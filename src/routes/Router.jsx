@@ -1,13 +1,18 @@
-import React from 'react'
+
 import { Route, Routes } from 'react-router-dom'
-import Layout from '../layouts/Layout'
+
 import AdminLayout from '../layouts/AdminLayout'
 import GestionUsers from '../views/GestionUsers'
-import GestionProcesos from '../views/calidad/GestionProcesos'
+
 
 import AuthLyout from '../layouts/AuthLyout'
 import Login from '../views/Login'
-import EstrategicosGerencia from '../views/calidad/EstrategicosGerencia'
+
+import DepartamentosPage from '../views/calidad/DepartamentosPage'
+import ProcesosDepartamento from '../components/calidad/ProcesosDepartamento'
+import Tareas from '../views/calidad/Tareas'
+import Errores from '../views/calidad/Errores'
+import DepartatamentosUpdate from '../views/calidad/DepartatamentosUpdate'
 
 
 
@@ -19,14 +24,22 @@ export default function Router() {
 
 {/* Rutas bajo AuthLayout */}
 <Route path="/auth" element={<AuthLyout />}>
-  <Route path="procesos" element={<GestionProcesos />} />
-  <Route path=":macroproceso_id/:departmen_id" element={<EstrategicosGerencia/>} />
+  <Route path="procesos" element={<DepartamentosPage/>} />
+  <Route path="procesos/:departamentoId" element={<ProcesosDepartamento/>} />
+ 
+
 </Route>
+
 
 {/* Rutas bajo AdminLayout */}
 <Route path="/admin" element={<AdminLayout />}>
   <Route path="users" element={<GestionUsers />} />
+ <Route path="tareas" element={<Tareas />} />
+  <Route path="errores" element={<Errores/>} />
+  <Route path="departamentos" element={<DepartatamentosUpdate/>} />
+
 </Route>
+
 
 </Routes>
   )

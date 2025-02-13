@@ -1,85 +1,156 @@
-import React from 'react'
-import { PencilIcon,TrashIcon } from '@heroicons/react/16/solid';
+import { PencilIcon } from '@heroicons/react/16/solid';
 import useSystem from '../hooks/useSystem';
+import { useAuth } from '../hooks/useAuth';
+import { useEffect, useState, } from 'react';
+import Modal from './calidad/Modal';
+import UpdateUser from './calidad/UpdateUser';
 
 
-export default function TableUsers() {
+/**
+ * El componente TableUsers obtiene y muestra una lista paginada de usuarios.
+ * Permite alternar el estado de activación de cada usuario.
+ *
+ * @component
+ * @example
+ * return (
+ *   <TableUsers />
+ * )
+ *
+ * @returns {JSX.Element} El componente renderizado.
+ *
+ * @function
+ * @name TableUsers
+ *
+ * @description
+ * Este componente obtiene una lista de usuarios de la API y los muestra en una tabla.
+ * Soporta paginación y permite alternar el estado de activación de cada usuario.
+ * El componente también adapta sus estilos según la configuración de modo oscuro del sistema.
+ *
+ * @property {Array} users - La lista de usuarios obtenida de la API.
+ * @property {Object} pagination - La información de paginación para la lista de usuarios.
+ * @property {boolean} loading - Indica si los usuarios están siendo cargados.
+ *
+ * @method
+ * @name obtenerUsuarios
+ * @description Obtiene la lista de usuarios de la API.
+ * @param {number} [page=1] - El número de página a obtener.
+ *
+ * @method
+ * @name toggleEstadoUsuario
+ * @description Alterna el estado de activación de un usuario.
+ * @param {number} id - El ID del usuario.
+ * @param {number} estadoActual - El estado de activación actual del usuario.
+ *
+ * @hook
+ * @name useEffect
+ * @description Obtiene los usuarios cuando el componente se monta.
+ *
+ * @hook
+ * @name useSystem
+ * @description Recupera la configuración de modo oscuro del sistema.
+ */
+export default function TableUsers({onClose}) {
+ 
+ const { darkMode} = useSystem();
+ const [isUserModalOpen, setUserModalOpen] = useState(false);
 
-  const { darkMode, toggleDarkMode } = useSystem();
-    // Datos estáticos para la tabla
-  const data = [
-    {
-      id: 1,
-      name: "Juan Pérez",
-      email: "juan.perez@example.com",
-      phone: "123456789",
-      role: "Administrador",
-      department: "Ventas",
-    },
-    {
-      id: 2,
-      name: "María Gómez",
-      email: "maria.gomez@example.com",
-      phone: "987654321",
-      role: "Usuario",
-      department: "Recursos Humanos",
-    },
-    {
-      id: 3,
-      name: "Carlos López",
-      email: "carlos.lopez@example.com",
-      phone: "456789123",
-      role: "Supervisor",
-      department: "Producción",
-    },
-  ];
+ const {users, pagination,obtenerUsuarios,toggleEstadoUsuario,  loading}=useAuth({middleware: "auth"})
+ 
+  const  [selectedUser, setSelectedUser] = useState(null);
+
+  useEffect(() => {
+    obtenerUsuarios();
+  }, []);
+
+
+ 
+
   return (
-<div className="overflow-x-auto">
-      <table className={ darkMode ? "bg-gray-800 text-white p-4 table-auto w-full border-collapse " : "bg-white text-gray-900 shadow-md p-4  table-auto w-full border-collapse border border-gray-300 bg-white rounded-md shadow-md"}>
-        <thead>
-          <tr className={darkMode ? " bg-gray-800 text-white p-4" : "bg-white text-gray-900 shadow-md bg-gray-100  "}>
-            <th className="border border-gray-300 px-4 py-2">Editar</th>
-            <th className="border border-gray-300 px-4 py-2">Eliminar</th>
-            <th className="border border-gray-300 px-4 py-2">Nombre</th>
-            <th className="border border-gray-300 px-4 py-2">Correo</th>
-            <th className="border border-gray-300 px-4 py-2">Teléfono</th>
-            <th className="border border-gray-300 px-4 py-2">Rol</th>
-            <th className="border border-gray-300 px-4 py-2">Departamento</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((row) => (
-            <tr key={row.id} className="hover:bg-gray-50">
-              {/* Botón Editar */}
-              <td className="border border-gray-300 px-4 py-2 text-center">
-                <button
-                  className="flex items-center bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
-                  onClick={() => alert(`Editar registro de: ${row.name}`)}
-                >
-                  <PencilIcon className="h-5 w-5 mr-1" />
-                  Editar
-                </button>
-              </td>
-              {/* Botón Eliminar */}
-              <td className="border border-gray-300 px-4 py-2 text-center">
-                <button
-                  className="flex items-center bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-                  onClick={() => alert(`Eliminar registro de: ${row.name}`)}
-                >
-                  <TrashIcon className="h-5 w-5 mr-1" />
-                  Eliminar
-                </button>
-              </td>
-              {/* Datos */}
-              <td className="border border-gray-300 px-4 py-2">{row.name}</td>
-              <td className="border border-gray-300 px-4 py-2">{row.email}</td>
-              <td className="border border-gray-300 px-4 py-2">{row.phone}</td>
-              <td className="border border-gray-300 px-4 py-2">{row.role}</td>
-              <td className="border border-gray-300 px-4 py-2">{row.department}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="overflow-x-auto">
+      {loading ? (
+        <div className="text-center py-4">Cargando usuarios...</div>
+      ) : (
+        <>
+          <table className={
+            darkMode
+              ? "bg-gray-800 text-white p-4 table-auto w-full border-collapse "
+              : "bg-white text-gray-900 shadow-md p-4 table-auto w-full border-collapse border border-gray-300 bg-white rounded-md shadow-md"
+          }>
+            <thead>
+              <tr className={darkMode ? "bg-gray-800 text-white p-4" : "bg-gray-100 text-gray-900"}>
+                <th className="border border-gray-300 px-4 py-2">Editar</th>
+                <th className="border border-gray-300 px-4 py-2">Estado</th>
+                <th className="border border-gray-300 px-4 py-2">Nombre</th>
+                <th className="border border-gray-300 px-4 py-2">Correo</th>
+                <th className="border border-gray-300 px-4 py-2">Teléfono</th>
+                <th className="border border-gray-300 px-4 py-2">Rol</th>
+                <th className="border border-gray-300 px-4 py-2">Departamento</th>
+          
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((row) => (
+                <tr key={row.id} className="hover:bg-gray-50 border-b">
+                  <td className="border border-gray-300 px-4 py-2 text-center">
+                    <button
+                      className="flex items-center bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+                      onClick={async () => {
+                        setSelectedUser(row.id);
+                        setUserModalOpen(true);
+                    }}
+                    
+                      
+                    >
+                      <PencilIcon className="h-5 w-5 mr-1" />
+                      Editar
+
+                    </button>
+                    <Modal isOpen={isUserModalOpen} onClose={() => setUserModalOpen(false)}>
+              <UpdateUser userId={selectedUser} onClose={()=>setUserModalOpen(false)} />
+            </Modal>
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2 text-center">
+                    <button
+                      className={`flex items-center ${
+                        row.estado_id === 3 ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-green-500 hover:bg-green-600'
+                      } text-white px-3 py-1 rounded`}
+                      onClick={() => toggleEstadoUsuario(row.id, row.estado_id)}
+                    >
+                      {row.estado_id === 3 ? 'Desactivar' : 'Activar'}
+                    </button>
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2">{row.name}</td>
+                  <td className="border border-gray-300 px-4 py-2">{row.email}</td>
+                  <td className="border border-gray-300 px-4 py-2">{row.telefono}</td>
+                  <td className="border border-gray-300 px-4 py-2">{row.role?.nombre || "Sin rol"}</td>
+                  <td className="border border-gray-300 px-4 py-2">{row.departamento?.nombre || "Sin departamento"}</td>
+           
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className="flex justify-between items-center mt-4">
+            <span className="text-sm text-gray-600">Total registros: {pagination.total}</span>
+            <div className="flex space-x-4">
+              <button
+                disabled={pagination.current_page === 1}
+                className="bg-gray-300 px-3 py-1 rounded hover:bg-gray-400 disabled:opacity-50"
+                onClick={() => obtenerUsuarios(pagination.current_page - 1)}
+              >
+                Anterior
+              </button>
+              <span>Página {pagination.current_page} de {pagination.last_page}</span>
+              <button
+                disabled={pagination.current_page === pagination.last_page}
+                className="bg-gray-300 px-3 py-1 rounded hover:bg-gray-400 disabled:opacity-50"
+                onClick={() => obtenerUsuarios(pagination.current_page + 1)}
+              >
+                Siguiente
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
-  )
+  );
 }

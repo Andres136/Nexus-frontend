@@ -1,8 +1,30 @@
+import { useParams } from "react-router-dom"
+import { createRef, useState} from "react"
+import clienteAxios from "../../config/axios"
+import { toast } from "react-toastify"
+import { useAuth } from "../../hooks/useAuth"
+
 
 
 
 export default function EstrategicosGerencia() {
+const {id} = useParams();
+const {user} = useAuth({middleware: 'auth'});
+console.log(user);
 
+
+const [nombreProceso, setNombreProceso] = useState("");
+const nombreRef = createRef();
+const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  const data = {
+    nombre: nombreRef.current.value,
+    departamento_id: id,
+    user_id: user.id
+  }
+  console.log(data);
+}
 
   return (
     
@@ -13,15 +35,17 @@ export default function EstrategicosGerencia() {
 
     <div className="bg-white shadow-lg rounded-lg p-6 mb-6">
     <h2 className="text-xl font-bold text-gray-700 mb-4 text-center">Registrar un nuevo Proceso</h2>
-    <form>
+    <form  onSubmit={handleSubmit} noValidate>
       <div className="mb-4">
         <label htmlFor="name" className="block text-gray-700 font-semibold mb-2">Nombre del Proceso</label>
         <input
           type="text"
-          id="name"
+          id="nombre"
           placeholder="Nombre del Proceso"
+          ref={nombreRef}
           className="w-full p-3 border rounded-lg focus:ring focus:ring-green-300"
         />
+
       </div>
       <div className="text-right">
         <button
