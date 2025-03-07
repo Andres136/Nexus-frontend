@@ -21,6 +21,7 @@ login(data, setErrores);
    
   };
 
+    const [mostrarPassword, setMostrarPassword] = useState(false);
   return (
     <div
       className="flex flex-col md:flex-row h-screen bg-cover bg-center"
@@ -71,25 +72,30 @@ login(data, setErrores);
               )}
             </div>
             <div className="mb-6">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="password"
-              >
-                Contraseña
-              </label>
-              <input
-                id="password"
-                type="password"
-                placeholder="Ingresa tu contraseña"
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring ${
-                  errores.password ? "border-red-500" : "border-gray-300"
-                }`}
-                ref={passwordRef}
-              />
-              {errores.password && (
-                <small className="text-red-500">{errores.password}</small>
-              )}
-            </div>
+      <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="password">
+        Contraseña
+      </label>
+      <div className="relative">
+        <input
+          id="password"
+          type={mostrarPassword ? "text" : "password"} // Alternar entre text y password
+          placeholder="Ingresa tu contraseña"
+          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring ${
+            errores.password ? "border-red-500" : "border-gray-300"
+          }`}
+          ref={passwordRef}
+        />
+        {/* Botón para alternar visibilidad */}
+        <button
+          type="button"
+          onClick={() => setMostrarPassword(!mostrarPassword)}
+          className="absolute inset-y-0 right-3 flex items-center text-gray-600"
+        >
+          {mostrarPassword ? "🙈" : "👁"} {/* Cambia el icono según el estado */}
+        </button>
+      </div>
+      {errores.password && <small className="text-red-500">{errores.password}</small>}
+    </div>
             <div className="flex items-center justify-between">
               <button
                 type="submit"

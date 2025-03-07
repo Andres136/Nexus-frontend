@@ -1,4 +1,5 @@
 import { useGestionProcesos } from "../../hooks/useGestionProcesos"
+import clienteAxios from "../../config/axios"
 
 export default function Documentacion({}) {
 
@@ -26,12 +27,13 @@ export default function Documentacion({}) {
               </p>
             </div>
             <a
-              href={`http://127.0.0.1:8000/api/documentos/descargar/${doc.id}`}
+              href={`${clienteAxios.defaults.baseURL}/documentos/${doc.archivo}`}
               download
               target="_blank"
               rel="noopener noreferrer"
               className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
             >
+              
               Descargar
             </a>
           </li>

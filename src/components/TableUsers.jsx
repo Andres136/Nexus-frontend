@@ -93,7 +93,7 @@ export default function TableUsers({onClose}) {
                 <tr key={row.id} className="hover:bg-gray-50 border-b">
                   <td className="border border-gray-300 px-4 py-2 text-center">
                     <button
-                      className="flex items-center bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+                      className="flex items-center bg-green-700 text-white px-3 py-1 rounded hover:bg-gray-800"
                       onClick={async () => {
                         setSelectedUser(row.id);
                         setUserModalOpen(true);
@@ -112,7 +112,7 @@ export default function TableUsers({onClose}) {
                   <td className="border border-gray-300 px-4 py-2 text-center">
                     <button
                       className={`flex items-center ${
-                        row.estado_id === 3 ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-green-500 hover:bg-green-600'
+                        row.estado_id === 3 ? 'bg-gray-800 hover:bg-green-700' : 'bg-green-700 hover:bg-green-700'
                       } text-white px-3 py-1 rounded`}
                       onClick={() => toggleEstadoUsuario(row.id, row.estado_id)}
                     >

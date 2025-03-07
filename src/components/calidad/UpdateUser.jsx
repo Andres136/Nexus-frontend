@@ -103,7 +103,8 @@ export default function UpdateUser({ onClose, userId }) {
   }, [errores]);
 
   return (
-    <form className="grid grid-cols-1 gap-6" onSubmit={handleSubmit} noValidate>
+    <div className="p-4 w-full">
+      <form className="grid grid-cols-1 gap-6" onSubmit={handleSubmit} noValidate>
       <div>
         <label htmlFor="name" className="block text-sm font-medium text-gray-700">
           Nombre
@@ -207,5 +208,6 @@ export default function UpdateUser({ onClose, userId }) {
         </button>
       </div>
     </form>
+    </div>
   );
 }

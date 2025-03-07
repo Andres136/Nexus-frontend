@@ -1,4 +1,5 @@
-import { createContext, useState } from "react";
+import { createContext, useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import clienteAxios from "../config/axios";
 import { toast } from "react-toastify";
 
@@ -6,6 +7,12 @@ const SystemContext = createContext();
 const SystemProvider =({children}) => {
     const [darkMode, setDarkMode] = useState(false)
     const toggleDarkMode = () => setDarkMode(!darkMode)
+    const [obtenerOrdenesCompra, setObtenerOrdenesCompra] = useState([])
+    const [paginaActual, setPaginaActual] = useState(1)
+  //  const [totalPaginas, setTotalPaginas] = useState(1)
+    const [busquedaOrdenesCompra, setBusquedaOrdenesCompra] = useState('')
+
+
 
 
 
@@ -47,18 +54,60 @@ const handleRegisterDepartaments = async (data, setErrores) => {
 }
 
 
-//Desactivar o Activar el usuario
+// Consultar ordenes de compra
 
-  
+// obtener ordenes de compra con react query
+
+// 🔹 Función para obtener órdenes de compra
+const fetOrdenesCompra = async ({ queryKey }) => {
+    const [, page, search] = queryKey; // ✅ Extraer correctamente page y search
+    const token = localStorage.getItem("token");
+
+    try {
+        const response = await clienteAxios.get(`/api/orden-compras?page=${page}&search=${search}`, {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+       ;
+        return response.data;
+    } catch (error) {
+        console.error("Error al obtener órdenes de compra:", error);
+        throw new Error("Error al obtener órdenes de compra");
+    }
+};
+
+// 🔹 React Query para obtener órdenes de compra
+const { data: ordenesCompra, isLoading, isError, refetch } = useQuery({
+    queryKey: ["ordenesCompra", paginaActual, busquedaOrdenesCompra], // ✅ Mantener el queryKey correcto
+    queryFn: fetOrdenesCompra, // ✅ Llamar la función sin argumentos
+    keepPreviousData: true, // ✅ Mantener los datos anteriores
+    staleTime: 60000, // Cachea datos por 60 segundos
+    refetchOnWindowFocus: false,
+});
+
+//Guardar  Ordenes de trabajo
+
+
+
 
     return (
         <SystemContext.Provider value={{
 
-            darkMode,
+            darkMode,   
+            obtenerOrdenesCompra,
+             paginaActual,
+             busquedaOrdenesCompra,
+             ordenesCompra,
+             isError,
+             isLoading,
+            setBusquedaOrdenesCompra,
             toggleDarkMode,
-        
             handleRegisterDepartaments,
             handlerConsultarUsuarios,
+            setObtenerOrdenesCompra,  
+             setPaginaActual,
+            refetchOrdenesCompra:refetch,
+           
+          
      
             
         }}>

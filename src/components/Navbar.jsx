@@ -1,29 +1,34 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import useSystem from '../hooks/useSystem';
-import { useAuth } from '../hooks/useAuth';
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import useSystem from "../hooks/useSystem";
+import { useAuth } from "../hooks/useAuth";
 
 export default function Navbar() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { darkMode, toggleDarkMode } = useSystem();
   const { logout, user } = useAuth({ middleware: "auth" });
 
-  // Define los enlaces de navegación según tus rutas.
-  // Puedes modificarlos o agregar más según necesites.
+
+  // Definir enlaces de navegación según los roles.
   const navLinks = [
-    { name: 'Inicio', to: '/' },
-    { name: 'Procesos', to: '/auth/procesos' },
-    { name: 'Tareas', to: '/admin/tareas' },
-    { name: 'Errores', to: '/admin/errores' },
-    { name: 'Compras', to: '/admin/users' },
+    { name: "Inicio", to: "/",allowedRoles: [1] },
+    { name: "Procesos", to: "/auth/procesos", alwaysVisible: true }, // Siempre visible
+    { name: "Tareas", to: "/admin/tareas", allowedRoles: [1, 2, ] },
+    { name: "Errores", to: "/admin/errores", allowedRoles: [1, 2] },
+    { name: "Crm", to: "/auth/crm", allowedRoles: [1,4,5,6,7] },
   ];
+
+  // Filtrar enlaces según el rol del usuario, pero dejando "Procesos" siempre visible.
+  const filteredNavLinks = navLinks.filter(
+    (link) => link.alwaysVisible || !link.allowedRoles || link.allowedRoles.includes(user?.role_id)
+  );
 
   return (
     <nav
       className={
         darkMode
-          ? "sticky top-0 left-0 w-full bg-gray-800 text-white p-4"
-          : "bg-gray-800 text-white shadow-md p-4"
+          ? "sticky top-0 left-0 w-full bg-gray-800 text-white p-4 "
+          : "  sticky top-0 bg-gray-800 text-white shadow-md p-4"
       }
     >
       <div className="container mx-auto flex justify-between items-center">
@@ -52,7 +57,7 @@ export default function Navbar() {
 
         {/* Menú de navegación para pantallas medianas y grandes */}
         <div className="hidden md:flex items-center space-x-4">
-          {navLinks.map((link) => (
+          {filteredNavLinks.map((link) => (
             <Link
               key={link.name}
               to={link.to}
@@ -71,7 +76,7 @@ export default function Navbar() {
           <span>Hola: {user?.name}</span>
           <button
             onClick={logout}
-            className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition duration-300"
+            className="bg-gray-700 text-white px-3 py-1 rounded hover:bg-green-700 transition duration-300"
           >
             Cerrar Sesión
           </button>
@@ -82,7 +87,7 @@ export default function Navbar() {
       {isSidebarOpen && (
         <div className="md:hidden mt-4">
           <ul className="flex flex-col space-y-2">
-            {navLinks.map((link) => (
+            {filteredNavLinks.map((link) => (
               <li key={link.name}>
                 <Link
                   to={link.to}
