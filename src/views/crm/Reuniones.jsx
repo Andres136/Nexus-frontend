@@ -1,8 +1,10 @@
 
 import React from 'react'
+import { Link } from 'react-router-dom'
+import TableUsers from '../../components/TableUsers'
 
 export default function Reuniones() {
   return (
-    <div>Reuniones</div>
+  <h1>Reuniones</h1>
   )
 }

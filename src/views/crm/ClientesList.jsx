@@ -47,7 +47,7 @@ const {user}=useAuth({middleware:'auth'});
         </div>
 
         {/* Tabla Responsiva */}
-        <div className="overflow-x-auto">
+        <div className="grid grid-cols-1 overflow-x-auto">
           <table className="w-full min-w-[600px] border-collapse border border-gray-300 shadow-lg">
             <thead className="bg-gray-200">
               <tr>
@@ -88,7 +88,7 @@ const {user}=useAuth({middleware:'auth'});
                     </td>
                     <td className="border border-gray-300 px-4 py-2 flex flex-wrap justify-center gap-2">
                       <button
-                        className="bg-green-700 text-white px-3 py-1 rounded-lg flex items-center gap-2 hover:bg-gray-600 transition"
+                        className=" w-full sm:w-auto max-w-full bg-green-700 text-white px-3 py-1 rounded-lg flex items-center gap-2 hover:bg-gray-600 transition"
                         onClick={async () => {
                           setSelectedUser(cliente.id);
                           setUserModalOpen(true);
@@ -109,7 +109,7 @@ const {user}=useAuth({middleware:'auth'});
                      {/* Solo mostrar el botón si el usuario tiene rol 1 */}
         {user.role_id === 1 && (
           <button
-            className="bg-red-500 text-white px-3 py-1 rounded-lg flex items-center gap-2 hover:bg-red-600 transition"
+            className="w-full sm:w-auto max-w-full bg-red-500 text-white px-3 py-1 rounded-lg flex items-center gap-2 hover:bg-red-600 transition"
             onClick={() => {
               Swal.fire({
                 title: "¿Estás seguro?",
@@ -133,7 +133,7 @@ const {user}=useAuth({middleware:'auth'});
         )}
 
                       <button
-                        className="bg-green-700 text-white px-3 py-1 rounded-lg flex items-center gap-2 hover:bg-green-600 transition"
+                        className="w-full sm:w-auto max-w-full bg-green-700 text-white px-3 py-1 rounded-lg flex items-center gap-2 hover:bg-green-600 transition"
                         onClick={async () => {
                           setSelectedUser(cliente.id);
                           setGestionarModalOpen(true);
@@ -152,7 +152,7 @@ const {user}=useAuth({middleware:'auth'});
                       </Modal>
 
                      <button
-                     className="bg-gray-700 text-white px-3 py-1 rounded-lg flex items-center gap-2 hover:bg-green-700 transition"
+                     className="w-full sm:w-auto max-w-full bg-gray-700 text-white px-3 py-1 rounded-lg flex items-center gap-2 hover:bg-green-700 transition"
                      onClick={async()=> consultarHistorial(cliente.id)}>Historial
                      <FaHistory/></button>
                     </td>

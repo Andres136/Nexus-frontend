@@ -3,6 +3,7 @@ import OrdenCompraMultiItem from "../../components/crm/OrdenCompraMultiItem";
 import clienteAxios from "../../config/axios";
 import { toast } from "react-toastify";
 import { useClientes } from "../../hooks/useClientes";
+import TableUsers from "../../components/TableUsers";
 
 
 
@@ -214,12 +215,17 @@ export default function OrdenCompraForm() {
             <span className="text-sm text-red-500">{errores.observaciones}</span>
           )}
         </div>
+         <div className="col-span-2">
+               <OrdenCompraMultiItem onDetallesChange={handleDetallesChange}
+        errores={erroresDetalles} />
+         </div>
+   
       </div>   
+      
       <div>  
+
+ 
      
-         {/* Componente de Ítems de la Orden */}
-      <OrdenCompraMultiItem onDetallesChange={handleDetallesChange}
-      errores={erroresDetalles} />
 
 </div>
 

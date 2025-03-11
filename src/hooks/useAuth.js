@@ -159,36 +159,73 @@ const obtenerUsuarios = async (page = 1) => {
   };
 
 
+  // useEffect(() => {
+  //   // Si se está en modo "guest" y ya hay un usuario autenticado
+  //   if (middleware === "guest" && user) {
+  //     // Si el usuario es administrador, redirige a la ruta de administración,
+  //     // de lo contrario, a la sección de procesos.
+  //     const redirectUrl = user.role_id === 1 ? "/admin/users" : "/auth/procesos";
+  //     navigate(redirectUrl);
+  //     return;
+  //   }
+  
+  //   // Para rutas protegidas (middleware "auth") y si hay un usuario autenticado:
+  //   if (middleware === "auth" && user) {
+  //     // Si el usuario NO es administrador, forzamos que use las rutas de /auth.
+  //     if (user.role_id !== 1 && !location.pathname.startsWith("/auth")) {
+  //       navigate("/auth/procesos");
+  //       return;
+  //     }
+  //     // Para el administrador: No hacemos redirección automática.
+  //     // Así, el administrador puede acceder a cualquier página que desee.
+  //   }
+  
+  //   // Si hay algún error (por ejemplo, token inválido o expirado) en modo "auth",
+  //   // redirige a la pantalla de login.
+  //   if (middleware === "auth" && error) {
+  //     navigate("/");
+  //   }
+  // }, [middleware, user, error, location.pathname, navigate]);
+  
+  
   useEffect(() => {
-    // Si se está en modo "guest" y ya hay un usuario autenticado
     if (middleware === "guest" && user) {
-      // Si el usuario es administrador, redirige a la ruta de administración,
-      // de lo contrario, a la sección de procesos.
-      const redirectUrl = user.role_id === 1 ? "/admin/users" : "/auth/procesos";
+      // Definir las rutas según los roles de usuario
+      const roleRedirects = {
+        1: "/admin/users",  // Administrador
+        2: "/auth/procesos", // HSEQ
+        3: "/auth/procesos", // Invitado
+        4: "/auth/procesos", // Administrativo
+        5: "/auth/crm/obtener-ordenes-compras", // Compras
+        6: "/auth/crm/reporte-inventarios", // Inventario
+        7: "/auth/crm/gestion-clientes", // Comercial
+        8: "/auth/procesos"  // Transporte
+      };
+  
+      const redirectUrl = roleRedirects[user.role_id] || "/auth/procesos";
       navigate(redirectUrl);
       return;
     }
   
-    // Para rutas protegidas (middleware "auth") y si hay un usuario autenticado:
     if (middleware === "auth" && user) {
-      // Si el usuario NO es administrador, forzamos que use las rutas de /auth.
-      if (user.role_id !== 1 && !location.pathname.startsWith("/auth")) {
+      // 🔹 Si el usuario es ADMINISTRADOR, no hacer redirección
+      if (user.role_id === 1) return;
+  
+      // 🔹 Si el usuario NO es admin y está fuera de /auth, redirigir
+      if (!location.pathname.startsWith("/auth")) {
         navigate("/auth/procesos");
         return;
       }
-      // Para el administrador: No hacemos redirección automática.
-      // Así, el administrador puede acceder a cualquier página que desee.
     }
   
-    // Si hay algún error (por ejemplo, token inválido o expirado) en modo "auth",
-    // redirige a la pantalla de login.
     if (middleware === "auth" && error) {
       navigate("/");
     }
   }, [middleware, user, error, location.pathname, navigate]);
   
-  
 
+  
+  
 const updateUsuario = async (userId, data,setErrores) => {
   console.log('updateUsuario este', userId, data);
   const token = localStorage.getItem('token');

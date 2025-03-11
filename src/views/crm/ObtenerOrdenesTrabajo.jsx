@@ -18,22 +18,25 @@ export default function ObtenerOrdenesTrabajo() {
 
   return (
     <div className="p-6 bg-white rounded-xl">
-      <h2 className="text-2xl font-bold mb-4">Órdenes de Trabajo</h2>
+
+      <div className="grid grid-cols-2 gap-4">
+   <h2 className="text-2xl font-bold mb-4">Órdenes de Trabajo</h2>
      
 
          <div className="flex items-center mb-4">
              <FaSearch className="text-gray-500 mr-2" />
              <input
                type="text"
-               placeholder="Buscar orden de compra..."
+               placeholder="Buscar orden de Trabajo..."
                className="border px-3 py-2 rounded-lg w-full"
                value={busqueda}
                onChange={(e) => setBusqueda(e.target.value)}
              />
            </div>
-   
 
-      <table className="w-full border border-gray-300 rounded-lg overflow-hidden">
+       
+
+           <table className=" col-span-2 w-full border border-gray-300 rounded-lg overflow-hidden">
         <thead className="bg-gray-800 text-white text-sm">
           <tr>
             <th className="px-4 py-3 text-left">ID</th>
@@ -55,15 +58,21 @@ export default function ObtenerOrdenesTrabajo() {
               <td className="px-4 py-3">
                 <Link
                   to={`/auth/crm/ordenes-trabajo/${orden.id}`}
-                  className="bg-gray-700 text-white px-2 py-1 rounded hover:bg-green-700"
+                  className="w-full bg-gray-800 text-white px-2 py-2 rounded hover:bg-green-700"
                 >
-                  Ver Detalles
+                  Detalles
                 </Link>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+
+    
+      </div>
+
+     
+   
 
       {/* Paginación */}
       <div className="flex justify-between mt-4">

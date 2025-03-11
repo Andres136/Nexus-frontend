@@ -207,23 +207,30 @@ export default function DetallesOrdenTrabajo() {
 
   // 7. Render final
   return (
-    <div className="p-6 bg-white rounded-xl">
+    <div className=" p-6 bg-white rounded-xl ">
+<div className="grid grid-cols-2">
+
+  <div className="col-span-2">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold">
           Orden de Trabajo #{orden.id} - {orden.cliente?.nombre}
         </h2>
         <Link 
-          className="bg-gray-700 text-white px-3 py-1 rounded hover:bg-green-700"
+          className="bg-gray-800 text-white px-3 py-1 rounded hover:bg-green-700"
           to="/auth/crm/reporte-inventarios"
         >
           Regresar
         </Link>
+        
       </div>
+  </div>
+   
 
-      <p className="text-gray-600">Fecha de Entrega: {orden.fecha_entrega}</p>
+ <div className="col-span-2">
+
+ <h3 className="text-xl font-semibold mt-6">Detalles</h3> 
+  <p className="text-gray-600">Fecha de Entrega: {orden.fecha_entrega}</p>
       <p className="text-gray-600">Generado por: {orden.user?.name}</p>
-
-      <h3 className="text-xl font-semibold mt-6">Detalles</h3>
       <table className="w-full border border-gray-300 rounded-lg mt-2">
         <thead className="bg-gray-800 text-white text-sm">
           <tr>
@@ -315,6 +322,14 @@ export default function DetallesOrdenTrabajo() {
           })}
         </tbody>
       </table>
+ </div>
+
+</div>
+
+   
+
+   
+   
 
       {/* Observaciones */}
       <div className="mt-4">

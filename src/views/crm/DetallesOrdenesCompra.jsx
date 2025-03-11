@@ -184,9 +184,14 @@ export default function DetallesOrdenesCompra() {
   };
 
   return (
-    <div className="p-4">
-      <div className="flex items-center justify-between gap-4 mb-4">
-        <h1 className="text-2xl font-semibold">
+    <div className="min-h-screen  text-gray-900 p-6">
+
+  <div className="grid grid-cols-2 gap-4">
+
+
+      <div className=" col-span-2 flex items-center justify-between gap-4 mb-4">
+        <div className="">
+             <h1 className="text-2xl font-semibold">
           Detalles {ordenSeleccionada ? `Cliente ${ordenSeleccionada?.cliente?.nombre}` : ""}
         </h1>
         <p className="text-gray-500 font-extrabold">
@@ -195,13 +200,16 @@ export default function DetallesOrdenesCompra() {
         <p className="text-gray-500 font-extrabold">
           Asesor Comercial: {ordenSeleccionada?.user?.name || "No disponible"}
         </p>
-        <Link
-          to="/auth/crm/notifyficaciones"
-          className="bg-gray-700 text-white px-3 py-1 rounded-lg hover:bg-green-700 transition"
+      
+        </div>
+       <Link
+          to="/auth/crm/obtener-ordenes-compras"
+          className="bg-gray-800 text-white px-3 py-2 rounded-lg hover:bg-green-700 transition"
         >
           Regresar
         </Link>
       </div>
+      <div className="col-span-2">
 
       {/* Si no hay orden */}
       {!ordenSeleccionada ? (
@@ -346,7 +354,7 @@ export default function DetallesOrdenesCompra() {
           {/* Botón para agregar item */}
           <button
             onClick={agregarItem}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mb-4"
+            className="bg-gray-800 text-white px-4 py-2 rounded hover:bg-green-800 mb-4"
           >
             Agregar Ítem
           </button>
@@ -375,6 +383,13 @@ export default function DetallesOrdenesCompra() {
           </button>
         </>
       )}
+
+      </div>
+       
+
+  </div>
+
+
     </div>
   );
 }

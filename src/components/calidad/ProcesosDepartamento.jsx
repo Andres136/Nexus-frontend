@@ -83,7 +83,7 @@ const cargarUsuariosDepartamento = async (departamentoId) => {
         
         });
         console.log('Usuarios del departamento:', response.data);
-        setUsuariosDepartamento({data: [response.data]});
+        setUsuariosDepartamento(response.data);
       } catch (error) {
         console.error('Error al cargar los usuarios del departamento:', error);
         toast.error('No hay  usuarios para registrado para el departamento');
@@ -144,7 +144,7 @@ const cargarUsuariosDepartamento = async (departamentoId) => {
                     </p>
                   </div>
                   <a
-                    href={`http://127.0.0.1:8000/api/documentos/descargar/${doc.id}`}
+                   href={`${clienteAxios.defaults.baseURL}/api/documentos/descargar/${doc.id}`}
                     download
                     target="_blank"
                     rel="noopener noreferrer"
@@ -310,7 +310,7 @@ const cargarUsuariosDepartamento = async (departamentoId) => {
 
 <select className='m-3 p-2 border rounded-lg w-full mt-3' ref={nuevaTareaUsuarioRef}>
     <option value="" disabled>Selecciona un Colaborador</option>
-    {usuariosDepartamento?.data?.map((usuario) => (
+    {usuariosDepartamento?.map((usuario) => (
         <option key={usuario.id} value={usuario.id}>{usuario.name}</option>
     ))}
 </select>

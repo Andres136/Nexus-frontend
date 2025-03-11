@@ -1,5 +1,5 @@
-import { Route, Routes } from "react-router-dom";
-
+import { Navigate, Route, Routes } from "react-router-dom";
+import ProtectedRoute from "./ProtectedRoute";
 import AdminLayout from "../layouts/AdminLayout";
 import GestionUsers from "../views/GestionUsers";
 
@@ -24,47 +24,50 @@ import Visitas from "../views/crm/Visitas";
 import OrdenCompraForm from "../views/crm/OrdenCompraForm";
 import DetallesOrdenesCompra from "../views/crm/DetallesOrdenesCompra";
 import DetallesOrdenTrabajo from "../views/crm/DetallesOrdenTrabajo";
+import ObtenerOrdenesCompra from "../components/crm/ObtenerOrdenesCompra";
 
 export default function Router() {
   return (
     <Routes>
-      {/* Ruta de Login */}
-      <Route path="/" element={<Login />} />
-
-      {/* Rutas bajo AuthLayout */}
+    {/* 🔹 Ruta de Login (Accesible para todos) */}
+    <Route path="/" element={<Login />} />
+  
+    {/* 🔹 Rutas bajo AuthLayout (Procesos y CRM) */}
+    <Route element={<ProtectedRoute allowedRoles={[1,2, 3, 4, 5, 6, 7, 8]} />}>
       <Route path="/auth" element={<AuthLyout />}>
         <Route path="procesos" element={<DepartamentosPage />} />
-        <Route
-          path="procesos/:departamentoId"
-          element={<ProcesosDepartamento />}
-        />
+        <Route path="procesos/:departamentoId" element={<ProcesosDepartamento />} />
       </Route>
-
+  
       <Route path="/auth/crm" element={<Crm />}>
-        <Route path="/auth/crm/reuniones" element={<Reuniones />} />
-        <Route path="/auth/crm/ordenes-compras" element={<OrdenCompraForm />} />
-
-        <Route path="/auth/crm/cotizaciones" element={<Cotizaciones />} />
-        <Route
-          path="/auth/crm/gestion-clientes"
-          element={<GestionClientes />}
-        />
-        <Route path="/auth/crm/reporte-inventarios" element={<Inventarios />} />
-        <Route path="/auth/crm/notifyficaciones" element={<Notifycaciones />} />
-        <Route path="/auth/crm/detalles-compras/:id" element={<DetallesOrdenesCompra />}    />
-        <Route path="/auth/crm/ordenes-trabajo/:id" element={<DetallesOrdenTrabajo />} />
-        <Route path="/auth/crm/kpis" element={<Kpi />} />
-        <Route path="/auth/crm/pqrs" element={<Pqr />} />
-        <Route path="/auth/crm/visita-cliente" element={<Visitas />} />
+        <Route path="reuniones" element={<Reuniones />} />
+        <Route path="ordenes-compras" element={<OrdenCompraForm />} />
+        <Route path="obtener-ordenes-compras" element={<ObtenerOrdenesCompra />} />
+        <Route path="cotizaciones" element={<Cotizaciones />} />
+        <Route path="gestion-clientes" element={<GestionClientes />} />
+        <Route path="reporte-inventarios" element={<Inventarios />} />
+        <Route path="notificaciones" element={<Notifycaciones />} />
+        <Route path="detalles-compras/:id" element={<DetallesOrdenesCompra />} />
+        <Route path="ordenes-trabajo/:id" element={<DetallesOrdenTrabajo />} />
+        <Route path="kpis" element={<Kpi />} />
+        <Route path="pqrs" element={<Pqr />} />
+        <Route path="visita-cliente" element={<Visitas />} />
       </Route>
-
-      {/* Rutas bajo AdminLayout */}
+    </Route>
+  
+    {/* 🔹 Rutas para Administradores (AdminLayout) */}
+    <Route element={<ProtectedRoute allowedRoles={[1]} />}>
       <Route path="/admin" element={<AdminLayout />}>
         <Route path="users" element={<GestionUsers />} />
         <Route path="tareas" element={<Tareas />} />
         <Route path="errores" element={<Errores />} />
         <Route path="departamentos" element={<DepartatamentosUpdate />} />
       </Route>
-    </Routes>
+    </Route>
+  
+    {/* 🔹 Redirección si la ruta no existe */}
+    <Route path="*" element={<Navigate to="/" replace />} />
+  </Routes>
+  
   );
 }
