@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
 
 export default function GestionarClientes({ onClose, clienteId }) {
-  console.log("Cliente ID:", clienteId);
+  
   const { registrarGestionCliente, error } = useClientes();
   const { user } = useAuth({ middleware: 'auth' });
 

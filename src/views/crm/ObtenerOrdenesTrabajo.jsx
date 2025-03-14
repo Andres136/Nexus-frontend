@@ -12,7 +12,7 @@ export default function ObtenerOrdenesTrabajo() {
     busqueda,
     setBusqueda,
   } = useOrdenesTrabajo();
-
+console.log('ordenesTrabajo',ordenesTrabajo);
   if (isLoading) return <p>Cargando órdenes de trabajo...</p>;
   if (error) return <p className="text-red-500">Error: {error.message}</p>;
 
@@ -42,6 +42,7 @@ export default function ObtenerOrdenesTrabajo() {
             <th className="px-4 py-3 text-left">ID</th>
             <th className="px-4 py-3 text-left">Cliente</th>
             <th className="px-4 py-3 text-left">Fecha de Entrega</th>
+            <th className="px-4 py-3 text-left">Direcion de Entrega</th>
             <th className="px-4 py-3 text-left">Observaciones</th>
             <th className="px-4 py-3 text-left">Estado</th>
             <th className="px-4 py-3 text-left">Acciones</th>
@@ -53,6 +54,7 @@ export default function ObtenerOrdenesTrabajo() {
               <td className="px-4 py-3">{orden.id}</td>
               <td className="px-4 py-3">{orden.cliente.nombre}</td>
               <td className="px-4 py-3">{orden.fecha_entrega}</td>
+              <td className="px-4 py-3"> {orden?.orden_compra?.ubicacion_entrega || "No especificado"}</td>
                 <td className="px-4 py-3">{orden.observaciones}</td>
               <td className="px-4 py-3">{orden.estado.nombre}</td>
               <td className="px-4 py-3">

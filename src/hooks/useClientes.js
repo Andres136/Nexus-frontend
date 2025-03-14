@@ -38,7 +38,7 @@ const[clientesTodos, setClientesTodos]=useState([]);
 
  // Usamos SWR para manejar los clientes
  const { data, mutate } = useSWR(`/api/clientes`, fetcher,{
-    refreshInterval:1000,
+    refreshInterval:60000,
  });
  // Refs para capturar los valores del formulario
 

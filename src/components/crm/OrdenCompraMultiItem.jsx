@@ -5,10 +5,19 @@ import { Trash2, Plus } from "lucide-react";
 // Factor para convertir cm a pulgadas
 const FACTOR_PULGADA = 0.393701;
 
+// Genera un ID único para cada fila
+function generateUUID() {
+  return crypto.randomUUID();
+}
+
 // Función para crear una nueva fila con campos iniciales
-function createNewItem(id = null) {
+function createNewItem(itemNumber) {
   return {
-    id,
+    // Clave interna para React; NO se reusa para numerar ítems.
+    _uuid: generateUUID(),
+    // Este "itemNumber" es el que mostrarás como "Item 1, Item 2, ..."
+    itemNumber,
+    id: null,
     orden_compra_id: "", // ID de la orden de compra
     largo_cm: 0,
     ancho_cm: 0,
@@ -21,13 +30,11 @@ function createNewItem(id = null) {
     cantidad_requerida_kg: 0,
     descripcion: "",
     valor_total: 0,
+    observaciones: `${itemNumber}`,
   };
 }
 
-export default function OrdenCompraMultiItem({
-  onDetallesChange,
-  errores = {},
-}) {
+export default function OrdenCompraMultiItem({ onDetallesChange, errores = {} }) {
   console.log("Errores:", errores);
   // Estado para manejar las filas de la tabla
   const [rows, setRows] = useState([createNewItem(1)]);
@@ -62,10 +69,10 @@ export default function OrdenCompraMultiItem({
     return { peso_bolsa, numero_bolsas, cantidad_requerida_kg, valor_total };
   };
 
-  // Función para manejar cambios en los inputs
-  const handleInputChange = (id, field, value) => {
+  // Manejar cambios en los inputs usando _uuid
+  const handleInputChange = (_uuid, field, value) => {
     const newRows = rows.map((row) => {
-      if (row.id === id) {
+      if (row._uuid === _uuid) {
         const updatedRow = { ...row, [field]: value };
         const calculations = updateRowCalculations(updatedRow);
         return { ...updatedRow, ...calculations };
@@ -76,187 +83,195 @@ export default function OrdenCompraMultiItem({
     setRows(newRows);
   };
 
-  // Efecto para enviar los detalles al componente principal cada vez que `rows` cambie
+  // Enviar los detalles al componente principal cada vez que rows cambie
   useEffect(() => {
     if (rows.length > 0) {
       onDetallesChange(rows);
     }
-  }, [rows]);
+  }, [rows, onDetallesChange]);
 
-  // ✅ Escuchar cambios en `detalles` para limpiar el componente
+  // Escuchar cambios en errores para limpiar el componente (si aplica)
   useEffect(() => {
     if (Object.keys(errores).length === 0) {
       setRows([createNewItem(1)]);
     }
   }, [errores]);
 
-  // Agregar una nueva fila
+  // Agregar una nueva fila con itemNumber = rows.length + 1
   const addRow = () => {
-    const newId = rows.length + 1;
-    setRows([...rows, createNewItem(newId)]);
+    const newItemNumber = rows.length + 1;
+    setRows([...rows, createNewItem(newItemNumber)]);
   };
 
-  // Eliminar una fila
-  const removeRow = (id) => {
-    const updatedRows = rows.filter((row) => row.id !== id);
-    setRows(updatedRows);
+  // Eliminar una fila y reenumerar itemNumber y observaciones usando _uuid
+  const removeRow = (_uuid) => {
+    let newRows = rows.filter((row) => row._uuid !== _uuid);
+
+    // Reenumerar desde 1
+    newRows = newRows.map((row, index) => ({
+      ...row,
+      itemNumber: index + 1,
+      observaciones: `${index + 1}`,
+    }));
+
+    setRows(newRows);
   };
 
   return (
-<div className="overflow-x-auto mt-4">
-  <table className="min-w-full border border-gray-300 rounded-lg overflow-hidden">
-    <thead className="bg-gray-800 text-white text-xs sm:text-sm">
-      <tr>
-        {[
-          "Acciones",
-          "Largo cm",
-          "Ancho cm",
-          "Calibre",
-          "Peso Bolsa",
-          "Número de Bolsas",
-          "Cliente",
-          "Cantidad Requerida (Kg)",
-          "Descripcion",
-          "Cantidad",
-          "Valor Unitario",
-          "Valor Total",
-        ].map((header) => (
-          <th
-            key={header}
-            className="px-2 sm:px-4 py-2 text-left whitespace-nowrap"
-          >
-            {header}
-          </th>
-        ))}
-      </tr>
-    </thead>
-    <tbody className="text-xs sm:text-sm">
-      {rows.map((row) => (
-        <tr key={row.id} className="border-t border-gray-300">
-          {/* Columna de acciones */}
-          <td className="px-2 sm:px-4 py-2 flex gap-1 sm:gap-2">
-            <button
-              className="bg-red-500 text-white px-2 sm:px-3 py-1 rounded hover:bg-red-600"
-              onClick={() => removeRow(row.id)}
-            >
-              <Trash2 size={16} />
-            </button>
-          </td>
-          {/* Columnas de inputs para: largo_cm, ancho_cm, calibre */}
-          {[
-            { key: "largo_cm", type: "text" },
-            { key: "ancho_cm", type: "text" },
-            { key: "calibre", type: "text" },
-          ].map(({ key, type }) => (
-            <td key={key} className="px-2 sm:px-4 py-2">
-              <input
-                type={type}
-                className="w-full border border-gray-300 px-1 sm:px-2 py-1 rounded text-center text-xs sm:text-sm"
-                value={row[key]}
-                onChange={(e) =>
-                  handleInputChange(row.id, key, e.target.value)
-                }
-              />
-              {errores[rows.indexOf(row)]?.[key] && (
-                <span className="text-xs text-red-500">
-                  {errores[rows.indexOf(row)][key]}
-                </span>
-              )}
-            </td>
+    <div className="overflow-x-auto mt-4">
+      <table className="min-w-full border border-gray-300 rounded-lg overflow-hidden">
+        <thead className="bg-gray-800 text-white text-xs sm:text-sm">
+          <tr>
+            {[
+              "Acciones",
+              "Item",
+              "Largo cm",
+              "Ancho cm",
+              "Calibre",
+              "Peso Bolsa",
+              "Número de Bolsas",
+              "Cliente",
+              "Cantidad Requerida (Kg)",
+              "Descripcion",
+              "Cantidad",
+              "Valor Unitario",
+              "Valor Total",
+            ].map((header) => (
+              <th key={header} className="px-2 sm:px-4 py-2 text-left whitespace-nowrap">
+                {header}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody className="text-xs sm:text-sm">
+          {rows.map((row) => (
+            // Usamos _uuid como key, ya que row.id es null
+            <tr key={row._uuid} className="border-t border-gray-300">
+              {/* Columna de acciones */}
+              <td className="px-2 sm:px-4 py-2 flex gap-1 sm:gap-2">
+                <button
+                  className="bg-red-500 text-white px-2 sm:px-3 py-1 rounded hover:bg-red-600"
+                  onClick={() => removeRow(row._uuid)}
+                >
+                  <Trash2 size={16} />
+                </button>
+              </td>
+              {/* Columna de Item */}
+              <td className="px-2 sm:px-4 py-2 text-center">{row.observaciones}</td>
+              {/* Columnas de inputs para: largo_cm, ancho_cm, calibre */}
+              {[
+                { key: "largo_cm", type: "text" },
+                { key: "ancho_cm", type: "text" },
+                { key: "calibre", type: "text" },
+              ].map(({ key, type }) => (
+                <td key={key} className="px-2 sm:px-4 py-2">
+                  <input
+                    type={type}
+                    className="w-full border border-gray-300 px-1 sm:px-2 py-1 rounded text-center text-xs sm:text-sm"
+                    value={row[key]}
+                    onChange={(e) =>
+                      handleInputChange(row._uuid, key, e.target.value)
+                    }
+                  />
+                  {errores[rows.indexOf(row)]?.[key] && (
+                    <span className="text-xs text-red-500">
+                      {errores[rows.indexOf(row)][key]}
+                    </span>
+                  )}
+                </td>
+              ))}
+              {/* Columna de Peso Bolsa */}
+              <td className="px-2 sm:px-4 py-2 text-center">
+                {row.peso_bolsa.toFixed(2)}
+              </td>
+              {/* Columna de Número de Bolsas */}
+              <td className="px-2 sm:px-4 py-2 text-center">
+                {row.numero_bolsas.toFixed(0)}
+              </td>
+              {/* Columna de Cliente */}
+              <td className="px-2 sm:px-4 py-2">
+                <input
+                  type="text"
+                  className="w-full border border-gray-300 px-1 sm:px-2 py-1 rounded text-center text-xs sm:text-sm"
+                  value={row.cliente_clb}
+                  onChange={(e) =>
+                    handleInputChange(row._uuid, "cliente_clb", e.target.value)
+                  }
+                />
+                {errores[rows.indexOf(row)]?.cliente_clb && (
+                  <span className="text-xs text-red-500">
+                    {errores[rows.indexOf(row)].cliente_clb}
+                  </span>
+                )}
+              </td>
+              {/* Columna de Cantidad Requerida (Kg) */}
+              <td className="px-2 sm:px-4 py-2 text-center">
+                {row.cantidad_requerida_kg.toFixed(2)}
+              </td>
+              {/* Columna de Descripción */}
+              <td className="px-2 sm:px-4 py-2">
+                <input
+                  type="text"
+                  className="w-full border border-gray-300 px-1 sm:px-2 py-1 rounded text-center text-xs sm:text-sm"
+                  value={row.descripcion}
+                  onChange={(e) =>
+                    handleInputChange(row._uuid, "descripcion", e.target.value)
+                  }
+                />
+                {errores[rows.indexOf(row)]?.descripcion && (
+                  <span className="text-xs text-red-500">
+                    {errores[rows.indexOf(row)].descripcion}
+                  </span>
+                )}
+              </td>
+              {/* Columna de Cantidad */}
+              <td className="px-2 sm:px-4 py-2">
+                <input
+                  type="text"
+                  className="w-full border border-gray-300 px-1 sm:px-2 py-1 rounded text-center text-xs sm:text-sm"
+                  value={row.cantidad}
+                  onChange={(e) =>
+                    handleInputChange(row._uuid, "cantidad", e.target.value)
+                  }
+                />
+                {errores[rows.indexOf(row)]?.cantidad && (
+                  <span className="text-xs text-red-500">
+                    {errores[rows.indexOf(row)].cantidad}
+                  </span>
+                )}
+              </td>
+              {/* Columna de Valor Unitario */}
+              <td className="px-2 sm:px-4 py-2">
+                <input
+                  type="text"
+                  className="w-full border border-gray-300 px-1 sm:px-2 py-1 rounded text-center text-xs sm:text-sm"
+                  value={row.valor_unitario}
+                  onChange={(e) =>
+                    handleInputChange(row._uuid, "valor_unitario", e.target.value)
+                  }
+                />
+                {errores[rows.indexOf(row)]?.valor_unitario && (
+                  <span className="text-xs text-red-500">
+                    {errores[rows.indexOf(row)].valor_unitario}
+                  </span>
+                )}
+              </td>
+              {/* Columna de Valor Total */}
+              <td className="px-2 sm:px-4 py-2 text-center">
+                {formatCurrency(row.valor_total)}
+              </td>
+            </tr>
           ))}
-          {/* Columna de Peso Bolsa */}
-          <td className="px-2 sm:px-4 py-2 text-center">
-            {row.peso_bolsa.toFixed(2)}
-          </td>
-          {/* Columna de Número de Bolsas */}
-          <td className="px-2 sm:px-4 py-2 text-center">
-            {row.numero_bolsas.toFixed(0)}
-          </td>
-          {/* Columna de Cliente */}
-          <td className="px-2 sm:px-4 py-2">
-            <input
-              type="text"
-              className="w-full border border-gray-300 px-1 sm:px-2 py-1 rounded text-center text-xs sm:text-sm"
-              value={row.cliente_clb}
-              onChange={(e) =>
-                handleInputChange(row.id, "cliente_clb", e.target.value)
-              }
-            />
-            {errores[rows.indexOf(row)]?.cliente_clb && (
-              <span className="text-xs text-red-500">
-                {errores[rows.indexOf(row)].cliente_clb}
-              </span>
-            )}
-          </td>
-          {/* Columna de Cantidad Requerida (Kg) */}
-          <td className="px-2 sm:px-4 py-2 text-center">
-            {row.cantidad_requerida_kg.toFixed(2)}
-          </td>
-          {/* Columna de Descripción */}
-          <td className="px-2 sm:px-4 py-2">
-            <input
-              type="text"
-              className="w-full border border-gray-300 px-1 sm:px-2 py-1 rounded text-center text-xs sm:text-sm"
-              value={row.descripcion}
-              onChange={(e) =>
-                handleInputChange(row.id, "descripcion", e.target.value)
-              }
-            />
-            {errores[rows.indexOf(row)]?.descripcion && (
-              <span className="text-xs text-red-500">
-                {errores[rows.indexOf(row)].descripcion}
-              </span>
-            )}
-          </td>
-          {/* Columna de Cantidad */}
-          <td className="px-2 sm:px-4 py-2">
-            <input
-              type="text"
-              className="w-full border border-gray-300 px-1 sm:px-2 py-1 rounded text-center text-xs sm:text-sm"
-              value={row.cantidad}
-              onChange={(e) =>
-                handleInputChange(row.id, "cantidad", e.target.value)
-              }
-            />
-            {errores[rows.indexOf(row)]?.cantidad && (
-              <span className="text-xs text-red-500">
-                {errores[rows.indexOf(row)].cantidad}
-              </span>
-            )}
-          </td>
-          {/* Columna de Valor Unitario */}
-          <td className="px-2 sm:px-4 py-2">
-            <input
-              type="text"
-              className="w-full border border-gray-300 px-1 sm:px-2 py-1 rounded text-center text-xs sm:text-sm"
-              value={row.valor_unitario}
-              onChange={(e) =>
-                handleInputChange(row.id, "valor_unitario", e.target.value)
-              }
-            />
-            {errores[rows.indexOf(row)]?.valor_unitario && (
-              <span className="text-xs text-red-500">
-                {errores[rows.indexOf(row)].valor_unitario}
-              </span>
-            )}
-          </td>
-          {/* Columna de Valor Total */}
-          <td className="px-2 sm:px-4 py-2 text-center">
-            {formatCurrency(row.valor_total)}
-          </td>
-        </tr>
-      ))}
-    </tbody>
-  </table>
-  <div className="flex justify-end mt-4">
-    <button
-      onClick={addRow}
-      className="bg-gray-700 text-white px-3 py-2 rounded flex items-center gap-2 hover:bg-green-700 text-xs sm:text-sm"
-    >
-      <Plus size={16} /> Agregar Ítem
-    </button>
-  </div>
-</div>
-
+        </tbody>
+      </table>
+      <div className="flex justify-end mt-4">
+        <button
+          onClick={addRow}
+          className="bg-gray-700 text-white px-3 py-2 rounded flex items-center gap-2 hover:bg-green-700 text-xs sm:text-sm"
+        >
+          <Plus size={16} /> Agregar Ítem
+        </button>
+      </div>
+    </div>
   );
 }

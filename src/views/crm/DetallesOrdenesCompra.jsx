@@ -74,26 +74,24 @@ export default function DetallesOrdenesCompra() {
     ? ordenesCompra.data.find((orden) => orden.id === parseInt(id))
     : null;
 
-  // 1. Al cambiar ordenSeleccionada, cargamos y calculamos
-  useEffect(() => {
-    if (ordenSeleccionada) {
-      // Para cada detalle que viene del backend, calculamos sus campos
-      const detallesCalculados = ordenesCompra
-        .data
-        .find((orden) => orden.id === parseInt(id))
-        .detalles.map((det) => {
-          // Mezclamos los campos originales con los calculados
-          return { 
-            ...det,
-            ...calcularCampos(det)
-          };
-        });
-
-      setDetalles(detallesCalculados);
-      // Podrías setear aquí las observaciones de la OT si las trajeras
-    }
-  }, [ordenesCompra, id, ordenSeleccionada]);
-
+    useEffect(() => {
+      if (ordenSeleccionada) {
+        // Para cada detalle del backend, calculamos sus campos y asignamos el número de ítem
+        const detallesCalculados = ordenesCompra
+          .data
+          .find((orden) => orden.id === parseInt(id))
+          .detalles.map((det, index) => {
+            return {
+              ...det,
+              observaciones: ` ${index + 1}`,
+              ...calcularCampos(det)
+            };
+          });
+    
+        setDetalles(detallesCalculados);
+      }
+    }, [ordenesCompra, id, ordenSeleccionada]);
+    
   // 2. Manejar cambio de input en cada fila
   const handleChangeDetalle = (index, field, value) => {
     const newDetalles = [...detalles];
@@ -112,13 +110,18 @@ export default function DetallesOrdenesCompra() {
     setDetalles(newDetalles);
   };
 
-  // 3. Agregar nuevo item (vacío) y de paso calculado
   const agregarItem = () => {
     const newItem = createNewItem();
-    // Podríamos calcularlo, aunque estará todo en 0
+    // Calculamos los campos (aunque estén en 0) y asignamos observaciones con el número consecutivo
     const calculados = calcularCampos(newItem);
-    setDetalles([...detalles, { ...newItem, ...calculados }]);
+    const itemConNumero = { 
+      ...newItem, 
+      ...calculados,
+      observaciones: `${detalles.length + 1}` 
+    };
+    setDetalles([...detalles, itemConNumero]);
   };
+  
 
   // 4. Lógica para eliminar un item
   const eliminarItem = (index) => {
@@ -136,6 +139,7 @@ export default function DetallesOrdenesCompra() {
     try {
       setLoading(true);
       setErrores({});
+      
 
       const token = localStorage.getItem("token");
 
@@ -224,6 +228,7 @@ export default function DetallesOrdenesCompra() {
               <thead className="bg-gray-800 text-white text-sm">
                 <tr>
                   <th className="border border-gray-300 px-2 py-1">Acciones</th>
+                  <th className="border border-gray-300 px-2 py-1">Item</th>
                   <th className="border border-gray-300 px-2 py-1">Largo cm</th>
                   <th className="border border-gray-300 px-2 py-1">Ancho cm</th>
                   <th className="border border-gray-300 px-2 py-1">Calibre</th>
@@ -247,6 +252,16 @@ export default function DetallesOrdenesCompra() {
                       >
                         Eliminar
                       </button>
+                    </td>
+                    <td className="border border-gray-300 px-2 py-1 text-center">
+                      <input
+                        type="text"
+                        value={detalle.observaciones}
+                        onChange={(e) =>
+                          handleChangeDetalle(index, "observaciones", e.target.value)
+                        }
+                        className="w-full border border-gray-300 rounded px-1"
+                      />
                     </td>
                     {/* Largo */}
                     <td className="border border-gray-300 px-2 py-1">

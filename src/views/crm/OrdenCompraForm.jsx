@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import OrdenCompraMultiItem from "../../components/crm/OrdenCompraMultiItem";
 import clienteAxios from "../../config/axios";
 import { toast } from "react-toastify";
@@ -42,9 +42,15 @@ export default function OrdenCompraForm() {
 
  
   // Función para actualizar los detalles desde `OrdenCompraMultiItem`
-  const handleDetallesChange = (detallesActualizados) => {
-    setFormData({ ...formData, detalles: detallesActualizados });
-  };
+
+
+const handleDetallesChange = useCallback((detallesActualizados) => {
+  setFormData((prevData) => ({
+    ...prevData,
+    detalles: detallesActualizados,
+  }));
+}, []);
+
  
   
   // Función para enviar la orden al backend

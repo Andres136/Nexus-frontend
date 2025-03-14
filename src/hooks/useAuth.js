@@ -195,10 +195,10 @@ const obtenerUsuarios = async (page = 1) => {
         1: "/admin/users",  // Administrador
         2: "/auth/procesos", // HSEQ
         3: "/auth/procesos", // Invitado
-        4: "/auth/procesos", // Administrativo
-        5: "/auth/crm/obtener-ordenes-compras", // Compras
-        6: "/auth/crm/reporte-inventarios", // Inventario
-        7: "/auth/crm/gestion-clientes", // Comercial
+        4: "/auth/crm", // Administrativo
+        5: "/auth/crm", // Compras
+        6: "/auth/crm", // Inventario
+        7: "/auth/crm", // Comercial
         8: "/auth/procesos"  // Transporte
       };
   

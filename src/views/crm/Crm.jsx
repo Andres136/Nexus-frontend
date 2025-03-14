@@ -1,16 +1,20 @@
-import { useState } from "react";
-import { Link, Outlet } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, Outlet, useLocation } from "react-router-dom";
 import {
   Briefcase, Users, BarChart, ShoppingCart, FileText, Bell, 
-  MessageCircle, MapPin, Clipboard, Menu, ClipboardList
+  MessageCircle, MapPin, Clipboard, Menu, ClipboardList,
+  Badge
 } from "lucide-react";
 import Navbar from "../../components/Navbar";
 import { useAuth } from "../../hooks/useAuth";
+import Dashboard from "../Dashboard";
+import clienteAxios from "../../config/axios";
 
 export default function Crm() {
   const [isExpanded, setIsExpanded] = useState(false);
   const { user } = useAuth({ middleware: "auth" });
-
+  const location = useLocation();
+const [totalNotificaciones, setTotalNotificaciones] = useState(0);
   // Alternar manualmente en móviles
   const toggleSidebar = () => {
     setIsExpanded((prev) => !prev);
@@ -18,17 +22,34 @@ export default function Crm() {
 
   // Definir rutas con los roles permitidos
   const menuLinks = [
-    { name: "Reuniones", to: "/auth/crm/reuniones", icon: Briefcase, roles: [1, 2, 3] },
+    { name: "Reuniones", to: "/auth/crm/reuniones", icon: Briefcase, roles: [1] },
     { name: "Gestión de Clientes", to: "/auth/crm/gestion-clientes", icon: Users, roles: [1, 4, 7] },
     { name: "KPIs", to: "/auth/crm/kpis", icon: BarChart, roles: [1, 7] },
-    { name: "Crear Orden de Compra", to: "/auth/crm/ordenes-compras", icon: ShoppingCart, roles: [1, 5,4,6] },
+    { name: "Crear Orden de Compra", to: "/auth/crm/crear-ordenes-compras", icon: ShoppingCart, roles: [1, 5,4,7] },
     { name: "Órdenes de Trabajo", to: "/auth/crm/reporte-inventarios", icon: Clipboard, roles: [1, 6,4,7] },
-    { name: "Notificaciones", to: "/auth/crm/notificaciones", icon: Bell, roles: [1, 3, 4, 5, 6] },
-    { name: "Hacer Cotización", to: "/auth/crm/cotizaciones", icon: FileText, roles: [1, 7] },
-    { name: "PQRS", to: "/auth/crm/pqrs", icon: MessageCircle, roles: [1, 3, 4, 7] },
-    { name: "Visita al Cliente", to: "/auth/crm/visita-cliente", icon: MapPin, roles: [1, 7] },
+    { name: "Notificaciones", to: "/auth/crm/notificaciones", icon: Bell, roles: [1, 3, 4, 5, 6],badge: totalNotificaciones },
+    { name: "Hacer Cotización", to: "/auth/crm/cotizaciones", icon: FileText, roles: [1] },
+    { name: "PQRS", to: "/auth/crm/pqrs", icon: MessageCircle, roles: [1] },
+    { name: "Visita al Cliente", to: "/auth/crm/visita-cliente", icon: MapPin, roles: [1 ] },
     { name: "Órdenes de Compra", to: "/auth/crm/obtener-ordenes-compras", icon: ClipboardList, roles: [1, 5,4,7,6] },
-  ];
+  ]; // Obtener cantidad de notificaciones no leídas
+  const obtenerNotificaciones = async () => {
+    const token = localStorage.getItem("token");
+    try {
+      const response = await clienteAxios.get("/api/notificaciones", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setTotalNotificaciones(response.data.total_no_leidas);
+    } catch (error) {
+      console.error("Error al obtener notificaciones:", error);
+    }
+  };
+
+  useEffect(() => {
+    obtenerNotificaciones();
+    const interval = setInterval(obtenerNotificaciones, 20000); // Refrescar cada 20s
+    return () => clearInterval(interval);
+  }, []);
 
   // Filtrar rutas por rol
   const filteredMenuLinks = menuLinks.filter(link =>
@@ -46,7 +67,7 @@ export default function Crm() {
           <Menu className="w-6 h-6" />
         </button>
       </header>
-
+    
       <div className="flex bg-gray-100 min-h-screen">
         {/* Barra lateral con hover en pantallas grandes */}
         <aside 
@@ -57,9 +78,20 @@ export default function Crm() {
           onMouseEnter={() => setIsExpanded(true)}
           onMouseLeave={() => setIsExpanded(false)}
         >
-          <h2 className={`text-lg font-semibold mb-4 mt-4 px-2 transition-opacity ${isExpanded ? "opacity-100" : "opacity-0 hidden"}`}>
+          <div className="flex items-center justify-between p-4">
+                  <h2 className={`text-lg font-semibold mb-4 mt-4 px-2 transition-opacity ${isExpanded ? "opacity-100" : "opacity-0 hidden"}`}>
             Menú
           </h2>
+
+              {/* Botón para cerrar en pantallas pequeñas */}
+      <button
+        className="block md:hidden  text-white hover:text-white"
+        onClick={() => setIsExpanded(false)}
+      >
+        ✖
+      </button>
+          </div>
+    
 
           <nav className="flex flex-col space-y-4">
             {filteredMenuLinks.map((link) => (
@@ -72,14 +104,26 @@ export default function Crm() {
                 <link.icon className="w-5 h-5" />
                 <span className={`transition-opacity ${isExpanded ? "opacity-100" : "opacity-0 hidden"}`}>
                   {link.name}
+             
                 </span>
+                {link.badge > 0 &&(
+                  <span className="bg-red-500 text-white px-2 py-1 rounded-full text-xs">
+                    {link.badge}
+                  </span>
+                )}
               </Link>
             ))}
           </nav>
         </aside>
 
         <main className={`flex-1 pt-6 pb-10 transition-all duration-300 ${isExpanded ? "md:ml-64" : "md:ml-16"}`}>
+        
           <div className="overflow-x-auto mt-4 mx-4 md:mx-6 p-4 md:p-6 bg-white shadow-md">
+             {/* SOLO MUESTRA ESTE CONTENIDO EN /auth/crm, NO EN SUBRUTAS */}
+             {location.pathname === "/auth/crm" && (
+                  <Dashboard/>
+            )}
+
             <Outlet />
           </div>
         </main>

@@ -41,7 +41,7 @@ export default function Router() {
   
       <Route path="/auth/crm" element={<Crm />}>
         <Route path="reuniones" element={<Reuniones />} />
-        <Route path="ordenes-compras" element={<OrdenCompraForm />} />
+        <Route path="crear-ordenes-compras" element={<OrdenCompraForm />} />
         <Route path="obtener-ordenes-compras" element={<ObtenerOrdenesCompra />} />
         <Route path="cotizaciones" element={<Cotizaciones />} />
         <Route path="gestion-clientes" element={<GestionClientes />} />

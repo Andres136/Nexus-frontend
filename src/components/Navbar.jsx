@@ -66,13 +66,13 @@ export default function Navbar() {
               {link.name}
             </Link>
           ))}
-          <button
+          {/* <button
             onClick={toggleDarkMode}
             className="bg-gray-700 text-white px-3 py-1 rounded hover:bg-gray-600 transition duration-300"
             aria-label="Toggle dark mode"
           >
             {darkMode ? "☀️ Claro" : "🌙 Oscuro"}
-          </button>
+          </button> */}
           <span>Hola: {user?.name}</span>
           <button
             onClick={logout}

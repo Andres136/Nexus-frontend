@@ -4,6 +4,8 @@ import { toast } from "react-toastify";
 import clienteAxios from "../../config/axios";
 import useOrdenesTrabajo from "../../hooks/useOrdenesTrabajo";
 import { formatCurrency } from "../../helpers";
+import ApiSiigoSetasplast from "./ApiSiigoSetasplast";
+import ApiSiigoGlobal from "./ApiSiigoGlobal";
 
 /** Factor para convertir cm a pulgadas */
 const FACTOR_PULGADA = 0.393701;
@@ -55,6 +57,7 @@ export default function DetallesOrdenTrabajo() {
   const [errores, setErrores] = useState({});
   const [observaciones, setObservaciones] = useState("");
   const [loading, setLoading] = useState(false);
+  const [revisados, setRevisados] = useState({});
 
   // Estado inicial vacío (array), para no romper el .map
   const [detalles, setDetalles] = useState([]);
@@ -98,7 +101,20 @@ export default function DetallesOrdenTrabajo() {
 
     setDetalles(detallesCalculados);
     setObservaciones(orden.observaciones || "");
+    //Inicializar el estado de  checkboxes como false
+    const revisadoInicial = detallesCalculados.reduce((acc,detalle)=>{
+      acc[detalle.id] = false;
+      return acc;
+    },{})
+ setRevisados(revisadoInicial);
   }, [orden]);
+
+  const handleCheckboxChange = (id) => {
+    setRevisados((prev) => ({
+      ...prev,
+      [id]: !prev[id], // Cambia el estado del checkbox
+    }));
+  };
 
   // 4. Si la orden no existe o no hay 'orden_compra', salimos:
   // (Ojo: se hace DESPUÉS de los hooks)
@@ -111,6 +127,9 @@ export default function DetallesOrdenTrabajo() {
 
   // 5. Manejo de cambios en los campos que recalculan o actualizan
   const handleChangeDetalle = (index, field, value) => {
+
+//  verificamos si el campo es revisado
+
     setDetalles((prev) => {
       const nuevos = [...prev];
       // Si por cualquier razón 'nuevos[index]' no existe, salimos
@@ -141,6 +160,13 @@ export default function DetallesOrdenTrabajo() {
 
   // 6. Función para guardar la orden de trabajo en el backend
   const handleGuardarOrden = async () => {
+
+    const todosRevisados = Object.values(revisados).every((value)=>value);
+if(!todosRevisados){
+  toast.error("Por favor revisa todos los detalles antes de guardar");
+  return;
+}
+
     try {
       setLoading(true);
       setErrores({});
@@ -207,129 +233,128 @@ export default function DetallesOrdenTrabajo() {
 
   // 7. Render final
   return (
-    <div className=" p-6 bg-white rounded-xl ">
-<div className="grid grid-cols-2">
-
-  <div className="col-span-2">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold">
-          Orden de Trabajo #{orden.id} - {orden.cliente?.nombre}
-        </h2>
-        <Link 
-          className="bg-gray-800 text-white px-3 py-1 rounded hover:bg-green-700"
-          to="/auth/crm/reporte-inventarios"
-        >
-          Regresar
-        </Link>
-        
+    <div className="p-6 bg-white rounded-xl">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <ApiSiigoSetasplast />
+        </div>
+        <div>
+          <ApiSiigoGlobal />
+        </div>
       </div>
-  </div>
-   
 
- <div className="col-span-2">
+      <div className="grid grid-cols-1">
+        <div className="col-span-1">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-bold">
+              Orden de Trabajo #{orden.id} - {orden.cliente?.nombre}
+            </h2>
+            <Link
+              className="bg-gray-800 text-white px-3 py-1 rounded hover:bg-green-700"
+              to="/auth/crm/reporte-inventarios"
+            >
+              Regresar
+            </Link>
+          </div>
+        </div>
 
- <h3 className="text-xl font-semibold mt-6">Detalles</h3> 
-  <p className="text-gray-600">Fecha de Entrega: {orden.fecha_entrega}</p>
-      <p className="text-gray-600">Generado por: {orden.user?.name}</p>
-      <table className="w-full border border-gray-300 rounded-lg mt-2">
-        <thead className="bg-gray-800 text-white text-sm">
-          <tr>
-            <th className="px-4 py-2 text-left">Largo cm</th>
-            <th className="px-4 py-2 text-left">Ancho cm</th>
-            <th className="px-4 py-2 text-left">Calibre</th>
-            <th className="px-4 py-2 text-left">Peso Bolsa</th>
-            <th className="px-4 py-2 text-left"># Bolsas</th>
-            <th className="px-4 py-2 text-left">Cant. Req. (Kg)</th>
-            <th className="px-4 py-2 text-left">Descripción</th>
-            <th className="px-4 py-2 text-left">Cantidad</th>
-            <th className="px-4 py-2 text-left">Cant. Enviada</th>
-            <th className="px-4 py-2 text-left">Faltantes</th>
-            <th className="px-4 py-2 text-left">Valor Unit.</th>
-            <th className="px-4 py-2 text-left">Valor Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          {(detalles || []).map((detalle, index) => {
-            if (!detalle) return null; // Evitar fallos
-            return (
-              <tr key={detalle.id ?? `new-${index}`} className="border-t border-gray-300">
-                <td className="px-4 py-2">
-                  <input
-                    type="number"
-                    className="border border-gray-300 rounded px-1 w-20"
-                    value={detalle.largo_cm}
-                    onChange={(e) => handleChangeDetalle(index, "largo_cm", e.target.value)}
-                  />
-                </td>
-                <td className="px-4 py-2">
-                  <input
-                    type="number"
-                    className="border border-gray-300 rounded px-1 w-20"
-                    value={detalle.ancho_cm}
-                    onChange={(e) => handleChangeDetalle(index, "ancho_cm", e.target.value)}
-                  />
-                </td>
-                <td className="px-4 py-2">
-                  <input
-                    type="number"
-                    className="border border-gray-300 rounded px-1 w-20"
-                    value={detalle.calibre}
-                    onChange={(e) => handleChangeDetalle(index, "calibre", e.target.value)}
-                  />
-                </td>
-                <td className="px-4 py-2 text-center">
-                  {detalle.peso_bolsa || 0}
-                </td>
-                <td className="px-4 py-2 text-center">
-                  {detalle.numero_bolsas || 0}
-                </td>
-                <td className="px-4 py-2 text-center">
-                  {detalle.cantidad_requerida_kg?.toFixed(2) || 0}
-                </td>
-                <td className="px-4 py-2">
-                {detalle.descripcion}
-                </td>
-                <td className="px-4 py-2 text-center">
-                  <input
-                    type="number"
-                    className="border border-gray-300 rounded px-1 w-20"
-                    value={detalle.cantidad}
-                    onChange={(e) => handleChangeDetalle(index, "cantidad", e.target.value)}
-                  />
-                </td>
-                <td className="px-4 py-2 text-center">
-                  <input
-                    type="number"
-                    className="border border-gray-300 rounded px-1 w-20"
-                    value={detalle.cantidadEnviada}
-                    onChange={(e) => handleChangeDetalle(index, "cantidadEnviada", e.target.value)}
-                  />
-                </td>
-                <td className="px-4 py-2 text-center">
-                  {detalle.faltantesTemporal !== undefined
-                    ? detalle.faltantesTemporal
-                    : detalle.faltantes}
-                </td>
-                <td 
-                className="px-4 py-2 text-center">
-                {formatCurrency (detalle.valor_unitario)}
-                </td>
-                <td className="px-4 py-2 text-center">
-                  {formatCurrency(detalle.valor_total)}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
- </div>
+        <div className="col-span-1">
+          <h3 className="text-xl font-semibold mt-6">Detalles</h3>
+          <p className="text-gray-600">Fecha de Entrega: {orden.fecha_entrega}</p>
+          <p className="text-gray-600">Generado por: {orden.user?.name}</p>
+          <div className="overflow-x-auto">
+            <table className="w-full border border-gray-300 rounded-lg mt-2 min-w-full">
+              <thead className="bg-gray-800 text-white text-sm">
+                <tr>
+                  <th className="px-4 py-2 text-left">Item</th>
+                  <th className="px-4 py-2 text-left">Largo cm</th>
+                  <th className="px-4 py-2 text-left">Ancho cm</th>
+                  <th className="px-4 py-2 text-left">Calibre</th>
+                  <th className="px-4 py-2 text-left">Peso Bolsa</th>
+                  <th className="px-4 py-2 text-left"># Bolsas</th>
+                  <th className="px-4 py-2 text-left">Cant. Req. (Kg)</th>
+                  <th className="px-4 py-2 text-left">Descripción</th>
+                  <th className="px-4 py-2 text-left">Cantidad</th>
+                  <th className="px-4 py-2 text-left">Cant. Enviada</th>
+                  <th className="px-4 py-2 text-left">Faltantes</th>
+                  <th className="px-4 py-2 text-left">Valor Unit.</th>
+                  <th className="px-4 py-2 text-left">Valor Total</th>
+                  <th className="px-4 py-2">Revisado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(detalles || []).map((detalle, index) => {
+                  if (!detalle) return null;
+                  return (
 
-</div>
+                    <tr key={detalle.id ?? `new-${index}`} className="border-t border-gray-300">
+                      <td className="px-4 py-2">{detalle.observaciones}</td>
+                      <td className="px-4 py-2">
+                        <input
+                          type="number"
+                          className="border border-gray-300 rounded px-1 w-20"
+                          value={detalle.largo_cm}
+                          onChange={(e) => handleChangeDetalle(index, "largo_cm", e.target.value)}
+                        />
+                      </td>
+                      <td className="px-4 py-2">
+                        <input
+                          type="number"
+                          className="border border-gray-300 rounded px-1 w-20"
+                          value={detalle.ancho_cm}
+                          onChange={(e) => handleChangeDetalle(index, "ancho_cm", e.target.value)}
+                        />
+                      </td>
+                      <td className="px-4 py-2">
+                        <input
+                          type="number"
+                          className="border border-gray-300 rounded px-1 w-20"
+                          value={detalle.calibre}
+                          onChange={(e) => handleChangeDetalle(index, "calibre", e.target.value)}
+                        />
+                      </td>
+                      <td className="px-4 py-2 text-center">{detalle.peso_bolsa || 0}</td>
+                      <td className="px-4 py-2 text-center">{detalle.numero_bolsas || 0}</td>
+                      <td className="px-4 py-2 text-center">
+                        {detalle.cantidad_requerida_kg?.toFixed(2) || 0}
+                      </td>
+                      <td className="px-4 py-2">{detalle.descripcion}</td>
+                      <td className="px-4 py-2 text-center">
+                        <input
+                          type="number"
+                          className="border border-gray-300 rounded px-1 w-20"
+                          value={detalle.cantidad}
+                          onChange={(e) => handleChangeDetalle(index, "cantidad", e.target.value)}
+                        />
+                      </td>
+                      <td className="px-4 py-2 text-center">
+                        <input
+                          type="number"
+                          className="border border-gray-300 rounded px-1 w-20"
+                          value={detalle.cantidadEnviada}
+                          onChange={(e) => handleChangeDetalle(index, "cantidadEnviada", e.target.value)}
+                        />
+                      </td>
+                      <td className="px-4 py-2 text-center">
+                        {detalle.faltantesTemporal !== undefined
+                          ? detalle.faltantesTemporal
+                          : detalle.faltantes}
+                      </td>
+                      <td className="px-4 py-2 text-center">{formatCurrency(detalle.valor_unitario)}</td>
+                      <td className="px-4 py-2 text-center">{formatCurrency(detalle.valor_total)}</td>
+                      <td className="px-4 py-2 text-center"> <input type="checkbox"
+                         checked={revisados[detalle.id] || false}
+                         onChange={() => handleCheckboxChange(detalle.id)} /></td>
+                     
+                    </tr>
 
-   
-
-   
-   
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
 
       {/* Observaciones */}
       <div className="mt-4">
@@ -340,9 +365,7 @@ export default function DetallesOrdenTrabajo() {
           value={observaciones}
           onChange={(e) => setObservaciones(e.target.value)}
         />
-        {errores.observaciones && (
-          <p className="text-red-500 text-sm">{errores.observaciones}</p>
-        )}
+        {errores.observaciones && <p className="text-red-500 text-sm">{errores.observaciones}</p>}
       </div>
 
       <button

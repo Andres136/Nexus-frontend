@@ -4,21 +4,27 @@ import { toast } from "react-toastify";
 
 export default function Tareas() {
   const [tareas, setTareas] = useState([]);
-  const [pagina, setPagina] = useState(1); // Control de página actual
-  const [pagination, setPagination] = useState({}); // Guardará info de paginación
+  const [pagina, setPagina] = useState(1);
+  const [pagination, setPagination] = useState({});
   const [actualizar, setActualizar] = useState(false);
+  const [busqueda, setBusqueda] = useState(""); // Estado para almacenar el nombre del usuario
 
   const ObtenerTareas = async (paginaActual = 1) => {
+
+
+    
+
+
     const token = localStorage.getItem("token");
     try {
-      const response = await clienteAxios.get(`/api/tareas?page=${paginaActual}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await clienteAxios.get(
+        `/api/tareas?page=${paginaActual}&usuario=${busqueda}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
-      console.log("Tareas:", response.data); // Debug en consola
-
-      // Ajustar datos para la paginación
-      setTareas(response.data.data); // Accedemos correctamente a las tareas
+      setTareas(response.data.data);
       setPagination({
         current_page: response.data.current_page,
         next_page_url: response.data.next_page_url,
@@ -27,7 +33,7 @@ export default function Tareas() {
       });
     } catch (error) {
       console.log("Error al obtener tareas", error);
-      setTareas([]); // Evitar que tareas sea undefined
+      setTareas([]);
     }
   };
 
@@ -46,22 +52,51 @@ export default function Tareas() {
       toast.error("Error al actualizar estado");
       console.error("Error al actualizar estado", error);
     }
-  };
+  };//Enviar Notificaciones tareas vencidas
+
+    const generarNotificaciones = async () => {
+      const token = localStorage.getItem("token");
+      await clienteAxios.get("api/tareas-vencidas", {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+    }
+
 
   useEffect(() => {
+  
     ObtenerTareas(pagina);
-  }, [actualizar, pagina]);
+    generarNotificaciones();
+  
+  }, [actualizar, pagina, busqueda]); // Se ejecuta al cambiar la búsqueda
+
 
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-2xl font-bold mb-4">Lista de Tareas </h1>
+
+      {/* Input para la búsqueda de tareas por usuario */}
+      <div className="mb-4 flex justify-between p-4">
+        <input
+          type="text"
+          placeholder="Buscar por usuario asignado..."
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          className="border p-2 rounded-lg w-full md:w-1/3"
+        />
+        {/* <button
+          onClick={() => ObtenerTareas(1)}
+          className="ml-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+        >
+          Buscar
+        </button> */}
+      </div>
 
       {/* Renderizado de las tareas */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {Array.isArray(tareas) && tareas.length > 0 ? (
           tareas.map((tarea) => (
             <div key={tarea.id} className="bg-white shadow-md rounded-lg p-4">
-               <h3 className="text-lg font-semibold"> De: {tarea.departamentos?.nombre}</h3>
+              <h3 className="text-lg font-semibold">De: {tarea.departamentos?.nombre}</h3>
               <h3 className="text-lg font-semibold">{tarea.nombre}</h3>
               <p className="text-gray-600">{tarea.descripcion}</p>
 
@@ -69,8 +104,6 @@ export default function Tareas() {
               <p className="text-sm text-gray-500">
                 <strong>Asignado a:</strong> {tarea.usuario?.name || "N/A"}
               </p>
-
-             
 
               {/* Mostrar Fecha límite */}
               <p className="text-sm text-gray-500">
@@ -107,11 +140,11 @@ export default function Tareas() {
         >
           Anterior
         </button>
-        <span className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg">
+        <span className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg">
           Página {pagination.current_page}
         </span>
         <button
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg"
+          className="px-4 py-2 bg-gray-800 text-white rounded-lg"
           disabled={!pagination.next_page_url}
           onClick={() => setPagina(pagina + 1)}
         >
