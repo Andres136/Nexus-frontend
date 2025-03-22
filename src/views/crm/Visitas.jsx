@@ -1,7 +1,9 @@
 
 
+
 export default function Visitas() {
   return (
-    <div>Visitas</div>
+  <div>hola mundo</div>
+    
   )
 }

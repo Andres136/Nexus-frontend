@@ -14,8 +14,8 @@ export default function Navbar() {
     { name: "Inicio", to: "/",allowedRoles: [1] },
     { name: "Procesos", to: "/auth/procesos", alwaysVisible: true }, // Siempre visible
     { name: "Tareas", to: "/admin/tareas", allowedRoles: [1, 2, ] },
-    { name: "Errores", to: "/admin/errores", allowedRoles: [1, 2] },
-    { name: "Crm", to: "/auth/crm", allowedRoles: [1,4,5,6,7] },
+    { name: "Novedades", to: "/admin/errores", allowedRoles: [1, 2] },
+    { name: "CRM", to: "/auth/crm", allowedRoles: [1,4,5,6,7] },
   ];
 
   // Filtrar enlaces según el rol del usuario, pero dejando "Procesos" siempre visible.

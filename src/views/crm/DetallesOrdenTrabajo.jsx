@@ -4,8 +4,7 @@ import { toast } from "react-toastify";
 import clienteAxios from "../../config/axios";
 import useOrdenesTrabajo from "../../hooks/useOrdenesTrabajo";
 import { formatCurrency } from "../../helpers";
-import ApiSiigoSetasplast from "./ApiSiigoSetasplast";
-import ApiSiigoGlobal from "./ApiSiigoGlobal";
+import ApiInventario from "./ApiInventario";
 
 /** Factor para convertir cm a pulgadas */
 const FACTOR_PULGADA = 0.393701;
@@ -234,14 +233,7 @@ if(!todosRevisados){
   // 7. Render final
   return (
     <div className="p-6 bg-white rounded-xl">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <ApiSiigoSetasplast />
-        </div>
-        <div>
-          <ApiSiigoGlobal />
-        </div>
-      </div>
+<ApiInventario/>
 
       <div className="grid grid-cols-1">
         <div className="col-span-1">
@@ -270,6 +262,7 @@ if(!todosRevisados){
                   <th className="px-4 py-2 text-left">Largo cm</th>
                   <th className="px-4 py-2 text-left">Ancho cm</th>
                   <th className="px-4 py-2 text-left">Calibre</th>
+                  <th className="px-4 py-2 text-left">Cliente Clb</th>
                   <th className="px-4 py-2 text-left">Peso Bolsa</th>
                   <th className="px-4 py-2 text-left"># Bolsas</th>
                   <th className="px-4 py-2 text-left">Cant. Req. (Kg)</th>
@@ -313,6 +306,7 @@ if(!todosRevisados){
                           onChange={(e) => handleChangeDetalle(index, "calibre", e.target.value)}
                         />
                       </td>
+                      <td className="px-4 py-2">{detalle.cliente_clb}</td>
                       <td className="px-4 py-2 text-center">{detalle.peso_bolsa || 0}</td>
                       <td className="px-4 py-2 text-center">{detalle.numero_bolsas || 0}</td>
                       <td className="px-4 py-2 text-center">

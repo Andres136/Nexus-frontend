@@ -14,6 +14,8 @@ function calcularCampos(detalle) {
   const cantidad  = parseFloat(detalle.cantidad)  || 0;
   const unitario  = parseFloat(detalle.valor_unitario) || 0;
 
+  //Convertir metros a centimetros
+
   let peso_bolsa             = 0;
   let numero_bolsas          = 0;
   let cantidad_requerida_kg  = 0;

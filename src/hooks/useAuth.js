@@ -159,34 +159,6 @@ const obtenerUsuarios = async (page = 1) => {
   };
 
 
-  // useEffect(() => {
-  //   // Si se está en modo "guest" y ya hay un usuario autenticado
-  //   if (middleware === "guest" && user) {
-  //     // Si el usuario es administrador, redirige a la ruta de administración,
-  //     // de lo contrario, a la sección de procesos.
-  //     const redirectUrl = user.role_id === 1 ? "/admin/users" : "/auth/procesos";
-  //     navigate(redirectUrl);
-  //     return;
-  //   }
-  
-  //   // Para rutas protegidas (middleware "auth") y si hay un usuario autenticado:
-  //   if (middleware === "auth" && user) {
-  //     // Si el usuario NO es administrador, forzamos que use las rutas de /auth.
-  //     if (user.role_id !== 1 && !location.pathname.startsWith("/auth")) {
-  //       navigate("/auth/procesos");
-  //       return;
-  //     }
-  //     // Para el administrador: No hacemos redirección automática.
-  //     // Así, el administrador puede acceder a cualquier página que desee.
-  //   }
-  
-  //   // Si hay algún error (por ejemplo, token inválido o expirado) en modo "auth",
-  //   // redirige a la pantalla de login.
-  //   if (middleware === "auth" && error) {
-  //     navigate("/");
-  //   }
-  // }, [middleware, user, error, location.pathname, navigate]);
-  
   
   useEffect(() => {
     if (middleware === "guest" && user) {

@@ -334,7 +334,7 @@ const cargarUsuariosDepartamento = async (departamentoId) => {
                       onClick={registrarTarea}
                       className="bg-gray-800 text-white px-4 py-2 rounded-lg mt-4 w-full hover:bg-green-700 transition"
                     >
-                      Registrar Tarea
+                      Registrar Novedad
                     </button>
                   </div>
                 )}
@@ -346,7 +346,7 @@ const cargarUsuariosDepartamento = async (departamentoId) => {
                   className="w-full text-left p-4 font-semibold text-white bg-gray-500 rounded-lg focus:outline-none"
                   onClick={() => toggleAcordeon("errores")}
                 >
-                  Registrar errores  en : {departamentoActual?.nombre}
+                  Registrar Novedad : {departamentoActual?.nombre}
                 </button>
                 {acordeonAbierto === "errores" && (
                   <div className="p-4">
@@ -365,7 +365,7 @@ const cargarUsuariosDepartamento = async (departamentoId) => {
                       onClick={registrarError}
                       className="bg-red-600 text-white px-4 py-2 rounded-lg mt-4 w-full hover:bg-red-700 transition"
                     >
-                      Registrar Error
+                      Registrar Novedad
                     </button>
                   </div>
                 )}

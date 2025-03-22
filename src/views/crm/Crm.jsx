@@ -2,13 +2,15 @@ import { useEffect, useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import {
   Briefcase, Users, BarChart, ShoppingCart, FileText, Bell, 
-  MessageCircle, MapPin, Clipboard, Menu, ClipboardList,
-  Badge
+  MessageCircle,  Clipboard, Menu, ClipboardList,
+  FolderPlus,
+  
 } from "lucide-react";
 import Navbar from "../../components/Navbar";
 import { useAuth } from "../../hooks/useAuth";
 import Dashboard from "../Dashboard";
 import clienteAxios from "../../config/axios";
+import { DocumentTextIcon } from "@heroicons/react/16/solid";
 
 export default function Crm() {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -22,16 +24,21 @@ const [totalNotificaciones, setTotalNotificaciones] = useState(0);
 
   // Definir rutas con los roles permitidos
   const menuLinks = [
-    { name: "Reuniones", to: "/auth/crm/reuniones", icon: Briefcase, roles: [1] },
+    { name: "Ordenes Trabajo", to: "/auth/crm/ordenes-trabajo", icon: Briefcase, roles: [1] },
     { name: "Gestión de Clientes", to: "/auth/crm/gestion-clientes", icon: Users, roles: [1, 4, 7] },
     { name: "KPIs", to: "/auth/crm/kpis", icon: BarChart, roles: [1, 7] },
     { name: "Crear Orden de Compra", to: "/auth/crm/crear-ordenes-compras", icon: ShoppingCart, roles: [1, 5,4,7] },
-    { name: "Órdenes de Trabajo", to: "/auth/crm/reporte-inventarios", icon: Clipboard, roles: [1, 6,4,7] },
+    { name: "Inventarios", to: "/auth/crm/reporte-inventarios", icon: Clipboard, roles: [1, 6,4,7] },
     { name: "Notificaciones", to: "/auth/crm/notificaciones", icon: Bell, roles: [1, 3, 4, 5, 6],badge: totalNotificaciones },
     { name: "Hacer Cotización", to: "/auth/crm/cotizaciones", icon: FileText, roles: [1] },
     { name: "PQRS", to: "/auth/crm/pqrs", icon: MessageCircle, roles: [1] },
-    { name: "Visita al Cliente", to: "/auth/crm/visita-cliente", icon: MapPin, roles: [1 ] },
+    { name: "Ordenes a Facturar", to: "/auth/crm/ordenes-facturar", icon: DocumentTextIcon, roles: [1 ] },
     { name: "Órdenes de Compra", to: "/auth/crm/obtener-ordenes-compras", icon: ClipboardList, roles: [1, 5,4,7,6] },
+    { name: "Registrar Documentacion ", to: "/auth/crm/registrar-documentacion", icon: FolderPlus, roles: [1,7] },
+    
+
+    
+
   ]; // Obtener cantidad de notificaciones no leídas
   const obtenerNotificaciones = async () => {
     const token = localStorage.getItem("token");
@@ -39,7 +46,9 @@ const [totalNotificaciones, setTotalNotificaciones] = useState(0);
       const response = await clienteAxios.get("/api/notificaciones", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setTotalNotificaciones(response.data.total_no_leidas);
+      setTotalNotificaciones(response.data.notificaciones.total_no_leidas);
+
+   
     } catch (error) {
       console.error("Error al obtener notificaciones:", error);
     }

@@ -4,14 +4,14 @@ import clienteAxios from "../../config/axios";
 import { useQuery } from "@tanstack/react-query";
 
 
-export default function Inventarios() {
+export default function ApiInventario() {
 
   const [searchTerm, setSearchTerm] = useState("");
-
   const [currentPage, setCurrentPage] = useState(1); // Página actual
   const pageSize = 25; // Cantidad de productos por página
 
-  
+  // Obtener productos desde las dos APIs y combinarlos
+
   const fetchStock = async () => {
     const token = localStorage.getItem("token");
     const [stockGlobalRes, stockSetasplastRes] = await Promise.all([
@@ -130,7 +130,8 @@ const filtered = useMemo(() => {
       ) : (
         <>
           <div className="overflow-x-auto">
-            <table className="min-w-full bg-white border border-gray-200">
+          {searchTerm.trim() && filtered.length > 0 && (
+              <table className="min-w-full bg-white border border-gray-200">
               <thead>
                 <tr className="bg-gray-100 text-gray-600 uppercase text-sm leading-normal">
                   <th className="py-3 px-6 text-left">Código</th>
@@ -185,6 +186,7 @@ const filtered = useMemo(() => {
                 ))}
               </tbody>
             </table>
+          )}
           </div>
 
           {/* Controles de paginación */}

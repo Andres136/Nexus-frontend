@@ -12,19 +12,20 @@ import Tareas from "../views/calidad/Tareas";
 import Errores from "../views/calidad/Errores";
 import DepartatamentosUpdate from "../views/calidad/DepartatamentosUpdate";
 import Crm from "../views/crm/Crm";
-
-import Reuniones from "../views/crm/Reuniones";
 import Cotizaciones from "../views/crm/Cotizaciones";
 import GestionClientes from "../views/crm/GestionClientes";
 import Inventarios from "../views/crm/Inventarios";
 import Notifycaciones from "../views/crm/Notifycaciones";
 import Kpi from "../views/crm/Kpi";
 import Pqr from "../views/crm/Pqr";
-import Visitas from "../views/crm/Visitas";
+
 import OrdenCompraForm from "../views/crm/OrdenCompraForm";
 import DetallesOrdenesCompra from "../views/crm/DetallesOrdenesCompra";
 import DetallesOrdenTrabajo from "../views/crm/DetallesOrdenTrabajo";
 import ObtenerOrdenesCompra from "../components/crm/ObtenerOrdenesCompra";
+import ObtenerOrdenesTrabajo from "../views/crm/ObtenerOrdenesTrabajo";
+import OrdenesFacturar from "../views/crm/OrdenesFacturar";
+import RegistroDocumentacion from "../views/crm/RegistroDocumentacion";
 
 export default function Router() {
   return (
@@ -40,7 +41,7 @@ export default function Router() {
       </Route>
   
       <Route path="/auth/crm" element={<Crm />}>
-        <Route path="reuniones" element={<Reuniones />} />
+        <Route path="ordenes-trabajo" element={<ObtenerOrdenesTrabajo/>} />
         <Route path="crear-ordenes-compras" element={<OrdenCompraForm />} />
         <Route path="obtener-ordenes-compras" element={<ObtenerOrdenesCompra />} />
         <Route path="cotizaciones" element={<Cotizaciones />} />
@@ -51,7 +52,8 @@ export default function Router() {
         <Route path="ordenes-trabajo/:id" element={<DetallesOrdenTrabajo />} />
         <Route path="kpis" element={<Kpi />} />
         <Route path="pqrs" element={<Pqr />} />
-        <Route path="visita-cliente" element={<Visitas />} />
+        <Route path="ordenes-facturar" element={<OrdenesFacturar />} />
+        <Route path="registrar-documentacion" element={<RegistroDocumentacion />} />
       </Route>
     </Route>
   

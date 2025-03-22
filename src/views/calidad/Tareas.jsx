@@ -110,6 +110,9 @@ export default function Tareas() {
                 <strong>Fecha límite:</strong>{" "}
                 {tarea.fecha_fin ? new Date(tarea.fecha_fin).toLocaleDateString() : "Sin definir"}
               </p>
+              <p className="text-sm text-gray-500">
+                <strong>Fecha que se Asigno</strong>{' '}{tarea.created_at ? new Date(tarea.created_at).toLocaleDateString(): ''}
+              </p>
 
               {/* Botón para cambiar estado */}
               <div className="mt-4">
