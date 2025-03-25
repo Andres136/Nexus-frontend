@@ -171,7 +171,8 @@ const obtenerUsuarios = async (page = 1) => {
         5: "/auth/crm", // Compras
         6: "/auth/crm", // Inventario
         7: "/auth/crm", // Comercial
-        8: "/auth/procesos"  // Transporte
+        8: "/auth/crm",  // Transporte
+        9: "/auth/crm"  // Ejecutivo Comercial
       };
   
       const redirectUrl = roleRedirects[user.role_id] || "/auth/procesos";

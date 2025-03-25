@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import clienteAxios from "../../config/axios";
 import ModalCarpeta from "../../components/crm/ModalCarpeta";
@@ -7,12 +7,16 @@ import { toast } from "react-toastify";
 // Hook para manejar debounce (evita llamadas API innecesarias)
 function useDebounce(value, delay = 500) {
   const [debouncedValue, setDebouncedValue] = useState(value);
-  useState(() => {
+
+  useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedValue(value);
     }, delay);
+
+    // Limpiar el timeout si el valor cambia antes de que pase el tiempo
     return () => clearTimeout(handler);
   }, [value, delay]);
+
   return debouncedValue;
 }
 
@@ -40,20 +44,23 @@ export default function RegistroDocumentacion() {
     keepPreviousData: true,
   });
 
-  // Registrar nueva carpeta
+
 // Registrar nueva carpeta
 const registrarCarpeta = useMutation({
     mutationFn: async () => {
       const token = localStorage.getItem("token");
       // Hacemos la petición y guardamos la respuesta
       const response = await clienteAxios.post(
+        
         "/api/carpetas",
         { nombre }, // Enviamos el nombre de la carpeta
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      
       // Retornamos los datos de la respuesta
       return response.data;
     },
+
     onSuccess: (data) => {
       // data aquí es lo que retornamos en "return response.data" arriba
       // por ejemplo { message: "Carpeta creada con éxito", ... }
@@ -65,7 +72,7 @@ const registrarCarpeta = useMutation({
       }
     },
     onError: (error) => {
-      console.error("Hubo un error al registrar la carpeta:", error);
+      console.log("Hubo un error al registrar la carpeta:", error);
   
       // Verificar si el error es de validación (código 422)
       if (error.response?.status === 422) {
@@ -82,6 +89,7 @@ const registrarCarpeta = useMutation({
       } else {
         // Otro tipo de error (401, 500, etc.)
         toast.error("Ocurrió un error al registrar la carpeta.");
+        console.error(error);
       }
     },
   });
@@ -116,6 +124,7 @@ const registrarCarpeta = useMutation({
           className="border p-2 rounded w-full focus:outline-none focus:ring-2 focus:ring-blue-400"
           required
         />
+        
       
         <button
           type="submit"

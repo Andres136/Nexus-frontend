@@ -243,7 +243,7 @@ if(!todosRevisados){
             </h2>
             <Link
               className="bg-gray-800 text-white px-3 py-1 rounded hover:bg-green-700"
-              to="/auth/crm/reporte-inventarios"
+              to="/auth/crm/ordenes-trabajo"
             >
               Regresar
             </Link>

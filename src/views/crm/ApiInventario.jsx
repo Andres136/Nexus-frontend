@@ -129,9 +129,9 @@ const filtered = useMemo(() => {
         </div>
       ) : (
         <>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto grid grid-cols-1">
           {searchTerm.trim() && filtered.length > 0 && (
-              <table className="min-w-full bg-white border border-gray-200">
+              <table className="min-w-full bg-white border border-gray-200 col-span-1">
               <thead>
                 <tr className="bg-gray-100 text-gray-600 uppercase text-sm leading-normal">
                   <th className="py-3 px-6 text-left">Código</th>

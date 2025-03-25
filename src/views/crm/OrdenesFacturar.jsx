@@ -56,8 +56,8 @@ export default function OrdenesFacturar() {
       ) : error ? (
         <p className="text-red-500 text-center">Error al obtener las órdenes.</p>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white border border-gray-200">
+        <div className="overflow-x-auto grid grid-cols-1">
+          <table className="min-w-full bg-white border border-gray-200 col-span-1">
             <thead>
               <tr className="bg-gray-800 text-white uppercase text-sm">
                 <th className="py-3 px-6 text-left">ID</th>
@@ -166,7 +166,7 @@ export default function OrdenesFacturar() {
                   </td>
                     <td className="px-4 py-2">{detalle.cliente_clb}</td>
                   <td className="px-4 py-2">{detalle.cantidad_requerida_kg}</td>
-                  <td className="px-4 py-2">{detalle.cantidad}</td>
+                  <td className="px-4 py-2">{detalle.cantidad_enviada}</td>
                   <td className="px-4 py-2">${parseFloat(detalle.valor_unitario).toLocaleString()}</td>
                   <td className="px-4 py-2">${parseFloat(detalle.valor_total).toLocaleString()}</td>
                 </tr>

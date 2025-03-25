@@ -334,7 +334,7 @@ const cargarUsuariosDepartamento = async (departamentoId) => {
                       onClick={registrarTarea}
                       className="bg-gray-800 text-white px-4 py-2 rounded-lg mt-4 w-full hover:bg-green-700 transition"
                     >
-                      Registrar Novedad
+                      Registrar Tarea
                     </button>
                   </div>
                 )}
