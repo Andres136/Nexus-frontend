@@ -32,8 +32,8 @@ const [totalNotificaciones, setTotalNotificaciones] = useState(0);
     { name: "Notificaciones", to: "/auth/crm/notificaciones", icon: Bell, roles: [1,  5, 4],badge: totalNotificaciones },
     //{ name: "Hacer Cotización", to: "/auth/crm/cotizaciones", icon: FileText, roles: [1] },
     { name: "PQRS", to: "/auth/crm/pqrs", icon: MessageCircle, roles: [1] },
-    { name: "Ordenes a Facturar", to: "/auth/crm/ordenes-facturar", icon: DocumentTextIcon, roles: [1,4,5,6 ] },
-    { name: "Órdenes de Compra", to: "/auth/crm/obtener-ordenes-compras", icon: ClipboardList, roles: [1, 5,4,7,6,9] },
+    { name: "Ordenes a Facturar", to: "/auth/crm/ordenes-facturar", icon: DocumentTextIcon, roles: [1,4,5,6,9 ] },
+    { name: "Órdenes de Compra", to: "/auth/crm/obtener-ordenes-compras", icon: ClipboardList, roles: [1, 5,4,7,6] },
     { name: "Registrar Documentacion ", to: "/auth/crm/registrar-documentacion", icon: FolderPlus, roles: [1,4,5] },
     
 

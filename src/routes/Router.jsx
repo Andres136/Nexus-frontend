@@ -34,7 +34,7 @@ export default function Router() {
     <Route path="/" element={<Login />} />
   
     {/* 🔹 Rutas bajo AuthLayout (Procesos y CRM) */}
-    <Route element={<ProtectedRoute allowedRoles={[1,2, 3, 4, 5, 6, 7, 8]} />}>
+    <Route element={<ProtectedRoute allowedRoles={[1,2, 3, 4, 5, 6, 7, 8,9]} />}>
       <Route path="/auth" element={<AuthLyout />}>
         <Route path="procesos" element={<DepartamentosPage />} />
         <Route path="procesos/:departamentoId" element={<ProcesosDepartamento />} />
