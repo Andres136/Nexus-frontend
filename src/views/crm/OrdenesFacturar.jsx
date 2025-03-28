@@ -161,9 +161,12 @@ export default function OrdenesFacturar() {
               {selectedOrder.detalles.map((detalle) => (
                 <tr key={detalle.id} className="border-t">
                     <td className="px-4 py-2">{detalle.observaciones}</td>
-                  <td className="px-4 py-2">
-                    {Math.trunc (detalle.largo_cm)} x { Math.trunc (detalle.ancho_cm)}  {detalle.descripcion}   CAL  {detalle.calibre} {/* Eliminamos decimales */}
-                  </td>
+                    <td className="px-4 py-2">
+  {detalle.largo_cm > 0
+    ? `${Math.trunc(detalle.largo_cm)} x ${Math.trunc(detalle.ancho_cm)} ${detalle.descripcion} CAL ${detalle.calibre}`
+    : `${detalle.descripcion}`}
+</td>
+
                     <td className="px-4 py-2">{detalle.cliente_clb}</td>
                   <td className="px-4 py-2">{detalle.cantidad_requerida_kg}</td>
                   <td className="px-4 py-2">{detalle.cantidad_enviada}</td>

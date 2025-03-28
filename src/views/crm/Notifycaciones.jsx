@@ -35,9 +35,11 @@ export default function Notificaciones() {
     try {
       const response = await ClienteAxios.get("/api/notificaciones", {
         headers: { Authorization: `Bearer ${token}` },
+        
       });
-
-      return response.data.notificaciones || { ordenes_compra: [], tareas: [], total_no_leidas: 0 };
+      console.log("✔ Notificaciones obtenidas correctamente:", response.data);
+      return response.data.notificaciones || { ordenes_compra: [], tareas: [], ingresos:[], total_no_leidas: 0 };
+      
     } catch (error) {
       console.error("❌ Error al obtener notificaciones:", error);
 
@@ -47,7 +49,7 @@ export default function Notificaciones() {
         window.location.href = "/login";
       }
 
-      return { ordenes_compra: [], tareas: [], total_no_leidas: 0 };
+      return { ordenes_compra: [], tareas: [], ingresos:[], total_no_leidas: 0 };
     }
   };
 
@@ -57,7 +59,7 @@ export default function Notificaciones() {
   }, []);
 
   // React Query: Ejecutar cada 20 segundos
-  const { data = { ordenes_compra: [], tareas: [], total_no_leidas: 0 }, isLoading, error } = useQuery({
+  const { data = { ordenes_compra: [], tareas: [], ingresos:[], total_no_leidas: 0 }, isLoading, error } = useQuery({
     queryKey: ["notificaciones"],
     queryFn: fetchNotificaciones,
     refetchInterval: 60000,
@@ -148,6 +150,34 @@ export default function Notificaciones() {
               </table>
             </div>
           )}
+
+{filtro !== "ordenes_compra" && filtro !== "tareas" && data.ingresos?.length > 0 && (
+  <div className="mb-6">
+    <h3 className="text-lg font-bold text-gray-700 mb-2">Usuarios que ingresaron</h3>
+    <table className="min-w-full bg-white border border-gray-200">
+      <thead>
+        <tr className="bg-gray-100 text-gray-600 uppercase text-sm leading-normal">
+          <th className="py-3 px-6 text-left">Nombre</th>
+          <th className="py-3 px-6 text-left">Fecha y hora</th>
+        </tr>
+      </thead>
+      <tbody className="text-gray-700 text-sm">
+        {data.ingresos.map((noti, idx) => (
+          <tr key={idx} className="border-b border-gray-200 hover:bg-gray-100">
+            <td className="py-3 px-6">{noti.data?.name || "Sin nombre"}</td>
+            <td className="py-3 px-6">
+              {new Date(noti.created_at).toLocaleString("es-CO", {
+                dateStyle: "short",
+                timeStyle: "short",
+              })}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+)}
+
         </>
       )}
     </div>

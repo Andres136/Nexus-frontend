@@ -27,13 +27,13 @@ const [totalNotificaciones, setTotalNotificaciones] = useState(0);
     { name: "Ordenes Trabajo", to: "/auth/crm/ordenes-trabajo", icon: Briefcase, roles: [1,4,5,6] },
     { name: "Gestión de Clientes", to: "/auth/crm/gestion-clientes", icon: Users, roles: [1, 9, 7] },
     { name: "KPIs", to: "/auth/crm/kpis", icon: BarChart, roles: [1, 7] },
-    { name: "Crear Orden de Compra", to: "/auth/crm/crear-ordenes-compras", icon: ShoppingCart, roles: [1, 5,9,7] },
-    { name: "Inventarios", to: "/auth/crm/reporte-inventarios", icon: Clipboard, roles: [1, 6,4,7,9] },
+    { name: "Crear Orden de Compra", to: "/auth/crm/crear-ordenes-compras", icon: ShoppingCart, roles: [1, 9,7,4] },
+    { name: "Inventarios", to: "/auth/crm/reporte-inventarios", icon: Clipboard, roles: [1, 6,4,7,9,5] },
     { name: "Notificaciones", to: "/auth/crm/notificaciones", icon: Bell, roles: [1,  5, 4],badge: totalNotificaciones },
     //{ name: "Hacer Cotización", to: "/auth/crm/cotizaciones", icon: FileText, roles: [1] },
-    { name: "PQRS", to: "/auth/crm/pqrs", icon: MessageCircle, roles: [1] },
-    { name: "Ordenes a Facturar", to: "/auth/crm/ordenes-facturar", icon: DocumentTextIcon, roles: [1,4,5,6,9 ] },
-    { name: "Órdenes de Compra", to: "/auth/crm/obtener-ordenes-compras", icon: ClipboardList, roles: [1, 5,4,7,6] },
+    { name: "PQRS", to: "/auth/crm/pqrs", icon: MessageCircle, roles: [1,5] },
+    { name: "Ordenes a Facturar", to: "/auth/crm/ordenes-facturar", icon: DocumentTextIcon, roles: [1,4,5,6,9 ,7] },
+    { name: "Órdenes de Compra", to: "/auth/crm/obtener-ordenes-compras", icon: ClipboardList, roles: [1, 5,4,7] },
     { name: "Registrar Documentacion ", to: "/auth/crm/registrar-documentacion", icon: FolderPlus, roles: [1,4,5] },
     
 
