@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import clienteAxios from "../../config/axios";
 import { toast } from "react-toastify";
+import { useAuth } from "../../hooks/useAuth";
 
 export default function Tareas() {
   const [tareas, setTareas] = useState([]);
@@ -8,20 +9,15 @@ export default function Tareas() {
   const [pagination, setPagination] = useState({});
   const [actualizar, setActualizar] = useState(false);
   const [busqueda, setBusqueda] = useState(""); // Estado para almacenar el nombre del usuario
+  const { auth } = useAuth({ middleware: "auth" });
 
-  const ObtenerTareas = async (paginaActual = 1) => {
-
-
-    
-
-
+  // Función para obtener las tareas (y paginación)
+  const obtenerTareas = async (paginaActual = 1) => {
     const token = localStorage.getItem("token");
     try {
       const response = await clienteAxios.get(
         `/api/tareas?page=${paginaActual}&usuario=${busqueda}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       setTareas(response.data.data);
@@ -37,6 +33,7 @@ export default function Tareas() {
     }
   };
 
+  // Función para cambiar el estado de una tarea
   const cambiarEstado = async (id, estado_id) => {
     const token = localStorage.getItem("token");
     try {
@@ -52,27 +49,29 @@ export default function Tareas() {
       toast.error("Error al actualizar estado");
       console.error("Error al actualizar estado", error);
     }
-  };//Enviar Notificaciones tareas vencidas
+  };
 
-    const generarNotificaciones = async () => {
-      const token = localStorage.getItem("token");
-      await clienteAxios.get("api/tareas-vencidas", {}, {
-        headers: { Authorization: `Bearer ${token}` }
+  // Función para enviar notificaciones de tareas vencidas
+  const generarNotificaciones = async () => {
+    const token = localStorage.getItem("token");
+    try {
+      await clienteAxios.get("api/tareas-vencidas", {
+        headers: { Authorization: `Bearer ${token}` },
       });
+    } catch (error) {
+      console.error("Error al generar notificaciones:", error);
     }
+  };
 
-
+  // useEffect para cargar tareas y generar notificaciones
   useEffect(() => {
-  
-    ObtenerTareas(pagina);
+    obtenerTareas(pagina);
     generarNotificaciones();
-  
-  }, [actualizar, pagina, busqueda]); // Se ejecuta al cambiar la búsqueda
-
+  }, [actualizar, pagina, busqueda]);
 
   return (
     <div className="container mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-4">Lista de Tareas </h1>
+      <h1 className="text-2xl font-bold mb-4">Lista de Tareas</h1>
 
       {/* Input para la búsqueda de tareas por usuario */}
       <div className="mb-4 flex justify-between p-4">
@@ -83,12 +82,7 @@ export default function Tareas() {
           onChange={(e) => setBusqueda(e.target.value)}
           className="border p-2 rounded-lg w-full md:w-1/3"
         />
-        {/* <button
-          onClick={() => ObtenerTareas(1)}
-          className="ml-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-        >
-          Buscar
-        </button> */}
+        {/* Si decides usar un botón para la búsqueda, podrías activar obtenerTareas(1) aquí */}
       </div>
 
       {/* Renderizado de las tareas */}
@@ -96,7 +90,9 @@ export default function Tareas() {
         {Array.isArray(tareas) && tareas.length > 0 ? (
           tareas.map((tarea) => (
             <div key={tarea.id} className="bg-white shadow-md rounded-lg p-4">
-              <h3 className="text-lg font-semibold">De: {tarea.departamentos?.nombre}</h3>
+              <h3 className="text-lg font-semibold">
+                De: {tarea.departamentos?.nombre}
+              </h3>
               <h3 className="text-lg font-semibold">{tarea.nombre}</h3>
               <p className="text-gray-600">{tarea.descripcion}</p>
 
@@ -108,10 +104,17 @@ export default function Tareas() {
               {/* Mostrar Fecha límite */}
               <p className="text-sm text-gray-500">
                 <strong>Fecha límite:</strong>{" "}
-                {tarea.fecha_fin ? new Date(tarea.fecha_fin).toLocaleDateString() : "Sin definir"}
+                {tarea.fecha_fin
+                  ? new Date(tarea.fecha_fin).toLocaleDateString()
+                  : "Sin definir"}
               </p>
+
+              {/* Mostrar Fecha de Asignación */}
               <p className="text-sm text-gray-500">
-                <strong>Fecha que se Asigno</strong>{' '}{tarea.created_at ? new Date(tarea.created_at).toLocaleDateString(): ''}
+                <strong>Fecha asignada:</strong>{" "}
+                {tarea.created_at
+                  ? new Date(tarea.created_at).toLocaleDateString()
+                  : ""}
               </p>
 
               {/* Botón para cambiar estado */}

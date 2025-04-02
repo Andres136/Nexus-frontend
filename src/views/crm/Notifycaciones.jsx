@@ -58,7 +58,7 @@ export default function Notificaciones() {
     generarNotificaciones();
   }, []);
 
-  // React Query: Ejecutar cada 20 segundos
+  // React Query: Ejecutar cada 60 segundos
   const { data = { ordenes_compra: [], tareas: [], ingresos:[], total_no_leidas: 0 }, isLoading, error } = useQuery({
     queryKey: ["notificaciones"],
     queryFn: fetchNotificaciones,

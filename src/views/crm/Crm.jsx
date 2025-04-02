@@ -11,6 +11,7 @@ import { useAuth } from "../../hooks/useAuth";
 import Dashboard from "../Dashboard";
 import clienteAxios from "../../config/axios";
 import { DocumentTextIcon } from "@heroicons/react/16/solid";
+import { use } from "react";
 
 export default function Crm() {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -54,6 +55,22 @@ const [totalNotificaciones, setTotalNotificaciones] = useState(0);
     }
   };
 
+  // const obtenerNotificacionesPqrs = async () => {
+  //   const token = localStorage.getItem("token");
+  //   try {
+  //     const response = await clienteAxios.get("/api/notifications-pqrs/pqr", {
+  //       headers: { Authorization: `Bearer ${token}` },
+  //     });
+  
+  //     console.log("Pqr", response);
+  //     setTotalNotificaciones(response.data.total); // <- Este es el valor correcto según tu controlador
+  
+  //   } catch (error) {
+  //     console.error("Error al obtener notificaciones pqr:", error);
+  //   }
+  // };
+  
+
   useEffect(() => {
     obtenerNotificaciones();
     const interval = setInterval(obtenerNotificaciones, 20000); // Refrescar cada 20s
@@ -65,6 +82,12 @@ const [totalNotificaciones, setTotalNotificaciones] = useState(0);
     link.roles.includes(user?.role_id)
   );
 
+  // useEffect(() => {
+  //   console.log("⏳ Consultando notificaciones PQR...");
+  //   obtenerNotificacionesPqrs();
+  //   const interval = setInterval(obtenerNotificacionesPqrs, 20000); // Refrescar cada 20s
+  //   return () => clearInterval(interval);
+  // },[])
   return (
     <>
       <Navbar />
