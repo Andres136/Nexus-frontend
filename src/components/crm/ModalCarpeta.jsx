@@ -63,7 +63,7 @@ export default function ModalCarpeta({ carpeta, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center">
+    <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-50">
       <div className="bg-white p-6 rounded-lg shadow-lg w-1/2">
         <h2 className="text-xl font-bold mb-4">📂 {carpeta?.nombre}</h2>
 

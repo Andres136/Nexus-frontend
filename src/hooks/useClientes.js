@@ -72,10 +72,17 @@ async function registrarCliente(e){
             }
         });
         toast.success(response.data.message);
-        
+    
         console.log(response.data);
         // Actualizar el estado de clientes usando mutate de SWR
-        mutate();
+       // Actualizar la caché local agregando el nuevo cliente al inicio de la lista actual
+mutate((currentData) => {
+    if (!currentData || !currentData.data) return;
+    return {
+      ...currentData,
+      data: [response.data.cliente, ...currentData.data]
+    };
+  }, false);
         // Limpiar los campos del formulario
         nombreRef.current.value = '';
         emailRef.current.value = '';

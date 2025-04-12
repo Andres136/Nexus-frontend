@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback,  useState } from "react";
 import OrdenCompraMultiItem from "../../components/crm/OrdenCompraMultiItem";
 import clienteAxios from "../../config/axios";
 import { toast } from "react-toastify";
 import { useClientes } from "../../hooks/useClientes";
-import TableUsers from "../../components/TableUsers";
+
 
 
 
@@ -17,7 +17,7 @@ export default function OrdenCompraForm() {
  });
  const { clientesTodos,setBusqueda,busqueda } = useClientes();  
 
- console.log('clientes TODOS',clientesTodos);
+
 
 
 

@@ -58,6 +58,7 @@ const registrarCarpeta = useMutation({
       );
       
       // Retornamos los datos de la respuesta
+
       return response.data;
     },
 
@@ -81,6 +82,7 @@ const registrarCarpeta = useMutation({
         if (validationErrors) {
           // Recorremos los mensajes de cada campo y los mostramos con toast
           Object.values(validationErrors).forEach((messages) => {
+            console.log(messages);
             messages.forEach((msg) => {
               toast.error(msg);
             });
@@ -122,7 +124,7 @@ const registrarCarpeta = useMutation({
           onChange={(e) => setNombre(e.target.value)}
           placeholder="Nombre de la carpeta..."
           className="border p-2 rounded w-full focus:outline-none focus:ring-2 focus:ring-blue-400"
-          required
+          
         />
         
       

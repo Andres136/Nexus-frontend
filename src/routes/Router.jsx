@@ -12,7 +12,6 @@ import Tareas from "../views/calidad/Tareas";
 import Errores from "../views/calidad/Errores";
 import DepartatamentosUpdate from "../views/calidad/DepartatamentosUpdate";
 import Crm from "../views/crm/Crm";
-import Cotizaciones from "../views/crm/Cotizaciones";
 import GestionClientes from "../views/crm/GestionClientes";
 import Inventarios from "../views/crm/Inventarios";
 import Notifycaciones from "../views/crm/Notifycaciones";
@@ -26,6 +25,18 @@ import ObtenerOrdenesCompra from "../components/crm/ObtenerOrdenesCompra";
 import ObtenerOrdenesTrabajo from "../views/crm/ObtenerOrdenesTrabajo";
 import OrdenesFacturar from "../views/crm/OrdenesFacturar";
 import RegistroDocumentacion from "../views/crm/RegistroDocumentacion";
+import Vehiculos from "../views/crm/Vehiculos";
+import FormVehiculos from "../components/crm/FormVehiculos"
+import DocumentosVehiculos from "../components/crm/DocumentosVehiculos";
+import MantenimientosVehiculos from "../components/crm/MantenimientosVehiculos";
+import InspecionVehiculos from "../components/crm/InspecionVehiculos";
+import ListarVehiculos from "../components/crm/ListarVehiculos";
+import EditarVehiculo from "../components/crm/EditarVehiculo";
+import Proveedores from "../views/crm/Proveedores";
+import FormOrdenesProveedores from "../views/crm/FormOrdenesProveedores";
+import ObtenerOrdenesProveedores from "../views/crm/ObtenerOrdenesProveedores";
+import RegistrarEntregaProveedo from "../views/crm/RegistrarEntregaProveedor";
+import RegistrarEntregaProveedor from "../views/crm/RegistrarEntregaProveedor";
 
 export default function Router() {
   return (
@@ -44,7 +55,14 @@ export default function Router() {
         <Route path="ordenes-trabajo" element={<ObtenerOrdenesTrabajo/>} />
         <Route path="crear-ordenes-compras" element={<OrdenCompraForm />} />
         <Route path="obtener-ordenes-compras" element={<ObtenerOrdenesCompra />} />
-        <Route path="cotizaciones" element={<Cotizaciones />} />
+        <Route path="vehiculos" element={<Vehiculos />} />
+        <Route path="/auth/crm/vehiculos-register" element={<FormVehiculos/>}/>
+        <Route path="/auth/crm/vehiculos-documentos" element={<DocumentosVehiculos/>} />
+        <Route path="/auth/crm/vehiculos-mantenimientos" element={<MantenimientosVehiculos/>} />
+        <Route path="/auth/crm/vehiculos-inspecciones" element={<InspecionVehiculos />} />
+        <Route path="/auth/crm/vehiculos-all" element={<ListarVehiculos />} />
+        <Route path="/auth/crm/vehiculos/:id/editar" element={<EditarVehiculo/>} />
+
         <Route path="gestion-clientes" element={<GestionClientes />} />
         <Route path="reporte-inventarios" element={<Inventarios />} />
         <Route path="notificaciones" element={<Notifycaciones />} />
@@ -54,6 +72,10 @@ export default function Router() {
         <Route path="pqrs" element={<Pqr />} />
         <Route path="ordenes-facturar" element={<OrdenesFacturar />} />
         <Route path="registrar-documentacion" element={<RegistroDocumentacion />} />
+        <Route path="proveedores" element={<Proveedores />} />  
+        <Route path="proveedores-ordenes-compra" element={<FormOrdenesProveedores/>} />
+        <Route path="ordenes-compra-proveedor" element={<ObtenerOrdenesProveedores/>} />
+        <Route path="/auth/crm/ordenes-proveedor-entregas/:id/registrar-entrega" element={<RegistrarEntregaProveedor />} />
       </Route>
     </Route>
   
