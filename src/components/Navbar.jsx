@@ -1,42 +1,38 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import useSystem from "../hooks/useSystem";
+
 import { useAuth } from "../hooks/useAuth";
+import { Home, FolderKanban, ListChecks, Bell, Building2 } from "lucide-react";
 
 export default function Navbar() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const { darkMode, toggleDarkMode } = useSystem();
+
   const { logout, user } = useAuth({ middleware: "auth" });
 
-
-  // Definir enlaces de navegación según los roles.
   const navLinks = [
-    { name: "Inicio", to: "/",allowedRoles: [1] },
-    { name: "Procesos", to: "/auth/procesos", alwaysVisible: true }, // Siempre visible
-    { name: "Tareas", to: "/admin/tareas", allowedRoles: [1, 2, ] },
-    { name: "Novedades", to: "/admin/errores", allowedRoles: [1, 2] },
-    { name: "CRM", to: "/auth/crm", allowedRoles: [1,4,5,6,7,9] },
+    { name: "Inicio", to: "/", icon: Home, allowedRoles: [1] },
+    { name: "Procesos", to: "/auth/procesos", icon: FolderKanban, alwaysVisible: true },
+    { name: "Tareas", to: "/admin/tareas", icon: ListChecks, allowedRoles: [1, 2] },
+    { name: "Novedades", to: "/admin/errores", icon: Bell, allowedRoles: [1, 2] },
+    { name: "CRM", to: "/auth/crm", icon: Building2, allowedRoles: [1, 4, 5, 6, 7, 9] },
   ];
 
-  // Filtrar enlaces según el rol del usuario, pero dejando "Procesos" siempre visible.
   const filteredNavLinks = navLinks.filter(
     (link) => link.alwaysVisible || !link.allowedRoles || link.allowedRoles.includes(user?.role_id)
   );
 
   return (
     <nav
-      className={
-        darkMode
-          ? "sticky top-0 left-0 w-full bg-gray-800 text-white p-4 "
-          : "  sticky top-0 bg-gray-800 text-white shadow-md p-4"
-      }
+      className="sticky top-0 z-50 bg-gray-800 text-white shadow-md p-4"
+      role="navigation"
+      aria-label="Menú principal"
     >
       <div className="container mx-auto flex justify-between items-center">
-        {/* Botón de menú hamburguesa (visible en dispositivos móviles) */}
         <button
           className="md:hidden text-gray-300 focus:outline-none"
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          aria-label="Toggle navigation"
+          aria-label="Abrir menú"
+          aria-expanded={isSidebarOpen}
         >
           <svg
             className="w-6 h-6"
@@ -50,76 +46,65 @@ export default function Navbar() {
           </svg>
         </button>
 
-        {/* Título o logo */}
-        <h1 className="text-xl font-bold">
-          <Link to="/">Sistema de Gestión</Link>
+        <h1 className="text-left leading-tight">
+          <Link to="/" className="block group">
+            <span className="text-2xl font-extrabold text-white tracking-wide group-hover:text-green-400 transition">
+              SETAS ETS
+            </span>
+            <span className="block text-sm text-green-400 font-medium group-hover:text-white transition">
+              Entorno de Tecnología y Sostenibilidad
+            </span>
+          </Link>
         </h1>
 
-        {/* Menú de navegación para pantallas medianas y grandes */}
-        <div className="hidden md:flex items-center space-x-4">
+        <div className="hidden md:flex items-center space-x-6">
           {filteredNavLinks.map((link) => (
             <Link
               key={link.name}
               to={link.to}
-              className="hover:text-gray-300 transition-colors"
+              className="flex items-center space-x-1 hover:text-green-400 transition-colors"
             >
-              {link.name}
+              {link.icon && <link.icon className="w-4 h-4" />}
+              <span>{link.name}</span>
             </Link>
           ))}
-          {/* <button
-            onClick={toggleDarkMode}
-            className="bg-gray-700 text-white px-3 py-1 rounded hover:bg-gray-600 transition duration-300"
-            aria-label="Toggle dark mode"
-          >
-            {darkMode ? "☀️ Claro" : "🌙 Oscuro"}
-          </button> */}
-          <span>Hola: {user?.name}</span>
+          <span className="font-medium text-green-400 hidden md:inline">👤 {user?.name}</span>
           <button
             onClick={logout}
-            className="bg-gray-700 text-white px-3 py-1 rounded hover:bg-green-700 transition duration-300"
+            className="bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700 transition"
           >
             Cerrar Sesión
           </button>
         </div>
       </div>
 
-      {/* Menú de navegación para dispositivos móviles */}
-      {isSidebarOpen && (
-        <div className="md:hidden mt-4">
-          <ul className="flex flex-col space-y-2">
-            {filteredNavLinks.map((link) => (
-              <li key={link.name}>
-                <Link
-                  to={link.to}
-                  onClick={() => setIsSidebarOpen(false)}
-                  className="block px-4 py-2 hover:bg-gray-700 transition-colors"
-                >
-                  {link.name}
-                </Link>
-              </li>
-            ))}
-            <li>
-              <button
-                onClick={toggleDarkMode}
-                className="w-full text-left block px-4 py-2 hover:bg-gray-700 transition-colors"
+      <div
+        className={`md:hidden overflow-hidden transition-all duration-500 ease-in-out ${isSidebarOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"}`}
+      >
+        <ul className="flex flex-col space-y-3 mt-4 bg-gray-900 rounded p-4 shadow-lg animate-slide-down">
+          {filteredNavLinks.map((link) => (
+            <li key={link.name}>
+              <Link
+                to={link.to}
+                onClick={() => setIsSidebarOpen(false)}
+                className="flex items-center gap-2 px-4 py-2 rounded hover:bg-gray-700 text-white"
               >
-                {darkMode ? "☀️ Claro" : "🌙 Oscuro"}
-              </button>
+                {link.icon && <link.icon className="w-4 h-4" />}
+                {link.name}
+              </Link>
             </li>
-            <li>
-              <span className="block px-4 py-2">Hola: {user?.name}</span>
-            </li>
-            <li>
-              <button
-                onClick={logout}
-                className="w-full text-left block px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded transition-colors"
-              >
-                Cerrar Sesión
-              </button>
-            </li>
-          </ul>
-        </div>
-      )}
+          ))}
+          <li className="px-4 py-2 text-green-300 font-medium">👤 {user?.name}</li>
+          <li>
+            <button
+              onClick={logout}
+              className="w-full px-4 py-2 text-left bg-green-600 hover:bg-green-700 text-white rounded"
+            >
+              Cerrar Sesión
+            </button>
+          </li>
+        </ul>
+      </div>
     </nav>
   );
 }

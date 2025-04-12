@@ -11,7 +11,7 @@ export default function RegistrarEntregaProveedor() {
 
   const [detalles, setDetalles] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [errores, setErrores] = useState({});
+  
   const obtenerEstadoVisual = (detalle) => {
     const entregada = detalle.cantidad_entregada;
     const solicitada = detalle.cantidad_solicitada;
@@ -37,6 +37,7 @@ export default function RegistrarEntregaProveedor() {
         console.log(response.data.productos);
       } catch (error) {
         toast.error("Error al cargar los detalles de la orden");
+        console.error("Error al cargar los detalles de la orden:", error);
       } finally {
         setLoading(false);
       }
@@ -68,6 +69,7 @@ export default function RegistrarEntregaProveedor() {
       navigate(-1);
     } catch (error) {
       toast.error("Error al registrar la entrega");
+      console.error("Error al registrar la entrega:", error);
     }
   };
 

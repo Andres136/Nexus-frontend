@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import {
-  Briefcase, Users, BarChart, ShoppingCart, FileText, Bell, 
+  Briefcase, Users, BarChart, ShoppingCart,  Bell, 
   MessageCircle,  Clipboard, Menu, ClipboardList,
   FolderPlus,
   Car,
   CarrotIcon,
-  Carrot,
+ 
   VenetianMaskIcon,
   
 } from "lucide-react";
@@ -101,7 +101,7 @@ const [totalNotificaciones, setTotalNotificaciones] = useState(0);
       <Navbar />
       <header className="bg-white shadow-md px-4 py-3 md:px-7 md:py-4 z-50 flex items-center justify-between">
         <button
-          className="block md:hidden p-2 text-gray-700 hover:text-gray-900"
+          className="block md:hidden p-2 text-gray-8700 hover:text-gray-900"
           onClick={toggleSidebar}
         >
           <Menu className="w-6 h-6" />
@@ -111,7 +111,7 @@ const [totalNotificaciones, setTotalNotificaciones] = useState(0);
       <div className="flex bg-gray-100 min-h-screen">
         {/* Barra lateral con hover en pantallas grandes */}
         <aside 
-  className={`fixed top-[4rem] left-0 h-screen bg-gray-900 text-white shadow-lg transition-all duration-300
+  className={`fixed top-[5rem] left-0 h-screen bg-gray-900 text-white shadow-lg transition-all duration-300 z-50
     ${isExpanded ? "translate-x-0 w-64" : "-translate-x-full w-16"}
     md:translate-x-0 md:${isExpanded ? "w-64" : "w-16"}
     overflow-y-auto pt-6`}
