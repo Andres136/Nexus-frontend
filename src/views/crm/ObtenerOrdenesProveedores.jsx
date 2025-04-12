@@ -20,7 +20,9 @@ export default function ObtenerOrdenesProveedores() {
   };
   console.log(ordenes);
   return (
-    <div className="p-4">
+    <div className="grid grid-cols-1 ">
+
+      <div className="col-span-1">
       <h2 className="text-2xl font-bold mb-4">Órdenes de Compra Proveedores</h2>
 
       <div className="mb-4 flex gap-2">
@@ -112,6 +114,7 @@ export default function ObtenerOrdenesProveedores() {
         >
           Siguiente
         </button>
+      </div>
       </div>
     </div>
   );

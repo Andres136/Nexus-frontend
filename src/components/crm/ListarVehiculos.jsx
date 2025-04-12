@@ -359,7 +359,22 @@ export default function ListarVehiculos() {
                                         <td>{item.tipo_documento}</td>
                                         <td>{item.fecha_vencimiento}</td>
                                         <td>{item.fecha_renovacion}</td>
-                                        <td>{item.estado}</td>
+                                        <td>
+  {(() => {
+    const hoy = new Date();
+    const vencimiento = new Date(item.fecha_vencimiento);
+    const diasRestantes = Math.ceil((vencimiento - hoy) / (1000 * 60 * 60 * 24));
+
+    if (diasRestantes < 0) {
+      return <span className="text-red-600 font-bold">❌ Vencido</span>;
+    } else if (diasRestantes <= 30) {
+      return <span className="text-yellow-600 font-semibold">⚠️ Por vencer</span>;
+    } else {
+      return <span className="text-green-600">✅ Vigente</span>;
+    }
+  })()}
+</td>
+
                                         <td>
                                           <a
                                             href={encodeURI(

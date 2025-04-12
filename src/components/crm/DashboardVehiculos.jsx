@@ -2,10 +2,12 @@ import { useEffect, useState } from "react";
 import clienteAxios from "../../config/axios";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  LineChart, Line
+  LineChart, Line,
+  Cell,
+  Pie
 } from 'recharts';
 import { Link } from "react-router-dom";
-import { Car, Wrench, AlertCircle, FileBarChart2 } from "lucide-react";
+import { Car, Wrench, AlertCircle, FileBarChart2, PieChart } from "lucide-react";
 
 export default function DashboardVehiculos() {
   const [data, setData] = useState({
@@ -36,6 +38,7 @@ export default function DashboardVehiculos() {
       },
     })
       .then((response) => {
+        console.log('Dashboard data:', response.data);
         setData(response.data);
       })
       .catch((error) => {
@@ -72,6 +75,8 @@ export default function DashboardVehiculos() {
       Anterior: data.mantenimientos_pendientes,
     }
   ];
+ 
+
 
   return (
     <div className="p-4 space-y-6">
@@ -103,15 +108,17 @@ export default function DashboardVehiculos() {
             <p className="text-xs">{progreso()}% completados</p>
           </div>
         </div>
+        <div className="bg-purple-500 text-white p-4 rounded-2xl shadow flex items-center gap-4">
+  <FileBarChart2 className="w-10 h-10" />
+  <div>
+    <h2 className="text-lg">📄 Documentos</h2>
+    <p className="text-sm">❌ Vencidos: {data.documentos_estado?.vencidos ?? 0}</p>
+    <p className="text-sm">⚠️ Por vencer: {data.documentos_estado?.por_vencer ?? 0}</p>
+    <p className="text-sm">✅ Vigentes: {data.documentos_estado?.vigentes ?? 0}</p>
+  </div>
+</div>
 
-        <div className="bg-yellow-400 text-black p-4 rounded-2xl shadow flex items-center gap-4">
-          <AlertCircle className="w-10 h-10" />
-          <div>
-            <h2 className="text-lg">SOAT</h2>
-            <p className="text-sm">Vencidos: {data.soat.vencidos}</p>
-            <p className="text-sm">Por vencer: {data.soat.por_vencer}</p>
-          </div>
-        </div>
+
 
         <div className="bg-green-500 text-white p-4 rounded-2xl shadow flex items-center gap-4">
           <FileBarChart2 className="w-10 h-10" />
@@ -131,6 +138,26 @@ export default function DashboardVehiculos() {
             <div className="bg-green-500 h-4 rounded-full transition-all duration-500" style={{ width: `${progreso()}%` }}></div>
           </div>
         </div>
+        {data.ultimos_mantenimientos?.length > 0 && (
+  <div className="mt-4">
+  
+    <ul className="text-xs mt-1 space-y-1 text-gray-700">
+    {data.ultimos_mantenimientos?.length > 0 && (
+  <div className="bg-white shadow p-4 rounded-2xl border mt-4">
+    <h3 className="text-lg font-semibold mb-2">🛠️ Últimos Mantenimientos Realizados</h3>
+    <ul className="text-sm text-gray-700 space-y-1">
+      {data.ultimos_mantenimientos.map((m) => (
+        <li key={m.id}>
+          • {m.vehiculo?.placa ?? "Vehículo"} — {m.fecha_realizado}
+        </li>
+      ))}
+    </ul>
+  </div>
+)}
+
+    </ul>
+  </div>
+)}
 
         <div className="bg-white shadow p-4 rounded-2xl border">
           <h3 className="text-lg font-semibold mb-2">Inspecciones</h3>
@@ -168,6 +195,8 @@ export default function DashboardVehiculos() {
           </LineChart>
         </ResponsiveContainer>
       </div>
+   
+
     </div>
   );
 }

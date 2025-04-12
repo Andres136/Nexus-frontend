@@ -171,7 +171,7 @@ export default function FormVehiculos() {
 
           <div className="mb-4">
             <label className="block font-medium" htmlFor="anio">
-              Modelo
+              Año
             </label>
             <input
               id="anio"
@@ -180,7 +180,7 @@ export default function FormVehiculos() {
               onChange={handleChange}
               name="anio"
               className="border border-gray-300 rounded-md p-2 w-full"
-              placeholder="Ingrese el modelo del vehiculo"
+              placeholder="Ingrese el año del vehiculo"
             />
             {error.anio && (
               <p className="text-red-500 text-sm">{error.anio[0]}</p>

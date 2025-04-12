@@ -35,7 +35,7 @@ import EditarVehiculo from "../components/crm/EditarVehiculo";
 import Proveedores from "../views/crm/Proveedores";
 import FormOrdenesProveedores from "../views/crm/FormOrdenesProveedores";
 import ObtenerOrdenesProveedores from "../views/crm/ObtenerOrdenesProveedores";
-import RegistrarEntregaProveedo from "../views/crm/RegistrarEntregaProveedor";
+
 import RegistrarEntregaProveedor from "../views/crm/RegistrarEntregaProveedor";
 
 export default function Router() {

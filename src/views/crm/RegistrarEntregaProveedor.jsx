@@ -76,7 +76,8 @@ export default function RegistrarEntregaProveedor() {
   if (loading) return <p>Cargando...</p>;
 
   return (
-    <div className="p-6">
+    <div className="grid grid-cols-1">
+      <div className="col-span-1">
       <button
   onClick={() => navigate(-1)} // 👈 vuelve a la ruta anterior
   className="mb-4 px-4 py-2 bg-gray-300 hover:bg-gray-400 rounded text-sm"
@@ -158,6 +159,7 @@ export default function RegistrarEntregaProveedor() {
       >
         Registrar Entrega
       </button>
+      </div>
     </div>
   );
 }

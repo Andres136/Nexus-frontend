@@ -49,14 +49,12 @@ const telefonoRef = useRef(null);
 const direccionRef = useRef(null);
 const nitRef = useRef(null);
 
-
-async function registrarCliente(e){
-    setErrores({});// Limpiar errores antes de enviar
+async function registrarCliente(e) {
+    setErrores({});
     e.preventDefault();
-    console.log('id del usrario', user.id);
 
-    const token = localStorage.getItem('token');
-     // Crear objeto con los datos del cliente
+    const token = localStorage.getItem("token");
+
     const cliente = {
         user_id: user.id,
         nombre: nombreRef.current.value,
@@ -64,40 +62,46 @@ async function registrarCliente(e){
         telefono: telefonoRef.current.value,
         direccion: direccionRef.current.value,
         nit: nitRef.current.value
-    }
+    };
+
     try {
-        const response = await clienteAxios.post('/api/clientes', cliente, {
+        const response = await clienteAxios.post("/api/clientes", cliente, {
             headers: {
                 Authorization: `Bearer ${token}`
             }
         });
+
         toast.success(response.data.message);
-    
-        console.log(response.data);
-        // Actualizar el estado de clientes usando mutate de SWR
-       // Actualizar la caché local agregando el nuevo cliente al inicio de la lista actual
-mutate((currentData) => {
-    if (!currentData || !currentData.data) return;
-    return {
-      ...currentData,
-      data: [response.data.cliente, ...currentData.data]
-    };
-  }, false);
+        const clienteNuevo = response.data.cliente;
+
+        // Actualizar el estado local para que se vea inmediatamente
+        setClientes(prev => [clienteNuevo, ...prev]);
+
+        // Actualizar la caché de SWR sin hacer refetch
+        mutate(current => {
+            if (!current || !current.data) return current;
+            return {
+                ...current,
+                data: [clienteNuevo, ...current.data]
+            };
+        }, false);
+
         // Limpiar los campos del formulario
-        nombreRef.current.value = '';
-        emailRef.current.value = '';
-        telefonoRef.current.value = '';
-        direccionRef.current.value = '';
-        nitRef.current.value = '';
+        nombreRef.current.value = "";
+        emailRef.current.value = "";
+        telefonoRef.current.value = "";
+        direccionRef.current.value = "";
+        nitRef.current.value = "";
     } catch (error) {
-    if (error.response && error.response.data.errors) {
-        setErrores(error.response.data.errors);
-        console.log(error);
-    }else{
-        toast.error('Ocurrió un error al registrar el cliente');
-    }   
+        if (error.response && error.response.data.errors) {
+            setErrores(error.response.data.errors);
+        } else {
+            toast.error("Ocurrió un error al registrar el cliente");
+        }
+    }
 }
-}
+
+
 // Obtener los clientes de la API
 const obtenerClientes = async (page = 1, search = "") => {
     const token = localStorage.getItem("token");

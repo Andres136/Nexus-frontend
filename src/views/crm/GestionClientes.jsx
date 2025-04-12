@@ -39,7 +39,10 @@ export default function GestionClientes() {
 
   return (
     <>
-      <div className="gap-2 grid-cols-1 grid lg:grid-cols-2 ">
+    <div className="grid grid-cols-1 ">
+
+   
+      <div className="gap-2 grid-cols-1 grid lg:grid-cols-2">
         <div className="">
           <button
             className="w-full flex justify-between items-center bg-green-700 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded transition-all duration-300"
@@ -243,7 +246,9 @@ export default function GestionClientes() {
 
        
       </div>
+
       <ClientesList consultarHistorial={handleConsultarHistorial} />
+      </div>
     </>
   );
 }

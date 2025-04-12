@@ -30,7 +30,7 @@ const [totalNotificaciones, setTotalNotificaciones] = useState(0);
   // Definir rutas con los roles permitidos
   const menuLinks = [
     { name: "Ordenes Trabajo", to: "/auth/crm/ordenes-trabajo", icon: Briefcase, roles: [1,4,5,6] },
-    { name: "Gestión de Clientes", to: "/auth/crm/gestion-clientes", icon: Users, roles: [1, 9, 7] },
+    { name: "Gestión de Clientes", to: "/auth/crm/gestion-clientes", icon: Users, roles: [1, 9, 7,4] },
     { name: "KPIs", to: "/auth/crm/kpis", icon: BarChart, roles: [1, 7] },
     { name: "Crear Orden de Compra", to: "/auth/crm/crear-ordenes-compras", icon: ShoppingCart, roles: [1, 9,7,4] },
     { name: "Inventarios", to: "/auth/crm/reporte-inventarios", icon: Clipboard, roles: [1, 6,4,7,9,5] },

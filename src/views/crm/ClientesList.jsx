@@ -48,7 +48,7 @@ const {user}=useAuth({middleware:'auth'});
 
         {/* Tabla Responsiva */}
         <div className="grid grid-cols-1 overflow-x-auto">
-          <table className="w-full min-w-[600px] border-collapse border border-gray-300 shadow-lg">
+          <table className=" col-span-1 w-full min-w-[600px] border-collapse border border-gray-300 shadow-lg">
             <thead className="bg-gray-200">
               <tr>
                 <th className="border border-gray-300 px-4 py-2">Id</th>

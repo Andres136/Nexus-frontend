@@ -21,36 +21,46 @@ export default function GestionUsers() {
         {/* Contenido Principal */}
         <main className="flex-1 p-6">
           <h2 className="text-2xl font-bold mb-4">Gestion de Usuarios</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-            {/* Bloque 1: Registrar Usuarios */}
-            <div className={darkMode ? "bg-gray-800 p-6 rounded-lg shadow-md" : "bg-white p-6 rounded-lg shadow-md"}>
-              <h3 className="text-lg font-bold mb-4">Registrar Usuarios</h3>
-              <p className="mb-4">Gestiona el registro de nuevos usuarios en el sistema.</p>
-              <button onClick={() => setUserModalOpen(true)} className=" bg-gray-700 text-white px-4 py-2 rounded hover:bg-green-700">
-                Registrar Usuario
-              </button>
-              <Modal isOpen={isUserModalOpen} onClose={() => setUserModalOpen(false)}>
-                <RegisterUsers onClose={() => setUserModalOpen(false)} />
-              </Modal>
-            </div>
-          
-            {/* Bloque 2: Registrar Departamentos */}
-            <div className={darkMode ? "bg-gray-800 p-6 rounded-lg shadow-md" : "bg-white p-6 rounded-lg shadow-md"}>
-              <h3 className="text-lg font-bold mb-4">Registrar Departamentos</h3>
-              <p className="mb-4">Agrega y gestiona los departamentos de la organización.</p>
-              <div className='grid grid-cols-1 sm:grid-cols-2 gap-6'>
-                <button onClick={() => setDepartmentModalOpen(true)} className="bg-gray-700 text-white px-4 py-2 rounded hover:bg-green-700">
-                  Registrar Departamento
-                </button>
-                <Link to="/admin/departamentos" className="bg-gray-700 text-white px-4 py-2 text-center rounded hover:bg-green-700">
-                  Actualizar Departamento
-                </Link>
-              </div>
-              <Modal isOpen={isDepartmentModalOpen} onClose={() => setDepartmentModalOpen(false)}>
-                <RegisterDepartaments onClose={() => setDepartmentModalOpen(false)} />
-              </Modal>
-            </div>
-          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+  {/* Bloque 1: Registrar Usuarios */}
+  <div className={`p-6 rounded-2xl shadow-md transition-colors ${darkMode ? "bg-gray-800 text-white" : "bg-white text-gray-800"}`}>
+    <h3 className="text-xl font-bold mb-2">👤 Registrar Usuarios</h3>
+    <p className="mb-4 text-sm text-gray-400 dark:text-gray-300">Gestiona el registro de nuevos usuarios en el sistema.</p>
+    <button
+      onClick={() => setUserModalOpen(true)}
+      className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+    >
+      + Registrar Usuario
+    </button>
+    <Modal isOpen={isUserModalOpen} onClose={() => setUserModalOpen(false)}>
+      <RegisterUsers onClose={() => setUserModalOpen(false)} />
+    </Modal>
+  </div>
+
+  {/* Bloque 2: Registrar Departamentos */}
+  <div className={`p-6 rounded-2xl shadow-md transition-colors ${darkMode ? "bg-gray-800 text-white" : "bg-white text-gray-800"}`}>
+    <h3 className="text-xl font-bold mb-2">🏢 Registrar Departamentos</h3>
+    <p className="mb-4 text-sm text-gray-400 dark:text-gray-300">Agrega y gestiona los departamentos de la organización.</p>
+    <div className="flex flex-col sm:flex-row gap-4">
+      <button
+        onClick={() => setDepartmentModalOpen(true)}
+        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+      >
+        + Registrar Departamento
+      </button>
+      <Link
+        to="/admin/departamentos"
+        className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 text-center rounded-lg transition-colors"
+      >
+        ✏️ Actualizar Departamento
+      </Link>
+    </div>
+    <Modal isOpen={isDepartmentModalOpen} onClose={() => setDepartmentModalOpen(false)}>
+      <RegisterDepartaments onClose={() => setDepartmentModalOpen(false)} />
+    </Modal>
+  </div>
+</div>
+
         </main>
       </div>
       <div className='grid grid-cols-1 gap-6'>

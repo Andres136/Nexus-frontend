@@ -81,7 +81,9 @@ export default function FormOrdenesProveedores() {
   };
 
   return (
-    <div className="p-6 bg-white rounded-xl">
+    <div className="grid grid-cols-1 bg-white rounded-xl">
+
+      <div className="col-span-1">
       <h2 className="text-2xl font-bold mb-4">Registrar orden de Compra</h2>
 
       <div className="grid grid-cols-2 gap-4">
@@ -160,6 +162,7 @@ export default function FormOrdenesProveedores() {
           )}
         </div>
       </div>
+      
       <DetallesOrdenCompraProveedores
         onChange={handleDetallesChange}
         errores={erroresDetalles}
@@ -171,6 +174,7 @@ export default function FormOrdenesProveedores() {
         >
           Guardar Orden
         </button>
+      </div>
       </div>
     </div>
   );
