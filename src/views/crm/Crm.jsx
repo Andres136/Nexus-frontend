@@ -14,6 +14,8 @@ import {
   Car,
   CarrotIcon,
   VenetianMaskIcon,
+  Package,
+  Package2Icon,
 } from "lucide-react";
 import Navbar from "../../components/Navbar";
 import { useAuth } from "../../hooks/useAuth";
@@ -99,15 +101,15 @@ export default function Crm() {
       roles: [1, 4, 5, 6],
     },
     {
-      name: "proveedores-ordenes-compra",
+      name: "crear-ordenes-compra-proveedor",
       to: "/auth/crm/proveedores-ordenes-compra",
-      icon: VenetianMaskIcon,
+      icon: Package2Icon,
       roles: [1, 4, 5, 6],
     },
     {
       name: "ordenes-compra-proveedor",
       to: "/auth/crm/ordenes-compra-proveedor",
-      icon: CarrotIcon,
+      icon: Package,
       roles: [1, 4, 5, 6],
     },
   ];

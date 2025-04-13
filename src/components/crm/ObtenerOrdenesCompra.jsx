@@ -67,7 +67,22 @@ export default function ObtenerOrdenesCompra() {
             <td className="border border-gray-300 px-4 py-2">{orden.id}</td>
             <td className="border border-gray-300 px-4 py-2">{orden.cliente.nombre}</td>
             <td className="border border-gray-300 px-4 py-2">{orden.fecha_entrega}</td>
-            <td className="border border-gray-300 px-4 py-2">{orden.estado.nombre}</td>
+            <td className="px-4 py-3 text-center border border-gray-300">
+  {orden.estado.nombre === "Pendiente" ? (
+    <span className="text-red-700 bg-red-100 px-3 py-1 rounded-full text-sm font-semibold">
+      Pendiente
+    </span>
+  ) : orden.estado.nombre === "Completado" ? (
+    <span className="text-green-700 bg-green-100 px-3 py-1 rounded-full text-sm font-semibold">
+      Completado
+    </span>
+  ) : (
+    <span className="text-gray-700 bg-gray-100 px-3 py-1 rounded-full text-sm font-semibold">
+      {orden.estado.nombre}
+    </span>
+  )}
+</td>
+
             <td className="border border-gray-300 px-4 py-2">{orden.observaciones}</td>
             <td className="border border-gray-300 px-4 py-2">{orden.ubicacion_entrega}</td>
             <td className="border border-gray-300 px-4 py-2">

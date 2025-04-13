@@ -56,7 +56,22 @@ console.log('ordenesTrabajo',ordenesTrabajo);
               <td className="px-4 py-3">{orden.fecha_entrega}</td>
               <td className="px-4 py-3"> {orden?.orden_compra?.ubicacion_entrega || "No especificado"}</td>
                 <td className="px-4 py-3">{orden.observaciones}</td>
-              <td className="px-4 py-3">{orden.estado.nombre}</td>
+                <td className="px-4 py-3">
+  {orden.estado.nombre === "Pendiente" ? (
+    <span className="text-red-700 bg-red-100 px-3 py-1 rounded-full text-sm font-semibold">
+      Pendiente
+    </span>
+  ) : orden.estado.nombre === "Completado" ? (
+    <span className="text-green-700 bg-green-100 px-3 py-1 rounded-full text-sm font-semibold">
+      Completado
+    </span>
+  ) : (
+    <span className="text-gray-700 bg-gray-100 px-3 py-1 rounded-full text-sm font-semibold">
+      {orden.estado.nombre}
+    </span>
+  )}
+</td>
+
               <td className="px-4 py-3">
                 <Link
                   to={`/auth/crm/ordenes-trabajo/${orden.id}`}
