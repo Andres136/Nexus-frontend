@@ -7,6 +7,7 @@ import { formatCurrency } from "../../helpers";
 import ApiInventario from "./ApiInventario";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import LOGO from "/public/images/SETAS.png";
 
 /** Factor para convertir cm a pulgadas */
 const FACTOR_PULGADA = 0.393701;
@@ -239,7 +240,7 @@ if(!todosRevisados){
     const doc = new jsPDF();
   
     try {
-      const logo = await cargarImagen("/public/images/SETAS.png");
+      const logo = await cargarImagen(LOGO);
   
       // Encabezado
       doc.addImage(logo, "PNG", 10, 10, 40, 15);
