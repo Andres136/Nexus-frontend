@@ -197,6 +197,18 @@ export default function ListarVehiculos() {
                         <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
                           Tipo: {vehiculo.tipo}
                         </span>
+                        <span className="bg-red-100 text-red-800 px-2 py-0.5 rounded">
+                          Modelo : {vehiculo.modelo}
+                        </span>
+                        <span className="bg-orange-100 text-orange-800 px-2 py-0.5 rounded">
+                          Marca: {vehiculo.marca}
+                        </span>
+                        <span className="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded">
+                          Licencia Transito: {vehiculo.licencia_transito}
+                        </span>
+                        <span className="bg-purple-100 text-purple-800 px-2 py-0.5 rounded">
+                          Conductor Asiginado {vehiculo.conductor}
+                        </span>
                         <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded">
                           Año: {vehiculo.anio}
                         </span>
@@ -207,6 +219,7 @@ export default function ListarVehiculos() {
                           Km actual:{" "}
                           {vehiculo.kilometraje_actual.toLocaleString("es-CO")}
                         </span>
+
                       </div>
                     </div>
                   </div>
@@ -242,7 +255,7 @@ export default function ListarVehiculos() {
 
                 {expanded === vehiculo.id && (
                   <div className="p-4 bg-white text-sm space-y-6">
-                    {["mantenimientos", "documentos", "inspecciones"].map(
+                    {["mantenimientos", "documentos", "inspecciones",].map(
                       (seccion) => (
                         <div key={seccion} className="mt-4">
                           <h4 className="font-semibold mb-2">
@@ -293,6 +306,7 @@ export default function ListarVehiculos() {
                                     <th>Fecha</th>
                                     <th>Responsable</th>
                                     <th>Estado</th>
+                                    <th>Archivo</th>
                                   </tr>
                                 )}
                               </thead>
@@ -396,6 +410,23 @@ export default function ListarVehiculos() {
                                         <td>{item.fecha}</td>
                                         <td>{item.responsable}</td>
                                         <td>{item.estado_general}</td>
+                                        <td>
+  {item.documento ? (
+    <a
+      href={`${import.meta.env.VITE_API_URL}/storage/${item.documento}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-blue-600 hover:underline"
+      download
+    >
+      Descargar
+    </a>
+  ) : (
+    <span className="text-gray-400 italic">No adjunto</span>
+  )}
+</td>
+
+
                                       </>
                                     )}
                                   </tr>

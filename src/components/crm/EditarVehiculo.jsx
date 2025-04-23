@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { useParams, useNavigate } from "react-router-dom"
+import { useParams, useNavigate, Link } from "react-router-dom"
 import clienteAxios from "../../config/axios"
 import { toast } from "react-toastify";
 
@@ -17,6 +17,9 @@ export default function EditarVehiculo() {
         estado: "",
         observaciones: "",
         foto: "",
+        licencia_transito: "",
+        conductor: "",
+        
     });
     const [Cargando, setCargando] = useState(true);
     const [error, setError] = useState('');
@@ -59,6 +62,8 @@ export default function EditarVehiculo() {
         formData.append("estado", vehiculo.estado);
         formData.append("tipo", vehiculo.tipo);
         formData.append("observaciones", vehiculo.observaciones);
+        formData.append("licencia_transito", vehiculo.licencia_transito);
+        formData.append("conductor", vehiculo.conductor);
         if(vehiculo.foto instanceof File){
             formData.append("foto", vehiculo.foto);
         }
@@ -90,6 +95,14 @@ export default function EditarVehiculo() {
 
   return (
     <div>
+
+<Link
+          to="/auth/crm/vehiculos"
+          className="inline-block bg-gray-300 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-400 transition duration-200 text-sm"
+        >
+          ← Volver
+        </Link>
+
         <form
         onSubmit={handleSubmit} className="bg-white rounded-lg p-6 mx-auto space-y-4">
             <h2 className="text-2xl font-bold mb-4">Editar Vehiculo</h2>
@@ -106,6 +119,21 @@ export default function EditarVehiculo() {
     />
     {errorMessage.placa && <span className="text-red-500 text-sm">{errorMessage.placa}</span>}
 </div>
+
+
+<div className="mb-4"> <label className="block font-medium" htmlFor="licencia_transito">Licencia de Transito</label>
+    <input
+        type="text"
+        id="licencia_transito"
+        name="licencia_transito"
+        value={vehiculo.licencia_transito}
+        onChange={handleChange}
+        className={`border rounded-lg p-2 w-full ${errorMessage.licencia_transito ? 'border-red-500' : ''}`}
+    />
+    {errorMessage.licencia_transito && <span className="text-red-500 text-sm">{errorMessage.licencia_transito}</span>}
+</div>
+
+
 <div className="mb-4">
     <label className="block font-medium" htmlFor="marca">Marca</label>
     <input
@@ -153,6 +181,20 @@ export default function EditarVehiculo() {
         className={`border rounded-lg p-2 w-full ${errorMessage.kilometraje_actual ? 'border-red-500' : ''}`}
     />
     {errorMessage.kilometraje_actual && <span className="text-red-500 text-sm">{errorMessage.kilometraje_actual}</span>}
+</div>
+
+
+<div className="mb-4">
+    <label className="block font-medium" htmlFor="conductor">Conductor</label>
+    <input
+        type="text"
+        id="conductor"
+        name="conductor"
+        value={vehiculo.conductor}
+        onChange={handleChange}
+        className={`border rounded-lg p-2 w-full ${errorMessage.conductor ? 'border-red-500' : ''}`}
+    />
+    {errorMessage.conductor && <span className="text-red-500 text-sm">{errorMessage.conductor}</span>}
 </div>
 <div className="mb-4">
     <label className="block font-medium" htmlFor="estado">Estado</label>

@@ -19,7 +19,8 @@ export default function GestionarClientes({ onClose, clienteId }) {
   const metodosContacto = [
     { value: "whatsapp", label: "WhatsApp", icon: <FaWhatsapp className="text-green-500 w-5 h-5" /> },
     { value: "llamada", label: "Llamada", icon: <FaPhone className="text-blue-500 w-5 h-5" /> },
-    { value: "email", label: "Email", icon: <FaEnvelope className="text-red-500 w-5 h-5" /> },
+    { value: "email", label: "Email", icon: <FaEnvelope className="text-red-500 w-5 h-5" /> },  
+      { value: "visita", label: "Visita Realizada", icon: <FaRegSmile className="text-yellow-500 w-5 h-5" /> },
   ];
 
   // 📌 Opciones del Select de Estado del Cliente
@@ -27,7 +28,7 @@ export default function GestionarClientes({ onClose, clienteId }) {
     { value: "interesado", label: "Interesado", icon: <FaRegSmile className="text-green-500 w-5 h-5" /> },
     { value: "cotizacion", label: "Cotización Enviada", icon: <FaFileInvoice className="text-blue-500 w-5 h-5" /> },
     { value: "no_interesado", label: "No Interesado", icon: <FaTimesCircle className="text-red-500 w-5 h-5" /> },
-    { value: "visita", label: "Visita Realizada", icon: <FaRegSmile className="text-yellow-500 w-5 h-5" /> },
+
     { value: "orden_compra", label: "Generó Orden de Compra", icon: <FaFileInvoice className="text-green-500 w-5 h-5" /> },
     { value: "no_contesta", label: "No Contesta", icon: <FaTimesCircle className="text-red-500 w-5 h-5" /> },
     { value: "primer_contacto", label: "Primer Contacto", icon: <FaCommentDots className="text-blue-500 w-5 h-5" /> },

@@ -9,7 +9,7 @@ import { useAuth } from "../../hooks/useAuth";
 export default function GestionClientes() {
 
   const {user}=useAuth({middleware:'auth'});
-  const { formatearFecha } = useFormatoFecha();
+ 
 
   const {
     registrarCliente,
@@ -19,19 +19,12 @@ export default function GestionClientes() {
     direccionRef,
     nitRef,
     error,
-    consultarHistorialCliente,
+  
   } = useClientes();
 
   const [isOpen, setIsOpen] = useState(false);
-  const [clienteHistorial, setClienteHistorial] = useState(null);
-  const [clienteSeleccionado, setClienteSeleccionado] = useState(null); // Para mostrar quién se está consultando
 
-  // Función para obtener el historial del cliente y actualizar el estado
-  const handleConsultarHistorial = async (clienteId) => {
-    setClienteSeleccionado(clienteId); // Mostrar quién se está cargando
-    const historial = await consultarHistorialCliente(clienteId);
-    setClienteHistorial(historial); // 🔹 Guardar los datos en el estado local
-  };
+
 
   const toggleAccordion = () => {
     setIsOpen(!isOpen);
@@ -42,8 +35,8 @@ export default function GestionClientes() {
     <div className="grid grid-cols-1 ">
 
    
-      <div className="gap-2 grid-cols-1 grid lg:grid-cols-2">
-        <div className="">
+      <div className="">
+   
           <button
             className="w-full flex justify-between items-center bg-green-700 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded transition-all duration-300"
             onClick={toggleAccordion}
@@ -76,11 +69,16 @@ export default function GestionClientes() {
           </button>
 
           {isOpen && (
+
+
+             
             <form
               action=""
               onSubmit={registrarCliente}
               className="mt-4 bg-white p-4 rounded-md shadow-md"
             >
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="mb-4">
                 <label
                   htmlFor="nombre"
@@ -183,7 +181,7 @@ export default function GestionClientes() {
                 />
                 {error.nit && <span className="text-red-500">{error.nit}</span>}
               </div>
-
+</div>
               <button className="w-full bg-green-700 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
                 <span>Guardar</span>
               </button>
@@ -195,59 +193,12 @@ export default function GestionClientes() {
               Gestionar Clientes
             </h2>
           </div>
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-  {/* 📌 Columna 1: Información del Cliente */}
-  <div className="bg-gray-100 p-4 rounded-md shadow-md">
-    <h2 className="text-2xl font-bold mb-4 text-gray-800">Datos del Cliente</h2>
-
-    {clienteSeleccionado && !clienteHistorial ? (
-      <p className="text-gray-500">
-        Cargando historial del cliente {clienteSeleccionado}...
-      </p>
-    ) : clienteHistorial ? (
-      <div className="bg-white p-4 rounded-md shadow">
-        <h3 className="text-xl font-semibold">{clienteHistorial.nombre}</h3>
-        <p className="text-gray-600">📧 <strong>Email:</strong> {clienteHistorial.email}</p>
-        <p className="text-gray-600">📞 <strong>Teléfono:</strong> {clienteHistorial.telefono}</p>
-        <p className="text-gray-600">🏠 <strong>Dirección:</strong> {clienteHistorial.direccion}</p>
-        <p className="text-gray-600">📌 <strong>NIT:</strong> {clienteHistorial.nit}</p>
-      </div>
-    ) : (
-      <p className="text-gray-500">Selecciona un cliente para ver sus datos.</p>
-    )}
-  </div>
-
-  {/* 📌 Columna 2: Historial de Seguimientos */}
-  <div className="bg-gray-100 p-4 rounded-md shadow-md">
-    <h2 className="text-2xl font-bold mb-4 text-gray-800">Historial de Seguimientos</h2>
-
-    {clienteHistorial?.seguimientos?.length > 0 ? (
-      <ul className="list-disc pl-4 space-y-2">
-        {clienteHistorial.seguimientos.map((seguimiento) => (
-          <li key={seguimiento.id} className="bg-white p-3 rounded-md shadow">
-            <h4 className="text-gray-700">👤 <strong>Gestionado por:</strong> {seguimiento.usuario?.name || "Desconocido"}</h4>
-            <p className="text-gray-700">📌 <strong>Tipo:</strong> {seguimiento.tipo_contacto}</p>
-            <p className="text-gray-700">📅 <strong>Estado:</strong> {seguimiento.estado || "No disponible"}</p>
-            <p className="text-gray-700">📝 <strong>Comentario:</strong> {seguimiento.comentario}</p>
     
-        
-            <p className="text-gray-700">
-              <strong>Fecha de Gestión:</strong> {formatearFecha(seguimiento.created_at)}
-            </p>
-          </li>
-        ))}
-      </ul>
-    ) : (
-      <p className="text-gray-500">No hay seguimientos para este cliente.</p>
-    )}
-  </div>
-</div>
 
        
       </div>
 
-      <ClientesList consultarHistorial={handleConsultarHistorial} />
+      <ClientesList/>
       </div>
     </>
   );

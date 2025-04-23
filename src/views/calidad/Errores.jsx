@@ -113,7 +113,9 @@ export default function ErroresDashboard() {
             </div>
 
             {/* Tabla Comparativa */}
-            <div className="bg-white p-6 rounded-lg shadow-md mt-6">
+            <div className="grid grid-cols-1">
+
+                 <div className="bg-white p-6 rounded-lg shadow-md mt-6 col-span-1">
                 <h2 className="text-lg font-bold text-gray-700 mb-3">🔍 Comparación de Novedades por Departamento</h2>
                 <table className="min-w-full bg-white border border-gray-200">
                     <thead>
@@ -144,6 +146,8 @@ export default function ErroresDashboard() {
                     </tbody>
                 </table>
             </div>
+            </div>
+           
         </div>
     );
 }

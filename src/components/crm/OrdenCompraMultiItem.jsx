@@ -124,9 +124,10 @@ export default function OrdenCompraMultiItem({ onDetallesChange, errores = {} })
           <tr>
             {[
               "Acciones",
-              "Item",
+              "Item", 
+                 "Ancho cm",
               "Largo cm",
-              "Ancho cm",
+          
               "Calibre",
               "Peso Bolsa",
               "Número de Bolsas",
@@ -160,8 +161,9 @@ export default function OrdenCompraMultiItem({ onDetallesChange, errores = {} })
               <td className="px-2 sm:px-4 py-2 text-center">{row.observaciones}</td>
               {/* Columnas de inputs para: largo_cm, ancho_cm, calibre */}
               {[
-                { key: "largo_cm", type: "text" },
-                { key: "ancho_cm", type: "text" },
+              
+                { key: "ancho_cm", type: "text" }, 
+                 { key: "largo_cm", type: "text" },
                 { key: "calibre", type: "text" },
               ].map(({ key, type }) => (
                 <td key={key} className="px-2 sm:px-4 py-2">

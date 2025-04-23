@@ -28,6 +28,9 @@ const {vehiculos,obtenerVehiculos}=useVehiculos();
     responsable: "",
     observaciones: "",
     estado_general: "",
+
+
+
   });
 const [error, setErrors] = useState({});
   const handleChange = (e) => {
@@ -47,15 +50,23 @@ const [error, setErrors] = useState({});
             formData.append("responsable", form.responsable);
             formData.append("observaciones", form.observaciones);
             formData.append("estado_general", form.estado_general);
+            formData.append("fecha", form.fecha);
+            if (form.documento) {
+                formData.append("documento", form.documento);
+            }
+            
             
 
         const token = localStorage.getItem("token");
         const response = await clienteAxios.post(
             "/api/inspecciones",
-            form,
+            formData,
             {
             headers: {
+
+             "Content-Type": "multipart/form-data",
                 Authorization: `Bearer ${token}`,
+              
             },
             }
         );
@@ -69,6 +80,8 @@ const [error, setErrors] = useState({});
             responsable: "",
             observaciones: "",
             estado_general: "",
+            
+            documento: "",
         });
         } catch (error) {
         console.log("Error al registrar la inspección:", error);
@@ -117,7 +130,7 @@ onSubmit={handleSubmit}
             )}
         </div>
     
-        {/* <div>
+         <div>
             <label htmlFor="fecha" className="block mb-2 font-medium">
             Fecha
             </label>
@@ -132,7 +145,7 @@ onSubmit={handleSubmit}
             }`}
             />
             {error.fecha && <p className="text-red-500 text-sm">{error.fecha}</p>}
-        </div> */}
+        </div> 
     
         <div>
             <label htmlFor="responsable" className="block mb-2 font-medium">
@@ -194,6 +207,24 @@ onSubmit={handleSubmit}
             <p className="text-red-500 text-sm">{error.estado_general}</p>
             )}
         </div>
+        <div>
+  <label htmlFor="documento" className="block mb-2 font-medium">
+    Documento (opcional)
+  </label>
+  <input
+    type="file"
+    id="documento"
+    name="documento"
+    onChange={(e) => setForm({ ...form, documento: e.target.files[0] })}
+    className={`w-full border rounded-md p-2 ${
+      error.documento ? "border-red-500" : "border-gray-300"
+    }`}
+  />
+  {error.documento && (
+    <p className="text-red-500 text-sm">{error.documento}</p>
+  )}
+</div>
+
         <div className="flex justify-left">
             <button
             type="submit"

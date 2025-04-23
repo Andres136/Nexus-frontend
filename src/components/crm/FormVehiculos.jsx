@@ -16,6 +16,9 @@ export default function FormVehiculos() {
     estado: "",
     observaciones: "",
     foto: "",
+    licencia_transito: "",
+    conductor: "",
+
   });
 
   const handleChange = (e) => {
@@ -40,6 +43,9 @@ export default function FormVehiculos() {
       formData.append("kilometraje_actual", form.kilometraje_actual);
       formData.append("estado", form.estado);
       formData.append("observaciones", form.observaciones);
+      formData.append("licencia_transito", form.licencia_transito);
+      formData.append("conductor", form.conductor);
+      // Agregar la foto al FormData solo si existe
       if (form.foto) {
         formData.append("foto", form.foto);
       }
@@ -64,6 +70,8 @@ export default function FormVehiculos() {
         estado: "",
         observaciones: "",
         foto: "",
+        licencia_transito: "",
+        conductor: "",
       });
       setErrors({}); // Limpiar errores
     } catch (error) {
@@ -110,6 +118,27 @@ export default function FormVehiculos() {
               <p className="text-red-500 text-sm">{error.placa[0]}</p>
             )}
           </div>
+
+          <div className="mb-4"> 
+            <label className="block font-medium" htmlFor="licencia_transito">
+              Licencia de Transito
+            </label>
+            <input
+              id="licencia_transito"
+              type="text"
+              value={form.licencia_transito}
+              onChange={handleChange}
+              name="licencia_transito"
+              className="border border-gray-300 rounded-md p-2 w-full"
+              placeholder="Ingrese la licencia de transito del vehiculo"
+            />
+            {error.licencia_transito && (
+              <p className="text-red-500 text-sm">
+                {error.licencia_transito[0]}
+              </p>
+            )}
+          </div>
+
           <div className="mb-4">
             <label className="block font-medium" htmlFor="marca">
               Marca
@@ -186,6 +215,26 @@ export default function FormVehiculos() {
               <p className="text-red-500 text-sm">{error.anio[0]}</p>
             )}
           </div>
+
+           <div className="mb-4">
+            <label className="block font-medium" htmlFor="conductor">
+              Conductor
+            </label>
+            <input
+              id="conductor"
+              type="text"
+              value={form.conductor}
+              onChange={handleChange}
+              name="conductor"
+              className="border border-gray-300 rounded-md p-2 w-full"
+              placeholder="Ingrese el nombre del conductor"
+            />
+            {error.conductor && (
+              <p className="text-red-500 text-sm">{error.conductor[0]}</p>
+            )}
+          </div>
+
+
 
           <div className="mb-4">
             <label className="block font-medium" htmlFor="kilometraje_actual">

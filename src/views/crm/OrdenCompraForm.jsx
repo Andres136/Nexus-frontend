@@ -15,7 +15,7 @@ export default function OrdenCompraForm() {
  const [erroresDetalles, setErroresDetalles] = useState({
 
  });
- const { clientesTodos,setBusqueda,busqueda } = useClientes();  
+ const { clientesTodos,setBusqueda,busqueda,obtenerClientes } = useClientes();  
 
 
 

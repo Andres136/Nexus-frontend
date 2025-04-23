@@ -5,6 +5,8 @@ import clienteAxios from "../../config/axios";
 import useOrdenesTrabajo from "../../hooks/useOrdenesTrabajo";
 import { formatCurrency } from "../../helpers";
 import ApiInventario from "./ApiInventario";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 /** Factor para convertir cm a pulgadas */
 const FACTOR_PULGADA = 0.393701;
@@ -53,6 +55,7 @@ export default function DetallesOrdenTrabajo() {
   const { id } = useParams();
   const { ordenesTrabajo } = useOrdenesTrabajo();
 
+
   const [errores, setErrores] = useState({});
   const [observaciones, setObservaciones] = useState("");
   const [loading, setLoading] = useState(false);
@@ -63,7 +66,7 @@ export default function DetallesOrdenTrabajo() {
 
   // 2. Buscar la OT según el ID, ya que es un simple lookup
   const orden = ordenesTrabajo?.data?.find((o) => o.id === parseInt(id));
-
+console.log(orden);
   // 3. useEffect para setear detalles cuando tengamos la orden
   useEffect(() => {
     // Si no hay orden o no hay orden_compra, no hacemos nada todavía
@@ -116,13 +119,6 @@ export default function DetallesOrdenTrabajo() {
   };
 
   // 4. Si la orden no existe o no hay 'orden_compra', salimos:
-  // (Ojo: se hace DESPUÉS de los hooks)
-  if (!orden) {
-    return <p>Cargando orden o no se encontró la orden.</p>;
-  }
-  if (!orden.orden_compra) {
-    return <p>La orden no contiene una orden de compra.</p>;
-  }
 
   // 5. Manejo de cambios en los campos que recalculan o actualizan
   const handleChangeDetalle = (index, field, value) => {
@@ -230,6 +226,101 @@ if(!todosRevisados){
     }
   };
 
+
+  const cargarImagen = (url) =>
+    new Promise((resolve, reject) => {
+      const img = new Image();
+      img.src = url;
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+    });
+  
+  const handleGenerarPDF = async () => {
+    const doc = new jsPDF();
+  
+    try {
+      const logo = await cargarImagen("/public/images/SETAS.png");
+  
+      // Encabezado
+      doc.addImage(logo, "PNG", 10, 10, 40, 15);
+      doc.setFontSize(18);
+      doc.text("ORDEN DE TRABAJO", 105, 20, null, null, "center");
+  
+      doc.setFontSize(12);
+      doc.text(`Orden #${orden.id}`, 14, 35);
+      doc.text(`Cliente: ${orden.cliente?.nombre || "N/A"}`, 14, 41);
+      doc.text(`Fecha de entrega: ${orden.fecha_entrega}`, 14, 47);
+      doc.text(`Generado por el Asesor: ${orden.user?.name || "N/A"}`, 14, 53);
+  
+      // Tabla
+      const tableData = detalles.map((d) => [
+        d.observaciones || "",
+        d.ancho_cm,
+        d.largo_cm,
+        d.descripcion || "",
+        d.calibre,
+        d.cantidad_requerida_kg?.toFixed(2) || 0,
+        d.cantidad,
+        d.cantidadEnviada,
+        d.faltantesTemporal ?? d.faltantes,
+        formatCurrency(d.valor_unitario),
+        formatCurrency(d.valor_total),
+        
+        
+      ]);
+  
+      autoTable(doc, {
+        startY: 60,
+        head: [[
+          "Item", "Ancho", "Largo", "Descripcion","Calibre",   
+          "Cant. Req. (Kg)", "Cantidad", "Enviada", "Faltantes","Valor Unit.", "Valor Total"
+        ]],
+        body: tableData,
+        styles: { fontSize: 8 },
+      });
+  
+      // Observaciones
+      let y = doc.lastAutoTable.finalY + 10;
+      doc.setFontSize(12);
+      //colocamos el valor total
+      doc.text(`Valor Total: ${formatCurrency(orden.orden_compra.valor_total)}`, 14, y);
+      y += 10;
+      doc.text("Observaciones generales:", 14, y);
+      doc.setFontSize(10);
+      doc.text(doc.splitTextToSize(observaciones || "Sin observaciones", 180), 14, y + 6);
+  
+      // Descargar PDF
+      doc.save(`Orden_Trabajo_${orden.id}.pdf`);
+    } catch (error) {
+      console.error("Error al generar el PDF:", error);
+      toast.error("No se pudo cargar el logo o generar el PDF.");
+    }
+  };
+  const handleGuardarYGenerarPDF = async () => {
+    const todosRevisados = Object.values(revisados).every((value) => value);
+    if (!todosRevisados) {
+      toast.error("Por favor revisa todos los detalles antes de guardar");
+      return;
+    }
+  
+    try {
+      await handleGuardarOrden(); // ✅ Guarda
+      await handleGenerarPDF();   // 📄 Luego genera el PDF
+    } catch (error) {
+      console.error("Error al guardar y generar PDF", error);
+      toast.error("Error en el proceso, revisa la consola.");
+    }
+  };
+  
+    // (Ojo: se hace DESPUÉS de los hooks)
+  if (!orden) {
+    return <p>Cargando orden o no se encontró la orden.</p>;
+  }
+  if (!orden.orden_compra) {
+    return <p>La orden no contiene una orden de compra.</p>;
+  }
+
+  
   // 7. Render final
   return (
     <div className="p-6 bg-white rounded-xl">
@@ -253,14 +344,15 @@ if(!todosRevisados){
         <div className="col-span-1">
           <h3 className="text-xl font-semibold mt-6">Detalles</h3>
           <p className="text-gray-600">Fecha de Entrega: {orden.fecha_entrega}</p>
-          <p className="text-gray-600">Generado por: {orden.user?.name}</p>
+          <p className="text-gray-600">Generado por el Asesor: {orden.user?.name}</p>
           <div className="overflow-x-auto">
             <table className="w-full border border-gray-300 rounded-lg mt-2 min-w-full">
               <thead className="bg-gray-800 text-white text-sm">
                 <tr>
                   <th className="px-4 py-2 text-left">Item</th>
-                  <th className="px-4 py-2 text-left">Largo cm</th>
-                  <th className="px-4 py-2 text-left">Ancho cm</th>
+             
+                  <th className="px-4 py-2 text-left">Ancho cm</th>   
+                    <th className="px-4 py-2 text-left">Largo cm</th>
                   <th className="px-4 py-2 text-left">Calibre</th>
                   <th className="px-4 py-2 text-left">Cliente Clb</th>
                   <th className="px-4 py-2 text-left">Peso Bolsa</th>
@@ -286,16 +378,17 @@ if(!todosRevisados){
                         <input
                           type="number"
                           className="border border-gray-300 rounded px-1 w-20"
-                          value={detalle.largo_cm}
-                          onChange={(e) => handleChangeDetalle(index, "largo_cm", e.target.value)}
+                          value={parseInt(detalle.ancho_cm) || ""}
+                          onChange={(e) => handleChangeDetalle(index, "ancho_cm", e.target.value)}
                         />
                       </td>
                       <td className="px-4 py-2">
                         <input
                           type="number"
                           className="border border-gray-300 rounded px-1 w-20"
-                          value={detalle.ancho_cm}
-                          onChange={(e) => handleChangeDetalle(index, "ancho_cm", e.target.value)}
+                          value={parseInt(detalle.largo_cm) || ""}
+
+                          onChange={(e) => handleChangeDetalle(index, "largo_cm", e.target.value)}
                         />
                       </td>
                       <td className="px-4 py-2">
@@ -334,8 +427,9 @@ if(!todosRevisados){
                           ? detalle.faltantesTemporal
                           : detalle.faltantes}
                       </td>
-                      <td className="px-4 py-2 text-center">{formatCurrency(detalle.valor_unitario)}</td>
-                      <td className="px-4 py-2 text-center">{formatCurrency(detalle.valor_total)}</td>
+                      <td className="px-4 py-2 text-right">{formatCurrency(detalle.valor_unitario)}</td>
+<td className="px-4 py-2 text-right">{formatCurrency(detalle.valor_total)}</td>
+
                       <td className="px-4 py-2 text-center"> <input type="checkbox"
                          checked={revisados[detalle.id] || false}
                          onChange={() => handleCheckboxChange(detalle.id)} /></td>
@@ -346,6 +440,19 @@ if(!todosRevisados){
                 })}
               </tbody>
             </table>
+
+            {/*Valor Total*/ }
+            <div className="flex justify-end mt-4"></div>
+              <div className="flex items-center">
+                <span className="font-semibold">Valor Total:</span>
+                <div className="ml-2 text-lg font-bold">
+                  
+                  {orden.orden_compra.valor_total
+                    ? formatCurrency(orden.orden_compra.valor_total)
+                    : "0"}
+                </div>
+
+            </div>
           </div>
         </div>
       </div>
@@ -363,12 +470,14 @@ if(!todosRevisados){
       </div>
 
       <button
-        className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 mt-4"
-        onClick={handleGuardarOrden}
-        disabled={loading}
-      >
-        {loading ? "Guardando..." : "Guardar Cambios"}
-      </button>
+  className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 mt-4"
+  onClick={handleGuardarYGenerarPDF}
+  disabled={loading}
+>
+  {loading ? "Guardando..." : "💾 Guardar y Descargar PDF"}
+</button>
+
+
     </div>
   );
 }

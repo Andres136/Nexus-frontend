@@ -50,7 +50,7 @@ const direccionRef = useRef(null);
 const nitRef = useRef(null);
 
 async function registrarCliente(e) {
-    setErrores({});
+   
     e.preventDefault();
 
     const token = localStorage.getItem("token");

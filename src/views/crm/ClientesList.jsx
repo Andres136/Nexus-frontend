@@ -4,11 +4,13 @@ import Modal from "../../components/calidad/Modal";
 import UpdateClientes from "../../components/crm/UpdateClientes";
 import { useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
-
+import { useFormatoFecha } from "../../hooks/useFormatoFecha";
+import ModalClienteHistorial from "../../components/crm/ModalClienteHistorial";
 import Swal from "sweetalert2";
 import GestionarClientes from "../../components/crm/GestionarClientes";
 
-export default function ClientesList({ onClose,consultarHistorial }) {
+
+export default function ClientesList({ onClose}) {
 const {user}=useAuth({middleware:'auth'});
 
   const {
@@ -27,6 +29,12 @@ const {user}=useAuth({middleware:'auth'});
   const [isUserModalOpen, setUserModalOpen] = useState(false);
   const [isGestionarModalOpen, setGestionarModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const { formatearFecha } = useFormatoFecha();
+  const { consultarHistorialCliente } = useClientes();
+
+const [clienteHistorial, setClienteHistorial] = useState(null);
+
+
 
   return (
     <>
@@ -151,10 +159,17 @@ const {user}=useAuth({middleware:'auth'});
                         />
                       </Modal>
 
-                     <button
-                     className="w-full sm:w-auto max-w-full bg-gray-700 text-white px-3 py-1 rounded-lg flex items-center gap-2 hover:bg-green-700 transition"
-                     onClick={async()=> consultarHistorial(cliente.id)}>Historial
-                     <FaHistory/></button>
+                      <button
+  onClick={async () => {
+    const historial = await consultarHistorialCliente(cliente.id);
+    console.log(historial); // debería mostrar el objeto completo
+    setClienteHistorial(historial);
+  }}
+  className="w-full sm:w-auto max-w-full bg-gray-700 text-white px-3 py-1 rounded-lg flex items-center gap-2 hover:bg-green-700 transition"
+>
+  Historial <FaHistory />
+</button>
+
                     </td>
                   </tr>
                 ))
@@ -197,7 +212,15 @@ const {user}=useAuth({middleware:'auth'});
             Siguiente
           </button>
         </div>
+
       </div>
+      <ModalClienteHistorial
+  isOpen={clienteHistorial !== null}
+  onClose={() => setClienteHistorial(null)}
+  cliente={clienteHistorial}
+  formatearFecha={formatearFecha}
+/>
+
     </>
   );
 }

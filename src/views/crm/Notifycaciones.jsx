@@ -95,7 +95,7 @@ export default function Notificaciones() {
     NuevaTareaAsignada: "Nueva tarea asignada",
     OrdenCompraNotificacion: "Nueva orden de compra",
     OrdenesPorVencerNotificacion: "Órdenes por vencer",
-    pqrNotificaciones: "Nuevo mensaje de PQR",
+    pqrNotifycaciones: "Nuevo mensaje de PQR",
 
       // Agrega más según tus notificaciones
     };

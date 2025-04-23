@@ -231,8 +231,8 @@ export default function DetallesOrdenesCompra() {
                 <tr>
                   <th className="border border-gray-300 px-2 py-1">Acciones</th>
                   <th className="border border-gray-300 px-2 py-1">Item</th>
-                  <th className="border border-gray-300 px-2 py-1">Largo cm</th>
-                  <th className="border border-gray-300 px-2 py-1">Ancho cm</th>
+                 <th className="border border-gray-300 px-2 py-1">Ancho cm</th>
+                 <th className="border border-gray-300 px-2 py-1">Largo cm</th>  
                   <th className="border border-gray-300 px-2 py-1">Calibre</th>
                   <th className="border border-gray-300 px-2 py-1">Peso Bolsa</th>
                   <th className="border border-gray-300 px-2 py-1"># Bolsas</th>
@@ -265,17 +265,7 @@ export default function DetallesOrdenesCompra() {
                         className="w-full border border-gray-300 rounded px-1"
                       />
                     </td>
-                    {/* Largo */}
-                    <td className="border border-gray-300 px-2 py-1">
-                      <input
-                        type="number"
-                        value={detalle.largo_cm}
-                        onChange={(e) =>
-                          handleChangeDetalle(index, "largo_cm", e.target.value)
-                        }
-                        className="w-full border border-gray-300 rounded px-1"
-                      />
-                    </td>
+              
                     {/* Ancho */}
                     <td className="border border-gray-300 px-2 py-1">
                       <input
@@ -283,6 +273,16 @@ export default function DetallesOrdenesCompra() {
                         value={detalle.ancho_cm}
                         onChange={(e) =>
                           handleChangeDetalle(index, "ancho_cm", e.target.value)
+                        }
+                        className="w-full border border-gray-300 rounded px-1"
+                      />      {/* Largo */}
+          
+                    </td>          <td className="border border-gray-300 px-2 py-1">
+                      <input
+                        type="number"
+                        value={detalle.largo_cm}
+                        onChange={(e) =>
+                          handleChangeDetalle(index, "largo_cm", e.target.value)
                         }
                         className="w-full border border-gray-300 rounded px-1"
                       />
