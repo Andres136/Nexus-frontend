@@ -10,11 +10,11 @@ export default function Navbar() {
   const { logout, user } = useAuth({ middleware: "auth" });
 
   const navLinks = [
-    { name: "Inicio", to: "/", icon: Home, allowedRoles: [1] },
+    { name: "Inicio", to: "/", icon: Home, allowedRoles: [1,10,11] },
     { name: "Procesos", to: "/auth/procesos", icon: FolderKanban, alwaysVisible: true },
-    { name: "Tareas", to: "/admin/tareas", icon: ListChecks, allowedRoles: [1, 2] },
-    { name: "Novedades", to: "/admin/errores", icon: Bell, allowedRoles: [1, 2] },
-    { name: "CRM", to: "/auth/crm", icon: Building2, allowedRoles: [1, 4, 5, 6, 7, 9] },
+    { name: "Tareas", to: "/admin/tareas", icon: ListChecks, allowedRoles: [1, 2,10,11] },
+    { name: "Novedades", to: "/admin/errores", icon: Bell, allowedRoles: [1, 2,10,11] },
+    { name: "CRM", to: "/auth/crm", icon: Building2, allowedRoles: [1, 4, 5, 6, 7, 9,10,11] },
   ];
 
   const filteredNavLinks = navLinks.filter(

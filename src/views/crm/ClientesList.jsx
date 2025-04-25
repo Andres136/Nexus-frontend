@@ -1,8 +1,9 @@
 import { FaEdit, FaTrash, FaTasks, FaSearch,FaHistory } from "react-icons/fa";
 import { useClientes } from "../../hooks/useClientes";
+import { useDebounce } from "../../hooks/useDebounce";
 import Modal from "../../components/calidad/Modal";
 import UpdateClientes from "../../components/crm/UpdateClientes";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { useFormatoFecha } from "../../hooks/useFormatoFecha";
 import ModalClienteHistorial from "../../components/crm/ModalClienteHistorial";
@@ -25,7 +26,8 @@ const {user}=useAuth({middleware:'auth'});
   
     
   } = useClientes();
-
+const debouncedBusqueda = useDebounce(busqueda, 400);
+const [loading, setLoading] = useState(false);
   const [isUserModalOpen, setUserModalOpen] = useState(false);
   const [isGestionarModalOpen, setGestionarModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -35,6 +37,12 @@ const {user}=useAuth({middleware:'auth'});
 const [clienteHistorial, setClienteHistorial] = useState(null);
 
 
+  // Cuando cambie debouncedBusqueda, recargamos página 1
+  useEffect(() => {
+    setLoading(true);
+    obtenerClientes(1, debouncedBusqueda)
+      .finally(() => setLoading(false));
+  }, [debouncedBusqueda]);
 
   return (
     <>
@@ -47,13 +55,14 @@ const [clienteHistorial, setClienteHistorial] = useState(null);
             placeholder="Buscar cliente..."
             className="border px-3 py-2 rounded-lg w-full"
             value={busqueda}
-            onChange={(e) => {
-              setBusqueda(e.target.value);
-              obtenerClientes(1, e.target.value);
-            }}
+            onChange={e => setBusqueda(e.target.value)}
+     
           />
+            {loading && (
+        <div className="mb-4 text-center text-gray-600">Cargando...</div>
+      )}
         </div>
-
+      
         {/* Tabla Responsiva */}
         <div className="grid grid-cols-1 overflow-x-auto">
           <table className=" col-span-1 w-full min-w-[600px] border-collapse border border-gray-300 shadow-lg">
