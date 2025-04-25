@@ -3,6 +3,7 @@ import clienteAxios from "../../config/axios";
 import { toast } from "react-toastify";
 import { useProveedores } from "../../hooks/useProveedores";
 import DetallesOrdenCompraProveedores from "../../components/crm/DetallesOrdenCompraProveedores";
+import { Link } from "react-router-dom";
 
 
 export default function FormOrdenesProveedores() {
@@ -82,7 +83,12 @@ export default function FormOrdenesProveedores() {
 
   return (
     <div className="grid grid-cols-1 bg-white rounded-xl">
-
+  <Link
+        to="/auth/crm/proveedores"
+        className="m-4 inline-block bg-gray-300 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-400 transition duration-200 text-sm "
+      >
+        ← Volver
+      </Link>
       <div className="col-span-1">
       <h2 className="text-2xl font-bold mb-4">Registrar orden de Compra</h2>
 

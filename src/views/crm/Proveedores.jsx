@@ -2,6 +2,7 @@ import { useState,useEffect } from "react"
 import clienteAxios from "../../config/axios"
 import { toast } from "react-toastify"
 import Swal from "sweetalert2"
+import { Link } from "react-router-dom"
 
 export default function Proveedores() {
 
@@ -123,6 +124,22 @@ useEffect(() => {
   return (
     <div className="container mx-auto mt-10">
       <h1 className="text-2xl font-bold mb-4">Proveedores</h1>
+
+       {/* 🔗 Botones de enlace arriba del formulario */}
+  <div className="flex flex-col sm:flex-row gap-4 mb-6">
+    <Link
+      to="/auth/crm/proveedores-ordenes-compra"
+      className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-center"
+    >
+      Registrar Orden de Compra
+    </Link>
+    <Link
+      to="/auth/crm/ordenes-compra-proveedor"
+      className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded text-center"
+    >
+      Ver Órdenes Registradas
+    </Link>
+  </div>
       <form onSubmit={handleSubmit} className="mb-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <input

@@ -1,6 +1,7 @@
 
 import { useEffect, useState } from "react"
 import { Trash2 } from "lucide-react"
+import { Link } from "react-router-dom"
 
 export default function DetallesOrdenCompraProveedores({ onChange, errores = {} }) {
   const [detalles, setDetalles] = useState([
@@ -39,6 +40,8 @@ export default function DetallesOrdenCompraProveedores({ onChange, errores = {} 
 
   return (
     <div className="mt-8">
+
+      
       <h3 className="text-xl font-semibold mb-4">Detalles de Productos</h3>
 
       <table className="min-w-full text-sm border border-gray-300 bg-white rounded shadow overflow-x-auto">

@@ -100,18 +100,18 @@ export default function Crm() {
       icon: UserGroupIcon,
       roles: [1, 4, 5, 6],
     },
-    {
-      name: "crear-ordenes-compra-proveedor",
-      to: "/auth/crm/proveedores-ordenes-compra",
-      icon: Package2Icon,
-      roles: [1, 4, 5, 6],
-    },
-    {
-      name: "ordenes-compra-proveedor",
-      to: "/auth/crm/ordenes-compra-proveedor",
-      icon: Package,
-      roles: [1, 4, 5, 6],
-    },
+    // {
+    //   name: "crear-ordenes-compra-proveedor",
+    //   to: "/auth/crm/proveedores-ordenes-compra",
+    //   icon: Package2Icon,
+    //   roles: [1, 4, 5, 6],
+    // },
+    // {
+    //   name: "ordenes-compra-proveedor",
+    //   to: "/auth/crm/ordenes-compra-proveedor",
+    //   icon: Package,
+    //   roles: [1, 4, 5, 6],
+    // },
   ];
 
 

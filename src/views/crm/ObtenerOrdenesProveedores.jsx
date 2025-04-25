@@ -1,5 +1,5 @@
 import { useProveedores } from "../../hooks/useProveedores";
-import {  useNavigate } from "react-router-dom";
+import {  Link, useNavigate } from "react-router-dom";
 
 export default function ObtenerOrdenesProveedores() {
   const navigate = useNavigate();
@@ -24,7 +24,12 @@ export default function ObtenerOrdenesProveedores() {
 
       <div className="col-span-1">
       <h2 className="text-2xl font-bold mb-4">Órdenes de Compra Proveedores</h2>
-
+      <Link
+        to="/auth/crm/proveedores"
+        className="m-4 inline-block bg-gray-300 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-400 transition duration-200 text-sm "
+      >
+        ← Volver
+      </Link>
       <div className="mb-4 flex gap-2">
         <input
           type="text"
