@@ -28,7 +28,7 @@ const fetcher = (url) => {
   
 export function useClientes() {
 const{user}=useAuth({middleware:'auth'});
-const [clientes, setClientes] = useState([]);
+
 const [error, setErrores] = useState({});
 const [paginaActual, setPaginaActual] = useState(1);
 const [totalPaginas, setTotalPaginas] = useState(1);
@@ -36,11 +36,25 @@ const[busqueda, setBusqueda]=useState('');
 const [historialCliente, setHistorialCliente] = useState([]);
 const[clientesTodos, setClientesTodos]=useState([]);
 
- // Usamos SWR para manejar los clientes
- const { data, mutate } = useSWR(`/api/clientes`, fetcher,{
-    refreshInterval:60000,
- });
- // Refs para capturar los valores del formulario
+
+// Verifica si el usuario es admin (rol 1 o 7)
+const esAdmin = user?.role_id === 1 || user?.role_id === 7;
+
+// Define la ruta base según el rol
+const rutaBase = esAdmin ? "/api/clientes" : "/api/clientes-registro-user";
+
+// Arma la URL final con paginación y búsqueda
+const url = user ? `${rutaBase}?page=${paginaActual}&search=${busqueda}` : null;
+
+// SWR se ejecuta solo si `url` no es null
+const { data, mutate, isLoading } = useSWR(url, fetcher, {
+  refreshInterval: 60000,
+});
+
+// Extraer los datos si están disponibles
+const clientes = data?.data || [];
+ // usar data.data porque así lo devuelve tu API
+
 
 const id_user =useRef(null);    
 const nombreRef = useRef(null);
@@ -74,17 +88,14 @@ async function registrarCliente(e) {
         toast.success(response.data.message);
         const clienteNuevo = response.data.cliente;
 
-        // Actualizar el estado local para que se vea inmediatamente
-        setClientes(prev => [clienteNuevo, ...prev]);
-
-        // Actualizar la caché de SWR sin hacer refetch
-        mutate(current => {
-            if (!current || !current.data) return current;
+        mutate(async current => {
+            if (!current || !current.data) return { data: [clienteNuevo] };
             return {
-                ...current,
-                data: [clienteNuevo, ...current.data]
+              ...current,
+              data: [clienteNuevo, ...current.data]
             };
-        }, false);
+          }, false);
+          
 
         // Limpiar los campos del formulario
         nombreRef.current.value = "";
@@ -120,7 +131,7 @@ const obtenerClientes = async (page = 1, search = "") => {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      setClientes(response.data.data);
+   
       setPaginaActual(response.data.current_page);
       setTotalPaginas(response.data.last_page);
      //Actualizar la cache de SWR
