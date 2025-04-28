@@ -37,6 +37,7 @@ import FormOrdenesProveedores from "../views/crm/FormOrdenesProveedores";
 import ObtenerOrdenesProveedores from "../views/crm/ObtenerOrdenesProveedores";
 
 import RegistrarEntregaProveedor from "../views/crm/RegistrarEntregaProveedor";
+import LineaTiempo from "../views/calidad/LineaTiempo";
 
 export default function Router() {
   return (
@@ -84,7 +85,7 @@ export default function Router() {
       <Route path="/admin" element={<AdminLayout />}>
         <Route path="users" element={<GestionUsers />} />
         <Route path="tareas" element={<Tareas />} />
-        <Route path="errores" element={<Errores />} />
+        <Route path="rendimientos" element={<LineaTiempo/>} />
         <Route path="departamentos" element={<DepartatamentosUpdate />} />
       </Route>
     </Route>
