@@ -27,6 +27,7 @@
     "react-router-dom": "^7.1.1",
     "react-select": "^5.10.0",
     "react-toastify": "^11.0.3",
+    "react-vertical-timeline-component": "^3.5.3",
     "recharts": "^2.15.1",
     "sweetalert2": "^11.16.0",
     "swr": "^2.3.0",

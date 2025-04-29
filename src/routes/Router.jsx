@@ -39,6 +39,8 @@ import ObtenerOrdenesProveedores from "../views/crm/ObtenerOrdenesProveedores";
 import RegistrarEntregaProveedor from "../views/crm/RegistrarEntregaProveedor";
 import KpiTareas from "../components/calidad/KpiTareas";
 
+
+
 export default function Router() {
   return (
     <Routes>
@@ -85,7 +87,7 @@ export default function Router() {
       <Route path="/admin" element={<AdminLayout />}>
         <Route path="users" element={<GestionUsers />} />
         <Route path="tareas" element={<Tareas />} />
-        <Route path="errores" element={<Errores />} />
+       <Route path="errores" element={<Errores />} />
         <Route path="departamentos" element={<DepartatamentosUpdate />} />
         <Route path="rendimiento" element={<KpiTareas />} />
       </Route>
