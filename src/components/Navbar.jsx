@@ -15,6 +15,7 @@ export default function Navbar() {
     { name: "Tareas", to: "/admin/tareas", icon: ListChecks, allowedRoles: [1, 2,10,11] },
     { name: "Novedades", to: "/admin/errores", icon: Bell, allowedRoles: [1, 2,10,11] },
     { name: "CRM", to: "/auth/crm", icon: Building2, allowedRoles: [1, 4, 5, 6, 7, 9,10,11] },
+    {name: "KPI", to: "rendimiento", icon: Building2, allowedRoles: [1, 2,10,11] },
   ];
 
   const filteredNavLinks = navLinks.filter(
