@@ -52,6 +52,11 @@ export default function Router() {
       <Route path="/auth" element={<AuthLyout />}>
         <Route path="procesos" element={<DepartamentosPage />} />
         <Route path="procesos/:departamentoId" element={<ProcesosDepartamento />} />
+          <Route path="rendimiento" element={<KpiTareas />} />
+          <Route path="tareas" element={<Tareas />} />
+       <Route path="errores" element={<Errores />} />
+        <Route path="departamentos" element={<DepartatamentosUpdate />} />
+     
       </Route>
   
       <Route path="/auth/crm" element={<Crm />}>
@@ -86,10 +91,7 @@ export default function Router() {
     <Route element={<ProtectedRoute allowedRoles={[1]} />}>
       <Route path="/admin" element={<AdminLayout />}>
         <Route path="users" element={<GestionUsers />} />
-        <Route path="tareas" element={<Tareas />} />
-       <Route path="errores" element={<Errores />} />
-        <Route path="departamentos" element={<DepartatamentosUpdate />} />
-        <Route path="rendimiento" element={<KpiTareas />} />
+       
       </Route>
     </Route>
   

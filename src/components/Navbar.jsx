@@ -12,9 +12,9 @@ export default function Navbar() {
   const navLinks = [
     { name: "Inicio", to: "/", icon: Home, allowedRoles: [1,10,11] },
     { name: "Procesos", to: "/auth/procesos", icon: FolderKanban, alwaysVisible: true },
-    { name: "Tareas", to: "/admin/tareas", icon: ListChecks, allowedRoles: [1, 2,10,11] },
-    { name: "Novedades", to: "/admin/errores", icon: Bell, allowedRoles: [1, 2,10,11] },
-    { name: "CRM", to: "/auth/crm", icon: Building2, allowedRoles: [1, 4, 5, 6, 7, 9,10,11] },
+    { name: "Tareas", to: "tareas", icon: ListChecks, allowedRoles: [1,2, 10,11] },
+    { name: "Novedades", to: "errores", icon: Bell, allowedRoles: [1,2, 10,11] },
+    { name: "CRM", to: "/auth/crm", icon: Building2, allowedRoles: [1,2, 4, 5, 6, 7, 9,10,11] },
     {name: "KPI", to: "rendimiento", icon: Building2, allowedRoles: [1, 2,10,11] },
   ];
 
