@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import ClienteAxios from "../../config/axios";
 
-import { useEffect, useState } from "react";
+
 
 export default function Notificaciones() {
   // 🧠 Helper para obtener el nombre corto de la clase
