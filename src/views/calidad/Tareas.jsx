@@ -38,7 +38,7 @@ export default function Tareas() {
     const token = localStorage.getItem("token");
     try {
       const nuevoEstado = estado_id === 1 ? 2 : 1;
-      await clienteAxios.put(
+      await clienteAxios.patch(
         `/api/tareas/estado/${id}`,
         { estado_id: nuevoEstado },
         { headers: { Authorization: `Bearer ${token}` } }
@@ -93,6 +93,7 @@ export default function Tareas() {
               <h3 className="text-lg font-semibold">
                 De: {tarea.departamentos?.nombre}
               </h3>
+              <h3 className="text-lg font-semibold">Codigo de La Tarea {tarea.id}</h3>
               <h3 className="text-lg font-semibold">{tarea.nombre}</h3>
               <p className="text-gray-600">{tarea.descripcion}</p>
 
@@ -119,16 +120,18 @@ export default function Tareas() {
 
               {/* Botón para cambiar estado */}
               <div className="mt-4">
-                <button
-                  className={`px-4 py-2 text-sm font-medium rounded-lg w-full ${
-                    tarea.estado_id === 1
-                      ? "bg-gray-500 text-white hover:bg-green-600"
-                      : "bg-green-500 text-white hover:bg-gray-600"
-                  }`}
-                  onClick={() => cambiarEstado(tarea.id, tarea.estado_id)}
-                >
-                  {tarea.estado_id === 1 ? "Pendiente" : "Completado"}
-                </button>
+              <button
+  className={`px-4 py-2 text-sm font-medium rounded-lg w-full transition ${
+    tarea.estado_id === 1
+      ? "bg-gray-500 text-white hover:bg-green-600 cursor-pointer"
+      : "bg-green-300 text-white cursor-not-allowed"
+  }`}
+  onClick={() => cambiarEstado(tarea.id, tarea.estado_id)}
+  disabled={tarea.estado_id !== 1}
+>
+  {tarea.estado_id === 1 ? "Pendiente" : "Completado"}
+</button>
+
               </div>
             </div>
           ))

@@ -114,39 +114,52 @@ export default function ErroresDashboard() {
 
             {/* Tabla Comparativa */}
             <div className="grid grid-cols-1">
+  <div className="bg-white p-4 md:p-6 rounded-lg shadow-md mt-6 col-span-1 overflow-x-auto">
+    <h2 className="text-lg font-bold text-gray-700 mb-3">
+      🔍 Comparación de Novedades por Departamento
+    </h2>
 
-                 <div className="bg-white p-6 rounded-lg shadow-md mt-6 col-span-1">
-                <h2 className="text-lg font-bold text-gray-700 mb-3">🔍 Comparación de Novedades por Departamento</h2>
-                <table className="min-w-full bg-white border border-gray-200">
-                    <thead>
-                        <tr className="bg-gray-100 text-gray-600 uppercase text-sm leading-normal">
-                            <th className="py-3 px-6 text-left">Departamento</th>
-                            <th className="py-3 px-6 text-center">Mes Anterior</th>
-                            <th className="py-3 px-6 text-center">Mes Actual</th>
-                            <th className="py-3 px-6 text-center">Diferencia</th>
-                        </tr>
-                    </thead>
-                    <tbody className="text-gray-700 text-sm">
-                        {kpis.erroresPorProcesoMesActual.map((actual) => {
-                            const anterior = kpis.erroresPorProcesoMesAnterior.find(e => e.departamento_id === actual.departamento_id) || { total: 0 };
-                            const diferencia = actual.total - anterior.total;
+    <div className="w-full overflow-x-auto">
+      <table className="min-w-full bg-white border border-gray-200 text-sm">
+        <thead>
+          <tr className="bg-gray-100 text-gray-600 uppercase text-xs md:text-sm leading-normal">
+            <th className="py-3 px-4 md:px-6 text-left whitespace-nowrap">Departamento</th>
+            <th className="py-3 px-4 md:px-6 text-center whitespace-nowrap">Mes Anterior</th>
+            <th className="py-3 px-4 md:px-6 text-center whitespace-nowrap">Mes Actual</th>
+            <th className="py-3 px-4 md:px-6 text-center whitespace-nowrap">Diferencia</th>
+          </tr>
+        </thead>
+        <tbody className="text-gray-700">
+          {kpis.erroresPorProcesoMesActual.map((actual) => {
+            const anterior = kpis.erroresPorProcesoMesAnterior.find(
+              (e) => e.departamento_id === actual.departamento_id
+            ) || { total: 0 };
+            const diferencia = actual.total - anterior.total;
 
-                            return (
-                                <tr key={actual.departamento_id} className="border-b border-gray-200 hover:bg-gray-100">
-                                    <td className="py-3 px-6">{actual.departamento_nombre}</td>
-                                    <td className="py-3 px-6 text-center">{anterior.total}</td>
-                                    <td className="py-3 px-6 text-center">{actual.total}</td>
-                                    <td className={`py-3 px-6 text-center font-semibold 
-                                        ${diferencia >= 0 ? "text-green-500" : "text-red-500"}`}>
-                                        {diferencia}
-                                    </td>
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
-            </div>
-            </div>
+            return (
+              <tr
+                key={actual.departamento_id}
+                className="border-b border-gray-200 hover:bg-gray-50"
+              >
+                <td className="py-3 px-4 md:px-6">{actual.departamento_nombre}</td>
+                <td className="py-3 px-4 md:px-6 text-center">{anterior.total}</td>
+                <td className="py-3 px-4 md:px-6 text-center">{actual.total}</td>
+                <td
+                  className={`py-3 px-4 md:px-6 text-center font-semibold ${
+                    diferencia >= 0 ? "text-green-500" : "text-red-500"
+                  }`}
+                >
+                  {diferencia}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
            
         </div>
     );
