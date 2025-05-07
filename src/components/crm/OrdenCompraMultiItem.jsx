@@ -245,7 +245,7 @@ export default function OrdenCompraMultiItem({ onDetallesChange, errores = {} })
               {/* Columna de Valor Unitario */}
               <td className="px-2 sm:px-4 py-2">
                 <input
-                  type="text"
+                  type="number"
                   className="w-full border border-gray-300 px-1 sm:px-2 py-1 rounded text-center text-xs sm:text-sm"
                   value={row.valor_unitario}
                   onChange={(e) =>
