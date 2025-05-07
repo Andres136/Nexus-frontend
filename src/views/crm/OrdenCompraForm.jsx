@@ -15,7 +15,7 @@ export default function OrdenCompraForm() {
  const [erroresDetalles, setErroresDetalles] = useState({
 
  });
- const { clientesTodos,setBusqueda,busqueda,obtenerClientes } = useClientes();  
+ const { clientesTodos,setBusqueda,busqueda, } = useClientes();  
 
 
 
@@ -71,6 +71,16 @@ const handleDetallesChange = useCallback((detallesActualizados) => {
 
         console.log("Respuesta del servidor:", response.data.message);
         toast.success(response.data.message);
+
+ const ordenId = response.data.orden_compra_id;
+ // Asegúrate de que Laravel retorne el ID
+const link = document.createElement('a');
+link.href = `${import.meta.env.VITE_API_URL}/api/orden-compras/${ordenId}/pdf`;
+link.setAttribute('download', `orden_compra_${ordenId}.pdf`);
+document.body.appendChild(link);
+link.click();
+link.remove();
+
 
         // Limpiar el formulario después de un envío exitoso
         setFormData({
