@@ -1,121 +1,20 @@
 import { formatCurrency } from "../../helpers";
-import { useState, useEffect } from "react";
+
 import { Trash2, Plus } from "lucide-react";
+import useOrdenCompraItems from "../../hooks/useOrdenCompraItems";
 
-// Factor para convertir cm a pulgadas
-const FACTOR_PULGADA = 0.393701;
 
-// Genera un ID único para cada fila
-function generateUUID() {
-  return crypto.randomUUID();
-}
 
-// Función para crear una nueva fila con campos iniciales
-function createNewItem(itemNumber) {
-  return {
-    // Clave interna para React; NO se reusa para numerar ítems.
-    _uuid: generateUUID(),
-    // Este "itemNumber" es el que mostrarás como "Item 1, Item 2, ..."
-    itemNumber,
-    id: null,
-    orden_compra_id: "", // ID de la orden de compra
-    largo_cm: 0,
-    ancho_cm: 0,
-    calibre: 0,
-    cantidad: "",
-    valor_unitario: 0,
-    peso_bolsa: 0,
-    numero_bolsas: 0,
-    cliente_clb: 0,
-    cantidad_requerida_kg: 0,
-    descripcion: "",
-    valor_total: 0,
-    observaciones: `${itemNumber}`,
-  };
-}
 
-export default function OrdenCompraMultiItem({ onDetallesChange, errores = {} }) {
-  console.log("Errores:", errores);
-  // Estado para manejar las filas de la tabla
-  const [rows, setRows] = useState([createNewItem(1)]);
 
-  // Función para realizar los cálculos en una fila
-  const updateRowCalculations = (row) => {
-    const largo_cm = parseFloat(row.largo_cm) || 0;
-    const ancho_cm = parseFloat(row.ancho_cm) || 0;
-    const calibre = parseFloat(row.calibre) || 0;
-    const cantidad = parseFloat(row.cantidad) || 0;
-    const valor_unitario = parseFloat(row.valor_unitario) || 0;
 
-    let peso_bolsa = 0;
-    let numero_bolsas = 0;
-    let cantidad_requerida_kg = 0;
-    let valor_total = 0;
-
-    if (largo_cm > 0 && ancho_cm > 0 && calibre > 0) {
-      const largoIn = Math.round(largo_cm * FACTOR_PULGADA);
-      const anchoIn = Math.round(ancho_cm * FACTOR_PULGADA);
-      const resultado = Math.round((largoIn * anchoIn * 302) / 10);
-      peso_bolsa = Math.ceil((resultado * calibre) / 1000); // Peso en gramos
-
-      if (peso_bolsa > 0) {
-        numero_bolsas = Math.max(1, Math.round(1000 / peso_bolsa));
-        cantidad_requerida_kg = Math.ceil(cantidad * peso_bolsa) / 1000;
-      }
-    }
-
-    valor_total = cantidad * valor_unitario * 1.19;
-
-    return { peso_bolsa, numero_bolsas, cantidad_requerida_kg, valor_total };
-  };
-
-  // Manejar cambios en los inputs usando _uuid
-  const handleInputChange = (_uuid, field, value) => {
-    const newRows = rows.map((row) => {
-      if (row._uuid === _uuid) {
-        const updatedRow = { ...row, [field]: value };
-        const calculations = updateRowCalculations(updatedRow);
-        return { ...updatedRow, ...calculations };
-      }
-      return row;
-    });
-
-    setRows(newRows);
-  };
-
-  // Enviar los detalles al componente principal cada vez que rows cambie
-  useEffect(() => {
-    if (rows.length > 0) {
-      onDetallesChange(rows);
-    }
-  }, [rows, onDetallesChange]);
-
-  // Escuchar cambios en errores para limpiar el componente (si aplica)
-  useEffect(() => {
-    if (Object.keys(errores).length === 0) {
-      setRows([createNewItem(1)]);
-    }
-  }, [errores]);
-
-  // Agregar una nueva fila con itemNumber = rows.length + 1
-  const addRow = () => {
-    const newItemNumber = rows.length + 1;
-    setRows([...rows, createNewItem(newItemNumber)]);
-  };
-
-  // Eliminar una fila y reenumerar itemNumber y observaciones usando _uuid
-  const removeRow = (_uuid) => {
-    let newRows = rows.filter((row) => row._uuid !== _uuid);
-
-    // Reenumerar desde 1
-    newRows = newRows.map((row, index) => ({
-      ...row,
-      itemNumber: index + 1,
-      observaciones: `${index + 1}`,
-    }));
-
-    setRows(newRows);
-  };
+export default function OrdenCompraMultiItem({ onDetallesChange, errores = {}, value = [] }) {
+  const { rows, handleInputChange, addRow, removeRow } = useOrdenCompraItems({
+    errores,
+    onChange: onDetallesChange,
+    initialItems: value,
+  });
+ 
 
   return (
     <div className="overflow-x-auto mt-4">

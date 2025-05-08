@@ -58,7 +58,8 @@ export default function ObtenerOrdenesCompra() {
           <th className="border border-gray-300 px-4 py-2">Estado</th>
           <th className="border border-gray-300 px-4 py-2">Observaciones</th>
           <th className="border border-gray-300 px-4 py-2">Dirección de Entrega</th>
-          <th className="border border-gray-300 px-4 py-2">Detalles</th>
+      
+
         </tr>
       </thead>
       <tbody>
@@ -93,6 +94,7 @@ export default function ObtenerOrdenesCompra() {
                 Ver
               </Link>
             </td>
+   
           </tr>
         ))}
       </tbody>

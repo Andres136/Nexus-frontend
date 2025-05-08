@@ -100,12 +100,12 @@ export default function Crm() {
       icon: UserGroupIcon,
       roles: [1,2, 4, 5, 6, 10,11],
     },
-    // {
-    //   name: "crear-ordenes-compra-proveedor",
-    //   to: "/auth/crm/proveedores-ordenes-compra",
-    //   icon: Package2Icon,
-    //   roles: [1, 4, 5, 6],
-    // },
+    {
+      name: "Mis Ordenes de Compra",
+      to: "/auth/crm/mis-ordenes",
+      icon: Package2Icon,
+      roles: [1,  7, 9],
+    },
     // {
     //   name: "ordenes-compra-proveedor",
     //   to: "/auth/crm/ordenes-compra-proveedor",

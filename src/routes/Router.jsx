@@ -38,6 +38,8 @@ import ObtenerOrdenesProveedores from "../views/crm/ObtenerOrdenesProveedores";
 
 import RegistrarEntregaProveedor from "../views/crm/RegistrarEntregaProveedor";
 import KpiTareas from "../components/calidad/KpiTareas";
+import CotizacionForm from "../views/crm/CotizacionForm";
+import MisOrdenesComerciales from "../views/crm/MisOrdenesComerciales";
 
 
 
@@ -70,6 +72,11 @@ export default function Router() {
         <Route path="/auth/crm/vehiculos-inspecciones" element={<InspecionVehiculos />} />
         <Route path="/auth/crm/vehiculos-all" element={<ListarVehiculos />} />
         <Route path="/auth/crm/vehiculos/:id/editar" element={<EditarVehiculo/>} />
+ 
+<Route
+  path="/auth/crm/editar-compra/:id"
+  element={<OrdenCompraForm modo="edicion" />}
+/>
 
         <Route path="gestion-clientes" element={<GestionClientes />} />
         <Route path="reporte-inventarios" element={<Inventarios />} />
@@ -84,6 +91,8 @@ export default function Router() {
         <Route path="proveedores-ordenes-compra" element={<FormOrdenesProveedores/>} />
         <Route path="ordenes-compra-proveedor" element={<ObtenerOrdenesProveedores/>} />
         <Route path="/auth/crm/ordenes-proveedor-entregas/:id/registrar-entrega" element={<RegistrarEntregaProveedor />} />
+        <Route path="cotizaciones" element={<CotizacionForm/>} />
+        <Route path="mis-ordenes" element={<MisOrdenesComerciales/>} />
       </Route>
     </Route>
   
