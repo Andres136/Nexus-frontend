@@ -32,8 +32,8 @@ export default function MisOrdenesComerciales() {
       {isLoading && <p>Cargando...</p>}
       {isError && <p className="text-red-500">Error al cargar las órdenes</p>}
 
-      <div className="overflow-x-auto">
-        <table className="w-full border border-gray-300">
+      <div className=" grid grid-cols-1 ">
+        <table className="w-full border border-gray-300 col-span-1">
           <thead className="bg-gray-800 text-white text-sm">
             <tr>
               <th className="px-4 py-2 border">ID</th>

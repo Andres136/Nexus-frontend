@@ -96,7 +96,9 @@ return (
                             <th className="px-2 py-1">Cantidad Requerida (Kg)</th>
                             <th className="px-2 py-1">Descripcion</th>
                             <th className="px-2 py-1">Cantidad</th>
+                            <th className="px-2 py-1">Precio Paquete</th>
                             <th className="px-2 py-1">Precio Total</th>
+                            
                             <th className="px-2 py-1">Valor Unitario</th>
                             <th className="px-2 py-1">Valor Total</th>
                         </tr>
@@ -117,6 +119,8 @@ return (
                                 <td className="text-center">{row.cantidad_requerida_kg.toFixed(2)}</td>
                                 <td><input className="border w-full" value={row.descripcion} onChange={(e) => handleInputChange(row._uuid, "descripcion", e.target.value)} /></td>
                                 <td><input className="border w-full" value={row.cantidad} onChange={(e) => handleInputChange(row._uuid, "cantidad", e.target.value)} /></td>
+                                <td className="text-right text-indigo-700">{row.precio_paquete.toFixed(2)}</td>
+
                                 <td className="text-right">
                                     <input
                                         type="number"

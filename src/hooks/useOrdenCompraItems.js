@@ -99,7 +99,7 @@ function createNewItem(n) {
     cantidad_requerida_kg: 0,
     valor_total: 0,
     observaciones: `${n}`,
-    cliente_clb: "",
+    cliente_clb: 0,
     descripcion: "",
   };
 }
@@ -124,7 +124,7 @@ function updateRow(row) {
   const peso_bolsa = calcularPesoBolsaNegocio(largo, ancho, calibre);
   const numero_bolsas = peso_bolsa ? Math.round(1000 / peso_bolsa) : 0;
   const kg_requeridos = peso_bolsa ? Math.ceil(cantidad * peso_bolsa) / 1000 : 0;
-  const valor_total = cantidad * unit * 1.19;
+  const valor_total = cantidad * unit;
 
   return { peso_bolsa, numero_bolsas, cantidad_requerida_kg: kg_requeridos, valor_total };
 }

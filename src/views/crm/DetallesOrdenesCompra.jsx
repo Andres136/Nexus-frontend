@@ -34,7 +34,7 @@ function calcularCampos(detalle) {
     }
   }
 
-  valor_total = cantidad * unitario * 1.19; 
+  valor_total = cantidad * unitario ; 
 
   return {
     peso_bolsa,

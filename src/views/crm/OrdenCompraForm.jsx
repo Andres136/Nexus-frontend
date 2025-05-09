@@ -426,7 +426,7 @@ export default function OrdenCompraForm({ modo }) {
       </h2>
 
       <div className="mb-4">
-  {/* {modo === "edicion" ? (
+  {modo === "edicion" ? (
     <Link
       to="/auth/crm/mis-ordenes"
       className="inline-block bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-800 transition"
@@ -440,13 +440,7 @@ export default function OrdenCompraForm({ modo }) {
     >
       Crear Cotización
     </Link>
-  )} */}
-   <Link
-      to="/auth/crm/mis-ordenes"
-      className="inline-block bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-800 transition"
-    >
-      ← Regresar a Mis Órdenes
-    </Link>
+  )}
 </div>
 
 

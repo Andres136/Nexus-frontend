@@ -30,7 +30,7 @@ export default function OrdenCompraMultiItem({ onDetallesChange, errores = {}, v
               "Calibre",
               "Peso Bolsa",
               "Número de Bolsas",
-              "Cliente",
+              "Cliente Clb",
               "Cantidad Requerida (Kg)",
               "Descripcion",
               "Cantidad",
