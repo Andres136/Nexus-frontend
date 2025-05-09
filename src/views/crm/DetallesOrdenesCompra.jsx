@@ -206,6 +206,10 @@ export default function DetallesOrdenesCompra() {
         <p className="text-gray-500 font-extrabold">
           Asesor Comercial: {ordenSeleccionada?.user?.name || "No disponible"}
         </p>
+        <p className="text-gray-500 font-extrabold">
+    Observacione s: {ordenSeleccionada?.observaciones || "No disponible"} 
+        </p>
+
       
         </div>
        <Link
