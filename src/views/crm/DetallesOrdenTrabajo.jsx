@@ -24,6 +24,9 @@ export default function DetallesOrdenTrabajo() {
       <h2 className="text-2xl font-bold mb-4">
         Orden de Trabajo #{orden.id} - {orden.cliente?.nombre}
       </h2>
+      <p className="text-gray-600 mb-2">
+     Observaciones de la Orden de Compra: {orden.observaciones}
+      </p>
 
       <TablaDetallesOrden
         detalles={detalles}
