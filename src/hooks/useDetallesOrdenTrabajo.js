@@ -3,7 +3,6 @@ import { useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 
-import useOrdenesTrabajo from "./useOrdenesTrabajo";
 import { formatCurrency } from "../helpers";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -54,14 +53,31 @@ const cargarImagen = (url) =>
 
 export default function useDetallesOrdenTrabajo() {
   const { id } = useParams();
-  const { ordenesTrabajo } = useOrdenesTrabajo();
-  const orden = ordenesTrabajo?.data?.find((o) => o.id === parseInt(id));
+  const [orden, setOrden] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const [errores, setErrores] = useState({});
   const [observaciones, setObservaciones] = useState("");
-  const [loading, setLoading] = useState(false);
+
   const [revisados, setRevisados] = useState({});
   const [detalles, setDetalles] = useState([]);
+  useEffect(() => {
+    const fetchOrden = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await clienteAxios.get(`/api/orden-trabajo/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setOrden(response.data);
+      } catch (error) {
+        toast.error("No se pudo cargar la orden de trabajo.");
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    fetchOrden();
+  }, [id]);
 
   useEffect(() => {
     if (!orden || !orden.orden_compra) return;
@@ -188,6 +204,7 @@ export default function useDetallesOrdenTrabajo() {
         d.largo_cm,
         d.descripcion || "",
         d.calibre,
+        d.cliente_clb,
         d.cantidad_requerida_kg?.toFixed(2) || 0,
         d.cantidad,
         d.cantidadEnviada,
@@ -199,7 +216,7 @@ export default function useDetallesOrdenTrabajo() {
       autoTable(doc, {
         startY: 60,
         head: [[
-          "Item", "Ancho", "Largo", "Descripcion", "Calibre",
+          "Item", "Ancho", "Largo", "Descripcion", "Calibre"," Cliente CLB",
           "Cant. Req. (Kg)", "Cantidad", "Enviada", "Faltantes",
           "Valor Unit.", "Valor Total"
         ]],

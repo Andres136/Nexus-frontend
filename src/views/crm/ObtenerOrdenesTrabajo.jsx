@@ -1,6 +1,7 @@
 import { FaSearch } from "react-icons/fa";
 import useOrdenesTrabajo from "../../hooks/useOrdenesTrabajo";
 import { Link } from "react-router-dom";
+import { useEffect } from "react";
 
 export default function ObtenerOrdenesTrabajo() {
   const {
@@ -13,6 +14,10 @@ export default function ObtenerOrdenesTrabajo() {
     setBusqueda,
   } = useOrdenesTrabajo();
 console.log('ordenesTrabajo',ordenesTrabajo);
+useEffect(() => {
+  setPagina(1);
+}, [busqueda]);
+
   if (isLoading) return <p>Cargando órdenes de trabajo...</p>;
   if (error) return <p className="text-red-500">Error: {error.message}</p>;
 

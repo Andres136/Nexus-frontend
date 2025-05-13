@@ -6,6 +6,7 @@ export default function useOrdenesTrabajo() {
   const [busqueda, setBusqueda] = useState("");
   const [pagina, setPagina] = useState(1);
 
+
   // Función para obtener órdenes de trabajo con paginación y búsqueda
   const fetchOrdenesTrabajo = async () => {
     try {

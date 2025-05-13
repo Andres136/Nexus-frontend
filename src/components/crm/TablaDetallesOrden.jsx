@@ -11,7 +11,8 @@ export default function TablaDetallesOrden({
 }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full border border-gray-300 rounded-lg mt-2 min-w-full">
+ <table className="min-w-max w-full border border-gray-300 rounded-lg mt-2">
+
         <thead className="bg-gray-800 text-white text-sm">
           <tr>
             {["Item", "Ancho cm", "Largo cm", "Calibre", "Cliente Clb", "Peso Bolsa", "# Bolsas",
