@@ -27,6 +27,7 @@ export default function DetallesOrdenTrabajo() {
       <p className="text-gray-600 mb-2">
      Observaciones de la Orden de Compra: {orden.observaciones}
       </p>
+ 
 <div className="grid grid-cols-1 gap-4">
   <div className="col-span-1">
      <TablaDetallesOrden
