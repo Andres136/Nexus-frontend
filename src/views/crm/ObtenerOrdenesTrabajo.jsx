@@ -12,11 +12,18 @@ export default function ObtenerOrdenesTrabajo() {
     setPagina,
     busqueda,
     setBusqueda,
+    fecha,
+  setFecha,
   } = useOrdenesTrabajo();
-console.log('ordenesTrabajo',ordenesTrabajo);
+  const limpiarFiltros = () => {
+    setBusqueda("");
+    setFecha("");
+    setPagina(1);
+  };
+  
 useEffect(() => {
   setPagina(1);
-}, [busqueda]);
+}, [busqueda, fecha]);
 
   if (isLoading) return <p>Cargando órdenes de trabajo...</p>;
   if (error) return <p className="text-red-500">Error: {error.message}</p>;
@@ -28,16 +35,35 @@ useEffect(() => {
    <h2 className="text-2xl font-bold mb-4">Órdenes de Trabajo</h2>
      
 
-         <div className="flex items-center mb-4">
-             <FaSearch className="text-gray-500 mr-2" />
-             <input
-               type="text"
-               placeholder="Buscar orden de Trabajo..."
-               className="border px-3 py-2 rounded-lg w-full"
-               value={busqueda}
-               onChange={(e) => setBusqueda(e.target.value)}
-             />
-           </div>
+   <div className="flex items-center gap-4 mb-4">
+  <div className="flex items-center w-full">
+    <FaSearch className="text-gray-500 mr-2" />
+    <input
+      type="text"
+      placeholder="Buscar por cliente..."
+      autoFocus
+      className="border px-3 py-2 rounded-lg w-full"
+      value={busqueda}
+      onChange={(e) => setBusqueda(e.target.value)}
+    />
+  </div>
+
+  <div className="w-full">
+    <input
+      type="date"
+      className="border px-3 py-2 rounded-lg w-full"
+      value={fecha}
+      onChange={(e) => setFecha(e.target.value)}
+    />
+  </div>
+  <button
+    onClick={limpiarFiltros}
+    className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg"
+  >
+    Limpiar
+  </button>
+</div>
+
 
        
 

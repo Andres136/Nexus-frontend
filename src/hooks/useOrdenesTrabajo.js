@@ -1,23 +1,22 @@
-import { useQuery} from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import clienteAxios from "../config/axios";
+
 
 export default function useOrdenesTrabajo() {
   const [busqueda, setBusqueda] = useState("");
   const [pagina, setPagina] = useState(1);
+  const [fecha, setFecha] = useState(""); // ← NUEVO
 
-
-  // Función para obtener órdenes de trabajo con paginación y búsqueda
   const fetchOrdenesTrabajo = async () => {
     try {
       const token = localStorage.getItem("token");
       const response = await clienteAxios.get(
-        `/api/ordenes-trabajo?page=${pagina}&search=${busqueda}`,
+        `/api/ordenes-trabajo?page=${pagina}&search=${busqueda}&fecha=${fecha}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-
       return response.data;
     } catch (error) {
       console.error("Error obteniendo órdenes de trabajo:", error);
@@ -30,9 +29,9 @@ export default function useOrdenesTrabajo() {
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["ordenes-trabajo", pagina, busqueda],
+    queryKey: ["ordenes-trabajo", pagina, busqueda, fecha],
     queryFn: fetchOrdenesTrabajo,
-    staleTime: 20000, // 20 segundos
+    staleTime: 20000,
   });
 
   return {
@@ -43,5 +42,7 @@ export default function useOrdenesTrabajo() {
     setPagina,
     busqueda,
     setBusqueda,
+    fecha,         // ← NUEVO
+    setFecha       // ← NUEVO
   };
 }

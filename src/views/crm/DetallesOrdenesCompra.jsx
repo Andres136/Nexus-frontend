@@ -189,6 +189,7 @@ export default function DetallesOrdenesCompra() {
     }
   };
 
+
   return (
     <div className="min-h-screen  text-gray-900 p-6">
 

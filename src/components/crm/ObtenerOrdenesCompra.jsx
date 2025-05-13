@@ -3,6 +3,8 @@ import { useEffect } from "react";
 import useSystem from "../../hooks/useSystem";
 import { FaSearch } from "react-icons/fa";
 import { Link } from "react-router-dom";
+import clienteAxios from "../../config/axios";
+import Swal from "sweetalert2";
 
 export default function ObtenerOrdenesCompra() {
  
@@ -22,6 +24,52 @@ export default function ObtenerOrdenesCompra() {
   useEffect(() => {
     refetchOrdenesCompra();
   }, [busquedaOrdenesCompra]);
+
+  //Eliminar ordenes de compra
+  const eliminarOrdenCompra = async (id) => {
+    const confirmacion = await Swal.fire({
+      title: "¿Eliminar orden de compra?",
+      text: "Esta acción no se puede deshacer",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar",
+    });
+  
+    if (!confirmacion.isConfirmed) return;
+  
+    try {
+      const token = localStorage.getItem("token");
+      const response = await clienteAxios.delete(`/api/orden-compras/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+  
+      Swal.fire({
+        title: "¡Eliminada!",
+        text: response.data.message || "Orden eliminada con éxito.",
+        icon: "success",
+      });
+  
+      refetchOrdenesCompra();
+    } catch (error) {
+      // Captura mensaje del backend si viene
+      const status = error.response?.status;
+      const mensaje = error.response?.data?.error || "Ocurrió un error inesperado.";
+  
+      Swal.fire({
+        title: "No se pudo eliminar",
+        text:
+          status === 403
+            ? mensaje // Mensaje personalizado desde el backend
+            : "Hubo un problema al intentar eliminar la orden.",
+        icon: "error",
+      });
+    }
+  };
+  
+  
 
   return (
     <>
@@ -94,6 +142,12 @@ export default function ObtenerOrdenesCompra() {
               >
                 Ver
               </Link>
+              <button
+                onClick={() => eliminarOrdenCompra(orden.id)}
+                className="w-full bg-red-700 text-white px-3 py-1 rounded hover:bg-gray-700 text-center mt-2"
+              >
+                Eliminar
+              </button>
             </td>
    
           </tr>
