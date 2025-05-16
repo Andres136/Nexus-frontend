@@ -153,136 +153,129 @@ export default function OrdenCompraForm({ modo }) {
 
   return (
     <div className="p-6 bg-white rounded-xl">
-      <h2 className="text-2xl font-bold mb-4">
-        {modo === "edicion" ? "Editar Orden de Compra" : "Crear Orden de Compra"}
-      </h2>
+   <h2 className="text-2xl font-bold mb-4">
+  {modo === "edicion" ? "Editar Orden de Compra" : "Crear Orden de Compra"}
+</h2>
 
-      <div className="mb-4">
-  {/* {modo === "edicion" ? (
-    <Link
-      to="/auth/crm/mis-ordenes"
-      className="inline-block bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-800 transition"
-    >
-      ← Regresar a Mis Órdenes
-    </Link>
-  ) : (
-    <Link
-      to="/auth/crm/cotizaciones"
-      className="inline-block bg-green-700 text-white px-4 py-2 rounded hover:bg-gray-800 transition"
-    >
-      Crear Cotización
-    </Link>
-  )} */}
-      <Link
-      to="/auth/crm/mis-ordenes"
-      className="inline-block bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-800 transition"
-    >
-      ← Regresar a Mis Órdenes
-    </Link>
+<div className="flex gap-2 mb-4">
+  <Link
+    to="/auth/crm/mis-ordenes"
+    className="inline-flex items-center gap-2 bg-gray-700 hover:bg-gray-800 text-white text-sm font-medium px-4 py-2 rounded transition"
+  >
+    ← Mis Órdenes
+  </Link>
+
+  <Link
+    to="/auth/crm/cotizaciones"
+    className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 rounded transition"
+  >
+    📄 Crear Cotizaciones
+  </Link>
 </div>
 
 
+
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Fecha de Entrega
-          </label>
-          <input
-            type="date"
-            name="fecha_entrega"
-            value={formData.fecha_entrega}
-            onChange={handleInputChange}
-            className="w-full border border-gray-300 px-2 py-1 rounded"
-          />
-          {errores.fecha_entrega && (
-            <span className="text-sm text-red-500">{errores.fecha_entrega}</span>
-          )}
-        </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700">
+        Fecha de Entrega
+        </label>
+        <input
+        type="date"
+        name="fecha_entrega"
+        value={formData.fecha_entrega}
+        onChange={handleInputChange}
+        className="w-full border border-gray-300 px-2 py-1 rounded"
+        />
+        {errores.fecha_entrega && (
+        <span className="text-sm text-red-500">{errores.fecha_entrega}</span>
+        )}
+      </div>
 
-        <div className="p-5">
-          <input
-            type="text"
-            placeholder="Buscar Clientes"
-            value={busqueda}
-            onChange={(e) => {
-              setBusqueda(e.target.value);
-            }}
-            className="border p-2 w-full mb-2 rounded"
-          />
+      <div className="p-5">
+        <input
+        type="text"
+        placeholder="Buscar Clientes"
+        value={busqueda}
+        onChange={(e) => {
+          setBusqueda(e.target.value);
+        }}
+        className="border p-2 w-full mb-2 rounded"
+        />
 
-          <select
-            className="w-full border border-gray-300 px-3 py-1 rounded"
-            name="cliente_id"
-            value={formData.cliente_id}
-            onChange={handleInputChange}
-          >
-            <option value="">Seleccionar Cliente</option>
-            {clientesTodos.length > 0 ? (
-              clientesTodos.map((cliente) => (
-                <option key={cliente.id} value={cliente.id}>
-                  {cliente.nombre}
-                </option>
-              ))
-            ) : (
-              <option value="" disabled>No se encontraron clientes</option>
-            )}
-          </select>
-          {errores.cliente_id && (
-            <span className="text-sm text-red-500">{errores.cliente_id}</span>
-          )}
-        </div>
+        <select
+        className="w-full border border-gray-300 px-3 py-1 rounded"
+        name="cliente_id"
+        value={formData.cliente_id}
+        onChange={handleInputChange}
+        >
+        <option value="">Seleccionar Cliente</option>
+        {clientesTodos.length > 0 ? (
+          clientesTodos.map((cliente) => (
+          <option key={cliente.id} value={cliente.id}>
+            {cliente.nombre}
+          </option>
+          ))
+        ) : (
+          <option value="" disabled>No se encontraron clientes</option>
+        )}
+        </select>
+        {errores.cliente_id && (
+        <span className="text-sm text-red-500">{errores.cliente_id}</span>
+        )}
+      </div>
 
-        <div className="col-span-2">
-          <label className="block text-sm font-medium text-gray-700">
-            Ubicación de Entrega
-          </label>
-          <input
-            type="text"
-            name="ubicacion_entrega"
-            placeholder="Dirección de entrega y número de contacto"
-            value={formData.ubicacion_entrega}
-            onChange={handleInputChange}
-            className="w-full border border-gray-300 px-2 py-1 rounded"
-          />
-          {errores.ubicacion_entrega && (
-            <span className="text-sm text-red-500">{errores.ubicacion_entrega}</span>
-          )}
-        </div>
+      <div className="col-span-2">
+        <label className="block text-sm font-medium text-gray-700">
+        Ubicación de Entrega
+        </label>
+        <input
+        type="text"
+        name="ubicacion_entrega"
+        placeholder="Dirección de entrega y número de contacto"
+        value={formData.ubicacion_entrega}
+        onChange={handleInputChange}
+        className="w-full border border-gray-300 px-2 py-1 rounded"
+        />
+        {errores.ubicacion_entrega && (
+        <span className="text-sm text-red-500">{errores.ubicacion_entrega}</span>
+        )}
+      </div>
 
-        <div className="col-span-2">
-          <label className="block text-sm font-medium text-gray-700">
-            Observaciones
-          </label>
-          <textarea
-            name="observaciones"
-            value={formData.observaciones}
-            placeholder="Información adicional sobre la orden"
-            onChange={handleInputChange}
-            className="w-full border border-gray-300 px-2 py-1 rounded"
-          />
-          {errores.observaciones && (
-            <span className="text-sm text-red-500">{errores.observaciones}</span>
-          )}
-        </div>
+      <div className="col-span-2">
+        <label className="block text-sm font-medium text-gray-700">
+        Observaciones
+        </label>
+        <textarea
+        name="observaciones"
+        value={formData.observaciones}
+        placeholder="Información adicional sobre la orden"
+        onChange={handleInputChange}
+        className="w-full border border-gray-300 px-2 py-1 rounded"
+        />
+        {errores.observaciones && (
+        <span className="text-sm text-red-500">{errores.observaciones}</span>
+        )}
+      </div>
 
-        <div className="col-span-2">
-          <OrdenCompraMultiItem
-            onDetallesChange={handleDetallesChange}
-            errores={erroresDetalles}
-            value={formData.detalles}
-          />
-        </div>
+      <div className="col-span-2">
+        <OrdenCompraMultiItem
+        onDetallesChange={handleDetallesChange}
+        errores={erroresDetalles}
+        value={formData.detalles}
+        />
+      </div>
       </div>
 
       <div className="flex justify-end mt-4">
-        <button
-          onClick={enviarOrden}
-          className="bg-green-700 text-white px-4 py-2 rounded hover:bg-gray-600"
-        >
-          {modo === "edicion" ? "Actualizar Orden" : "Guardar Orden"}
-        </button>
+      <button
+        onClick={enviarOrden}
+        className="bg-green-700 text-white px-4 py-2 rounded hover:bg-gray-600"
+      >
+        {modo === "edicion" ? "Actualizar Orden" : "Guardar Orden"}
+      </button>
       </div>
     </div>
-  );
+    );
 }
 

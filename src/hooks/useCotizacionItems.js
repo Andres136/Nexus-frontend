@@ -1,201 +1,130 @@
-// import { useState, useEffect } from "react";
-
-// const FACTOR_PULGADA   = 0.393701; // cm → in
-// const FACTOR_CONSTANTE = 302;      // factor empírico
-
-// function generateUUID() {
-//   return crypto.randomUUID();
-// }
-
-// function createNewItem(itemNumber) {
-//   return {
-//     _uuid: generateUUID(),
-//     item: itemNumber,
-//     largo_cm: 0,
-//     ancho_cm: 0,
-//     calibre: 0,
-//     cantidad: 1,
-//     precio_total: 0,
-//     valor_unitario: 0,
-//     valor_total: 0,
-//     peso_bolsa: 0,
-//     numero_bolsas: 0,
-//     cantidad_requerida_kg: 0,
-//     descripcion: "",
-//     cliente_clb: "",
-//     observaciones: ""
-//   };
-// }
-
-// /* ---------- CÁLCULOS ACTUALIZADOS ---------- */
-// function updateRowCalculations(row) {
-//   const largo_cm     = parseFloat(row.largo_cm)     || 0;
-//   const ancho_cm     = parseFloat(row.ancho_cm)     || 0;
-//   const calibre      = parseFloat(row.calibre)      || 0;
-//   const cantidad     = parseFloat(row.cantidad)     || 0;
-//   const precio_total = parseFloat(row.precio_total) || 0;
-
-//   let peso_bolsa            = 0; // g
-//   let numero_bolsas         = 0; // bolsas por kg
-//   let cantidad_requerida_kg = 0; // kg totales
-//   let valor_unitario        = 0; // $
-//   let valor_total           = 0; // $
-
-//   /* --- 1. Peso de la bolsa --- */
-//   if (largo_cm > 0 && ancho_cm > 0 && calibre > 0) {
-//     const largoIn = Math.round(largo_cm * FACTOR_PULGADA);
-//     const anchoIn = Math.round(ancho_cm * FACTOR_PULGADA);
-
-//     // Fórmula de planta
-//     const resultado = largoIn * anchoIn * FACTOR_CONSTANTE * calibre;
-
-//     // “Correr la coma” → dividir entre 10 000 y TRUNCAR
-//     peso_bolsa = Math.max(1, Math.floor(resultado / 10_000)); // g
-
-//     /* --- 2. Bolsas por kilo y kg requeridos --- */
-//     numero_bolsas         = Math.round(1000 / peso_bolsa);          // bolsas por kg
-//     cantidad_requerida_kg = Math.ceil(cantidad * peso_bolsa) / 1000; // kg
-//   }
-
-//   /* --- 3. Valores monetarios --- */
-//   if (precio_total > 0 && numero_bolsas > 0) {
-//     valor_unitario = precio_total / numero_bolsas;
-//   }
-//   valor_total = cantidad * valor_unitario * 1.19; // incluye IVA 19 %
-
-//   return {
-//     peso_bolsa,
-//     numero_bolsas,
-//     cantidad_requerida_kg,
-//     valor_unitario,
-//     valor_total
-//   };
-// }
-// /* ------------------------------------------- */
-
-// export default function useCotizacionItems({ errores = {}, onChange }) {
-//   const [rows, setRows] = useState([createNewItem(1)]);
-
-//   const handleInputChange = (_uuid, field, value) => {
-//     setRows(rows.map(row => {
-//       if (row._uuid !== _uuid) return row;
-//       const updated      = { ...row, [field]: value };
-//       const calculations = updateRowCalculations(updated);
-//       return { ...updated, ...calculations };
-//     }));
-//   };
-
-//   const addRow = () =>
-//     setRows([...rows, createNewItem(rows.length + 1)]);
-
-//   const removeRow = (_uuid) =>
-//     setRows(
-//       rows
-//         .filter(r => r._uuid !== _uuid)
-//         .map((r, i) => ({ ...r, item: i + 1 }))
-//     );
-
-//   useEffect(() => { onChange?.(rows); }, [rows]);
-//   useEffect(() => { if (!Object.keys(errores).length) setRows([createNewItem(1)]); }, [errores]);
-
-//   return { rows, handleInputChange, addRow, removeRow };
-// }
 import { useState, useEffect } from "react";
 
-const FACTOR_PULGADA   = 0.393701; // cm → in
-const FACTOR_CONSTANTE = 302;      // factor empírico
+const FACTOR_PULGADA = 0.393701;
+const FACTOR_CONSTANTE = 302;
 
 function generateUUID() {
   return crypto.randomUUID();
 }
 
-function createNewItem(itemNumber) {
+function createItem(index) {
   return {
     _uuid: generateUUID(),
-    item: itemNumber,
-    largo_cm: 0,
-    ancho_cm: 0,
-    calibre: 0,
-    cantidad: 1,
-    precio_total: 0,       // precio por kg
-    valor_unitario: 0,     // precio por bolsa (antes de IVA)
-    precio_paquete: 0,     // NUEVO: precio neto por la cantidad de bolsas
-    valor_total: 0,        // total con IVA
+    item: index,
+    ancho_cm: "",
+    largo_cm: "",
+    calibre: "",
     peso_bolsa: 0,
     numero_bolsas: 0,
-    cantidad_requerida_kg: 0,
-    descripcion: "",
+    precio_total: "", // precio del kilo (opcional)
+    valor_unitario: 0,
+    cantidad: "", // número de unidades
+    valor_paquete: 0,
+    valor_total: 0,
     cliente_clb: "",
+    cantidad_requerida_kg: "",
+    descripcion: "",
     observaciones: ""
   };
 }
+function calcularValores(item) {
+  const ancho = parseFloat(item.ancho_cm) || 0;
+  const largo = parseFloat(item.largo_cm) || 0;
+  const calibre = parseFloat(item.calibre) || 0;
+  let precioKilo = parseFloat(item.precio_total) || 0;
+  const cantidad = parseFloat(item.cantidad) || 0;
+  const manual_unitario = item.valor_unitario !== "" ? parseFloat(item.valor_unitario) : 0;
 
-/* ---------- CÁLCULOS ACTUALIZADOS ---------- */
-function updateRowCalculations(row) {
-  const largo_cm     = parseFloat(row.largo_cm)     || 0;
-  const ancho_cm     = parseFloat(row.ancho_cm)     || 0;
-  const calibre      = parseFloat(row.calibre)      || 0;
-  const cantidad     = parseFloat(row.cantidad)     || 0;
-  const precioKilo   = parseFloat(row.precio_total) || 0; // esto es $/kg
+  let peso_bolsa = 0;
+  let numero_bolsas = 0;
+  let valor_unitario = 0;
+  let valor_paquete = 0;
+  let valor_total = 0;
 
-  // 1) CÁLCULO DE BOLSAS (para mostrar peso y núm. bolsas)
-  let peso_bolsa = 0, numero_bolsas = 0;
-  if (largo_cm && ancho_cm && calibre) {
-    const inA = Math.round(ancho_cm * FACTOR_PULGADA);
-    const inL = Math.round(largo_cm * FACTOR_PULGADA);
-    const res = inA * inL * FACTOR_CONSTANTE * calibre;
-    peso_bolsa    = Math.max(1, Math.floor(res / 10_000)); // en g
-    numero_bolsas = Math.round(1000 / peso_bolsa);         // bolsas por kg
+  if (ancho > 0 && largo > 0 && calibre > 0) {
+    const anchoIn = ancho * FACTOR_PULGADA;
+    const largoIn = largo * FACTOR_PULGADA;
+    const resultado = anchoIn * largoIn * calibre * FACTOR_CONSTANTE;
+    peso_bolsa = parseFloat((resultado / 10000).toFixed(2));
+    numero_bolsas = peso_bolsa > 0 ? Math.floor(1000 / peso_bolsa) : 0;
   }
 
-  // 2) PRECIO POR BOLSA (usando bolsas/kg)
-  const valor_unitario = numero_bolsas
-    ? precioKilo / numero_bolsas
-    : 0;
+  let fueCalculadoUnitario = false;
 
-  // 3) PRECIO NETO DEL PAQUETE (independiente de kilos):
-  //    simplemente cantidad de unidades × precio por unidad
-  const precio_paquete = cantidad * valor_unitario;
+  // Si hay precio por kilo y bolsas, calcular automáticamente
+  if (precioKilo > 0 && numero_bolsas > 0) {
+    valor_unitario = parseFloat((precioKilo / numero_bolsas).toFixed(2));
+    fueCalculadoUnitario = true;
+  }
 
-  // 4) TOTAL CON IVA 19% (si lo quieres sobre el paquete):
-  const valor_total = precio_paquete * 1.19;
+  // Si no se calculó y hay unitario manual
+ /* if (!fueCalculadoUnitario && manual_unitario > 0) {
+    valor_unitario = manual_unitario;
+
+    if (numero_bolsas === 0) numero_bolsas = 1;
+    if (precioKilo === 0) precioKilo = manual_unitario;
+  }*/
+    if (!fueCalculadoUnitario && manual_unitario > 0) {
+      valor_unitario = manual_unitario;
+    
+      // Establecemos precio_total explícitamente si viene solo valor_unitario
+      if (numero_bolsas === 0) {
+        numero_bolsas = 1;
+        precioKilo = manual_unitario; // <-- 👈 evita que precio_total se quede vacío
+      }
+    }
+    
+  if (valor_unitario > 0 && cantidad > 0) {
+    valor_paquete = parseFloat((valor_unitario * cantidad).toFixed(2));
+    valor_total = parseFloat((valor_paquete * 1.19).toFixed(2));
+  }
 
   return {
-    peso_bolsa,        // seguirás mostrando esto
-    numero_bolsas,     // y esto
-    valor_unitario,    // precio por bolsa
-    precio_paquete,    // precio neto del paquete
-    valor_total        // paquete + IVA
+    peso_bolsa,
+    numero_bolsas,
+    valor_unitario,
+    valor_paquete,
+    valor_total,
+    precio_total: parseFloat(precioKilo.toFixed(2)),
+    fueCalculadoUnitario
   };
 }
 
 
-/* ------------------------------------------- */
+export default function useCotizacionItems({ errores = {}, onChange, initialRows = [] }) {
+  const [rows, setRows] = useState(initialRows.length ? initialRows : [createItem(1)]);
 
-export default function useCotizacionItems({ errores = {}, onChange }) {
-  const [rows, setRows] = useState([createNewItem(1)]);
+  useEffect(() => {
+    if (initialRows.length) {
+      setRows(initialRows);
+    }
+  }, [initialRows]);
+ 
 
-  const handleInputChange = (_uuid, field, value) => {
-    setRows(rows.map(row => {
-      if (row._uuid !== _uuid) return row;
-      const updated      = { ...row, [field]: value };
-      const calculations = updateRowCalculations(updated);
-      return { ...updated, ...calculations };
-    }));
-  };
-
-  const addRow = () =>
-    setRows([...rows, createNewItem(rows.length + 1)]);
-
-  const removeRow = (_uuid) =>
-    setRows(
-      rows
-        .filter(r => r._uuid !== _uuid)
-        .map((r, i) => ({ ...r, item: i + 1 }))
+  const updateItem = (_uuid, field, value) => {
+    setRows((prev) =>
+      prev.map((item) => {
+        if (item._uuid !== _uuid) return item;
+        const actualizado = { ...item, [field]: value };
+        return { ...actualizado, ...calcularValores(actualizado) };
+      })
     );
+  };
 
-  useEffect(() => { onChange?.(rows); }, [rows]);
-  useEffect(() => { if (!Object.keys(errores).length) setRows([createNewItem(1)]); }, [errores]);
+  const addItem = () => {
+    setRows((prev) => [...prev, createItem(prev.length + 1)]);
+  };
 
-  return { rows, handleInputChange, addRow, removeRow };
+  const removeItem = (_uuid) => {
+    setRows((prev) =>
+      prev.filter((item) => item._uuid !== _uuid).map((item, i) => ({ ...item, item: i + 1 }))
+    );
+  };
+
+  useEffect(() => {
+    onChange?.(rows);
+  }, [rows]);
+
+  return { rows, updateItem, addItem, removeItem,  };
 }
+export {calcularValores}

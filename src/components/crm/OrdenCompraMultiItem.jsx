@@ -113,7 +113,7 @@ export default function OrdenCompraMultiItem({ onDetallesChange, errores = {}, v
               <td className="px-2 sm:px-4 py-2">
                 <input
                   type="text"
-                  className="w-full border border-gray-300 px-1 sm:px-2 py-1 rounded text-center text-xs sm:text-sm"
+                  className="w-full border border-gray-300 px-1 sm:px-2 py-1 rounded text-center text-xs sm:text-sm uppercase"
                   value={row.descripcion}
                   onChange={(e) =>
                     handleInputChange(row._uuid, "descripcion", e.target.value)

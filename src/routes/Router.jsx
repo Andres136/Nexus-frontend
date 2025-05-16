@@ -40,6 +40,7 @@ import RegistrarEntregaProveedor from "../views/crm/RegistrarEntregaProveedor";
 import KpiTareas from "../components/calidad/KpiTareas";
 import CotizacionForm from "../views/crm/CotizacionForm";
 import MisOrdenesComerciales from "../views/crm/MisOrdenesComerciales";
+import MisCotizaciones from "../views/crm/MisCotizaciones";
 
 
 
@@ -93,6 +94,8 @@ export default function Router() {
         <Route path="/auth/crm/ordenes-proveedor-entregas/:id/registrar-entrega" element={<RegistrarEntregaProveedor />} />
         <Route path="cotizaciones" element={<CotizacionForm/>} />
         <Route path="mis-ordenes" element={<MisOrdenesComerciales/>} />
+        <Route path="mis-cotizaciones" element={<MisCotizaciones/>} />
+        <Route path="/auth/crm/editar-cotizacion/:id" element={<CotizacionForm modo="edicion" />} />
       </Route>
     </Route>
   

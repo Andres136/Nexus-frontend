@@ -1,16 +1,16 @@
-import { useAuth } from "../../hooks/useAuth";
+
 import { useGestionProcesos } from "../../hooks/useGestionProcesos";
 import { Link } from "react-router-dom";
 import img from "../../assets/sig.png"
 
 function DepartamentosPage() {
   const { macroprocesos, departamentos } = useGestionProcesos();
-  const { user } = useAuth({ middleware: "auth" });
+ 
 
   // Función para verificar acceso
-  const tieneAcceso = (departamentoId) => {
+  /*const tieneAcceso = (departamentoId) => {
     return user?.role_id === 1 || user?.role_id === 2 || user?.departamento_id === departamentoId;
-  };
+  };*/
 
   return (
     <div className="p-8 bg-gray-50 min-h-screen">
@@ -30,39 +30,28 @@ function DepartamentosPage() {
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-              {departamentos
-                .filter((dep) => dep.macroprocesos_id === macroproceso.id)
-                .map((departamento) => {
-                  const autorizado = tieneAcceso(departamento.id);
+            {departamentos
+  .filter(dep => dep.macroprocesos_id === macroproceso.id)
+  .map(departamento => (
+    <Link 
+      key={departamento.id} 
+      to={`/auth/procesos/${departamento.id}`}
+      className="p-6 bg-white shadow-lg rounded-lg transition-all duration-300 hover:shadow-xl hover:scale-105 flex flex-col items-center border border-gray-200"
+    >
+      <img
+        className="w-20 h-20 mb-4 transition-all duration-300 hover:scale-110"
+        src={departamento.icono}
+        alt={departamento.nombre}
+      />
+      <h3 className="text-lg font-semibold text-gray-800 text-center">
+        {departamento.nombre}
+      </h3>
+      <p className="text-gray-600 text-sm text-center mt-2">
+        {departamento.descripcion}
+      </p>
+    </Link>
+  ))}
 
-                  return autorizado ? (
-                    <Link key={departamento.id} to={`/auth/procesos/${departamento.id}`}>
-                      <div className="p-6 bg-white shadow-lg rounded-lg transition-all duration-300 hover:shadow-xl hover:scale-105 flex flex-col items-center border border-gray-200">
-                        <img
-                          className="w-20 h-20 mb-4 transition-all duration-300 hover:scale-110"
-                          src={departamento.icono}
-                          alt={departamento.nombre}
-                        />
-                        <h3 className="text-lg font-semibold text-gray-800 text-center">
-                          {departamento.nombre}
-                        </h3>
-                        <p className="text-gray-600 text-sm text-center mt-2">{departamento.descripcion}</p>
-                      </div>
-                    </Link>
-                  ) : (
-                    <div
-                      key={departamento.id}
-                      className="p-6 bg-gray-200 shadow-md rounded-lg flex flex-col items-center border border-gray-300"
-                    >
-                      <img className="w-20 h-20 mb-4" src={departamento.icono} alt={departamento.nombre} />
-                      <h3 className="text-lg font-semibold text-gray-600 text-center">{departamento.nombre}</h3>
-                      <p className="text-gray-500 text-sm text-center mt-2">{departamento.descripcion}</p>
-                      <p className="text-red-500 text-sm font-medium mt-3 bg-red-100 px-3 py-1 rounded-lg">
-                        Acceso restringido
-                      </p>
-                    </div>
-                  );
-                })}
             </div>
           </div>
         ))}

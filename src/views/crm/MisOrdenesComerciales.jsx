@@ -68,7 +68,7 @@ export default function MisOrdenesComerciales() {
                   ) : orden.estado.nombre === "Pendiente" ? (
                     <Link
                     to={`/auth/crm/editar-compra/${orden.id}`}
-                    className="inline-block bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm"
+                    className="inline-block bg-green-700 text-white px-3 py-1 rounded hover:bg-green-800 text-sm"
                   >
                     Editar
                   </Link>
