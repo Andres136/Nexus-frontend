@@ -69,6 +69,17 @@ export default function UpdateClientes({ onClose, clienteId }) {
     }
   }, [clienteId, clientes]);
 
+
+  // Obtener usuarios para el select
+  
+  const [usuarios, setUsuarios] = useState([]);
+
+  useEffect(() => {
+    clienteAxios.get("/api/usuarios-comerciales") // Asegúrate de que esta ruta esté bien
+      .then(response => setUsuarios(response.data))
+      .catch(error => console.error("Error al cargar usuarios:", error));
+  }, []);
+
   useEffect(() => {
     obtenerUsuarios();
   }, []);
@@ -90,7 +101,7 @@ export default function UpdateClientes({ onClose, clienteId }) {
           className="mt-1 p-2 w-full border border-gray-300 rounded-md"
         >
           <option value="">--Asignar Acesor--</option>
-          {users.map((user) => (
+          {usuarios.map((user) => (
             <option key={user.id} value={user.id}>
               {user.name}
             </option>

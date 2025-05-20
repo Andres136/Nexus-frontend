@@ -22,7 +22,7 @@ function createNewItem(n) {
     valor_paquete: 0,
     valor_total: 0,
     precio_total: "",
-    cliente_clb: "",
+    cliente_clb: 0,
     descripcion: "",
     observaciones: `${n}`
   };
@@ -53,7 +53,7 @@ function updateRow(row) {
   }
 
   const valor_paquete = parseFloat((valor_unitario * cantidad).toFixed(2));
-  const valor_total = parseFloat((valor_paquete * 1.19).toFixed(2));
+  const valor_total = parseFloat((valor_paquete ).toFixed(2));
   const cantidad_requerida_kg = peso_bolsa > 0
     ? parseFloat(((cantidad * peso_bolsa) / 1000).toFixed(2))
     : 0;
