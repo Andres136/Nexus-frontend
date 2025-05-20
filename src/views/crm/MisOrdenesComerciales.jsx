@@ -1,3 +1,4 @@
+// MisOrdenesComerciales.jsx
 import { Link } from "react-router-dom";
 import { FaPen, FaSearch } from "react-icons/fa";
 import useMisOrdenesCompra from "../../hooks/useMisOrdenesCompra";
@@ -30,70 +31,69 @@ export default function MisOrdenesComerciales() {
       </div>
 
       {isLoading && <p>Cargando...</p>}
-      {isError && <p className="text-red-500">Error al cargar las órdenes</p>}
+      {isError   && <p className="text-red-500">Error al cargar las órdenes</p>}
 
-      <div className=" grid grid-cols-1 ">
-        <table className="w-full border border-gray-300 col-span-1">
-          <thead className="bg-gray-800 text-white text-sm">
-            <tr>
-              <th className="px-4 py-2 border">ID</th>
-              <th className="px-4 py-2 border">Cliente</th>
-              <th className="px-4 py-2 border">Fecha Entrega</th>
-              <th className="px-4 py-2 border">Estado</th>
-              <th className="px-4 py-2 border">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {ordenes?.data?.map((orden) => (
-              <tr key={orden.id} className="hover:bg-gray-100">
-                <td className="px-4 py-2 border">{orden.id}</td>
-                <td className="px-4 py-2 border">{orden.cliente?.nombre}</td>
-                <td className="px-4 py-2 border">{orden.fecha_entrega}</td>
-                <td className="px-4 py-2 border text-center">
-                  {orden.estado.nombre === "Pendiente" ? (
-                    <span className="bg-red-100 text-red-700 px-2 py-1 rounded-full text-sm">
-                      Pendiente
-                    </span>
-                  ) : (
-                    <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-sm">
-                      {orden.estado.nombre}
-                    </span>
-                  )}
-                </td>
-                <td className="px-4 py-2 border text-center">
-                  {orden.orden_trabajo ? (
-                    <span className="text-gray-400 text-sm italic">
-                      OT generada
-                    </span>
-                  ) : orden.estado.nombre === "Pendiente" ? (
-                    <Link
+      <table className="w-full border border-gray-300">
+        <thead className="bg-gray-800 text-white text-sm">
+          <tr>
+            <th className="px-4 py-2 border">ID</th>
+            <th className="px-4 py-2 border">Cliente</th>
+            <th className="px-4 py-2 border">Fecha Entrega</th>
+            <th className="px-4 py-2 border">Estado</th>
+            <th className="px-4 py-2 border">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {ordenes.map((orden) => (
+            <tr key={orden.id} className="hover:bg-gray-100">
+              <td className="px-4 py-2 border">{orden.id}</td>
+              <td className="px-4 py-2 border">{orden.cliente?.nombre}</td>
+              <td className="px-4 py-2 border">{orden.fecha_entrega}</td>
+              <td className="px-4 py-2 border text-center">
+                {orden.estado.nombre === "Pendiente" ? (
+                  <span className="bg-red-100 text-red-700 px-2 py-1 rounded-full text-sm">
+                    Pendiente
+                  </span>
+                ) : (
+                  <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-sm">
+                    {orden.estado.nombre}
+                  </span>
+                )}
+              </td>
+              <td className="px-4 py-2 border text-center">
+                {orden.orden_trabajo ? (
+                  <span className="text-gray-400 text-sm italic">
+                    OT generada
+                  </span>
+                ) : orden.estado.nombre === "Pendiente" ? (
+                  <Link
                     to={`/auth/crm/editar-compra/${orden.id}`}
                     className="inline-block bg-green-700 text-white px-3 py-1 rounded hover:bg-green-800 text-sm"
                   >
                     Editar
                   </Link>
-                  
-                  ) : (
-                    <span className="text-gray-400 text-sm">Bloqueado</span>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                ) : (
+                  <span className="text-gray-400 text-sm">Bloqueado</span>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
 
       <div className="flex justify-end mt-4 gap-4">
         <button
-          onClick={() => setPagina((prev) => Math.max(prev - 1, 1))}
+          onClick={() => setPagina((p) => Math.max(p - 1, 1))}
           disabled={pagina === 1}
           className="bg-gray-700 text-white px-3 py-1 rounded hover:bg-green-700 disabled:opacity-50"
         >
           Anterior
         </button>
-        <span>Página {pagina} de {totalPaginas}</span>
+        <span>
+          Página {pagina} de {totalPaginas}
+        </span>
         <button
-          onClick={() => setPagina((prev) => prev + 1)}
+          onClick={() => setPagina((p) => Math.min(p + 1, totalPaginas))}
           disabled={pagina === totalPaginas}
           className="bg-gray-700 text-white px-3 py-1 rounded hover:bg-green-700 disabled:opacity-50"
         >

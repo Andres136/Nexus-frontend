@@ -41,7 +41,7 @@ export default function OrdenCompraForm({ modo }) {
       const obtenerOrden = async () => {
         try {
           const token = localStorage.getItem("token");
-          const response = await clienteAxios.get(`/api/orden-compras/${id}`, {
+          const response = await clienteAxios.get(  `/api/orden-compras/${id}/edit`, {
             headers: { Authorization: `Bearer ${token}` },
           });
   
