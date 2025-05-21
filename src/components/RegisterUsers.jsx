@@ -10,6 +10,7 @@ export default function RegisterUsers({ onClose }) {
     const role_idRef = createRef();
     const telefonoRef = createRef();
     const departamento_idRef = createRef();
+    const imagenRef = createRef();
 
     const [errores, setErrores] = useState({});
     const { register } = useAuth({ middleware: "guest" });
@@ -19,21 +20,28 @@ export default function RegisterUsers({ onClose }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
-        const data = {
-            name: nameRef.current.value,
-            email: emailRef.current.value,
-            password: passwordRef.current.value,
-            role_id: parseInt(role_idRef.current.value),
-            telefono: telefonoRef.current.value,
-            departamento_id: parseInt(departamento_idRef.current.value),
-        };
-
-        const success = await register(data, setErrores);
-        if (success) {
-            onClose(); // Cierra el modal en caso de éxito
+      
+        // 1) Armar FormData
+        const formData = new FormData();
+        formData.append("name", nameRef.current.value);
+        formData.append("email", emailRef.current.value);
+        formData.append("password", passwordRef.current.value);
+        formData.append("role_id", role_idRef.current.value);
+        formData.append("telefono", telefonoRef.current.value);
+        formData.append("departamento_id", departamento_idRef.current.value);
+      
+        // 2) Si seleccionaron archivo, lo agregamos
+        if (imagenRef.current.files[0]) {
+          formData.append("imagen", imagenRef.current.files[0]);
         }
-    };
+      
+        // 3) Llamar a la función register (haz que acepte FormData)
+        const success = await register(formData, setErrores);
+        if (success) {
+          onClose();
+        }
+      };
+      
 
     // Obtener departamentos y roles
     const obtenerDepartamentos = async () => {
@@ -160,7 +168,20 @@ export default function RegisterUsers({ onClose }) {
                 </select>
                 {errores.departamento_id && <small className="text-red-500">{errores.departamento_id}</small>}
             </div>
-
+            <div>
+  <label htmlFor="imagen" className="block text-sm font-medium text-gray-700">
+    Foto 
+  </label>
+  <input
+    type="file"
+    id="imagen"
+    name="imagen"
+    accept="image/*"
+    ref={imagenRef}
+    className="mt-1 block w-full text-sm text-gray-700"
+  />
+  {errores.imagen && <small className="text-red-500">{errores.imagen}</small>}
+</div>
             <div>
                 <button
                     type="submit"

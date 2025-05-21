@@ -58,33 +58,41 @@ export const useAuth = ({ middleware, url }) => {
   };
   const register = async (data, setErrores) => {
     try {
-      const response = await clienteAxios.post("/api/users", data, {
+      // 1. Construimos el objeto de configuración de Axios
+      const config = {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
+          // Sólo si data es FormData, le ponemos multipart
+          ...(data instanceof FormData 
+            ? { "Content-Type": "multipart/form-data" } 
+            : {}
+          )
         },
-      });
-      // Mostrar mensaje de éxito
+      };
+  
+      // 2. Envío
+      const response = await clienteAxios.post("/api/users", data, config);
+  
+      // 3. Éxito
       toast.success(response.data.message);
-
-      // Limpiar errores previos
       setErrores({});
       return true;
+  
     } catch (error) {
-      if (error.response && error.response.status === 422) {
-        // Manejar errores de validación
+      if (error.response?.status === 422) {
+        // Validación
         const erroresPorCampo = {};
-        Object.keys(error.response.data.errors).forEach((campo) => {
+        for (const campo in error.response.data.errors) {
           erroresPorCampo[campo] = error.response.data.errors[campo][0];
-        });
+        }
         setErrores(erroresPorCampo);
       } else {
-        // Manejar otros errores
         toast.error("Ocurrió un error inesperado.");
       }
       return false;
     }
   };
-
+  
   const logout = async () => {
     try {
       await clienteAxios.post("/api/logout", null, {
@@ -196,24 +204,45 @@ export const useAuth = ({ middleware, url }) => {
     }
   }, [middleware, user, error, location.pathname, navigate]);
 
+  // Función para actualizar un usuario
   const updateUsuario = async (userId, data, setErrores) => {
-    console.log("updateUsuario este", userId, data);
     const token = localStorage.getItem("token");
-
+    const isForm = data instanceof FormData;
+  
     try {
-      const response = await clienteAxios.put(`/api/users/${userId}`, data, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await clienteAxios[ isForm ? "post" : "put" ](
+        `/api/users/${userId}`,
+        data,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            ...(isForm 
+              ? { "Content-Type": "multipart/form-data" } 
+              : {}
+            )
+          }
+        }
+      );
+  
       toast.success(response.data.message);
       setErrores({});
       mutate(`/api/users?page=${pagination.current_page}`);
       return true;
     } catch (error) {
-      console.error("Error al actualizar el usuario", error);
+      if (error.response?.status === 422) {
+        console.log(error.response.data.errors);
+        const errs = {};
+        Object.entries(error.response.data.errors)
+              .forEach(([f, msgs])=> errs[f]=msgs[0]);
+        setErrores(errs);
+      } else {
+        toast.error("Error al actualizar usuario.");
+      }
+      return false;
     }
   };
+  
+  
 
   return {
     login,

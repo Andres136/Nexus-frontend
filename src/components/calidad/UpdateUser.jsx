@@ -12,6 +12,7 @@ export default function UpdateUser({ onClose, userId }) {
   const role_idRef = useRef(null);
   const telefonoRef = useRef(null);
   const departamento_idRef = useRef(null);
+  const imagenRef = useRef(null);
 
   const [errores, setErrores] = useState({});
   const { users, updateUsuario, obtenerUsuarios } = useAuth({ middleware: "guest" });
@@ -22,23 +23,37 @@ export default function UpdateUser({ onClose, userId }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    const data = {
-      name: nameRef.current.value,
-      email: emailRef.current.value,
-      password: passwordRef.current.value,
-      role_id: parseInt(role_idRef.current.value),
-      telefono: telefonoRef.current.value,
-      departamento_id: parseInt(departamento_idRef.current.value),
-      estado_id: 1,
-    };
-
-    const success = await updateUsuario(userId, data, setErrores);
+    setErrores({});
+  
+    // 1) Armar FormData
+    const formData = new FormData();
+    formData.append("_method", "PUT");           // ← esto le dice a Laravel que es un PUT
+    formData.append("name", nameRef.current.value);
+    formData.append("email", emailRef.current.value);
+  
+    // 2) Sólo envía password si el usuario lo puso
+    if (passwordRef.current.value) {
+      formData.append("password", passwordRef.current.value);
+      formData.append("password_confirmation", passwordRef.current.value);
+    }
+  
+    formData.append("role_id", role_idRef.current.value);
+    formData.append("telefono", telefonoRef.current.value);
+    formData.append("departamento_id", departamento_idRef.current.value);
+  
+    // 3) Si seleccionaron archivo, lo agregamos
+    if (imagenRef.current.files[0]) {
+      formData.append("imagen", imagenRef.current.files[0]);
+    }
+  
+    // 4) Llamar a la función updateUsuario (ahora detectará FormData)
+    const success = await updateUsuario(userId, formData, setErrores);
     if (success) {
-      onClose(); // Cierra el modal en caso de éxito
+      toast.success("Usuario actualizado correctamente");
+      onClose();
     }
   };
-
+  
   // Funciones para obtener departamentos y roles
   const obtenerDepartamentos = async () => {
     try {
@@ -197,6 +212,21 @@ export default function UpdateUser({ onClose, userId }) {
             </option>
           ))}
         </select>
+      </div>
+
+      <div>
+        <label htmlFor="imagen" className="block text-sm font-medium text-gray-700">
+          Foto 
+        </label>
+        <input
+          type="file"
+          id="imagen"
+          name="imagen"
+          accept="image/*"
+          ref={imagenRef}
+          className="mt-1 block w-full text-sm text-gray-700"
+        />
+        {errores.imagen && <small className="text-red-500">{errores.imagen}</small>}
       </div>
 
       <div>

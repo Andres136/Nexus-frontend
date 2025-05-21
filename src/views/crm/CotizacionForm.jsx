@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import clienteAxios from "../../config/axios";
 import { useClientes } from "../../hooks/useClientes";
 import { Link, useParams } from "react-router-dom";
+import Select  from "react-select";
 
 export default function CotizacionForm({modo}) {
   const {id} = useParams();
@@ -99,7 +100,7 @@ export default function CotizacionForm({modo}) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    console.log("Enviando formData:", formData);  // <— verifica aquí
     if (!formData.detalles.length) {
       toast.error("Debe ingresar al menos un ítem");
       return;
@@ -131,6 +132,7 @@ export default function CotizacionForm({modo}) {
           })
         : await clienteAxios.post("/api/cotizaciones", {
             ...formData,
+            
             detalles: detallesLimpios,
           }, {
             headers: { Authorization: `Bearer ${token}` },
@@ -148,6 +150,7 @@ export default function CotizacionForm({modo}) {
       link.remove();
     } catch (error) {
       if (error.response?.data?.errors) {
+        console.log("Errores de validación:", error.response.data.errors);
         setErrores(error.response.data.errors);
         toast.error("Errores en el formulario, por favor revisa");
       } else {
@@ -159,7 +162,11 @@ export default function CotizacionForm({modo}) {
   };
 
   const totalGeneral = rows.reduce((acc, item) => acc + item.valor_total, 0);
-
+  // 1) Mapea tus clientes a { value, label }
+  const opcionesClientes = clientesTodos.map(cliente => ({
+    value: cliente.id,
+    label: cliente.nombre,
+  }));
   return (
     <div className="p-6 bg-white shadow rounded">
 <div className="grid grid-cols-2 items-center">
@@ -189,19 +196,21 @@ export default function CotizacionForm({modo}) {
       {/* CLIENTE */}
       <div>
         <label className="block font-semibold">Cliente:</label>
-        <select
-          name="cliente_id"
-          value={formData.cliente_id}
-          onChange={handleChange}
-          className="border rounded w-full p-2"
-        >
-          <option value="">Seleccione un cliente</option>
-          {clientesTodos.map((cliente) => (
-            <option key={cliente.id} value={cliente.id}>
-              {cliente.nombre}
-            </option>
-          ))}
-        </select>
+        <Select
+          options={opcionesClientes}
+          // 2) Busca la opción actual para mostrarla
+          value={opcionesClientes.find(o => o.value === formData.cliente_id)}
+          // 3) Cuando cambie, guarda el id
+          onChange={opt =>
+            setFormData(prev => ({
+              ...prev,
+              cliente_id: opt ? opt.value : "",
+            }))
+          }
+          isClearable
+          placeholder="Buscar o seleccionar cliente…"
+          className="mt-1"
+        />
         {errores.cliente_id && (
           <p className="text-red-600 text-sm">{errores.cliente_id}</p>
         )}
