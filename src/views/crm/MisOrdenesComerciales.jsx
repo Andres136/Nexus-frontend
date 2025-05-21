@@ -70,7 +70,7 @@ export default function MisOrdenesComerciales() {
                     to={`/auth/crm/editar-compra/${orden.id}`}
                     className="inline-block bg-green-700 text-white px-3 py-1 rounded hover:bg-green-800 text-sm"
                   >
-                    Editar
+                    Ver
                   </Link>
                 ) : (
                   <span className="text-gray-400 text-sm">Bloqueado</span>

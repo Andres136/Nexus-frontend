@@ -7,6 +7,7 @@ import clienteAxios from "../../config/axios";
 import { toast } from "react-toastify";
 import { useClientes } from "../../hooks/useClientes";
 import { Link, useParams } from "react-router-dom";
+import Select from 'react-select';
 
 export default function OrdenCompraForm({ modo }) {
   const { id } = useParams();
@@ -150,6 +151,12 @@ export default function OrdenCompraForm({ modo }) {
       }
     }
   };
+  // dentro del componente…
+const opcionesClientes = clientesTodos.map(c => ({
+  value: c.id,
+  label: c.nombre
+}));
+
 
   return (
     <div className="p-6 bg-white rounded-xl">
@@ -192,38 +199,24 @@ export default function OrdenCompraForm({ modo }) {
         )}
       </div>
 
-      <div className="p-5">
-        <input
-        type="text"
-        placeholder="Buscar Clientes"
-        value={busqueda}
-        onChange={(e) => {
-          setBusqueda(e.target.value);
-        }}
-        className="border p-2 w-full mb-2 rounded"
-        />
-
-        <select
-        className="w-full border border-gray-300 px-3 py-1 rounded"
-        name="cliente_id"
-        value={formData.cliente_id}
-        onChange={handleInputChange}
-        >
-        <option value="">Seleccionar Cliente</option>
-        {clientesTodos.length > 0 ? (
-          clientesTodos.map((cliente) => (
-          <option key={cliente.id} value={cliente.id}>
-            {cliente.nombre}
-          </option>
-          ))
-        ) : (
-          <option value="" disabled>No se encontraron clientes</option>
-        )}
-        </select>
-        {errores.cliente_id && (
-        <span className="text-sm text-red-500">{errores.cliente_id}</span>
-        )}
-      </div>
+      <div>
+    <label className="block font-semibold">Cliente:</label>
+    <Select
+      options={opcionesClientes}
+      // marca la opción actual según formData.cliente_id
+      value={opcionesClientes.find(o => o.value === formData.cliente_id) || null}
+      // onChange actualiza formData.cliente_id
+      onChange={opt => {
+        setFormData(f => ({ ...f, cliente_id: opt ? opt.value : '' }));
+      }}
+      isClearable
+      placeholder="Busca o selecciona un cliente…"
+      className="mt-1"
+    />
+    {errores.cliente_id && (
+      <p className="text-red-600 text-sm">{errores.cliente_id}</p>
+    )}
+  </div>
 
       <div className="col-span-2">
         <label className="block text-sm font-medium text-gray-700">
@@ -268,12 +261,17 @@ export default function OrdenCompraForm({ modo }) {
       </div>
 
       <div className="flex justify-end mt-4">
-      <button
-        onClick={enviarOrden}
-        className="bg-green-700 text-white px-4 py-2 rounded hover:bg-gray-600"
-      >
-        {modo === "edicion" ? "Actualizar Orden" : "Guardar Orden"}
-      </button>
+      <div className="flex justify-end mt-4">
+  {modo !== "edicion" && (
+    <button
+      onClick={enviarOrden}
+      className="bg-green-700 text-white px-4 py-2 rounded hover:bg-gray-600"
+    >
+      Guardar Orden de Compra
+    </button>
+  )}
+</div>
+
       </div>
     </div>
     );

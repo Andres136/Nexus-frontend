@@ -53,16 +53,17 @@ function calcularValores(item) {
 
   // Si hay precio por kilo y bolsas, calcular automáticamente
   if (precioKilo > 0 && numero_bolsas > 0) {
-   // valor_unitario = parseFloat((precioKilo / numero_bolsas).toFixed(2));
-   const rawUnitario = precioKilo / numero_bolsas;
-    valor_unitario    = Math.ceil(rawUnitario / 100) * 100;
+ //   valor_unitario = parseFloat((precioKilo / numero_bolsas).toFixed(2));
+ const rawUnitario = precioKilo / numero_bolsas;
+ valor_unitario    = Math.ceil(rawUnitario);
     fueCalculadoUnitario = true;
   }
 
   // Si no se calculó y hay unitario manual
 
     if (!fueCalculadoUnitario && manual_unitario > 0) {
-      valor_unitario = manual_unitario;
+     // valor_unitario = manual_unitario;
+     valor_unitario = Math.ceil(manual_unitario);
     
       // Establecemos precio_total explícitamente si viene solo valor_unitario
       if (numero_bolsas === 0) {
