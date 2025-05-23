@@ -1,13 +1,21 @@
 
 import ApexChart from 'react-apexcharts';
 import { useDashboard } from '../hooks/useDashboard';
-import { useEffect } from 'react';
+import { useDashboardMonthly } from '../hooks/useDashboardMonthly';
+import { useEffect, useState } from 'react';
 import clienteAxios from '../config/axios';
 
 const Dashboard = () => {
+
+    // — Mes/año para la vista mensual —
+    const today = new Date();
+    const [month, setMonth] = useState(today.getMonth() + 1);
+    const [year,  setYear]  = useState(today.getFullYear());
   const { data, error, isLoading } = useDashboard();
 
- 
+   // — Hook para estadísticas mensuales —
+   const { data: monthly, isLoading: loading2, error: error2 } =
+   useDashboardMonthly(month, year);
   // Función para enviar notificaciones de tareas vencidas
   const generarNotificaciones = async () => {
     const token = localStorage.getItem("token");
@@ -26,8 +34,8 @@ const Dashboard = () => {
   }, []);
 
 
-  if (isLoading) return <p>Cargando datos...</p>;
-  if (error) return <p>Error al obtener los datos.</p>;
+  if (isLoading || loading2) return <p>Cargando datos...</p>;
+  if (error || error2) return <p>Error al obtener los datos.</p>;
 
   const estados = [
     {
@@ -59,11 +67,19 @@ const Dashboard = () => {
 
 
 
-
+  const { despachadas, vencidas, pendientes } = monthly;
 
   return (
     <div className="grid grid-cols-1 w-full px-4">
+
+      
       <div className="p-6 grid gap-6 col-span-1">
+
+
+
+
+
+
         {/* Tarjetas resumen */}
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {[
@@ -133,25 +149,46 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Distribución por cliente */}
+     {/* — Selección de mes/año — */}
+     <div className="flex items-center gap-4 mb-6">
+          <select
+            value={month}
+            onChange={e => setMonth(Number(e.target.value))}
+            className="border px-2 py-1 rounded"
+          >
+            {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+              <option key={m} value={m}>
+                {m.toString().padStart(2, "0")}
+              </option>
+            ))}
+          </select>
+          <select
+            value={year}
+            onChange={e => setYear(Number(e.target.value))}
+            className="border px-2 py-1 rounded"
+          >
+            {Array.from({ length: 5 }, (_, i) => today.getFullYear() - i).map(y => (
+              <option key={y} value={y}>
+                {y}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* — Gráfico mensual — */}
         <div className="bg-white p-4 rounded shadow w-full overflow-x-auto mb-6">
-          <h3 className="font-semibold mb-4">Distribución por cliente</h3>
-          <div className="min-w-[300px]">
-            <ApexChart
-              type="pie"
-              height={300}
-              series={Object.values(data.por_cliente)}
-              options={{
-                labels: Object.keys(data.por_cliente),
-                legend: { position: 'bottom' },
-                tooltip: {
-                  y: {
-                    formatter: (val) => `${val} órdenes`,
-                  },
-                },
-              }}
-            />
-          </div>
+          <h3 className="font-semibold mb-4">
+            Estadísticas {month}/{year}
+          </h3>
+          <ApexChart
+        type="pie"
+        height={300}
+        series={[despachadas, vencidas, pendientes]}
+        options={{
+          labels: ["Despachadas", "Vencidas", "Pendientes"],
+          legend: { position: "bottom" },
+        }}
+      />
         </div>
 
         {/* Órdenes por usuario */}

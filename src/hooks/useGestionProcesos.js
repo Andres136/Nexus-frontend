@@ -252,6 +252,10 @@ export function useGestionProcesos() {
     return new Date(dateString).toLocaleDateString(undefined, opciones);
   }
 
+
+  //Eliminar un documento de cada colaborador
+
+  
   // Retornamos todo lo que se necesita usar en los componentes:
   return {
     // Estados

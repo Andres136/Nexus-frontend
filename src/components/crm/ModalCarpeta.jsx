@@ -1,7 +1,9 @@
 import { useState } from "react";
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import clienteAxios from "../../config/axios";
 import { toast } from "react-toastify";
+import Swal from "sweetalert2";
 
 export default function ModalCarpeta({ carpeta, onClose }) {
   const [archivo, setArchivo] = useState(null);
@@ -54,12 +56,84 @@ export default function ModalCarpeta({ carpeta, onClose }) {
     },
   });
 
+    // 3) Eliminar documento
+    const eliminarDocumento = useMutation({
+      mutationFn: async (id) => {
+        const token = localStorage.getItem('token')
+        const { data } = await clienteAxios.delete(
+          `/api/documentos-administrativos/${id}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        )
+        return data
+      },
+  
+      // **Antes** de enviar el DELETE, cancelamos y sacamos la caché actual
+      onMutate: async (id) => {
+        await queryClient.cancelQueries(['documentos', carpeta.id])
+  
+        const previous = queryClient.getQueryData(['documentos', carpeta.id])
+  
+        // **Actualizamos** la caché: filtramos el documento borrado
+        queryClient.setQueryData(
+          ['documentos', carpeta.id],
+          old => old.filter(doc => doc.id !== id)
+        )
+  
+        // devolvemos el snapshot para poder revertir en onError
+        return { previous }
+      },
+  
+      // Si hay error, restauramos la caché original
+      onError: (err, id, context) => {
+        queryClient.setQueryData(
+          ['documentos', carpeta.id],
+          context.previous
+        )
+        Swal.fire('Error', 'No se pudo eliminar', 'error')
+      },
+  
+      // Al final (sea éxito o error), opcionalmente refetch o no
+      onSettled: () => {
+        queryClient.invalidateQueries(['documentos', carpeta.id])
+      },
+  
+      // En el caso de éxito, podemos mostrar el mensaje
+      onSuccess: (data) => {
+        Swal.fire({
+          icon: 'success',
+          title: '¡Eliminado!',
+          text: data.message,
+          timer: 1500,
+          showConfirmButton: false
+        })
+      }
+    });
+  
+
   const handleSubirDocumento = () => {
     if (!archivo) {
       setError("Selecciona un archivo primero");
       return;
     }
     subirDocumento.mutate();
+  };
+
+  
+  const handleEliminar = (id) => {
+    Swal.fire({
+      title: '¿Estás seguro?',
+      text: "¡No podrás revertir esto!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        eliminarDocumento.mutate(id);
+      }
+    });
   };
 
   return (
@@ -121,13 +195,21 @@ export default function ModalCarpeta({ carpeta, onClose }) {
             {documentos?.map((doc) => (
               <li key={doc.id} className="border-b py-2 flex justify-between">
                 <span>{doc.nombre}</span>
-                <a
-                href={`${clienteAxios.defaults.baseURL}/api/download/${doc.id}`}
-                  className="text-blue-600"
-                  download
-                >
-                  ⬇️ Descargar
-                </a>
+                <div className="space-x-2">
+                  <a
+                    href={`${clienteAxios.defaults.baseURL}/api/download/${doc.id}`}
+                    className="text-blue-600"
+                    download
+                  >
+                    ⬇️
+                  </a>
+                  <button
+                    onClick={() => handleEliminar(doc.id)}
+                    className="text-red-600 hover:text-red-800"
+                  >
+                    🗑️
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
