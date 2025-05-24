@@ -5,7 +5,7 @@ import { FaSearch } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import clienteAxios from "../../config/axios";
 import Swal from "sweetalert2";
-
+import { FaEye, FaTrash, FaEdit } from 'react-icons/fa';
 export default function ObtenerOrdenesCompra() {
  
   const {
@@ -135,20 +135,29 @@ export default function ObtenerOrdenesCompra() {
 
             <td className="border border-gray-300 px-4 py-2">{orden.observaciones}</td>
             <td className="border border-gray-300 px-4 py-2">{orden.ubicacion_entrega}</td>
-            <td className="border border-gray-300 px-4 py-2">
-              <Link
-                to={`/auth/crm/detalles-compras/${orden.id}`}
-                className="w-full bg-green-700 text-white px-3 py-1 rounded hover:bg-gray-700 text-center block"
-              >
-                Ver
-              </Link>
-              <button
-                onClick={() => eliminarOrdenCompra(orden.id)}
-                className="w-full bg-red-700 text-white px-3 py-1 rounded hover:bg-gray-700 text-center mt-2"
-              >
-                Eliminar
-              </button>
-            </td>
+            <td className="border px-4 py-2">
+  <div className="flex justify-center items-center space-x-2">
+    <Link
+      to={`/auth/crm/detalles-compras/${orden.id}`}
+      className="flex items-center justify-center bg-blue-600 text-white px-3 py-1 rounded"
+    >
+      Ver
+    </Link>
+    <Link
+      to={`/auth/crm/editar-compra/${orden.id}`}
+      className="flex items-center justify-center bg-yellow-500 text-white px-3 py-1 rounded"
+    >
+      Editar
+    </Link>
+    <button
+      onClick={() => eliminarOrdenCompra(orden.id)}
+      className="flex items-center justify-center bg-red-600 text-white px-3 py-1 rounded"
+    >
+      Eliminar
+    </button>
+  </div>
+</td>
+
    
           </tr>
         ))}

@@ -79,33 +79,32 @@ export default function Navbar() {
         </div>
       </div>
 
-      <div
-        className={`md:hidden overflow-hidden transition-all duration-500 ease-in-out ${isSidebarOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"}`}
+      <div className={`md:hidden ${isSidebarOpen ? "block" : "hidden"}`}>
+  <ul className="flex flex-col space-y-3 mt-4 bg-gray-900 rounded p-4 shadow-lg">
+    {filteredNavLinks.map((link) => (
+      <li key={link.name}>
+        <Link
+          to={link.to}
+          onClick={() => setIsSidebarOpen(false)}
+          className="flex items-center gap-2 px-4 py-2 rounded hover:bg-gray-700 text-white"
+        >
+          {link.icon && <link.icon className="w-4 h-4" />}
+          {link.name}
+        </Link>
+      </li>
+    ))}
+    <li className="px-4 py-2 text-green-300 font-medium">👤 {user?.name}</li>
+    <li>
+      <button
+        onClick={logout}
+        className="w-full px-4 py-2 text-left bg-green-600 hover:bg-green-700 text-white rounded"
       >
-        <ul className="flex flex-col space-y-3 mt-4 bg-gray-900 rounded p-4 shadow-lg animate-slide-down">
-          {filteredNavLinks.map((link) => (
-            <li key={link.name}>
-              <Link
-                to={link.to}
-                onClick={() => setIsSidebarOpen(false)}
-                className="flex items-center gap-2 px-4 py-2 rounded hover:bg-gray-700 text-white"
-              >
-                {link.icon && <link.icon className="w-4 h-4" />}
-                {link.name}
-              </Link>
-            </li>
-          ))}
-          <li className="px-4 py-2 text-green-300 font-medium">👤 {user?.name}</li>
-          <li>
-            <button
-              onClick={logout}
-              className="w-full px-4 py-2 text-left bg-green-600 hover:bg-green-700 text-white rounded"
-            >
-              Cerrar Sesión
-            </button>
-          </li>
-        </ul>
-      </div>
+        Cerrar Sesión
+      </button>
+    </li>
+  </ul>
+</div>
+
     </nav>
   );
 }

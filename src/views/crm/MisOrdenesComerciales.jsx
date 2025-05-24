@@ -61,20 +61,12 @@ export default function MisOrdenesComerciales() {
                 )}
               </td>
               <td className="px-4 py-2 border text-center">
-                {orden.orden_trabajo ? (
-                  <span className="text-gray-400 text-sm italic">
-                    OT generada
-                  </span>
-                ) : orden.estado.nombre === "Pendiente" ? (
-                  <Link
+              <Link
                     to={`/auth/crm/editar-compra/${orden.id}`}
-                    className="inline-block bg-green-700 text-white px-3 py-1 rounded hover:bg-green-800 text-sm"
+                    className="inline-block bg-green-700 text-white px-3 py-1 rounded hover:bg-green-800 text-sm w-full"
                   >
                     Ver
                   </Link>
-                ) : (
-                  <span className="text-gray-400 text-sm">Bloqueado</span>
-                )}
               </td>
             </tr>
           ))}

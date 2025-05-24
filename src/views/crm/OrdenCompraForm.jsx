@@ -6,14 +6,19 @@ import OrdenCompraMultiItem from "../../components/crm/OrdenCompraMultiItem";
 import clienteAxios from "../../config/axios";
 import { toast } from "react-toastify";
 import { useClientes } from "../../hooks/useClientes";
+import { useAuth } from "../../hooks/useAuth";
+
 import { Link, useParams } from "react-router-dom";
 import Select from 'react-select';
+
 
 export default function OrdenCompraForm({ modo }) {
   const { id } = useParams();
   const [errores, setErrores] = useState({});
   const [erroresDetalles, setErroresDetalles] = useState({});
   const { clientesTodos, setBusqueda, busqueda } = useClientes();
+  const { user } = useAuth({middleware: "auth"});
+  console.log( "rol",user.role_id);
 
   const [formData, setFormData] = useState({
     fecha_entrega: "",
@@ -261,16 +266,29 @@ const opcionesClientes = clientesTodos.map(c => ({
       </div>
 
       <div className="flex justify-end mt-4">
-      <div className="flex justify-end mt-4">
+      <div className="flex justify-end mt-4 space-x-2">
+  {/* Si estoy en edición Y soy rol 1 → mostrar “Actualizar” */}
+  {modo === "edicion" && [1, 2, 4].includes(user?.role_id) && (
+  <button
+    onClick={enviarOrden}
+    className="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded"
+  >
+    Actualizar Orden de Compra
+  </button>
+)}
+
+
+  {/* Si NO estoy en edición → mostrar “Guardar” */}
   {modo !== "edicion" && (
     <button
       onClick={enviarOrden}
-      className="bg-green-700 text-white px-4 py-2 rounded hover:bg-gray-600"
+      className="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded"
     >
       Guardar Orden de Compra
     </button>
   )}
 </div>
+
 
       </div>
     </div>
