@@ -83,12 +83,15 @@ export default function FormOrdenesProveedores() {
 
   return (
     <div className="grid grid-cols-1 bg-white rounded-xl">
+ <div className="text-left">
   <Link
-        to="/auth/crm/proveedores"
-        className="m-4 inline-block bg-gray-300 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-400 transition duration-200 text-sm "
-      >
-        ← Volver
-      </Link>
+    to="/auth/crm/proveedores"
+    className="inline-block bg-gray-300 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-400 transition duration-200 text-sm w-fit"
+  >
+    ← Volver
+  </Link>
+</div>
+
       <div className="col-span-1">
       <h2 className="text-2xl font-bold mb-4">Registrar orden de Compra</h2>
 
