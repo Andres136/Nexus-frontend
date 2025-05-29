@@ -42,12 +42,24 @@ function calcularValores(item) {
   let valor_total = 0;
 
   if (ancho > 0 && largo > 0 && calibre > 0) {
-    const anchoIn = ancho * FACTOR_PULGADA;
-    const largoIn = largo * FACTOR_PULGADA;
+    const anchoIn   = ancho  * FACTOR_PULGADA;
+    const largoIn   = largo  * FACTOR_PULGADA;
     const resultado = anchoIn * largoIn * calibre * FACTOR_CONSTANTE;
-    peso_bolsa = parseFloat((resultado / 10000).toFixed(2));
-    numero_bolsas = peso_bolsa > 0 ? Math.floor(1000 / peso_bolsa) : 0;
+  
+    // 1) Peso de la bolsa con “.5 hacia arriba”
+    const rawPeso = resultado / 10000;
+    const enteroP = Math.floor(rawPeso);
+    const decimaP = rawPeso - enteroP;
+    peso_bolsa    = decimaP >= 0.5 ? enteroP + 1 : enteroP;
+  
+    // 2) Número de bolsas con “.5 hacia arriba”
+    const rawBags  = 1000 / peso_bolsa;
+    const enteroB  = Math.floor(rawBags);
+    const decimaB  = rawBags - enteroB;
+    numero_bolsas = decimaB >= 0.5 ? enteroB + 1 : enteroB;
   }
+  
+  
 
   let fueCalculadoUnitario = false;
 

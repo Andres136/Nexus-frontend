@@ -95,77 +95,91 @@ export default function ObtenerOrdenesCompra() {
     {isError && <p className="text-red-500 ml-4">Error al cargar órdenes de compra</p>}
   </div>
 
-  {/* Tabla - Ocupa 2 columnas */}
-  <div className="col-span-2 overflow-x-auto">
-    <table className="w-full min-w-[600px] border-collapse border border-gray-300 shadow-lg">
-      <thead className="bg-gray-800 text-white text-sm">
-        <tr>
-          <th className="border border-gray-300 px-4 py-2">Id</th>
-          <th className="border border-gray-300 px-4 py-2">Cliente</th>
-          <th className="border border-gray-300 px-4 py-2">Fecha Entrega</th>
-          <th className="border border-gray-300 px-4 py-2">Estado</th>
-          <th className="border border-gray-300 px-4 py-2">Observaciones</th>
-          <th className="border border-gray-300 px-4 py-2">Dirección de Entrega</th>
-          <th className="border border-gray-300 px-4 py-2">Acciones</th>
-      
+  
+    <div className="col-span-2 overflow-x-auto">
+      <table className="w-full min-w-[600px] border-collapse border border-gray-300 shadow-lg">
+        <thead className="bg-gray-800 text-white text-sm">
+          <tr>
+            <th className="border border-gray-300 px-4 py-2">Id</th>
+            <th className="border border-gray-300 px-4 py-2">Cliente</th>
+            <th className="border border-gray-300 px-4 py-2">Fecha de Creacion</th>
+            <th className="border border-gray-300 px-4 py-2">Fecha Entrega</th>
+            <th className="border border-gray-300 px-4 py-2">Estado</th>
+            <th className="border border-gray-300 px-4 py-2">Observaciones</th>
+            <th className="border border-gray-300 px-4 py-2">Dirección de Entrega</th>
+            <th className="border border-gray-300 px-4 py-2">Acciones</th>
+        
 
-        </tr>
-      </thead>
-      <tbody>
-        {ordenesCompra?.data?.map((orden) => (
-          <tr key={orden.id} className="hover:bg-gray-100">
-            <td className="border border-gray-300 px-4 py-2">{orden.id}</td>
-            <td className="border border-gray-300 px-4 py-2">{orden.cliente.nombre}</td>
-            <td className="border border-gray-300 px-4 py-2">{orden.fecha_entrega}</td>
-            <td className="px-4 py-3 text-center border border-gray-300">
-  {orden.estado.nombre === "Pendiente" ? (
-    <span className="text-red-700 bg-red-100 px-3 py-1 rounded-full text-sm font-semibold">
-      Pendiente
-    </span>
-  ) : orden.estado.nombre === "Completado" ? (
-    <span className="text-green-700 bg-green-100 px-3 py-1 rounded-full text-sm font-semibold">
-      Completado
-    </span>
-  ) : (
-    <span className="text-gray-700 bg-gray-100 px-3 py-1 rounded-full text-sm font-semibold">
-      {orden.estado.nombre}
-    </span>
-  )}
-</td>
-
-            <td className="border border-gray-300 px-4 py-2">{orden.observaciones}</td>
-            <td className="border border-gray-300 px-4 py-2">{orden.ubicacion_entrega}</td>
-            <td className="border px-4 py-2">
-  <div className="flex justify-center items-center space-x-2">
-    <Link
-      to={`/auth/crm/detalles-compras/${orden.id}`}
-      className="flex items-center justify-center bg-blue-600 text-white px-3 py-1 rounded"
-    >
-      Ver
-    </Link>
-    <Link
-      to={`/auth/crm/editar-compra/${orden.id}`}
-      className="flex items-center justify-center bg-yellow-500 text-white px-3 py-1 rounded"
-    >
-      Editar
-    </Link>
-    <button
-      onClick={() => eliminarOrdenCompra(orden.id)}
-      className="flex items-center justify-center bg-red-600 text-white px-3 py-1 rounded"
-    >
-      Eliminar
-    </button>
-  </div>
-</td>
-
-   
           </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
+        </thead>
+        <tbody>
+          {ordenesCompra?.data?.map((orden) => (
+            <tr key={orden.id} className="hover:bg-gray-100">
+              <td className="border border-gray-300 px-4 py-2">{orden.id}</td>
+              <td className="border border-gray-300 px-4 py-2">{orden.cliente.nombre}</td>
+              <td className="border border-gray-300 px-4 py-2">
+              {new Date(orden.created_at).toLocaleDateString('es-CO', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
+              </td>
+              <td className="border border-gray-300 px-4 py-2">
+              {new Date(orden.fecha_entrega).toLocaleDateString('es-CO', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
+              </td>
+              <td className="px-4 py-3 text-center border border-gray-300">
+    {orden.estado.nombre === "Pendiente" ? (
+      <span className="text-red-700 bg-red-100 px-3 py-1 rounded-full text-sm font-semibold">
+        Pendiente
+      </span>
+    ) : orden.estado.nombre === "Completado" ? (
+      <span className="text-green-700 bg-green-100 px-3 py-1 rounded-full text-sm font-semibold">
+        Completado
+      </span>
+    ) : (
+      <span className="text-gray-700 bg-gray-100 px-3 py-1 rounded-full text-sm font-semibold">
+        {orden.estado.nombre}
+      </span>
+    )}
+  </td>
 
-  {/* Paginación - Ocupa 2 columnas */}
+              <td className="border border-gray-300 px-4 py-2">{orden.observaciones}</td>
+              <td className="border border-gray-300 px-4 py-2">{orden.ubicacion_entrega}</td>
+              <td className="border px-4 py-2">
+    <div className="flex justify-center items-center space-x-2">
+      <Link
+        to={`/auth/crm/detalles-compras/${orden.id}`}
+        className="flex items-center justify-center bg-blue-600 text-white px-3 py-1 rounded"
+      >
+        Ver
+      </Link>
+      <Link
+        to={`/auth/crm/editar-compra/${orden.id}`}
+        className="flex items-center justify-center bg-yellow-500 text-white px-3 py-1 rounded"
+      >
+        Editar
+      </Link>
+      <button
+        onClick={() => eliminarOrdenCompra(orden.id)}
+        className="flex items-center justify-center bg-red-600 text-white px-3 py-1 rounded"
+      >
+        Eliminar
+      </button>
+    </div>
+  </td>
+
+     
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+    {/* Paginación - Ocupa 2 columnas */}
   <div className="col-span-2 flex justify-end mt-4 gap-4">
     <button
       className={`px-4 py-2 rounded-lg ${
