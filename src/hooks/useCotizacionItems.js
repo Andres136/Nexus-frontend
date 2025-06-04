@@ -35,6 +35,8 @@ function calcularValores(item) {
   const cantidad = parseFloat(item.cantidad) || 0;
   const manual_unitario = item.valor_unitario !== "" ? parseFloat(item.valor_unitario) : 0;
 
+  console.log("📏 Input inicial:", { ancho, largo, calibre, precioKilo, cantidad });
+
   let peso_bolsa = 0;
   let numero_bolsas = 0;
   let valor_unitario = 0;
@@ -42,51 +44,54 @@ function calcularValores(item) {
   let valor_total = 0;
 
   if (ancho > 0 && largo > 0 && calibre > 0) {
-    const anchoIn   = ancho  * FACTOR_PULGADA;
-    const largoIn   = largo  * FACTOR_PULGADA;
+    const anchoIn = ancho * FACTOR_PULGADA;
+    const largoIn = largo * FACTOR_PULGADA;
     const resultado = anchoIn * largoIn * calibre * FACTOR_CONSTANTE;
-  
-    // 1) Peso de la bolsa con “.5 hacia arriba”
+
+    console.log("📐 Conversión cm → pulgadas:", { anchoIn, largoIn });
+    console.log("📊 Resultado fórmula:", resultado);
+
     const rawPeso = resultado / 10000;
-    const enteroP = Math.floor(rawPeso);
-    const decimaP = rawPeso - enteroP;
-    peso_bolsa    = decimaP >= 0.5 ? enteroP + 1 : enteroP;
-  
-    // 2) Número de bolsas con “.5 hacia arriba”
-    const rawBags  = 1000 / peso_bolsa;
-    const enteroB  = Math.floor(rawBags);
-    const decimaB  = rawBags - enteroB;
+     peso_bolsa= Math.floor(rawPeso);
+    if (peso_bolsa > 0) {
+      const rawBags = 1000 / peso_bolsa;
+      numero_bolsas = Math.round(rawBags); // puedes redondear esto si sí lo deseas
+    }
+
+    console.log("⚖️ Peso bolsa:", rawPeso, "→ redondeado:", peso_bolsa);
+
+    const rawBags = 1000 / peso_bolsa;
+    const enteroB = Math.floor(rawBags);
+    const decimaB = rawBags - enteroB;
     numero_bolsas = decimaB >= 0.5 ? enteroB + 1 : enteroB;
+
+    console.log("📦 Número de bolsas:", rawBags, "→ redondeado:", numero_bolsas);
   }
-  
-  
 
   let fueCalculadoUnitario = false;
 
-  // Si hay precio por kilo y bolsas, calcular automáticamente
   if (precioKilo > 0 && numero_bolsas > 0) {
- //   valor_unitario = parseFloat((precioKilo / numero_bolsas).toFixed(2));
- const rawUnitario = precioKilo / numero_bolsas;
- valor_unitario    = Math.ceil(rawUnitario);
+    const rawUnitario = precioKilo / numero_bolsas;
+    valor_unitario = Math.ceil(rawUnitario);
     fueCalculadoUnitario = true;
+    console.log("💰 Unitario por precio/kilo:", rawUnitario, "→ redondeado:", valor_unitario);
   }
 
-  // Si no se calculó y hay unitario manual
+  if (!fueCalculadoUnitario && manual_unitario > 0) {
+    valor_unitario = Math.ceil(manual_unitario);
+    console.log("✍️ Unitario manual:", manual_unitario, "→ redondeado:", valor_unitario);
 
-    if (!fueCalculadoUnitario && manual_unitario > 0) {
-     // valor_unitario = manual_unitario;
-     valor_unitario = Math.ceil(manual_unitario);
-    
-      // Establecemos precio_total explícitamente si viene solo valor_unitario
-      if (numero_bolsas === 0) {
-        numero_bolsas = 1;
-        precioKilo = manual_unitario; // <-- 👈 evita que precio_total se quede vacío
-      }
+    if (numero_bolsas === 0) {
+      numero_bolsas = 1;
+      precioKilo = manual_unitario;
+      console.log("⚠️ Ajuste: número de bolsas fijado en 1 por entrada manual.");
     }
-    
+  }
+
   if (valor_unitario > 0 && cantidad > 0) {
     valor_paquete = parseFloat((valor_unitario * cantidad).toFixed(2));
     valor_total = parseFloat((valor_paquete * 1.19).toFixed(2));
+    console.log("📦 Paquete sin IVA:", valor_paquete, "→ con IVA:", valor_total);
   }
 
   return {
@@ -99,6 +104,7 @@ function calcularValores(item) {
     fueCalculadoUnitario
   };
 }
+
 
 
 export default function useCotizacionItems({ errores = {}, onChange, initialRows = [] }) {
@@ -135,6 +141,11 @@ export default function useCotizacionItems({ errores = {}, onChange, initialRows
     onChange?.(rows);
   }, [rows]);
 
-  return { rows, updateItem, addItem, removeItem,  };
+  const resetItems = () => {
+    setRows([]);
+    onChange([]);
+  };
+
+  return { rows, updateItem, addItem, removeItem,resetItems  };
 }
 export {calcularValores}

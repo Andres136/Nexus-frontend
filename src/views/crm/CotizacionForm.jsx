@@ -40,7 +40,7 @@ export default function CotizacionForm({modo}) {
   const [errores, setErrores] = useState({});
   const [loading, setLoading] = useState(false);
 
-  const { rows, updateItem, addItem, removeItem } = useCotizacionItems({
+  const { rows, updateItem, addItem, removeItem, resetItems} = useCotizacionItems({
     errores,
     onChange: (detalles) => setFormData((prev) => ({ ...prev, detalles })),
     initialRows: detallesCargados,
@@ -97,7 +97,33 @@ export default function CotizacionForm({modo}) {
     }
   }, [modo, id]);
   
-
+  const resetFormulario = () => {
+    setFormData({
+      cliente_id: "",
+      empresa: "setasplast",
+      observaciones: `❖ El precio ofertado es para pago a treinta (30) días calendario.
+  
+  ❖ Tiempo de Entrega: Quince (15) a veinte (20) días para el primer pedido, tres (03) a seis (06) días para los pedidos posteriores.
+  
+  ❖ Disponibilidad del Producto: Garantizamos la disponibilidad del producto.
+  
+  ❖ Las entregas en la ciudad de Bogotá las ofrecemos punto a punto. Para los municipios Girardot, Melgar, Ricaurte, Flandes, Viotá, Tocaima, Soacha, Funza, Madrid, Mosquera, Cali, Barranquilla, Soledad no tienen ningún recargo. Se realizan despachos a nivel nacional.
+  
+  ❖ Todos nuestros artículos tienen garantía por defectos de fabricación.
+  
+  ❖ Nuestros paquetes van rotulados con el nombre de la empresa, número de unidades del paquete, medida de la bolsa, color, calibre y código de barras.
+  
+  ❖ Para el caso de las bolsas marcadas es importante que el “cliché” lo aporte el cliente. En caso de no tenerlos, se cotiza como valor adicional y los mismos son propiedad del cliente.
+  
+  ❖ Apoyando la mitigación del impacto ambiental, todos nuestros productos son fabricados a partir de materiales Biodegradables y 100% reciclables, certificados y respaldados con fichas técnicas.
+  `,
+      detalles: [],
+    });
+    setDetallesCargados([]);
+    setErrores({});
+    resetItems();
+  };
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     console.log("Enviando formData:", formData);  // <— verifica aquí
@@ -141,6 +167,7 @@ export default function CotizacionForm({modo}) {
 
       toast.success("Cotización registrada correctamente");
       //Limpiar formulario
+      resetFormulario();
 
       const link = document.createElement("a");
       link.href = `${import.meta.env.VITE_API_URL}/api/cotizaciones/${data.cotizacion.id}/pdf`;
