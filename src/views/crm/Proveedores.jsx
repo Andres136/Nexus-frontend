@@ -139,6 +139,12 @@ useEffect(() => {
     >
       Ver Órdenes Registradas
     </Link>
+    <Link
+      to="/auth/crm/referencias-excedidas"
+      className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded text-center"
+    >
+      Ver Referencias Excedidas
+    </Link>
   </div>
       <form onSubmit={handleSubmit} className="mb-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

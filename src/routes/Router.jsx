@@ -41,6 +41,7 @@ import KpiTareas from "../components/calidad/KpiTareas";
 import CotizacionForm from "../views/crm/CotizacionForm";
 import MisOrdenesComerciales from "../views/crm/MisOrdenesComerciales";
 import MisCotizaciones from "../views/crm/MisCotizaciones";
+import ReferenciasExcedidas from "../views/crm/ReferenciasExcedidas";
 
 
 
@@ -98,6 +99,7 @@ export default function Router() {
         <Route path="mis-ordenes" element={<MisOrdenesComerciales/>} />
         <Route path="mis-cotizaciones" element={<MisCotizaciones/>} />
         <Route path="/auth/crm/editar-cotizacion/:id" element={<CotizacionForm modo="edicion" />} />
+        <Route path="/auth/crm/referencias-excedidas" element={<ReferenciasExcedidas/>} />
       </Route>
     </Route>
   
