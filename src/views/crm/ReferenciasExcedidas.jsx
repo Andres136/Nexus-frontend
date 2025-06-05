@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import clienteAxios from "../../config/axios";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 export default function ReferenciasExcedidas() {
   const [referencias, setReferencias] = useState([]);
   const [filtro, setFiltro] = useState("");
   const [paginaActual, setPaginaActual] = useState(1);
   const elementosPorPagina = 10;
+  const navigate = useNavigate();
 
   useEffect(() => {
     const obtenerReferencias = async () => {
@@ -47,6 +49,12 @@ export default function ReferenciasExcedidas() {
       <h3 className="text-lg font-bold mb-4 text-red-600">
         Resultados de Entregas Excedidas
       </h3>
+      <button
+  onClick={() => navigate(-1)} // 👈 vuelve a la ruta anterior
+  className="mb-4 px-4 py-2 bg-gray-300 hover:bg-gray-400 rounded text-sm"
+>
+  ← Volver
+</button>
 
       <div className="mb-4">
         <input

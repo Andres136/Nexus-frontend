@@ -109,6 +109,19 @@ export default function RegistrarEntregaProveedor({modo = "crear"}) {
   
     setErroresFecha({}); // limpia si está todo bien
     try {
+      // Primero: actualizar los detalles si estás en modo edición
+  if (modo === "editar") {
+    for (const d of detalles) {
+      await clienteAxios.put(`/api/detalles-orden/${d.id}`, {
+        descripcion: d.descripcion,
+        cantidad_solicitada: d.cantidad_solicitada,
+      
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+    }
+  }
+
       for (const entrega of entregas) {
         const endpoint = modo === "editar"
           ? `/api/entregas-proveedor/${entrega.id}` // usando el id específico
@@ -177,8 +190,34 @@ export default function RegistrarEntregaProveedor({modo = "crear"}) {
       {/* Fila principal del ítem */}
       <tr>
   <td className="border px-4 py-2">{detalle.item}</td>
-  <td className="border px-4 py-2">{detalle.descripcion}</td>
-  <td className="border px-4 py-2">{detalle.cantidad_solicitada}</td>
+  <td className="border px-4 py-2">
+  <input
+    type="text"
+    value={detalle.descripcion}
+    onChange={(e) => {
+      const nuevos = [...detalles];
+      nuevos[index].descripcion = e.target.value;
+      setDetalles(nuevos);
+    }}
+    className="w-full border rounded px-2 py-1"
+  />
+</td>
+
+<td className="border px-4 py-2">
+  <input
+    type="number"
+    value={detalle.cantidad_solicitada}
+    onChange={(e) => {
+      const nuevos = [...detalles];
+      nuevos[index].cantidad_solicitada = parseFloat(e.target.value) || 0;
+      setDetalles(nuevos);
+    }}
+    className="w-full border rounded px-2 py-1"
+  />
+</td>
+
+
+
   <td className="border px-4 py-2">{detalle.cantidad_entregada}</td>
   <td className="border px-4 py-2">
     {detalle.cantidad_solicitada - detalle.cantidad_entregada}
