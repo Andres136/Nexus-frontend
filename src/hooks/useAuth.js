@@ -109,15 +109,21 @@ export const useAuth = ({ middleware, url }) => {
     }
   };
 
-  const obtenerUsuarios = async (page = 1) => {
+  const obtenerUsuarios = async (page = 1, search = "") => {
     setLoading(true);
     const token = localStorage.getItem("token");
+  
     try {
-      const response = await clienteAxios.get(`/api/users?page=${page}`, {
+      const response = await clienteAxios.get(`/api/users`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+        params: {
+          page,
+          search,
+        },
       });
+  
       setUsers(response.data.data);
       setPagination({
         current_page: response.data.current_page,
@@ -131,6 +137,7 @@ export const useAuth = ({ middleware, url }) => {
       setLoading(false);
     }
   };
+  
 
   const toggleEstadoUsuario = async (id, estadoActual) => {
     const result = await Swal.fire({

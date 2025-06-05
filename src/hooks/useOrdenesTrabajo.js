@@ -7,16 +7,20 @@ export default function useOrdenesTrabajo() {
   const [busqueda, setBusqueda] = useState("");
   const [pagina, setPagina] = useState(1);
   const [fecha, setFecha] = useState(""); // ← NUEVO
+  const [sede, setSede] = useState(""); // ← NUEVO
+
 
   const fetchOrdenesTrabajo = async () => {
     try {
       const token = localStorage.getItem("token");
       const response = await clienteAxios.get(
-        `/api/ordenes-trabajo?page=${pagina}&search=${busqueda}&fecha=${fecha}`,
+        `/api/ordenes-trabajo?page=${pagina}&search=${busqueda}&fecha=${fecha}&sede=${sede}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
+      
+      console.log("Órdenes de trabajo obtenidas:", response.data);
       return response.data;
     } catch (error) {
       console.error("Error obteniendo órdenes de trabajo:", error);
@@ -29,7 +33,7 @@ export default function useOrdenesTrabajo() {
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["ordenes-trabajo", pagina, busqueda, fecha],
+    queryKey: ["ordenes-trabajo", pagina, busqueda, fecha, sede],
     queryFn: fetchOrdenesTrabajo,
     staleTime: 20000,
   });
@@ -43,6 +47,8 @@ export default function useOrdenesTrabajo() {
     busqueda,
     setBusqueda,
     fecha,         // ← NUEVO
-    setFecha       // ← NUEVO
+    setFecha,       // ← NUEVO
+    sede,          // ← NUEVO
+    setSede        // ← NUEVO
   };
 }

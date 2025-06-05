@@ -14,10 +14,16 @@ export default function ObtenerOrdenesTrabajo() {
     setBusqueda,
     fecha,
   setFecha,
+  sede,
+  setSede,
   } = useOrdenesTrabajo();
   const limpiarFiltros = () => {
     setBusqueda("");
     setFecha("");
+    setSede("");
+    // Reiniciar la página a 1 al limpiar los filtros
+    // Esto es importante para que al limpiar los filtros, la paginación vuelva a la primera página
+    // y no se quede en una página que no tiene resultados
     setPagina(1);
   };
   
@@ -73,10 +79,13 @@ useEffect(() => {
             <th className="px-4 py-3 text-left">ID</th>
             <th className="px-4 py-3 text-left">Cliente</th>
             <th className="px-4 py-3 text-left">Fecha de Entrega</th>
-            <th className="px-4 py-3 text-left">Direcion de Entrega</th>
+         <th className="px-4 py-3 text-left">Sede</th>
+           <th className="px-4 py-3 text-left">Direcion de Entrega</th>
             <th className="px-4 py-3 text-left">Observaciones</th>
             <th className="px-4 py-3 text-left">Estado</th>
             <th className="px-4 py-3 text-left">Acciones</th>
+      
+            
           </tr>
         </thead>
         <tbody>
@@ -85,6 +94,9 @@ useEffect(() => {
               <td className="px-4 py-3">{orden.id}</td>
               <td className="px-4 py-3">{orden.cliente.nombre}</td>
               <td className="px-4 py-3">{orden.fecha_entrega}</td>
+              <td className="px-4 py-3">{orden?.orden_compra?.sede?.nombre || "Sin sede"}</td>
+
+
               <td className="px-4 py-3"> {orden?.orden_compra?.ubicacion_entrega || "No especificado"}</td>
                 <td className="px-4 py-3">{orden.observaciones}</td>
                 <td className="px-4 py-3">

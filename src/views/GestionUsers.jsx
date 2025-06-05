@@ -32,9 +32,13 @@ export default function GestionUsers() {
     >
       + Registrar Usuario
     </button>
-    <Modal isOpen={isUserModalOpen} onClose={() => setUserModalOpen(false)}>
-      <RegisterUsers onClose={() => setUserModalOpen(false)} />
-    </Modal>
+  <Modal isOpen={isUserModalOpen} onClose={() => setUserModalOpen(false)}>
+  <RegisterUsers 
+    onClose={() => setUserModalOpen(false)} 
+   
+  />
+</Modal>
+
   </div>
 
   {/* Bloque 2: Registrar Departamentos */}

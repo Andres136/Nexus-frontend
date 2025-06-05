@@ -65,11 +65,13 @@ function createNewItem() {
 export default function DetallesOrdenesCompra() {
   const { id } = useParams();
   const { ordenesCompra } = useSystem();
-
+  const [sedes, setSedes] = useState([]);
+  const [sedeId, setSedeId] = useState("");
   const [observaciones, setObservaciones] = useState("");
   const [detalles, setDetalles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [errores, setErrores] = useState({});
+
 
   // Encontrar la orden de compra en tu store/hook
   const ordenSeleccionada = ordenesCompra?.data
@@ -148,6 +150,8 @@ export default function DetallesOrdenesCompra() {
       const response = await clienteAxios.post(
         `/api/orden-trabajo/${ordenSeleccionada.id}`,
         {
+         
+          sede_id: parseInt(sedeId), 
           observaciones,
           detalles: detalles.map((det) => ({
             // Si det.id existe, actualiza; si es null, crea nuevo
@@ -188,7 +192,27 @@ export default function DetallesOrdenesCompra() {
       setLoading(false);
     }
   };
-
+ 
+  
+  // Cargar sedes al montar
+  useEffect(() => {
+    const obtenerSedes = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await clienteAxios.get("/api/sedes", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setSedes(response.data);
+      } catch (error) {
+        toast.error("Error al cargar las sedes");
+      }
+    };
+  
+    obtenerSedes();
+  }, []);
+  
 
   return (
     <div className="min-h-screen  text-gray-900 p-6">
@@ -395,6 +419,24 @@ export default function DetallesOrdenesCompra() {
               <p className="text-red-500 text-sm">{errores.observaciones}</p>
             )}
           </div>
+
+          <div className="mb-4">
+  <label className="font-semibold text-sm text-gray-700">Selecciona la sede:</label>
+  <select
+    className="w-full border border-gray-300 rounded p-2 mt-1"
+    value={sedeId}
+    onChange={(e) => setSedeId(e.target.value)}
+  >
+    <option value="">-- Selecciona una sede --</option>
+    {sedes.map((sede) => (
+      <option key={sede.id} value={sede.id}>
+        {sede.nombre}
+      </option>
+    ))}
+  </select>
+  {errores.sede_id && <p className="text-red-500 text-sm">{errores.sede_id}</p>}
+</div>
+
 
           {/* Botón Generar Orden de Trabajo */}
           <button

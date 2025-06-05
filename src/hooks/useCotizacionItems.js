@@ -44,8 +44,11 @@ function calcularValores(item) {
   let valor_total = 0;
 
   if (ancho > 0 && largo > 0 && calibre > 0) {
-    const anchoIn = ancho * FACTOR_PULGADA;
-    const largoIn = largo * FACTOR_PULGADA;
+    let anchoIn = ancho * FACTOR_PULGADA;
+    let largoIn = largo * FACTOR_PULGADA;
+    if (ancho < 100) anchoIn = Math.ceil(anchoIn);
+    if (largo < 100) largoIn = Math.ceil(largoIn);
+  
     const resultado = anchoIn * largoIn * calibre * FACTOR_CONSTANTE;
 
     console.log("📐 Conversión cm → pulgadas:", { anchoIn, largoIn });

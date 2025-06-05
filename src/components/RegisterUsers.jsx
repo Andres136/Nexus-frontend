@@ -11,9 +11,13 @@ export default function RegisterUsers({ onClose }) {
     const telefonoRef = createRef();
     const departamento_idRef = createRef();
     const imagenRef = createRef();
+    const sedeNombreRef = createRef();
+const sedeDireccionRef = createRef();
+
 
     const [errores, setErrores] = useState({});
     const { register } = useAuth({ middleware: "guest" });
+
 
     const [departamentos, setDepartamentos] = useState([]);
     const [roles, setRoles] = useState([]);
@@ -29,6 +33,9 @@ export default function RegisterUsers({ onClose }) {
         formData.append("role_id", role_idRef.current.value);
         formData.append("telefono", telefonoRef.current.value);
         formData.append("departamento_id", departamento_idRef.current.value);
+        // Agregar sede si es necesario
+        formData.append("sede_nombre", sedeNombreRef.current?.value || "");
+        formData.append("sede_direccion", sedeDireccionRef.current?.value || "");
       
         // 2) Si seleccionaron archivo, lo agregamos
         if (imagenRef.current.files[0]) {
@@ -39,6 +46,7 @@ export default function RegisterUsers({ onClose }) {
         const success = await register(formData, setErrores);
         if (success) {
           onClose();
+        
         }
       };
       
@@ -182,6 +190,36 @@ export default function RegisterUsers({ onClose }) {
   />
   {errores.imagen && <small className="text-red-500">{errores.imagen}</small>}
 </div>
+<div>
+  <label htmlFor="sede_nombre" className="block text-sm font-medium text-gray-700">
+    Nombre de la sede
+  </label>
+  <input
+    type="text"
+    id="sede_nombre"
+    name="sede_nombre"
+    ref={sedeNombreRef}
+    placeholder="Ingrese el nombre de la sede"
+    className="mt-1 block w-full h-10 shadow-sm sm:text-sm border-gray-300 rounded-md"
+  />
+  {errores.sede_nombre && <small className="text-red-500">{errores.sede_nombre}</small>}
+</div>
+
+<div>
+  <label htmlFor="sede_direccion" className="block text-sm font-medium text-gray-700">
+    Dirección de la sede
+  </label>
+  <input
+    type="text"
+    id="sede_direccion"
+    name="sede_direccion"
+    ref={sedeDireccionRef}
+    placeholder="Ingrese la dirección de la sede"
+    className="mt-1 block w-full h-10 shadow-sm sm:text-sm border-gray-300 rounded-md"
+  />
+  {errores.sede_direccion && <small className="text-red-500">{errores.sede_direccion}</small>}
+</div>
+
             <div>
                 <button
                     type="submit"

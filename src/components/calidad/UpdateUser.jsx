@@ -13,13 +13,28 @@ export default function UpdateUser({ onClose, userId }) {
   const telefonoRef = useRef(null);
   const departamento_idRef = useRef(null);
   const imagenRef = useRef(null);
+  const sede_idRef = useRef(null);
 
   const [errores, setErrores] = useState({});
   const { users, updateUsuario, obtenerUsuarios } = useAuth({ middleware: "guest" });
-  console.log("Usuarios:", users);
+ 
 
   const [departamentos, setDepartamentos] = useState([]);
   const [roles, setRoles] = useState([]);
+
+const [sedes, setSedes] = useState([]);
+const [nuevaSede, setNuevaSede] = useState("");
+const [direccionSede, setDireccionSede] = useState("");
+
+
+const obtenerSedes = async () => {
+  try {
+    const response = await clienteAxios.get("/api/sedes");
+    setSedes(response.data);
+  } catch (error) {
+    toast.error("No se pudieron cargar las sedes.");
+  }
+};
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -40,12 +55,17 @@ export default function UpdateUser({ onClose, userId }) {
     formData.append("role_id", role_idRef.current.value);
     formData.append("telefono", telefonoRef.current.value);
     formData.append("departamento_id", departamento_idRef.current.value);
+    formData.append("sede_id", sede_idRef.current.value);
   
     // 3) Si seleccionaron archivo, lo agregamos
     if (imagenRef.current.files[0]) {
       formData.append("imagen", imagenRef.current.files[0]);
     }
-  
+    if (nuevaSede) {
+      formData.append("sede_nombre", nuevaSede);
+      formData.append("sede_direccion", direccionSede);
+    }
+    
     // 4) Llamar a la función updateUsuario (ahora detectará FormData)
     const success = await updateUsuario(userId, formData, setErrores);
     if (success) {
@@ -103,12 +123,14 @@ export default function UpdateUser({ onClose, userId }) {
         if (telefonoRef.current) telefonoRef.current.value = usuario.telefono || "";
         if (role_idRef.current) role_idRef.current.value = usuario.role_id || "";
         if (departamento_idRef.current) departamento_idRef.current.value = usuario.departamento_id || "";
+        if (sede_idRef.current) sede_idRef.current.value = usuario.sede_id || "";
       }
     };
 
     cargarDatos();
     obtenerDepartamentos();
     obtenerRoles();
+    obtenerSedes();
   }, [users, userId]);
 
   // Cada vez que cambien los errores, se reobtienen los usuarios (esto actualiza la lista si es necesario)
@@ -120,6 +142,48 @@ export default function UpdateUser({ onClose, userId }) {
   return (
     <div className="p-4 w-full">
       <form className="grid grid-cols-1 gap-6" onSubmit={handleSubmit} noValidate>
+
+      <div>
+  <label htmlFor="sede_id" className="block text-sm font-medium text-gray-700">
+    Sede
+  </label>
+  <select
+    id="sede_id"
+    name="sede_id"
+    ref={sede_idRef}
+    className="mt-1 block w-full h-10 py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+  >
+    <option>Seleccione una sede</option>
+    {sedes.map((sede) => (
+      <option key={sede.id} value={sede.id}>
+        {sede.nombre}
+      </option>
+    ))}
+  </select>
+</div>
+<div>
+  <label className="block text-sm font-medium text-gray-700">Nueva Sede (opcional)</label>
+  <input
+    type="text"
+    name="sede_nombre"
+    placeholder="Nombre de la nueva sede"
+    onChange={(e) => setNuevaSede(e.target.value)}
+    className="mt-1 block w-full h-10 px-3 border border-gray-300 rounded-md shadow-sm"
+  />
+</div>
+
+<div>
+  <label className="block text-sm font-medium text-gray-700">Dirección de la sede (opcional)</label>
+  <input
+    type="text"
+    name="sede_direccion"
+    placeholder="Dirección de la sede"
+    onChange={(e) => setDireccionSede(e.target.value)}
+    className="mt-1 block w-full h-10 px-3 border border-gray-300 rounded-md shadow-sm"
+  />
+</div>
+
+
       <div>
         <label htmlFor="name" className="block text-sm font-medium text-gray-700">
           Nombre

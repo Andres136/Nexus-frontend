@@ -57,7 +57,12 @@ export default function TableUsers({onClose}) {
  const {users, pagination,obtenerUsuarios,toggleEstadoUsuario,  loading}=useAuth({middleware: "auth"})
  
   const  [selectedUser, setSelectedUser] = useState(null);
+  const [search, setSearch] = useState("");
 
+  const handleSearch = () => {
+    obtenerUsuarios(1, search);
+  };
+  
   useEffect(() => {
     obtenerUsuarios();
   }, []);
@@ -71,6 +76,22 @@ export default function TableUsers({onClose}) {
         <div className="text-center py-4">Cargando usuarios...</div>
       ) : (
         <>
+        <div className="flex items-center mb-4">
+  <input
+    type="text"
+    value={search}
+    onChange={(e) => setSearch(e.target.value)}
+    placeholder="Buscar usuario..."
+    className="border p-2 rounded mr-2"
+  />
+  <button
+    onClick={handleSearch}
+    className="bg-blue-600 text-white px-3 py-1 rounded"
+  >
+    Buscar
+  </button>
+</div>
+
           <table className={
             darkMode
               ? "bg-gray-800 text-white p-4 table-auto w-full border-collapse "
@@ -85,6 +106,7 @@ export default function TableUsers({onClose}) {
                 <th className="border border-gray-300 px-4 py-2">Teléfono</th>
                 <th className="border border-gray-300 px-4 py-2">Rol</th>
                 <th className="border border-gray-300 px-4 py-2">Departamento</th>
+                <th className="border border-gray-300 px-4 py-2">Sede</th>
           
               </tr>
             </thead>
@@ -106,6 +128,7 @@ export default function TableUsers({onClose}) {
 
                     </button>
                     <Modal isOpen={isUserModalOpen} onClose={() => setUserModalOpen(false)}>
+                      
               <UpdateUser userId={selectedUser} onClose={()=>setUserModalOpen(false)} />
             </Modal>
                   </td>
@@ -123,7 +146,10 @@ export default function TableUsers({onClose}) {
                   <td className="border border-gray-300 px-4 py-2">{row.email}</td>
                   <td className="border border-gray-300 px-4 py-2">{row.telefono}</td>
                   <td className="border border-gray-300 px-4 py-2">{row.role?.nombre || "Sin rol"}</td>
-                  <td className="border border-gray-300 px-4 py-2">{row.departamento?.nombre || "Sin departamento"}</td>
+                  <td className="border border-gray-300 px-4 py-2">{row.departamento?.nombre || "Sin departamento"}
+
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2">{row.sede?.nombre || "Sin sede"}</td>
            
                 </tr>
               ))}
