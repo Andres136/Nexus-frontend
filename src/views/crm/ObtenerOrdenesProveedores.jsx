@@ -94,6 +94,17 @@ export default function ObtenerOrdenesProveedores() {
                   >
                     Registrar Entrega
                   </button>
+                  <button
+                    onClick={() =>
+                      navigate(
+                        `/auth/crm/ordenes-proveedor-entregas/${orden.id}/editar`
+                      )
+                    }
+                    className="bg-blue-500 text-white px-3 py-1 rounded"
+                  >
+                    Editar Entrega
+                  </button>
+            
                 </td>
               </tr>
             ))}

@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import clienteAxios from "../../config/axios";
 import { toast } from "react-toastify";
 
-export default function RegistrarEntregaProveedor() {
+export default function RegistrarEntregaProveedor({modo = "crear"}) {
   const { id } = useParams();
   const navigate = useNavigate();
   const [orden, setOrden] = useState({});
@@ -31,6 +31,13 @@ export default function RegistrarEntregaProveedor() {
       [index]: value,
     }));
   };
+
+  const handleChange = (index, value) => {
+    const nuevos = [...detalles];
+    nuevos[index].cantidad_entregada_input = value;
+    setDetalles(nuevos);
+  };
+  
   
   useEffect(() => {
     const fetchDetalles = async () => {
@@ -39,55 +46,60 @@ export default function RegistrarEntregaProveedor() {
         const response = await clienteAxios.get(`/api/ordenes-compra-proveedor/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setDetalles(response.data.productos);
+  
+        const productos = response.data.productos.map((detalle) => {
+          const ultimaEntrega = detalle.entregas?.[detalle.entregas.length - 1]; // última entrega
+        
+          return {
+            ...detalle,
+            cantidad_entregada_input: modo === "editar" ? ultimaEntrega?.cantidad_entregada || "" : "",
+            entrega_id: modo === "editar" ? ultimaEntrega?.id : null, // 👈 aquí guardas el id de la entrega
+          };
+        });
+        
+        setDetalles(productos);
         setOrden({
           proveedor: response.data.proveedor,
-          numero_orden: response.data.numero_orden
+          numero_orden: response.data.numero_orden,
         });
-        console.log(response.data.productos);
+  
       } catch (error) {
         toast.error("Error al cargar los detalles de la orden");
-        console.error("Error al cargar los detalles de la orden:", error);
       } finally {
         setLoading(false);
       }
     };
-
+  
     fetchDetalles();
-  }, [id]);
-
-  const handleChange = (index, value) => {
-    const nuevos = [...detalles];
-    nuevos[index].cantidad_entregada_input = value;
-    setDetalles(nuevos);
-  };
-
+  }, [id, modo]);
+  
   const handleSubmit = async () => {
     const token = localStorage.getItem("token");
     const nuevosErrores = {};
   
     const entregas = detalles
-      .map((d, index) => {
-        const cantidad = parseFloat(d.cantidad_entregada_input);
-        const fecha = fechasEntrega[index];
+    .map((d, index) => {
+      const cantidad = parseFloat(d.cantidad_entregada_input);
+      const fecha = fechasEntrega[index];
   
-        // Validación: si hay cantidad, debe haber fecha
-        if (cantidad > 0 && !fecha) {
-          nuevosErrores[index] = "La fecha es obligatoria";
-          return null;
-        }
-  
-        if (cantidad > 0) {
-          return {
-            detalle_id: d.id,
-            cantidad_entregada: cantidad,
-            fecha_entrega: fecha,
-          };
-        }
-  
+      if (cantidad > 0 && !fecha) {
+        nuevosErrores[index] = "La fecha es obligatoria";
         return null;
-      })
-      .filter((e) => e !== null);
+      }
+  
+      if (cantidad > 0) {
+        return {
+          id: d.entrega_id, // 👈 necesario solo en edición
+          detalle_id: d.id,
+          cantidad_entregada: cantidad,
+          fecha_entrega: fecha,
+        };
+      }
+  
+      return null;
+    })
+    .filter((e) => e !== null);
+  
   
     if (Object.keys(nuevosErrores).length > 0) {
       setErroresFecha(nuevosErrores);
@@ -96,19 +108,31 @@ export default function RegistrarEntregaProveedor() {
     }
   
     setErroresFecha({}); // limpia si está todo bien
-  
     try {
       for (const entrega of entregas) {
-        await clienteAxios.post("/api/entregas-proveedor", entrega, {
+        const endpoint = modo === "editar"
+          ? `/api/entregas-proveedor/${entrega.id}` // usando el id específico
+          : "/api/entregas-proveedor";
+      
+        await clienteAxios({
+          method: modo === "editar" ? "put" : "post",
+          url: endpoint,
+          data: entrega,
           headers: { Authorization: `Bearer ${token}` },
         });
       }
-      toast.success("Entregas registradas correctamente");
+      
+      toast.success(
+        modo === "editar"
+          ? "Entregas actualizadas correctamente"
+          : "Entregas registradas correctamente"
+      );
       navigate(-1);
     } catch (error) {
-      toast.error("Error al registrar entregas");
-      console.error("Error al registrar entregas:", error);
+      toast.error("Error al registrar o actualizar entregas");
+      console.error("Error:", error);
     }
+    
   };
   
   
@@ -231,11 +255,12 @@ export default function RegistrarEntregaProveedor() {
       </table>
 
       <button
-        onClick={handleSubmit}
-        className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-      >
-        Registrar Entrega
-      </button>
+  onClick={handleSubmit}
+  className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+>
+  {modo === "editar" ? "Actualizar Entrega" : "Registrar Entrega"}
+</button>
+
       </div>
     </div>
   );

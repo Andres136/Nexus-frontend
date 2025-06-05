@@ -92,6 +92,8 @@ export default function Router() {
         <Route path="proveedores-ordenes-compra" element={<FormOrdenesProveedores/>} />
         <Route path="ordenes-compra-proveedor" element={<ObtenerOrdenesProveedores/>} />
         <Route path="/auth/crm/ordenes-proveedor-entregas/:id/registrar-entrega" element={<RegistrarEntregaProveedor />} />
+        <Route path="/auth/crm/ordenes-proveedor-entregas/:id/editar" element={<RegistrarEntregaProveedor modo="editar" />} />
+
         <Route path="cotizaciones" element={<CotizacionForm/>} />
         <Route path="mis-ordenes" element={<MisOrdenesComerciales/>} />
         <Route path="mis-cotizaciones" element={<MisCotizaciones/>} />
