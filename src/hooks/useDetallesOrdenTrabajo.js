@@ -188,7 +188,7 @@ export default function useDetallesOrdenTrabajo() {
     const doc = new jsPDF();
     try {
       const logo = await cargarImagen(LOGO);
-      doc.addImage(logo, "PNG", 10, 10, 30, 15); // proporciones más equilibradas
+      doc.addImage(logo, "PNG", 10, 10, 25, 25); // proporciones más equilibradas
       doc.setFontSize(18);
       doc.text("ORDEN DE TRABAJO", 105, 20, null, null, "center");
 
@@ -223,10 +223,16 @@ export default function useDetallesOrdenTrabajo() {
         body: tableData,
         styles: { fontSize: 8 },
       });
-
+      const totalKg = detalles.reduce(
+        (acc, d) => acc + (parseFloat(d.cantidad_requerida_kg) || 0),
+        0
+      );
+      
       let y = doc.lastAutoTable.finalY + 10;
       doc.setFontSize(12);
       doc.text(`Valor Total: ${formatCurrency(orden.orden_compra.valor_total)}`, 14, y);
+      y += 7; // Ajusta separación
+      doc.text(`Total Kg Calculados: ${totalKg.toFixed(2)} Kg`, 14, y); // ✅ ESTA LÍNEA NUEVA
       y += 10;
       doc.text("Observaciones generales:", 14, y);
       doc.setFontSize(10);
@@ -247,6 +253,14 @@ export default function useDetallesOrdenTrabajo() {
     await handleGuardarOrden();
     await handleGenerarPDF();
   };
+  const handleSeleccionarTodo = (checked) => {
+    const nuevos = {};
+    detalles.forEach((detalle) => {
+      nuevos[detalle.id] = checked;
+    });
+    setRevisados(nuevos);
+  };
+  
 
   return {
     orden,
@@ -258,6 +272,7 @@ export default function useDetallesOrdenTrabajo() {
     handleGuardarYGenerarPDF,
     handleChangeDetalle,
     handleCheckboxChange,
+    handleSeleccionarTodo, // 👈 aquí la expones
     revisados,
   };
 }

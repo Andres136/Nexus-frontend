@@ -14,6 +14,7 @@ export default function DetallesOrdenTrabajo() {
     handleChangeDetalle,
     revisados,
     handleCheckboxChange,
+    handleSeleccionarTodo,
   } = useDetallesOrdenTrabajo();
 
   if (!orden) return <p>Cargando orden o no se encontró la orden.</p>;
@@ -30,6 +31,19 @@ export default function DetallesOrdenTrabajo() {
  
 <div className="grid grid-cols-1 gap-4">
   <div className="col-span-1">
+  <div className="mb-4">
+  <label className="inline-flex items-center">
+    <input
+      type="checkbox"
+      onChange={(e) => handleSeleccionarTodo(e.target.checked)}
+      className="form-checkbox h-5 w-5 text-blue-600"
+    />
+    <span className="ml-2 text-sm font-semibold text-gray-700">
+      Seleccionar/Deseleccionar todos los ítems
+    </span>
+  </label>
+</div>
+
      <TablaDetallesOrden
         detalles={detalles}
         errores={errores}

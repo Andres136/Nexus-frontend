@@ -63,6 +63,11 @@ const Dashboard = () => {
       value: data.vencidas,
       clientes: data.vencidas_detalle || [],
     },
+    {
+      name: 'Entrega Parcial',
+      value: data.entrega_parcial,
+      clientes: data.entrega_parcial_detalle || [],
+    },
   ];
 
 
@@ -81,7 +86,7 @@ const Dashboard = () => {
 
 
         {/* Tarjetas resumen */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
           {[
             ['Órdenes', data.registradas],
             ['En orden de trabajo', data.en_orden_trabajo],
@@ -89,6 +94,7 @@ const Dashboard = () => {
             ['Con faltantes', data.faltantes],
             ['Vencidas', data.vencidas],
             ['A entregar hoy', data.hoy],
+            ['Entrega Parcial', data.entrega_parcial], // ✅ NUEVA TARJETA
           ].map(([title, value], i) => (
             <div key={i} className="bg-white p-4 rounded shadow text-center">
               <h4 className="text-sm font-semibold">{title}</h4>
@@ -132,7 +138,8 @@ const Dashboard = () => {
                     `;
                   },
                 },
-                colors: ['#3b82f6'],
+                colors: ['#3b82f6']
+                ,
                 responsive: [
                   {
                     breakpoint: 768,

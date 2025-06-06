@@ -16,7 +16,9 @@ export default function OrdenCompraForm({ modo }) {
   const { id } = useParams();
   const [errores, setErrores] = useState({});
   const [erroresDetalles, setErroresDetalles] = useState({});
-  const { clientesTodos, setBusqueda, busqueda } = useClientes();
+  const { clientesTodos } = useClientes()
+  const [guardando, setGuardando] = useState(false);
+
   const { user } = useAuth({middleware: "auth"});
   console.log( "rol",user.role_id);
 
@@ -93,6 +95,8 @@ export default function OrdenCompraForm({ modo }) {
   const enviarOrden = async () => {
     setErrores({});
     setErroresDetalles({});
+    setGuardando(true);
+
     try {
       const token = localStorage.getItem("token");
    
@@ -155,6 +159,7 @@ export default function OrdenCompraForm({ modo }) {
         toast.error("Ocurrió un error al enviar la orden.");
       }
     }
+    setGuardando(false);
   };
   // dentro del componente…
 const opcionesClientes = clientesTodos.map(c => ({
@@ -280,12 +285,14 @@ const opcionesClientes = clientesTodos.map(c => ({
 
   {/* Si NO estoy en edición → mostrar “Guardar” */}
   {modo !== "edicion" && (
-    <button
-      onClick={enviarOrden}
-      className="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded"
-    >
-      Guardar Orden de Compra
-    </button>
+   <button
+   onClick={enviarOrden}
+   disabled={guardando}
+   className="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded disabled:opacity-60"
+ >
+   {guardando ? "Guardando..." : "Guardar Orden de Compra"}
+ </button>
+ 
   )}
 </div>
 

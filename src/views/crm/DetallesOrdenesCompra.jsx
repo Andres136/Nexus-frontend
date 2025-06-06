@@ -71,6 +71,8 @@ export default function DetallesOrdenesCompra() {
   const [detalles, setDetalles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [errores, setErrores] = useState({});
+  const [forzarEntregaParcial, setForzarEntregaParcial] = useState(false);
+
 
 
   // Encontrar la orden de compra en tu store/hook
@@ -153,6 +155,7 @@ export default function DetallesOrdenesCompra() {
          
           sede_id: parseInt(sedeId), 
           observaciones,
+          forzar_entrega_parcial: forzarEntregaParcial, // << ESTE CAMPO NUEVO
           detalles: detalles.map((det) => ({
             // Si det.id existe, actualiza; si es null, crea nuevo
             id: det.id,
@@ -437,6 +440,19 @@ export default function DetallesOrdenesCompra() {
   {errores.sede_id && <p className="text-red-500 text-sm">{errores.sede_id}</p>}
 </div>
 
+<div className="mb-4">
+  <label className="inline-flex items-center">
+    <input
+      type="checkbox"
+      className="form-checkbox h-5 w-5 text-green-600"
+      checked={forzarEntregaParcial}
+      onChange={(e) => setForzarEntregaParcial(e.target.checked)}
+    />
+    <span className="ml-2 text-gray-700 font-semibold">
+      Cliente requiere entregas parciales
+    </span>
+  </label>
+</div>
 
           {/* Botón Generar Orden de Trabajo */}
           <button
