@@ -48,27 +48,28 @@ function calcularValores(item) {
     let largoIn = largo * FACTOR_PULGADA;
     if (ancho < 100) anchoIn = Math.ceil(anchoIn);
     if (largo < 100) largoIn = Math.ceil(largoIn);
-  
+
     const resultado = anchoIn * largoIn * calibre * FACTOR_CONSTANTE;
 
     console.log("📐 Conversión cm → pulgadas:", { anchoIn, largoIn });
     console.log("📊 Resultado fórmula:", resultado);
 
     const rawPeso = resultado / 10000;
-     peso_bolsa= Math.floor(rawPeso);
-    if (peso_bolsa > 0) {
-      const rawBags = 1000 / peso_bolsa;
-      numero_bolsas = Math.round(rawBags); // puedes redondear esto si sí lo deseas
-    }
+    peso_bolsa = Math.floor(rawPeso);
 
     console.log("⚖️ Peso bolsa:", rawPeso, "→ redondeado:", peso_bolsa);
 
-    const rawBags = 1000 / peso_bolsa;
-    const enteroB = Math.floor(rawBags);
-    const decimaB = rawBags - enteroB;
-    numero_bolsas = decimaB >= 0.5 ? enteroB + 1 : enteroB;
-
-    console.log("📦 Número de bolsas:", rawBags, "→ redondeado:", numero_bolsas);
+    if (peso_bolsa > 0) {
+      const rawBags = 1000 / peso_bolsa;
+      const enteroB = Math.floor(rawBags);
+      const decimaB = rawBags - enteroB;
+      numero_bolsas = decimaB >= 0.5 ? enteroB + 1 : enteroB;
+      console.log("📦 Número de bolsas:", rawBags, "→ redondeado:", numero_bolsas);
+    } else {
+      console.warn("⚠️ No se pudo calcular número de bolsas porque peso_bolsa es 0");
+    }
+  } else {
+    console.warn("❌ No se puede calcular por valores incompletos", { ancho, largo, calibre });
   }
 
   let fueCalculadoUnitario = false;
