@@ -18,6 +18,9 @@ export default function OrdenCompraForm({ modo }) {
   const [erroresDetalles, setErroresDetalles] = useState({});
   const { clientesTodos } = useClientes()
   const [guardando, setGuardando] = useState(false);
+  const [mostrarModalObservaciones, setMostrarModalObservaciones] = useState(false);
+const [observacionDetectada, setObservacionDetectada] = useState(false); // evita mostrar varias veces
+
 
   const { user } = useAuth({middleware: "auth"});
   console.log( "rol",user.role_id);
@@ -31,13 +34,21 @@ export default function OrdenCompraForm({ modo }) {
   });
 
   const handleInputChange = (e) => {
+    const { name, value } = e.target;
+  
+    if (name === "observaciones" && value.trim() !== "" && !observacionDetectada) {
+      setMostrarModalObservaciones(true);
+      setObservacionDetectada(true);
+    }
+  
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: value,
     });
   };
-
+  
   const handleDetallesChange = useCallback((detallesActualizados) => {
+    
     setFormData((prevData) => ({
       ...prevData,
       detalles: detallesActualizados,
@@ -168,8 +179,30 @@ const opcionesClientes = clientesTodos.map(c => ({
 }));
 
 
+
+
   return (
-    <div className="p-6 bg-white rounded-xl">
+
+    
+    <div className="p-6 bg-white rounded-xl">{mostrarModalObservaciones && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+    <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-xl">
+      <h2 className="text-xl font-semibold mb-2">¿Qué deseas anotar?</h2>
+      <p className="text-sm text-gray-600 mb-4">
+        Las observaciones son útiles para incluir detalles adicionales sobre direciones, horarios de entregas,  condiciones especiales o compromisos acordados.
+      </p>
+      <div className="flex justify-end space-x-2">
+        <button
+          onClick={() => setMostrarModalObservaciones(false)}
+          className="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-700"
+        >
+          Entendido
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
    <h2 className="text-2xl font-bold mb-4">
   {modo === "edicion" ? "Editar Orden de Compra" : "Crear Orden de Compra"}
 </h2>
@@ -299,6 +332,7 @@ const opcionesClientes = clientesTodos.map(c => ({
 
       </div>
     </div>
+    
     );
 }
 
