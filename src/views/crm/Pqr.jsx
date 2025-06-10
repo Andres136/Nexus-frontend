@@ -2,7 +2,8 @@
 import { useEffect, useState } from "react";
 import clienteAxios from "../../config/axios";
 import { toast } from "react-toastify";
-
+import {useAuth} from "../../hooks/useAuth";
+import Select from "react-select";
 export default function Pqr() {
   const [pqrs, setPqrs] = useState([]);
   const [empresa, setEmpresa] = useState("");
@@ -10,6 +11,8 @@ export default function Pqr() {
   const [pagina, setPagina] = useState(1);
   const [pagination, setPagination] = useState({});
   const [mensajeSeleccionado, setMensajeSeleccionado] = useState(null);
+  const { obtenerUsuarios, users,user } = useAuth({ middleware: "auth" });
+  
 
 
   const fetchPqrs = async () => {
@@ -59,7 +62,30 @@ export default function Pqr() {
 
   useEffect(() => {
     fetchPqrs();
+    obtenerUsuarios();
   }, [empresa, estado, pagina]);
+
+
+  const asignarResponsable = async () => {
+    const token = localStorage.getItem("token");
+    try {
+      const response = await clienteAxios.put(
+        `/api/pqrs/${mensajeSeleccionado.id}/asignar`,
+        { asignado_a: mensajeSeleccionado.asignado_a },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      toast.success(response.data.message); // ✅ ahora usa el mensaje desde el backend
+      fetchPqrs(); // Recarga la tabla
+      setMensajeSeleccionado(null); // Cierra el modal
+    } catch (error) {
+      toast.error("Error al asignar responsable.");
+      console.error(error);
+    }
+  };
+  
+  
 
   return (
     <div className="container p-4">
@@ -88,6 +114,8 @@ export default function Pqr() {
     <th className="py-2 px-4 text-left">Nombre</th>
     <th className="py-2 px-4 text-left">Empresa</th>
     <th className="py-2 px-4 text-left">Teléfono</th>
+    <th className="py-2 px-4 text-left">Responsable</th>
+
     <th className="py-2 px-4 text-left">Mensaje </th>
     <th className="py-2 px-4 text-left">Estado</th>
     <th className="py-2 px-4 text-left">Fecha</th>
@@ -100,9 +128,12 @@ export default function Pqr() {
       <td className="py-2 px-4">{pqr.nombre}</td>
       <td className="py-2 px-4">{pqr.empresa}</td>
       <td className="py-2 px-4">{pqr.telefono}</td>
+      <td className="py-2 px-4">{pqr.asignado?.name || "Sin asignar"}</td>
+
       <td className="py-2 px-4">
         <button
-          onClick={() => setMensajeSeleccionado(pqr.mensaje)}
+     onClick={() => setMensajeSeleccionado(pqr)}
+
           className=" hover:underline"
         >
           Ver Mensaje
@@ -111,13 +142,16 @@ export default function Pqr() {
 
 <td className="py-2 px-4">
   {pqr.estado?.nombre || "Sin estado"}
-  <button
-    onClick={() => cambiarEstado(pqr.id, pqr.estado_id)}
-    className="ml-2 text-sm text-green-600 underline"
-  >
-    Cambiar estado
-  </button>
+  {user?.role_id === 1 && (
+    <button
+      onClick={() => cambiarEstado(pqr.id, pqr.estado_id)}
+      className="ml-2 text-sm text-green-600 underline"
+    >
+      Cambiar estado
+    </button>
+  )}
 </td>
+
 
       <td className="py-2 px-4">
         {new Date(pqr.created_at).toLocaleDateString("es-CO", {
@@ -170,18 +204,108 @@ export default function Pqr() {
       </div>
       {mensajeSeleccionado && (
   <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div className="bg-white p-6 rounded-lg shadow-lg max-w-lg w-full">
-      <h3 className="text-xl font-semibold mb-4">📩 Mensaje completo</h3>
-      <p className="text-gray-800 whitespace-pre-line">{mensajeSeleccionado}</p>
-      <div className="mt-6 text-right">
-        <button
-          onClick={() => setMensajeSeleccionado(null)}
-          className="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-700"
-        >
-          Cerrar
-        </button>
-      </div>
+
+
+<div className="bg-white p-6 rounded-lg shadow-lg max-w-lg w-full">
+  <h3 className="text-xl font-semibold mb-4">📩 Detalles de la PQR</h3>
+
+  <p><strong>Nombre:</strong> {mensajeSeleccionado.nombre}</p>
+  <p><strong>Empresa:</strong> {mensajeSeleccionado.empresa}</p>
+  <p><strong>Correo:</strong> {mensajeSeleccionado.email}</p>
+  <p><strong>Mensaje:</strong></p>
+  <p className="text-gray-800 whitespace-pre-line mb-4">
+    {mensajeSeleccionado.mensaje}
+  </p>
+
+  {user?.role_id === 1 && (
+  <>
+    <label className="block mb-2 font-semibold">Asignar a:</label>
+    <Select
+      className="mb-4"
+      placeholder="Seleccionar responsable..."
+      options={users.map((u) => ({
+        value: u.id,
+        label: u.name,
+      }))}
+      value={
+        mensajeSeleccionado.asignado_a
+          ? {
+              value: mensajeSeleccionado.asignado_a,
+              label:
+                users.find((u) => u.id === mensajeSeleccionado.asignado_a)?.name ||
+                "Seleccionado",
+            }
+          : null
+      }
+      onChange={(selected) =>
+        setMensajeSeleccionado((prev) => ({
+          ...prev,
+          asignado_a: selected?.value || "",
+        }))
+      }
+    />
+  </>
+)}
+{(user?.role_id === 1 || user?.id === mensajeSeleccionado.asignado_a) && (
+  <>
+    <label className="block mb-2 font-semibold">Respuesta:</label>
+    <textarea
+      className="w-full border px-3 py-2 rounded mb-4"
+      rows="4"
+      value={mensajeSeleccionado.respuesta || ""}
+      onChange={(e) =>
+        setMensajeSeleccionado((prev) => ({
+          ...prev,
+          respuesta: e.target.value,
+        }))
+      }
+      placeholder="Escribe tu respuesta..."
+    ></textarea>
+
+    <div className="flex justify-end gap-2 mb-4">
+      <button
+        onClick={async () => {
+          try {
+            const token = localStorage.getItem("token");
+            await clienteAxios.put(
+              `/api/pqrs/${mensajeSeleccionado.id}/responder`,
+              { respuesta: mensajeSeleccionado.respuesta },
+              {
+                headers: { Authorization: `Bearer ${token}` },
+              }
+            );
+            toast.success("Respuesta guardada correctamente");
+            fetchPqrs();
+            setMensajeSeleccionado(null);
+          } catch (error) {
+            toast.error("Error al guardar la respuesta");
+          }
+        }}
+        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+      >
+        Guardar respuesta
+      </button>
     </div>
+  </>
+)}
+
+
+  <div className="flex justify-end gap-2">
+    <button
+      onClick={() => setMensajeSeleccionado(null)}
+      className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400"
+    >
+      Cancelar
+    </button>
+    <button
+      onClick={asignarResponsable}
+      className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+    >
+      Asignar
+    </button>
+  </div>
+</div>
+
   </div>
 )}
 

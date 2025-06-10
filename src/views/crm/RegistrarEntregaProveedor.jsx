@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import React, { useEffect, useState } from "react";
 import clienteAxios from "../../config/axios";
 import { toast } from "react-toastify";
+import Select from "react-select";
 
 export default function RegistrarEntregaProveedor({modo = "crear"}) {
   const { id } = useParams();
@@ -15,6 +16,8 @@ export default function RegistrarEntregaProveedor({modo = "crear"}) {
 
 
   const [fechasEntrega, setFechasEntrega] = useState({});
+  const [proveedores, setProveedores] = useState([]);
+  const [proveedorSeleccionado, setProveedorSeleccionado] = useState(null);
 
   const obtenerEstadoVisual = (detalle) => {
     const entregada = detalle.cantidad_entregada;
@@ -36,6 +39,33 @@ export default function RegistrarEntregaProveedor({modo = "crear"}) {
     const nuevos = [...detalles];
     nuevos[index].cantidad_entregada_input = value;
     setDetalles(nuevos);
+  };
+  const fetchProveedores = async () => {
+    const token = localStorage.getItem("token");
+    try {
+      const response = await clienteAxios.get("/api/proveedores", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+     // console.log("Proveedores response:", response.data);
+  
+      const opciones = response.data.proveedores.data.map((p) => ({
+        value: p.id,
+        label: p.nombre,
+      }));
+      
+      setProveedores(opciones);
+  
+      // Establece el proveedor actual en edición
+      if (modo === "editar" && response.data.length > 0) {
+        const proveedorActual = opciones.find(
+          (op) => op.value === orden.proveedor?.id
+        );
+        setProveedorSeleccionado(proveedorActual || null);
+      }
+    } catch (error) {
+      toast.error("Error al cargar proveedores");
+      console.error(error);
+    }
   };
   
   
@@ -71,6 +101,7 @@ export default function RegistrarEntregaProveedor({modo = "crear"}) {
     };
   
     fetchDetalles();
+    fetchProveedores();
   }, [id, modo]);
   
   const handleSubmit = async () => {
@@ -113,6 +144,7 @@ export default function RegistrarEntregaProveedor({modo = "crear"}) {
   if (modo === "editar") {
     for (const d of detalles) {
       await clienteAxios.put(`/api/detalles-orden/${d.id}`, {
+        proveedor_id: orden.proveedor_id,
         descripcion: d.descripcion,
         cantidad_solicitada: d.cantidad_solicitada,
       
@@ -147,6 +179,8 @@ export default function RegistrarEntregaProveedor({modo = "crear"}) {
     }
     
   };
+
+
   
   
 
@@ -162,9 +196,24 @@ export default function RegistrarEntregaProveedor({modo = "crear"}) {
   ← Volver
 </button>
 
-  <h2 className="text-xl font-bold mb-2">
-  Entrega Proveedor: <span className="text-blue-600">{orden.proveedor}</span>
-</h2>
+<div className="mb-4">
+  <label className="block text-sm font-medium text-gray-700 mb-1">Proveedor</label>
+  <Select
+    options={proveedores}
+    value={proveedorSeleccionado}
+    onChange={(opcion) => {
+      setProveedorSeleccionado(opcion);
+      setOrden((prev) => ({
+        ...prev,
+        proveedor_id: opcion?.value || null,
+      }));
+    }}
+    placeholder="Seleccione un proveedor"
+    isClearable
+    className="w-full md:w-1/2"
+  />
+</div>
+
 <h3 className="text-md text-gray-700 mb-4">
   Orden de Compra: <span className="font-medium">{orden.numero_orden}</span>
 </h3>

@@ -55,7 +55,7 @@ export default function ObtenerOrdenesProveedores() {
             <tr>
               <th className="border px-4 py-2">Número O-C</th>
               <th className="border px-4 py-2">Fecha </th>
-
+               <th className="border px-4 py-2">Observaciones</th>
               <th className="border px-4 py-2">Proveedor</th>
               <th className="border px-4 py-2">Estado</th>
               <th className="border px-4 py-2">Usuario</th>
@@ -67,6 +67,9 @@ export default function ObtenerOrdenesProveedores() {
               <tr key={orden.id}>
                 <td className="border px-4 py-2">{orden.numero_orden}</td>
                 <td className="border px-4 py-2">{orden.fecha}</td>
+                <td className="border px-4 py-2">
+                  {orden.observaciones || "Sin observaciones"}
+                </td>
                 <td className="border px-4 py-2">{orden.proveedor?.nombre}</td>
                 <td className="border px-4 py-2 text-center">
                   <span
