@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { data, useParams } from 'react-router-dom';
+import {  useParams } from 'react-router-dom';
 import { useGestionProcesos } from '../../hooks/useGestionProcesos';
 import { useAuth } from '../../hooks/useAuth';
 import clienteAxios from '../../config/axios';
 import { toast } from 'react-toastify';
 import { Download, Folder } from 'lucide-react';
+import Swal from 'sweetalert2';
 
 function ProcesosDepartamento() {
   // Obtenemos el departamentoId desde la URL
@@ -40,6 +41,7 @@ function ProcesosDepartamento() {
     nuevaDocumentacionNombreRef,
     nuevaDocumentacionArchivoRef,
     nuevaDocumentacionVersionRef,
+    nuevaDocumentacionObservacionesRef,
     nuevaTareaNombreRef,
     nuevaTareaDescripcionRef,
     nuevaTareaFechaRef,
@@ -92,6 +94,37 @@ const cargarUsuariosDepartamento = async (departamentoId) => {
 }
 
 
+//Eliminar documento
+const eliminarDocumento = async (documentoId) => {
+  const token = localStorage.getItem("token");
+  try {
+    await clienteAxios.delete(`/api/documentos/${documentoId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    toast.success("Documento eliminado");
+    cargarDocumentacion(procesoSeleccionado);  // recargamos la lista
+  } catch (error) {
+    console.error("Error al eliminar documento", error);
+    toast.error("Error al eliminar");
+  }
+}
+const confirmarEliminacion = (documentoId) => {
+  Swal.fire({
+    title: '¿Estás seguro?',
+    text: "Esta acción eliminará el documento permanentemente",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#d33',
+    cancelButtonColor: '#3085d6',
+    confirmButtonText: 'Sí, eliminar',
+    cancelButtonText: 'Cancelar'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      eliminarDocumento(documentoId);
+    }
+  });
+}
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       {/* Título del Departamento */}
@@ -124,6 +157,8 @@ const cargarUsuariosDepartamento = async (departamentoId) => {
                 <Folder size={16} />
                 Ver Documentación
               </button>
+ 
+
             </li>
           ))}
         </ul>
@@ -149,6 +184,9 @@ const cargarUsuariosDepartamento = async (departamentoId) => {
               <div className="w-full">
                 <p className="font-bold text-lg text-gray-700">{doc.nombre}</p>
                 <p className="text-gray-500 text-sm">Versión: {doc.version}</p>
+                <p className="text-gray-500 text-sm">
+                  Observaciones: {doc.observaciones || "N/A"}
+                </p>
                 <p className="text-gray-500 text-sm">Subido por: {doc.usuarios.name}</p>
                 <p className="text-gray-500 text-sm">
                   Fecha de subida: {formatDate(doc.created_at)}
@@ -166,6 +204,15 @@ const cargarUsuariosDepartamento = async (departamentoId) => {
                 <Download size={16} />
                 Descargar
               </a>
+              {user?.role_id === 1 && (
+  <button
+    onClick={() => confirmarEliminacion(doc.id)}
+    className="bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-700 transition"
+  >
+    Eliminar
+  </button>
+)}
+
             </li>
           ))}
         </ul>
@@ -271,6 +318,24 @@ const cargarUsuariosDepartamento = async (departamentoId) => {
                         </p>
                       )}
                     </div>
+
+                    <div className="mb-4">
+  <label className="block text-gray-700 font-semibold mb-2">Observaciones</label>
+  <input
+    type="text"
+    ref={nuevaDocumentacionObservacionesRef}
+    placeholder="Observaciones sobre la versión"
+    className={`p-3 border rounded-lg w-full ${
+      erroresDocumentacion.observaciones ? "border-red-500" : "border-gray-300"
+    }`}
+  />
+  {erroresDocumentacion.observaciones && (
+    <p className="text-red-500 text-sm mt-1">
+      {erroresDocumentacion.observaciones[0]}
+    </p>
+  )}
+</div>
+
                     <button
                       onClick={registrarDocumentacion}
                       className="bg-gray-800 text-white px-4 py-2 rounded-lg w-full hover:bg-green-700 transition"

@@ -29,6 +29,7 @@ export function useGestionProcesos() {
   const nuevaDocumentacionNombreRef = useRef(null);
   const nuevaDocumentacionArchivoRef = useRef(null);
   const nuevaDocumentacionVersionRef = useRef(null);
+  const nuevaDocumentacionObservacionesRef = useRef(null);
   const nuevaTareaNombreRef = useRef(null);
   const nuevaTareaDescripcionRef = useRef(null);
   const nuevaTareaFechaRef = useRef(null);
@@ -136,6 +137,7 @@ export function useGestionProcesos() {
     const nombreDocumentacion = nuevaDocumentacionNombreRef.current?.value || '';
     const documento = nuevaDocumentacionArchivoRef.current?.files[0];
     const version = nuevaDocumentacionVersionRef.current?.value || '';
+    const observaciones = nuevaDocumentacionObservacionesRef.current?.value || '';
 
    
     const token = localStorage.getItem('token');
@@ -145,6 +147,7 @@ export function useGestionProcesos() {
     formData.append('proceso_id', procesoSeleccionado);
     formData.append('user_id', user.id);
     formData.append('version', version);
+    formData.append('observaciones', observaciones);
 
     try {
       await clienteAxios.post('/api/documentos', formData, {
@@ -163,6 +166,9 @@ export function useGestionProcesos() {
       }
       if (nuevaDocumentacionVersionRef.current) {
         nuevaDocumentacionVersionRef.current.value = '';
+      }
+      if (nuevaDocumentacionObservacionesRef.current) {
+        nuevaDocumentacionObservacionesRef.current.value = '';
       }
       setErroresDocumentacion({});
       cargarDocumentacion(procesoSeleccionado);
@@ -285,6 +291,7 @@ export function useGestionProcesos() {
     nuevaTareaFechaRef,
     nuevErrorDescripcionRef,
     nuevaTareaUsuarioRef,
+    nuevaDocumentacionObservacionesRef,
 
     // Métodos
     cargarDatos,

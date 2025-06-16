@@ -4,6 +4,7 @@ import clienteAxios from "../../config/axios";
 import { toast } from "react-toastify";
 import {useAuth} from "../../hooks/useAuth";
 import Select from "react-select";
+import Swal from "sweetalert2";
 export default function Pqr() {
   const [pqrs, setPqrs] = useState([]);
   const [empresa, setEmpresa] = useState("");
@@ -45,19 +46,34 @@ export default function Pqr() {
 
   // funcion para  cambiar el estado de una PQR
   const cambiarEstado = async (id, estadoId) => {
-    const token = localStorage.getItem("token");
     const nuevoEstado = estadoId === 1 ? 2 : 1;
   
-    try {
-          const response =   await clienteAxios.put(`/api/pqrs/${id}/estado`, { estado_id: nuevoEstado }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-     toast.success(response.data.message);
-      fetchPqrs(); // Recarga los datos
-    } catch (error) {
-      console.error("❌ Error al cambiar el estado", error);
-    }
+    Swal.fire({
+      title: '¿Estás seguro?',
+      text: "¿Deseas cambiar el estado de esta PQR?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Sí, cambiar',
+      cancelButtonText: 'Cancelar'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        const token = localStorage.getItem("token");
+        try {
+          const response = await clienteAxios.put(`/api/pqrs/${id}/estado`, { estado_id: nuevoEstado }, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          toast.success(response.data.message);
+          fetchPqrs();
+        } catch (error) {
+          console.error("❌ Error al cambiar el estado", error);
+          toast.error("Error al cambiar el estado");
+        }
+      }
+    });
   };
+  
   
 
   useEffect(() => {
@@ -85,6 +101,32 @@ export default function Pqr() {
     }
   };
   
+  const confirmarEliminacion = (id) => {
+    Swal.fire({
+      title: '¿Deseas eliminar esta PQR?',
+      text: "Esta acción no se puede deshacer.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        const token = localStorage.getItem("token");
+        try {
+          await  clienteAxios.delete(`/api/pqrs/${id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          toast.success("PQR eliminada correctamente");
+          fetchPqrs();
+        } catch (error) {
+          console.error("❌ Error al eliminar PQR", error);
+          toast.error("Error al eliminar PQR");
+        }
+      }
+    });
+  };
   
 
   return (
@@ -150,6 +192,16 @@ export default function Pqr() {
       Cambiar estado
     </button>
   )}
+
+{user?.role_id === 1 && (
+  <button
+    onClick={() => confirmarEliminacion(pqr.id)}
+    className="ml-2 text-sm text-red-600 underline"
+  >
+    Eliminar
+  </button>
+)}
+
 </td>
 
 
