@@ -75,7 +75,7 @@ export default function Crm() {
       icon: Car,
       roles: [1,2, 4, 8,10,11],
     },
-    { name: "PQRS", to: "/auth/crm/pqrs", icon: MessageCircle, roles: [1, 5,4,6,2] },
+    { name: "PQRS", to: "/auth/crm/pqrs", icon: MessageCircle, roles: [1,10] },
     {
       name: "Ordenes a Facturar",
       to: "/auth/crm/ordenes-facturar",
