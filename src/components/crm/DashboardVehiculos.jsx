@@ -142,18 +142,23 @@ export default function DashboardVehiculos() {
   <div className="mt-4">
   
     <ul className="text-xs mt-1 space-y-1 text-gray-700">
-    {data.ultimos_mantenimientos?.length > 0 && (
-  <div className="bg-white shadow p-4 rounded-2xl border mt-4">
-    <h3 className="text-lg font-semibold mb-2">🛠️ Últimos Mantenimientos Realizados</h3>
-    <ul className="text-sm text-gray-700 space-y-1">
-      {data.ultimos_mantenimientos.map((m) => (
-        <li key={m.id}>
-          • {m.vehiculo?.placa ?? "Vehículo"} — {m.fecha_realizado}
+      <h3 className="text-lg font-semibold mb-2">Últimos Mantenimientos</h3>
+ {data.ultimos_mantenimientos?.length > 0 && (
+  <div className="bg-white shadow p-4 rounded-2xl border">
+    <h3 className="text-lg font-semibold mb-2">🛠️ Últimos Mantenimientos</h3>
+
+    <ul className="space-y-2">
+      {data.ultimos_mantenimientos.map(m => (
+        <li key={m.id} className="flex justify-between text-sm">
+          <span>{m.vehiculo?.placa ?? 'Vehículo'}</span>
+          <span>{m.fecha_realizado}</span>
         </li>
       ))}
     </ul>
   </div>
 )}
+
+
 
     </ul>
   </div>
@@ -189,7 +194,7 @@ export default function DashboardVehiculos() {
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="mes" />
             <YAxis />
-            <Tooltip />
+            <Tooltip />     console.log("Respuesta de vehiculos:", response.data);
             <Legend />
             <Line type="monotone" dataKey="total" stroke="#10b981" name="Gastos" />
           </LineChart>

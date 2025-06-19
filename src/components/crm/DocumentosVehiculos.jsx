@@ -6,8 +6,9 @@ import { useEffect } from "react"
 import { Link } from "react-router-dom"
 
 export default function DocumentosVehiculos() {
+
     const {vehiculos,obtenerVehiculos}=useVehiculos();
-    console.log('vehiculos', vehiculos);
+    console.log('vehiculos documentos', vehiculos);
     const [form, setForm] = useState({
         vehiculo_id: "",
         tipo_documento: "",

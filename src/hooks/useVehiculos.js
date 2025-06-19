@@ -1,41 +1,49 @@
 
 import { useState } from "react";
 import clienteAxios from "../config/axios"
+// hooks/useVehiculos.js
+export function useVehiculos() {
+  const [vehiculos, setVehiculos] = useState([]);
+  const [cargando,  setCargando]  = useState(false);
+  const [error,     setError]     = useState(null);
+  const [conductores, setConductores] = useState([]);
 
-export const useVehiculos = () => {
-
-const [vehiculos, setVehiculos] = useState([]);
-const [cargando, setCargando] = useState(false);
-const [error, setError] = useState({});
-
-const obtenerVehiculos = async () => {
-    setCargando(true);
-    setError({}); // Limpiar errores antes de enviar
+  const obtenerVehiculos = async () => {
     try {
-        const token = localStorage.getItem("token");
-        const response = await clienteAxios.get("/api/vehiculos", {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
-        console.log("Vehiculos:", response.data);
-        setVehiculos(response.data.vehiculos);
+      setCargando(true);
+      const token = localStorage.getItem('token');
 
-        
-    } catch (error) {
-        console.error("Error al obtener los vehículos:", error);
-        setError(error) 
-     }finally{
-        setCargando(false);
-     }
-}
-
-
-    return{
-     vehiculos,
-     cargando,
-     error,
-     setError,
-     obtenerVehiculos
+      const { data } = await clienteAxios.get('/api/vehiculos-options', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      console.log('Vehículos obtenidos:', data.vehiculos);
+    setVehiculos(Array.isArray(data) ? data : data.vehiculos ?? []);
+    } catch (err) {
+      console.error(err);
+      setError(err);
+    } finally {
+      setCargando(false);
     }
+  };
+
+  //Obtener  conductores
+  const obtenerConductores = async () => {
+    try {
+      setCargando(true);
+      const token = localStorage.getItem('token');
+
+      const { data } = await clienteAxios.get('/api/conductores', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      console.log('Conductores obtenidos:', data);
+      setConductores(data);
+    } catch (err) {
+      console.error(err);
+      setError(err);
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  return { vehiculos, cargando, error, obtenerVehiculos, obtenerConductores, conductores };
 }

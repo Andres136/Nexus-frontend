@@ -7,6 +7,7 @@ import Lightbox from "yet-another-react-lightbox";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
+import { toast } from "react-toastify";
 
 
 export default function ListarVehiculos() {
@@ -30,6 +31,11 @@ export default function ListarVehiculos() {
 
   const [paginasInternas, setPaginasInternas] = useState({});
   const [fechasInternas, setFechasInternas] = useState({});
+  const [fotosPorVehiculo, setFotosPorVehiculo] = useState({});
+  const [galeria, setGaleria] = useState([]);
+  const [edicionFechas, setEdicionFechas] = useState({});
+
+
 
   const fetchVehiculos = async () => {
     setLoading(true);
@@ -43,12 +49,33 @@ export default function ListarVehiculos() {
           },
         }
       );
+ 
       setVehiculos(response.data.vehiculos);
     } catch (error) {
       console.error("Error fetching vehiculos:", error);
     }
     setLoading(false);
   };
+
+const cargarFotosVehiculo = async (vehiculoId) => {
+  const token = localStorage.getItem("token");
+
+  try {
+    const response = await clienteAxios.get(`/api/vehiculos/${vehiculoId}/fotos`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    setFotosPorVehiculo(prev => ({
+      ...prev,
+      [vehiculoId]: response.data // si el array viene como [] directo
+    }));
+  } catch (error) {
+    console.error("Error al cargar fotos del vehículo", error);
+  }
+};
+
 
   useEffect(() => {
     fetchVehiculos();
@@ -77,6 +104,18 @@ export default function ListarVehiculos() {
     }));
   };
 
+
+
+  const manejarCambioFecha = (documentoId, campo, valor) => {
+  setEdicionFechas((prev) => ({
+    ...prev,
+    [documentoId]: {
+      ...(prev[documentoId] || {}),
+      [campo]: valor,
+    },
+  }));
+};
+
   const actualizarFecha = (vehiculoId, seccion, nuevaFecha) => {
     setFechasInternas((prev) => ({
       ...prev,
@@ -87,45 +126,72 @@ export default function ListarVehiculos() {
     }));
   };
 
-  //Eliminar un vehiculo
-  const handleEliminar = async (id) => {
-    const resultado = await Swal.fire({
-      title: '¿Estás seguro?',
-      text: "Esta acción no se puede deshacer",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar'
+  const guardarFechasDocumento = async (documentoId) => {
+  const datos = edicionFechas[documentoId];
+  if (!datos?.fecha_vencimiento) return toast.error("La fecha de vencimiento es obligatoria");
+
+  try {
+    const token = localStorage.getItem("token");
+    await clienteAxios.put(`/api/documentos/${documentoId}/fechas`, datos, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     });
-  
-    if (resultado.isConfirmed) {
-      try {
-        const token = localStorage.getItem("token");
-        await clienteAxios.delete(`/api/vehiculos/${id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-  
-        await Swal.fire(
-          '¡Eliminado!',
-          'El vehículo fue eliminado correctamente.',
-          'success'
-        );
-  
-        navigate("/auth/crm/vehiculos-all");
-      } catch (error) {
-        console.error("Error al eliminar el vehículo:", error);
-        Swal.fire(
-          'Error',
-          'Hubo un problema al intentar eliminar el vehículo.',
-          'error'
-        );
-      }
+
+    toast.success("Fechas actualizadas correctamente");
+    fetchVehiculos(); // refresca la lista
+    setEdicionFechas((prev) => {
+      const nuevo = { ...prev };
+      delete nuevo[documentoId];
+      return nuevo;
+    });
+  } catch (error) {
+    console.error("Error al actualizar fechas", error);
+    toast.error("No se pudieron guardar las fechas");
+  }
+};
+
+
+  //Eliminar un vehiculo
+const handleEliminar = async (id) => {
+  const resultado = await Swal.fire({
+    title: '¿Estás seguro?',
+    text: "Esta acción no se puede deshacer",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#d33',
+    cancelButtonColor: '#3085d6',
+    confirmButtonText: 'Sí, eliminar',
+    cancelButtonText: 'Cancelar'
+  });
+
+  if (resultado.isConfirmed) {
+    try {
+      const token = localStorage.getItem("token");
+      await clienteAxios.delete(`/api/vehiculos/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      await Swal.fire(
+        '¡Eliminado!',
+        'El vehículo fue eliminado correctamente.',
+        'success'
+      );
+
+      fetchVehiculos(); // ⚠️ Refresca la lista en vez de navegar
+    } catch (error) {
+      console.error("Error al eliminar el vehículo:", error);
+      Swal.fire(
+        'Error',
+        'Hubo un problema al intentar eliminar el vehículo.',
+        'error'
+      );
     }
-  };
+  }
+};
+
   
 
   const obtenerPagina = (id, seccion) => paginasInternas[id]?.[seccion] || 1;
@@ -134,12 +200,15 @@ export default function ListarVehiculos() {
   return (
     <div className="p-4 grid grid-cols-1  gap-4">
       <h2 className="text-xl font-bold mb-4">Vehículos</h2>
-      <Link
-        to="/auth/crm/vehiculos"
-        className="m-4 inline-block bg-gray-300 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-400 transition duration-200 text-sm "
-      >
-        ← Volver
-      </Link>
+<div className="flex justify-start mb-2">
+  <Link
+    to="/auth/crm/vehiculos"
+    className="bg-gray-300 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-400 transition duration-200 text-sm inline-block"
+  >
+    ← Volver
+  </Link>
+</div>
+
 
       <input
         type="text"
@@ -161,9 +230,13 @@ export default function ListarVehiculos() {
               <div key={vehiculo.id} className="border rounded mb-4 shadow">
                 <div
                   className="flex flex-col md:flex-row justify-between items-start md:items-center bg-gray-100 p-4 gap-4 cursor-pointer"
-                  onClick={() =>
-                    setExpanded(expanded === vehiculo.id ? null : vehiculo.id)
-                  }
+              onClick={() => {
+  setExpanded(expanded === vehiculo.id ? null : vehiculo.id);
+  if (!fotosPorVehiculo[vehiculo.id]) {
+    cargarFotosVehiculo(vehiculo.id);
+  }
+}}
+
                 >
                   <div className="flex items-center gap-4">
                     <img
@@ -173,17 +246,13 @@ export default function ListarVehiculos() {
                         }`
                       )}
                       alt={`Foto de ${vehiculo.placa}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setImagenActual(
-                          encodeURI(
-                            `${import.meta.env.VITE_API_URL}/storage/${
-                              vehiculo.foto
-                            }`
-                          )
-                        );
-                        setOpenLightbox(true);
-                      }}
+                 onClick={(e) => {
+  e.stopPropagation();
+  const url = encodeURI(`${import.meta.env.VITE_API_URL}/storage/${vehiculo.foto}`);
+  setGaleria([{ src: url }]); // <-- importante
+  setOpenLightbox(true);
+}}
+
                       className="w-28 h-20 object-cover rounded shadow cursor-pointer hover:scale-105 transition-transform"
                     />
                     <div>
@@ -220,20 +289,50 @@ export default function ListarVehiculos() {
                           {vehiculo.kilometraje_actual.toLocaleString("es-CO")}
                         </span>
 
+                        <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
+                          nombre: {vehiculo.nombre}
+                        </span>
+                        <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
+                          Tipo de servicio: {vehiculo.tipo_servicio}
+                        </span>
+                        <span className="bg-red-100 text-red-800 px-2 py-0.5 rounded">
+                          Color: {vehiculo.color}
+                        </span>
+                        <span className="bg-orange-100 text-orange-800 px-2 py-0.5 rounded">
+                          Tipo de carrocería: {vehiculo.tipo_carroceria}
+                        </span>
+                        <span className="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded">
+                          Tipo de combustible: {vehiculo.tipo_combustible}
+                        </span>
+                        <span className="bg-purple-100 text-purple-800 px-2 py-0.5 rounded">
+                          Número de motor: {vehiculo.numero_motor}
+                        </span>
+                        <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded">
+                          Número de chasis: {vehiculo.numero_chasis}
+                        </span>
+                        <span className="bg-gray-100 text-gray-800 px-2 py-0.5 rounded">
+                          Propietario: {vehiculo.propietario}
+                        </span>
+                        <span className="bg-purple-100 text-purple-800 px-2 py-0.5 rounded">
+                          Identificación: {vehiculo.identificacion}
+                        </span>
+                        <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
+                          Organismo de tránsito: {vehiculo.organismo_transito}
+                        </span>
+                        <span className="bg-red-100 text-red-800 px-2 py-0.5 rounded">
+                          Fecha de matrícula: {vehiculo.fecha_matricula}
+                        </span>
                       </div>
                     </div>
                   </div>
 
                   <div className="flex flex-wrap justify-end gap-3 mt-4">
-                    {/* <a
-                      href={`${import.meta.env.VITE_API_URL}/vehiculos/${
-                        vehiculo.id
-                      }/reporte`}
-                      target="_blank"
+                     <Link
+                    to={`/auth/crm/vehiculos/${vehiculo.id}/fotos`}
                       className="bg-blue-600 text-white px-4 py-1 rounded text-sm hover:bg-blue-700"
                     >
-                      📄 Descargar PDF
-                    </a> */}
+                    📤 Subir más fotos
+                    </Link> 
                     <button
   onClick={() => navigate(`/auth/crm/vehiculos/${vehiculo.id}/editar`)}
   className="bg-yellow-500 text-white px-4 py-1 rounded text-sm hover:bg-yellow-600"
@@ -242,12 +341,13 @@ export default function ListarVehiculos() {
 </button>
 
 {user?.role_id === 1 && (
-  <button
-    onClick={handleEliminar}
-    className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition"
-  >
-    Eliminar Vehículo
-  </button>
+<button
+  onClick={() => handleEliminar(vehiculo.id)}
+  className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition"
+>
+  Eliminar Vehículo
+</button>
+
 )}
 
                   </div>
@@ -255,6 +355,32 @@ export default function ListarVehiculos() {
 
                 {expanded === vehiculo.id && (
                   <div className="p-4 bg-white text-sm space-y-6">
+
+
+                    {fotosPorVehiculo[vehiculo.id] && fotosPorVehiculo[vehiculo.id].length > 0 && (
+  <div className="mt-4">
+    <h4 className="text-lg font-semibold mb-2">📷 Galería del Vehículo</h4>
+    <div className="flex flex-wrap gap-3">
+      {fotosPorVehiculo[vehiculo.id].map((foto) => (
+        <img
+          key={foto.id}
+          src={`${import.meta.env.VITE_API_URL}/storage/${foto.ruta_foto}`}
+          alt={`Foto ${foto.id}`}
+         onClick={() => {
+  const fotos = fotosPorVehiculo[vehiculo.id] || [];
+  const slides = fotos.map((f) => ({
+    src: `${import.meta.env.VITE_API_URL}/storage/${f.ruta_foto}`
+  }));
+  setGaleria(slides);
+  setOpenLightbox(true);
+}}
+
+          className="w-28 h-20 object-cover rounded shadow cursor-pointer hover:scale-105 transition-transform"
+        />
+      ))}
+    </div>
+  </div>
+)}
                     {["mantenimientos", "documentos", "inspecciones",].map(
                       (seccion) => (
                         <div key={seccion} className="mt-4">
@@ -278,6 +404,8 @@ export default function ListarVehiculos() {
                             className="mb-2 border rounded p-1 text-sm"
                           />
 
+
+
                           <div className="overflow-x-auto">
                             <table className="min-w-full table-auto text-sm border border-gray-200">
                               <thead className="bg-gray-200 text-gray-700">
@@ -299,6 +427,8 @@ export default function ListarVehiculos() {
                                     <th>Renovación</th>
                                     <th>Estado</th>
                                     <th>PDF</th>
+                                    <th>Guardar</th>
+
                                   </tr>
                                 )}
                                 {seccion === "inspecciones" && (
@@ -348,7 +478,8 @@ export default function ListarVehiculos() {
         src={encodeURI(`${import.meta.env.VITE_API_URL}/storage/${item.archivo}`)}
         alt="Soporte"
         onClick={() => {
-          setImagenActual(encodeURI(`${import.meta.env.VITE_API_URL}/storage/${item.archivo}`));
+          setImagenActual(`${import.meta.env.VITE_API_URL}/storage/${item.archivo}`);
+          setGaleria([{ src: `${import.meta.env.VITE_API_URL}/storage/${item.archivo}` }]);
           setOpenLightbox(true);
         }}
         className="w-16 h-16 object-cover rounded shadow cursor-pointer hover:scale-105 transition-transform"
@@ -371,8 +502,31 @@ export default function ListarVehiculos() {
                                     {seccion === "documentos" && (
                                       <>
                                         <td>{item.tipo_documento}</td>
-                                        <td>{item.fecha_vencimiento}</td>
-                                        <td>{item.fecha_renovacion}</td>
+                                   <td>
+  <input
+    type="date"
+    className="border rounded p-1 text-sm"
+    value={
+      edicionFechas[item.id]?.fecha_vencimiento ?? item.fecha_vencimiento
+    }
+    onChange={(e) =>
+      manejarCambioFecha(item.id, "fecha_vencimiento", e.target.value)
+    }
+  />
+</td>
+<td>
+  <input
+    type="date"
+    className="border rounded p-1 text-sm"
+    value={
+      edicionFechas[item.id]?.fecha_renovacion ?? item.fecha_renovacion
+    }
+    onChange={(e) =>
+      manejarCambioFecha(item.id, "fecha_renovacion", e.target.value)
+    }
+  />
+</td>
+
                                         <td>
   {(() => {
     const hoy = new Date();
@@ -403,6 +557,16 @@ export default function ListarVehiculos() {
                                             Ver
                                           </a>
                                         </td>
+
+                                        <td>
+  <button
+    onClick={() => guardarFechasDocumento(item.id)}
+    className="bg-green-600 text-white px-2 py-1 rounded text-xs hover:bg-green-700"
+  >
+    Guardar
+  </button>
+</td>
+
                                       </>
                                     )}
                                     {seccion === "inspecciones" && (
@@ -483,11 +647,15 @@ export default function ListarVehiculos() {
             );
           })}
 
-          <Lightbox
-            open={openLightbox}
-            close={() => setOpenLightbox(false)}
-            slides={[{ src: imagenActual }]}
-          />
+       <Lightbox
+  open={openLightbox}
+  close={() => {
+    setOpenLightbox(false);
+    setGaleria([]);
+  }}
+  slides={galeria}
+/>
+
 
           <div className="flex justify-center gap-4 mt-4">
             <button

@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import clienteAxios from "../../config/axios";
 import { toast } from "react-toastify";
 import {useAuth} from "../../hooks/useAuth";
-import Select from "react-select";
+import AsyncSelect from "react-select/async";
+
 import Swal from "sweetalert2";
 export default function Pqr() {
   const [pqrs, setPqrs] = useState([]);
@@ -127,7 +128,33 @@ export default function Pqr() {
       }
     });
   };
-  
+const cargarOpcionesUsuarios = async (inputValue, callback) => {
+  try {
+    const token = localStorage.getItem("token");
+
+    const response = await clienteAxios.get(`/api/usuarios/all`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      params: {
+        search: inputValue,
+      },
+    });
+
+    const opciones = response.data.map((u) => ({
+      value: u.id,
+      label: u.name,
+    }));
+
+    console.log("Usuarios cargados:", opciones);
+    callback(opciones);
+  } catch (error) {
+    console.error("Error al cargar usuarios dinámicamente", error.response ?? error);
+    callback([]);
+  }
+};
+
+
 
   return (
     <div className="container p-4">
@@ -272,30 +299,31 @@ export default function Pqr() {
   {user?.role_id === 1 && (
   <>
     <label className="block mb-2 font-semibold">Asignar a:</label>
-    <Select
-      className="mb-4"
-      placeholder="Seleccionar responsable..."
-      options={users.map((u) => ({
-        value: u.id,
-        label: u.name,
-      }))}
-      value={
-        mensajeSeleccionado.asignado_a
-          ? {
-              value: mensajeSeleccionado.asignado_a,
-              label:
-                users.find((u) => u.id === mensajeSeleccionado.asignado_a)?.name ||
-                "Seleccionado",
-            }
-          : null
-      }
-      onChange={(selected) =>
-        setMensajeSeleccionado((prev) => ({
-          ...prev,
-          asignado_a: selected?.value || "",
-        }))
-      }
-    />
+   <AsyncSelect
+  className="mb-4"
+  cacheOptions
+  defaultOptions
+  loadOptions={cargarOpcionesUsuarios}
+  placeholder="Seleccionar responsable..."
+  value={
+    
+    mensajeSeleccionado.asignado_a
+      ? {
+          value: mensajeSeleccionado.asignado_a,
+          label:
+            users.find((u) => u.id === mensajeSeleccionado.asignado_a)?.name ||
+            "Seleccionado",
+        }
+      : null
+  }
+  onChange={(selected) =>
+    setMensajeSeleccionado((prev) => ({
+      ...prev,
+      asignado_a: selected?.value || "",
+    }))
+  }
+/>
+
   </>
 )}
 {(user?.role_id === 1 || user?.id === mensajeSeleccionado.asignado_a) && (
