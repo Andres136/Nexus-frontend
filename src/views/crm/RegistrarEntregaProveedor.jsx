@@ -3,6 +3,7 @@ import  { useEffect, useState } from "react";
 import clienteAxios from "../../config/axios";
 import { toast } from "react-toastify";
 import Select from "react-select";
+import Swal from "sweetalert2";
 // Convierte cualquier fecha (string) a "YYYY-MM-DDTHH:MM" en tu zona horaria
 export function toDatetimeLocal(dateString) {
   if (!dateString) return "";
@@ -220,7 +221,42 @@ if (proveedorId !== proveedorOriginal) {
       toast.error("Error al registrar entrega");
     }
   };
-  
+const eliminarItem = async (index, id) => {
+  const resultado = await Swal.fire({
+    title: '¿Estás seguro?',
+    text: 'Esta acción eliminará el ítem seleccionado.',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#e3342f',
+    cancelButtonColor: '#6c757d',
+    confirmButtonText: 'Sí, eliminar',
+    cancelButtonText: 'Cancelar',
+  });
+
+  if (!resultado.isConfirmed) return;
+
+  // Si no tiene ID => solo borrar en frontend
+  if (!id) {
+    setDetalles((prev) => prev.filter((_, i) => i !== index));
+    Swal.fire('Eliminado', 'Ítem eliminado del formulario.', 'success');
+    return;
+  }
+
+  // Si tiene ID => eliminar en backend
+  try {
+    const token = localStorage.getItem('token');
+    await clienteAxios.delete(`/api/detalles-orden/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    setDetalles((prev) => prev.filter((_, i) => i !== index));
+    Swal.fire('Eliminado', 'Ítem eliminado correctamente.', 'success');
+  } catch (err) {
+    console.error(err);
+    Swal.fire('Error', 'No se pudo eliminar el ítem.', 'error');
+  }
+};
+
 
   if (loading) return <p>Cargando...</p>;
 
@@ -264,6 +300,8 @@ if (proveedorId !== proveedorOriginal) {
               <th className="border px-4 py-2">Historial de entregas</th>
               <th className="border px-4 py-2">Ultima Entrega</th>
               <th className="border px-4 py-2">Nueva Entrega</th>
+              <th className="border px-4 py-2">Acción</th>
+
             </tr>
           </thead>
           <tbody>
@@ -327,6 +365,15 @@ if (proveedorId !== proveedorOriginal) {
           {erroresFecha[index] && <p className="text-red-500 text-xs mt-1">{erroresFecha[index]}</p>}
         </div>
       </td>
+      <td className="border px-4 py-2 text-center">
+  <button
+    onClick={() => eliminarItem(index, detalle.id)}
+    className="text-red-600 hover:text-red-800 text-sm"
+  >
+    🗑 Eliminar
+  </button>
+</td>
+
     </tr>
   ))}
 </tbody>

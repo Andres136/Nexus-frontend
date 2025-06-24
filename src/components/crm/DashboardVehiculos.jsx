@@ -88,6 +88,7 @@ export default function DashboardVehiculos() {
           <Link to="/auth/crm/vehiculos-documentos" className="bg-purple-500 text-white w-full text-center px-4 py-2 rounded-lg shadow hover:bg-purple-600 text-sm">Registrar Documento</Link>
           <Link to="/auth/crm/vehiculos-inspecciones" className="bg-orange-500 text-white w-full text-center px-4 py-2 rounded-lg shadow hover:bg-orange-600 text-sm">Registrar Inspección</Link>
           <Link to="/auth/crm/vehiculos-mantenimientos" className="bg-rose-500 text-white w-full text-center px-4 py-2 rounded-lg shadow hover:bg-rose-600 text-sm">Registrar Mantenimiento</Link>
+          <Link to="/auth/crm/conductores" className="bg-teal-500 text-white w-full text-center px-4 py-2 rounded-lg shadow hover:bg-teal-600 text-sm">Conductores</Link>
         </div>
       </div>
 

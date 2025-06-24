@@ -43,6 +43,8 @@ import MisOrdenesComerciales from "../views/crm/MisOrdenesComerciales";
 import MisCotizaciones from "../views/crm/MisCotizaciones";
 import ReferenciasExcedidas from "../views/crm/ReferenciasExcedidas";
 import CargaFotosVehiculo from "../components/crm/vehiculos/CargarFotosVehiculos";
+import Conductores from "../components/Conductores";
+import ObtenerDatosConductores from "../components/crm/ObtenerDatosConductores";
 
 
 
@@ -102,6 +104,8 @@ export default function Router() {
         <Route path="/auth/crm/editar-cotizacion/:id" element={<CotizacionForm modo="edicion" />} />
         <Route path="/auth/crm/referencias-excedidas" element={<ReferenciasExcedidas/>} />
         <Route path="/auth/crm/vehiculos/:id/fotos" element= {<CargaFotosVehiculo />} />
+        <Route path="/auth/crm/conductores" element={<ObtenerDatosConductores/>} />
+        <Route path="/auth/crm/crear-datos-conductores" element={<Conductores/>} />
       </Route>
     </Route>
   
