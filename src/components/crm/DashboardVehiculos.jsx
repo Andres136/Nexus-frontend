@@ -148,17 +148,32 @@ export default function DashboardVehiculos() {
   <div className="bg-white shadow p-4 rounded-2xl border">
     <h3 className="text-lg font-semibold mb-2">🛠️ Últimos Mantenimientos</h3>
 
-    <ul className="space-y-2">
-      {data.ultimos_mantenimientos.map(m => (
-        <li key={m.id} className="flex justify-between text-sm">
-          <span>{m.vehiculo?.placa ?? 'Vehículo'}</span>
-          <span>{m.fecha_realizado}</span>
-       <span>${parseFloat(m.costo).toLocaleString('es-CO')}</span>
+<ul className="space-y-2">
+  {data.ultimos_mantenimientos.map(m => (
+    <li
+      key={m.id}
+      className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-gray-50 rounded-lg border hover:shadow transition"
+    >
+      <div className="flex items-center space-x-3">
+        <span className="text-blue-600 font-semibold">
+          🚗 {m.vehiculo?.placa ?? 'Vehículo'}
+        </span>
+        <span className="text-gray-500 text-sm hidden sm:inline">|</span>
+        <span className="text-gray-700">
+          🗓 {new Date(m.fecha_realizado).toLocaleDateString('es-CO', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+          })}
+        </span>
+      </div>
+      <div className="text-green-600 font-bold text-sm mt-2 sm:mt-0">
+        💰 ${parseFloat(m.costo).toLocaleString('es-CO')}
+      </div>
+    </li>
+  ))}
+</ul>
 
-     
-        </li>
-      ))}
-    </ul>
   </div>
 )}
 
@@ -198,7 +213,7 @@ export default function DashboardVehiculos() {
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="mes" />
             <YAxis />
-            <Tooltip />     console.log("Respuesta de vehiculos:", response.data);
+            <Tooltip />     
             <Legend />
             <Line type="monotone" dataKey="total" stroke="#10b981" name="Gastos" />
           </LineChart>
