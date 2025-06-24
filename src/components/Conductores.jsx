@@ -147,7 +147,7 @@ export default function Conductores() {
 
     {/* Tipo de licencia */}
     <div>
-      <label className="font-semibold text-sm">Tipo de Licencia</label>
+      <label className="font-semibold text-sm">Categoría</label>
       <input
         type="text"
         name="tipo_licencia"
@@ -187,14 +187,14 @@ export default function Conductores() {
 
     {/* Categoría */}
     <div>
-      <label className="font-semibold text-sm">Categoría</label>
+      <label className="font-semibold text-sm">Tipo</label>
       <input
         type="text"
         name="categoria"
         value={formData.categoria}
         onChange={handleChange}
         className="w-full border p-2 rounded"
-        placeholder="Categoría"
+        placeholder="Ej: Particular, Público, Especializado"
       />
       {errores.categoria && <p className="text-red-500 text-sm">{errores.categoria[0]}</p>}
     </div>
@@ -220,12 +220,13 @@ export default function Conductores() {
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
       {/* RUT */}
       <div>
-        <label className="font-semibold text-sm">RUT</label>
+        <label className="font-semibold text-sm">RUNT</label>
         <input
           type="file"
           name="rut_archivo"
           onChange={handleChange}
           className="w-full border p-2 rounded"
+
         />
         {errores.rut_archivo && <p className="text-red-500 text-sm">{errores.rut_archivo[0]}</p>}
       </div>

@@ -153,6 +153,9 @@ export default function DashboardVehiculos() {
         <li key={m.id} className="flex justify-between text-sm">
           <span>{m.vehiculo?.placa ?? 'Vehículo'}</span>
           <span>{m.fecha_realizado}</span>
+       <span>${parseFloat(m.costo).toLocaleString('es-CO')}</span>
+
+     
         </li>
       ))}
     </ul>

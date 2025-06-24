@@ -11,6 +11,9 @@ export default function FormFotosVehiculo({ vehiculoId }) {
     setFotos(e.target.files);
   };
 
+
+
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
 
