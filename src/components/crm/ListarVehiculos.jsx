@@ -276,9 +276,7 @@ export default function ListarVehiculos() {
                       <h3 className="text-lg font-bold text-gray-800">
                         {vehiculo.placa} — {vehiculo.marca} {vehiculo.modelo}
                       </h3>
-                      <p className="text-sm text-gray-600 mb-1">
-                        {vehiculo.observaciones}
-                      </p>
+                      
                       <div className="flex flex-wrap gap-2 text-xs">
                         <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
                           Tipo: {vehiculo.tipo}

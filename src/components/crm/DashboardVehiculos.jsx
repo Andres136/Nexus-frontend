@@ -77,6 +77,13 @@ export default function DashboardVehiculos() {
   ];
  
 
+const formatoPesosColombianos = (valor) => {
+  return new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+    minimumFractionDigits: 0,
+  }).format(valor);
+};
 
   return (
     <div className="p-4 space-y-6">
@@ -125,7 +132,14 @@ export default function DashboardVehiculos() {
           <FileBarChart2 className="w-10 h-10" />
           <div>
             <h2 className="text-lg">Gastos Totales</h2>
-            <p className="text-xl font-bold">$ {data.gastos.actual.toLocaleString()}</p>
+         <p className="text-xl font-bold">
+  {new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+    minimumFractionDigits: 0,
+  }).format(data.gastos.actual)}
+</p>
+
             <p className="text-sm text-white/80">{variacion(data.gastos.actual, data.gastos.anterior)}</p>
           </div>
         </div>
@@ -198,7 +212,11 @@ export default function DashboardVehiculos() {
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" />
             <YAxis />
-            <Tooltip />
+          <Tooltip
+  formatter={(value) => formatoPesosColombianos(value)}
+  labelFormatter={(label) => `Mes: ${label}`}
+/>
+
             <Legend />
             <Bar dataKey="Actual" fill="#3b82f6" name="Actual" />
             <Bar dataKey="Anterior" fill="#facc15" name="Anterior" />
@@ -213,7 +231,11 @@ export default function DashboardVehiculos() {
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="mes" />
             <YAxis />
-            <Tooltip />     
+     <Tooltip
+  formatter={(value) => formatoPesosColombianos(value)}
+  labelFormatter={(label) => `Mes: ${label}`}
+/>
+
             <Legend />
             <Line type="monotone" dataKey="total" stroke="#10b981" name="Gastos" />
           </LineChart>
