@@ -4,6 +4,7 @@ import { useDashboard } from '../hooks/useDashboard';
 import { useDashboardMonthly } from '../hooks/useDashboardMonthly';
 import { useEffect, useState } from 'react';
 import clienteAxios from '../config/axios';
+import TopClientes from '../components/calidad/TopClientes';
 
 const Dashboard = () => {
 
@@ -198,6 +199,8 @@ const Dashboard = () => {
       />
         </div>
 
+        <TopClientes/>
+
         {/* Órdenes por usuario */}
         <div className="bg-white p-4 rounded shadow w-full overflow-x-auto mb-6">
           <h3 className="font-semibold mb-4">Órdenes por usuario</h3>
@@ -220,8 +223,10 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+   
     </div>
   );
+  
 };
 
 export default Dashboard;
