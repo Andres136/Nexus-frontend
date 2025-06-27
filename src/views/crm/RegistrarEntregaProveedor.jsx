@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import  { useEffect, useState } from "react";
+import  { useRef, useEffect, useState } from "react";
 import clienteAxios from "../../config/axios";
 import { toast } from "react-toastify";
 import Select from "react-select";
@@ -18,8 +18,11 @@ export function toDatetimeLocal(dateString) {
 export default function RegistrarEntregaProveedor({ modo = "crear" }) {
   const { id } = useParams();
   const navigate = useNavigate();
+    const detallesOriginal = useRef([]);
   const [orden, setOrden] = useState({});
   const [proveedorOriginal, setProveedorOriginal] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+
   const [detalles, setDetalles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [erroresFecha, setErroresFecha] = useState({});
@@ -62,18 +65,27 @@ export default function RegistrarEntregaProveedor({ modo = "crear" }) {
       );
   
       /* 1.  Construimos el arreglo de detalles */
-      const productos = data.productos.map((detalle) => {
-        const ultima = detalle.entregas?.[detalle.entregas.length - 1] || null;
-  
-        return {
-          ...detalle,
-          cantidad_entregada_input: "",            // ← SIEMPRE vacío
-          entrega_id: ultima?.id || null,          // para actualizar si edita entrega
-          fecha_ultima: ultima?.fecha_entrega || null,
-        };
-      });
+const productos = data.productos.map(det => {
+  const ultima = det.entregas?.at(-1) ?? null;
+  return {
+    ...det,
+    // para la UI
+    cantidad_entregada_input: "",
+    fecha_ultima: ultima?.fecha_entrega ?? null,
+    // para la lógica:
+    entrega_id_ultima: ultima?.id ?? null,   // ← NO se usa si modo==="crear"
+  };
+});
+
   
       setDetalles(productos);
+
+        // ⬇️ guarda solo los campos que compararás
+  detallesOriginal.current = productos.map((d) => ({
+    id: d.id,
+    descripcion: d.descripcion,
+    cantidad_solicitada: d.cantidad_solicitada,
+  }));
   
       /* 2.  Generamos fechas iniciales para los <input type="datetime-local"> */
       const fechasIniciales = {};
@@ -100,28 +112,36 @@ export default function RegistrarEntregaProveedor({ modo = "crear" }) {
     }
   };
   
+useEffect(() => {
+  if (proveedorPreSeleccionado && proveedores.length) {
+    const actual = proveedores.find(
+      (p) => p.value === proveedorPreSeleccionado.value
+    );
+    setProveedorSeleccionado(actual ?? null);
+  }
+}, [proveedorPreSeleccionado, proveedores]);
 
-  useEffect(() => {
-    if (proveedorPreSeleccionado !== null && proveedores.length > 0) {
-      const actual = proveedores.find((p) => p.value === proveedorPreSeleccionado);
-      setProveedorSeleccionado(actual || null);
-    }
-    if(proveedorPreSeleccionado && proveedores.length){
-      const actual = proveedores.find((p) => p.value === proveedorPreSeleccionado.value);
-      setProveedorSeleccionado(actual || null);
-    }
-  }, [proveedorPreSeleccionado, proveedores]);
-  
+
 
   const handleFechaChange = (index, value) => {
     setFechasEntrega((prev) => ({ ...prev, [index]: value }));
   };
 
-  const handleChange = (index, value) => {
-    const nuevos = [...detalles];
-    nuevos[index].cantidad_entregada_input = value;
-    setDetalles(nuevos);
-  };
+const handleChange = (idx, value) => {
+  setDetalles(prev => {
+    const copia = [...prev];
+    copia[idx].cantidad_entregada_input = value;
+
+    if (modo === "crear") {
+      // siempre fuerza POST
+      copia[idx].entrega_id_ultima = null;
+    }
+    // en "editar" NO se toca, así PUT usará ese id
+    return copia;
+  });
+};
+
+
 
   const agregarItem = () => {
     const nuevoItem = {
@@ -138,28 +158,29 @@ export default function RegistrarEntregaProveedor({ modo = "crear" }) {
   };
 
   const handleSubmit = async () => {
+  if (isSaving) return;
     const token = localStorage.getItem("token");
     const nuevosErrores = {};
-  
-    const entregas = detalles
-      .map((d, index) => {
-        const cantidad = parseFloat(d.cantidad_entregada_input);
-        const fecha = fechasEntrega[index];
-        if (cantidad > 0 && !fecha) {
-          nuevosErrores[index] = "La fecha es obligatoria";
-          return null;
-        }
-        if (cantidad > 0) {
-          return { 
-            id: d.entrega_id, 
-            detalle_id: d.id, 
-            cantidad_entregada: cantidad, 
-            fecha_entrega: fecha 
-          };
-        }
-        return null;
-      })
-      .filter((e) => e !== null);
+    setIsSaving(true);
+
+const entregas = detalles
+  .map((d, i) => {
+    const cant  = parseFloat(d.cantidad_entregada_input);
+    const fecha = fechasEntrega[i];
+
+    if (cant > 0 && !fecha) { nuevosErrores[i] = "La fecha es obligatoria"; return null; }
+    if (cant <= 0) return null;
+
+    return {
+      id:   modo === "editar" ? d.entrega_id_ultima : undefined, // ← clave
+      detalle_id: d.id,
+      cantidad_entregada: cant,
+      fecha_entrega:      fecha,
+    };
+  })
+  .filter(Boolean);
+
+
   
     if (Object.keys(nuevosErrores).length > 0) {
       setErroresFecha(nuevosErrores);
@@ -169,57 +190,66 @@ export default function RegistrarEntregaProveedor({ modo = "crear" }) {
   
     setErroresFecha({});
     try {
-      // 🔐 SOLO ACTUALIZAMOS PROVEEDOR SI EL USUARIO REALMENTE LO MODIFICÓ
-   const proveedorId = proveedorSeleccionado?.value || null;
+   
+// 2. Comparación estricta en el submit
+const proveedorId = Number(proveedorSeleccionado?.value ?? 0);
 if (proveedorId !== proveedorOriginal) {
-  console.log('🔄 Actualizando proveedor:', proveedorSeleccionado.value);
-  await clienteAxios.put(
-    `/api/ordenes-compra-proveedor/${id}/update-proveedor`,
-    { proveedor_id: proveedorSeleccionado.value },
+  await clienteAxios.put(`/api/ordenes-compra-proveedor/${id}/update-proveedor`,
+    { proveedor_id: proveedorId },
     { headers: { Authorization: `Bearer ${token}` } }
   );
-  console.log('✅ petición PUT /update-proveedor completada');
 }
 
   
-      // 🔐 PROCESAMOS DETALLES SI HUBO MODIFICACIONES DE ITEMS
-      for (const d of detalles) {
-        if (d.id) {
-          await clienteAxios.put(`/api/detalles-orden/${d.id}`, {
-            descripcion: d.descripcion,
-            cantidad_solicitada: d.cantidad_solicitada
-          }, { headers: { Authorization: `Bearer ${token}` } });
-        } else {
-          await clienteAxios.post(`/api/detalles-orden`, {
-          
-            orden_id: id,
-            descripcion: d.descripcion,
-            cantidad_solicitada: d.cantidad_solicitada,
-            item: d.item
-          }, { headers: { Authorization: `Bearer ${token}` } });
-        }
-      }
-  
-      // 🔐 REGISTRAMOS LAS ENTREGAS NORMALMENTE
-      for (const entrega of entregas) {
-        const endpoint = entrega.id 
-          ? `/api/entregas-proveedor/${entrega.id}` 
-          : "/api/entregas-proveedor";
-  
-        await clienteAxios({
-          method: entrega.id ? "put" : "post",
-          url: endpoint,
-          data: entrega,
-          headers: { Authorization: `Bearer ${token}` },
-        });
-      }
+// 3. PUT solo si cambió algo
+for (const d of detalles) {
+  // si es nuevo -> POST
+  if (!d.id) {
+    await clienteAxios.post("/api/detalles-orden", {
+      orden_id: id,
+      descripcion: d.descripcion,
+      cantidad_solicitada: d.cantidad_solicitada,
+      item: d.item,
+    }, { headers: { Authorization: `Bearer ${token}` } });
+    continue;
+  }
+
+  // buscar el original
+  const orig = detallesOriginal.current.find((o) => o.id === d.id);
+  if (!orig) continue;                       // seguridad extra
+
+  const descCambio = d.descripcion !== orig.descripcion;
+  const cantCambio = d.cantidad_solicitada !== orig.cantidad_solicitada;
+
+  if (descCambio || cantCambio) {
+    await clienteAxios.put(`/api/detalles-orden/${d.id}`, {
+      descripcion: d.descripcion,
+      cantidad_solicitada: d.cantidad_solicitada,
+    }, { headers: { Authorization: `Bearer ${token}` } });
+  }
+}
+
+  for (const entrega of entregas) {
+  await clienteAxios({
+    method: entrega.id ? "put" : "post",
+    url:    entrega.id
+            ? `/api/entregas-proveedor/${entrega.id}`
+            : "/api/entregas-proveedor",
+    data:   entrega,
+    headers:{ Authorization: `Bearer ${token}` },
+  });
+}
+
   
       toast.success("Entrega registrada correctamente");
       navigate(-1);
     } catch (error) {
       console.error(error);
       toast.error("Error al registrar entrega");
+    } finally {
+      setIsSaving(false);
     }
+    
   };
 const eliminarItem = async (index, id) => {
   const resultado = await Swal.fire({
@@ -379,10 +409,19 @@ const eliminarItem = async (index, id) => {
 </tbody>
 
         </table>
-
-        <button onClick={handleSubmit} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-          {modo === "editar" ? "Actualizar Entrega" : "Registrar Entrega"}
-        </button>
+<button
+  onClick={handleSubmit}
+  disabled={isSaving}                     // ← deshabilitado mientras guarda
+  className={`px-4 py-2 rounded text-white ${
+    isSaving ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"
+  }`}
+>
+  {isSaving
+    ? "Guardando…"                       // texto mientras envía
+    : modo === "editar"
+      ? "Actualizar Entrega"
+      : "Registrar Entrega"}
+</button>
 
       </div>
     </div>
