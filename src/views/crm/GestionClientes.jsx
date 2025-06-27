@@ -1,15 +1,81 @@
 import { useClientes } from "../../hooks/useClientes";
-
+import * as XLSX from "xlsx";
 import ClientesList from "./ClientesList";
 import { useFormatoFecha } from "../../hooks/useFormatoFecha";
 import { useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
+import clienteAxios from "../../config/axios";
+import { toast } from "react-toastify";
 
 
 export default function GestionClientes() {
 
   const {user}=useAuth({middleware:'auth'});
- 
+   // …tus estados existentes
+  const [excelError, setExcelError] = useState("");
+
+
+
+const normaliza = (txt) =>
+  txt
+    .toString()
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")      // quita tildes
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, "_"); // espacios → guion bajo
+
+
+  
+
+const handleExcelChange = async (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  try {
+    const buffer    = await file.arrayBuffer();
+    const workbook  = XLSX.read(buffer, { type: "array" });
+    const sheet     = workbook.Sheets[workbook.SheetNames[0]];
+  
+const rawRows = XLSX.utils.sheet_to_json(sheet, { defval: "", raw: false });
+
+
+    if (!rawRows.length) throw new Error("El archivo está vacío");
+
+    // ⇨ aplica normalización a todas las claves
+
+    // 1. Fuerza que XLSX devuelva strings
+// 2. O, si prefieres raw:true, hazlo a mano:
+
+const rows = rawRows.map(r => ({
+  ...r,
+  telefono: r.telefono ? String(r.telefono) : "",
+  nit:      r.nit      ? String(r.nit)      : "",
+}));
+    const requeridos = ["nombre", "email", "telefono", "direccion", "nit"];
+    const faltan     = requeridos.filter((c) => !(c in rows[0]));
+    if (faltan.length) throw new Error(`Faltan columnas: ${faltan.join(", ")}`);
+
+    /* ───────── envío al backend ───────── */
+    const token = localStorage.getItem("token");
+    await clienteAxios.post(
+      "/api/clientes/importar-excel",
+      { clientes: rows },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    toast.success("Clientes importados correctamente");
+    setExcelError("");
+  } catch (err) {
+    console.error(err);
+    setExcelError(
+      err?.response?.data?.message ?? err.message ?? "Error en la importación"
+    );
+  }
+};
+
+    
+
 
   const {
     registrarCliente,
@@ -182,6 +248,27 @@ export default function GestionClientes() {
                 {error.nit && <span className="text-red-500">{error.nit}</span>}
               </div>
 </div>
+{/* --- Carga masiva desde Excel ----------------------------------- */}
+<div className="mb-6">
+  <label className="block text-sm font-medium text-gray-700 mb-1">
+    Importar clientes desde Excel (.xlsx)
+  </label>
+
+  <input
+    type="file"
+    accept=".xlsx,.xls"
+    onChange={handleExcelChange}
+    className="block w-full text-sm text-gray-900
+               file:mr-4 file:py-2 file:px-4
+               file:rounded file:border-0
+               file:text-sm file:font-semibold
+               file:bg-green-50 file:text-green-700
+               hover:file:bg-green-100"
+  />
+
+  {excelError && <p className="text-red-500 text-xs mt-1">{excelError}</p>}
+</div>
+
               <button className="w-full bg-green-700 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
                 <span>Guardar</span>
               </button>
