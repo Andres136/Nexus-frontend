@@ -167,9 +167,11 @@ const entregas = detalles
   .map((d, i) => {
     const cant  = parseFloat(d.cantidad_entregada_input);
     const fecha = fechasEntrega[i];
-
-    if (cant > 0 && !fecha) { nuevosErrores[i] = "La fecha es obligatoria"; return null; }
-    if (cant <= 0) return null;
+  if (!Number.isFinite(cant) || cant <= 0) return null;
+    if (!fecha) {
+      nuevosErrores[i] = "La fecha es obligatoria";
+      return null;
+    }
 
     return {
       id:   modo === "editar" ? d.entrega_id_ultima : undefined, // ← clave
