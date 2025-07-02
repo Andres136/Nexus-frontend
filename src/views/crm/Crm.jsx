@@ -12,9 +12,6 @@ import {
   ClipboardList,
   FolderPlus,
   Car,
-  CarrotIcon,
-  VenetianMaskIcon,
-  Package,
   Package2Icon,
 } from "lucide-react";
 import Navbar from "../../components/Navbar";
@@ -26,6 +23,7 @@ import { DocumentTextIcon, UserGroupIcon } from "@heroicons/react/16/solid";
 export default function Crm() {
   const [isExpanded, setIsExpanded] = useState(false);
   const { user } = useAuth({ middleware: "auth" });
+  console.log("Usuario autenticado:", user);
   const location = useLocation();
   const [totalNotificaciones, setTotalNotificaciones] = useState(0);
 
@@ -41,39 +39,41 @@ export default function Crm() {
       name: "Ordenes Trabajo",
       to: "/auth/crm/ordenes-trabajo",
       icon: Briefcase,
-      roles: [1,2, 4, 5, 6,11,10],
+      roles: [1, 4, 5, 6,],
+      departamento:[1, 4, 5, 6],
+
     },
     {
       name: "Gestión de Clientes",
       to: "/auth/crm/gestion-clientes",
       icon: Users,
-      roles: [1,2, 9, 7, 4,11,10],
+      roles: [1, 9, 7, 4,11,10],
     },
     { name: "KPIs", to: "/auth/crm/kpis", icon: BarChart, roles: [1, 7] },
     {
       name: "Crear Orden de Compra",
       to: "/auth/crm/crear-ordenes-compras",
       icon: ShoppingCart,
-      roles: [1,2, 9, 7, 4,10,10],
+      roles: [1, 9, 7, 4,10,10],
     },
     {
       name: "Inventarios",
       to: "/auth/crm/reporte-inventarios",
       icon: Clipboard,
-      roles: [1,2, 6, 4, 7, 9, 5,10,11],
+      roles: [1, 6, 4, 7, 9, 5,10,11],
     },
     {
       name: "Notificaciones",
       to: "/auth/crm/notificaciones",
       icon: Bell,
-      roles: [1, 5,2, 10,11],
+      roles: [1, 5, 10,11],
       badge: totalNotificaciones,
     },
     {
       name: "Vehiculos",
       to: "/auth/crm/vehiculos",
       icon: Car,
-      roles: [1,2, 4, 8,10,11],
+      roles: [1, 4, 8,10,11],
     },
     { name: "PQRS", to: "/auth/crm/pqrs", icon: MessageCircle, roles: [1,10] },
     {
@@ -86,19 +86,19 @@ export default function Crm() {
       name: "Órdenes de Compra",
       to: "/auth/crm/obtener-ordenes-compras",
       icon: ClipboardList,
-      roles: [1, 5,2, 4, 7,10,11],
+      roles: [1, 5, 4, 7,10,11],
     },
     {
       name: "Registrar Documentacion ",
       to: "/auth/crm/registrar-documentacion",
       icon: FolderPlus,
-      roles: [1, 4,2, 5,10,11],
+      roles: [1, 4, 5,10,11],
     },
     {
       name: "Proveedores",
       to: "/auth/crm/proveedores",
       icon: UserGroupIcon,
-      roles: [1,2, 4, 5, 6, 10,11],
+      roles: [1, 4, 5, 6, 10,11],
     },
     {
       name: "Mis Ordenes de Compra",
@@ -141,9 +141,12 @@ export default function Crm() {
   }, []);
 
   // Filtrar rutas por rol
-  const filteredMenuLinks = menuLinks.filter((link) =>
-    link.roles.includes(user?.role_id)
-  );
+const filteredMenuLinks = menuLinks.filter((link) => {
+  const rolValido = link.roles.includes(user?.role_id);
+  const deptoValido = !link.departamentos || link.departamentos.includes(user?.departamento_id);
+  return rolValido && deptoValido;
+});
+
 
   return (
     <>
