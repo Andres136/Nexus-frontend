@@ -20,6 +20,7 @@ const {  vehiculos,obtenerVehiculos} = useVehiculos();
         costo: "",
         kilometro_programado: "",
         tipo_mantenimiento: "",
+        kilometraje_actual: "",
         archivo: "",
 
     })
@@ -50,6 +51,7 @@ const {  vehiculos,obtenerVehiculos} = useVehiculos();
             formData.append("costo", form.costo);
             formData.append("kilometro_programado", form.kilometro_programado);
             formData.append("tipo_mantenimiento", form.tipo_mantenimiento);
+            formData.append("kilometraje_actual", form.kilometraje_actual); // Agregar el kilometraje actual al FormData
             if (form.archivo) {
                 formData.append("archivo", form.archivo);
             }
@@ -77,6 +79,7 @@ const {  vehiculos,obtenerVehiculos} = useVehiculos();
                 costo: "",
                 kilometro_programado: "",
                 tipo_mantenimiento: "",
+                kilometraje_actual: "",
                 archivo: "",
             });
         } catch (error) {
@@ -217,6 +220,19 @@ useEffect(() => {
                         className={`border ${error.archivo ? 'border-red-500' : 'border-gray-300'} rounded-md p-2 w-full`}
                     />
                     {error.archivo && <p className="text-red-500 text-sm">{error.archivo}</p>}
+                </div>
+
+                <div>
+                    <label htmlFor="kilometraje_actual" className="block mb-2 text-sm font-medium text-gray-700">Kilometraje Actual</label>
+                    <input
+                        type="number"
+                        name="kilometraje_actual"   
+                        id="kilometraje_actual"
+                        value={form.kilometraje_actual}
+                        onChange={handleChange}
+                        className={`border ${error.kilometraje_actual ? 'border-red-500' : 'border-gray-300'} rounded-md p-2 w-full`}
+                    />
+                    {error.kilometraje_actual && <p className="text-red-500 text-sm">{error.kilometraje_actual}</p>}
                 </div>
             </div>
             <div className="flex justify-left mt-6">

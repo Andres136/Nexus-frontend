@@ -72,17 +72,18 @@ export default function ObtenerOrdenesProveedores() {
                 </td>
                 <td className="border px-4 py-2">{orden.proveedor?.nombre}</td>
                 <td className="border px-4 py-2 text-center">
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-semibold shadow-sm ${
-                      orden.estado.nombre === "Pendiente"
-                        ? "bg-red-100 text-red-800"
-                        : orden.estado.nombre === "Completado"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-yellow-100 text-yellow-800"
-                    }`}
-                  >
-                    {orden.estado.nombre}
-                  </span>
+              <span
+  className={`px-3 py-1 rounded-full text-xs font-semibold shadow-sm ${
+    orden.estado_calculado === "Pendiente"
+      ? "bg-red-100 text-red-800"
+      : orden.estado_calculado === "Completada"
+      ? "bg-green-100 text-green-800"
+      : "bg-yellow-100 text-yellow-800"
+  }`}
+>
+  {orden.estado_calculado}
+</span>
+
                 </td>
 
                 <td className="border px-4 py-2">{orden.usuario?.name}</td>

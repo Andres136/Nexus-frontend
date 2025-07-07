@@ -430,6 +430,7 @@ export default function ListarVehiculos() {
                                 {seccion === "mantenimientos" && (
                                   <tr>
                                     <th>Próximo</th>
+                                  <th>Kilometraje Programado</th>
                                     <th>Realizado</th>
                                     <th>Tipo</th>
                                     <th>Taller</th>
@@ -470,6 +471,7 @@ export default function ListarVehiculos() {
                                     {seccion === "mantenimientos" && (
                                       <>
                                         <td>{item.fecha_programada}</td>
+                                        <td>{item.kilometro_programado}</td>
                                         <td>
                                           {item.fecha_realizado ?? (
                                             <i className="text-gray-400">

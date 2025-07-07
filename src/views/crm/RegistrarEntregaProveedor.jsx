@@ -5,7 +5,12 @@ import { toast } from "react-toastify";
 import Select from "react-select";
 import Swal from "sweetalert2";
 // Convierte cualquier fecha (string) a "YYYY-MM-DDTHH:MM" en tu zona horaria
-export function toDatetimeLocal(dateString) {
+
+
+
+
+export default function RegistrarEntregaProveedor({ modo = "crear" }) {
+function toDatetimeLocal(dateString) {
   if (!dateString) return "";
   const d = new Date(dateString);
   return new Date(d.getTime() - d.getTimezoneOffset() * 60000)
@@ -13,9 +18,7 @@ export function toDatetimeLocal(dateString) {
            .slice(0, 16);
 }
 
-
-
-export default function RegistrarEntregaProveedor({ modo = "crear" }) {
+  
   const { id } = useParams();
   const navigate = useNavigate();
     const detallesOriginal = useRef([]);
@@ -71,9 +74,11 @@ const productos = data.productos.map(det => {
     ...det,
     // para la UI
     cantidad_entregada_input: "",
+    observaciones_input: ultima?.observaciones ?? "", // ← aquí
     fecha_ultima: ultima?.fecha_entrega ?? null,
     // para la lógica:
     entrega_id_ultima: ultima?.id ?? null,   // ← NO se usa si modo==="crear"
+
   };
 });
 
@@ -151,6 +156,7 @@ const handleChange = (idx, value) => {
       cantidad_solicitada: 0,
       cantidad_entregada: 0,
       cantidad_entregada_input: "",
+      observaciones_input: "",
       entrega_id: null,
       entregas: [],
     };
@@ -178,6 +184,7 @@ const entregas = detalles
       detalle_id: d.id,
       cantidad_entregada: cant,
       fecha_entrega:      fecha,
+      observaciones:      d.observaciones_input || "",
     };
   })
   .filter(Boolean);
@@ -331,7 +338,10 @@ const eliminarItem = async (index, id) => {
               <th className="border px-4 py-2">Estado</th>
               <th className="border px-4 py-2">Historial de entregas</th>
               <th className="border px-4 py-2">Ultima Entrega</th>
+         
               <th className="border px-4 py-2">Nueva Entrega</th>
+                 <th className="border px-4 py-2">Observaciones</th>
+
               <th className="border px-4 py-2">Acción</th>
 
             </tr>
@@ -397,6 +407,20 @@ const eliminarItem = async (index, id) => {
           {erroresFecha[index] && <p className="text-red-500 text-xs mt-1">{erroresFecha[index]}</p>}
         </div>
       </td>
+       <td className="border px-4 py-2">
+  <textarea
+    value={detalle.observaciones_input || ""}
+    onChange={(e) => {
+      const nuevos = [...detalles];
+      nuevos[index].observaciones_input = e.target.value;
+      setDetalles(nuevos);
+    }}
+    rows={2}
+    className="w-full border rounded px-2 py-1 text-sm"
+    placeholder="Observaciones..."
+  />
+</td>
+
       <td className="border px-4 py-2 text-center">
   <button
     onClick={() => eliminarItem(index, detalle.id)}

@@ -34,6 +34,7 @@ export function useProveedores (){
           search, // 👈 Envía el término
         },
       });
+      console.log(response.data.ordenes);
       setOrdenes(response.data.ordenes);
       setPagina(response.data.ordenes.current_page);
       setLastPage(response.data.ordenes.last_page);
