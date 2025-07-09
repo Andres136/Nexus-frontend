@@ -45,6 +45,7 @@ import ReferenciasExcedidas from "../views/crm/ReferenciasExcedidas";
 import CargaFotosVehiculo from "../components/crm/vehiculos/CargarFotosVehiculos";
 import Conductores from "../components/Conductores";
 import ObtenerDatosConductores from "../components/crm/ObtenerDatosConductores";
+import RevisionesPage from "../views/crm/RevisionesPage";
 
 
 
@@ -106,6 +107,10 @@ export default function Router() {
         <Route path="/auth/crm/vehiculos/:id/fotos" element= {<CargaFotosVehiculo />} />
         <Route path="/auth/crm/conductores" element={<ObtenerDatosConductores/>} />
         <Route path="/auth/crm/crear-datos-conductores" element={<Conductores/>} />
+        <Route
+  path="/auth/crm/conductores/:conductorId/revisiones"
+  element={<RevisionesPage />}
+/>
       </Route>
     </Route>
   

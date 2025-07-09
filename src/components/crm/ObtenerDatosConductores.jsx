@@ -285,6 +285,12 @@ const actualizarArchivos = async (id, conductor) => {
                   >
                     Actualizar
                   </button>
+                    <Link
+    to={`/auth/crm/conductores/${conductor.id}/revisiones`}
+    className="bg-gray-700 text-white px-3 py-1 rounded hover:bg-gray-700 text-xs block mt-1"
+  >
+    Revisiones
+  </Link>
                 </td>
               </tr>
             ))}

@@ -23,7 +23,7 @@ import { DocumentTextIcon, UserGroupIcon } from "@heroicons/react/16/solid";
 export default function Crm() {
   const [isExpanded, setIsExpanded] = useState(false);
   const { user } = useAuth({ middleware: "auth" });
-  console.log("Usuario autenticado:", user);
+ 
   const location = useLocation();
   const [totalNotificaciones, setTotalNotificaciones] = useState(0);
 
