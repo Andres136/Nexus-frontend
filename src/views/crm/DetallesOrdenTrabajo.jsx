@@ -26,6 +26,12 @@ export default function DetallesOrdenTrabajo() {
         Orden de Trabajo #{orden.id} - {orden.cliente?.nombre}
       </h2>
       <p className="text-gray-600 mb-2">
+        Fecha de Entrega: {orden.fecha_entrega}
+      </p>
+      <p className="text-gray-600 mb-2">
+        Asesor: {orden.user?.name || "No asignado"}
+      </p>
+      <p className="text-gray-600 mb-2">
      Observaciones de la Orden de Compra: {orden.observaciones}
       </p>
  
