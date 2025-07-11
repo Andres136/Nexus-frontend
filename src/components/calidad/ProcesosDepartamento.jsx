@@ -168,7 +168,7 @@ const confirmarEliminacion = (documentoId) => {
     </div>
 
         {/* Columna 2: Documentación Disponible */}
-        <div className="bg-white p-6 rounded-lg shadow-md h-64 overflow-y-auto">
+        <div className="bg-white p-6 rounded-lg shadow-md overflow-y-auto">
       <h3 className="text-xl font-semibold mb-4 text-gray-800">
         {procesoActual?.nombre || "No has seleccionado una carpeta"}
       </h3>
