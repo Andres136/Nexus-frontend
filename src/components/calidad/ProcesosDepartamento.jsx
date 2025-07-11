@@ -168,7 +168,7 @@ const confirmarEliminacion = (documentoId) => {
     </div>
 
         {/* Columna 2: Documentación Disponible */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className="bg-white p-6 rounded-lg shadow-md h-64 overflow-y-auto">
       <h3 className="text-xl font-semibold mb-4 text-gray-800">
         {procesoActual?.nombre || "No has seleccionado una carpeta"}
       </h3>
@@ -181,7 +181,7 @@ const confirmarEliminacion = (documentoId) => {
               className="p-4 bg-gray-100 shadow-sm rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
             >
               {/* Texto de la documentación */}
-              <div className="w-full h-64 overflow-auto">
+              <div className="w-full">
                 <p className="font-bold text-lg text-gray-700">{doc.nombre}</p>
                 <p className="text-gray-500 text-sm">Versión: {doc.version}</p>
                 <p className="text-gray-500 text-sm">
