@@ -9,6 +9,9 @@ import Swal from 'sweetalert2';
 
 function ProcesosDepartamento() {
   // Obtenemos el departamentoId desde la URL
+  const [procesoEditando, setProcesoEditando] = useState(null);
+const [nuevoNombreProceso, setNuevoNombreProceso] = useState('');
+
   const { departamentoId } = useParams();
   
   const [acordeonAbierto, setAcordeonAbierto] = useState("");
@@ -22,7 +25,16 @@ function ProcesosDepartamento() {
   // Extraemos la información del usuario
   const { user } = useAuth({ middleware: "auth" });
 
-
+const ordenManual = [
+  "Registros",
+  "Recursos",
+  "Procedimientos",
+  "Políticas",
+  "Otros documentos",
+  "Instructivos",
+  "Formatos",
+  "Caracterización del proceso"
+];
 
   // Consumimos el hook
   const {
@@ -124,6 +136,38 @@ const confirmarEliminacion = (documentoId) => {
     }
   });
 }
+const procesosOrdenados = [...procesos].sort((a, b) => {
+  return ordenManual.indexOf(a.nombre) - ordenManual.indexOf(b.nombre);
+});
+const abrirModalEdicion = (proceso) => {
+  setProcesoEditando(proceso);
+  setNuevoNombreProceso(proceso.nombre);
+};
+const editarNombreProceso = async () => {
+  const token = localStorage.getItem("token");
+  try {
+    await clienteAxios.put(`/api/procesos/${procesoEditando.id}`, {
+      nombre: nuevoNombreProceso,
+    }, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    toast.success("Nombre de carpeta actualizado");
+    setProcesoEditando(null);
+    cargarProcesos(departamentoId); // recargar
+  } catch (error) {
+    toast.error("Error al actualizar nombre");
+    console.error(error);
+  }
+};
+
+useEffect(() => {
+  const handleKeyDown = (e) => {
+    if (e.key === 'Escape') setProcesoEditando(null);
+  };
+  window.addEventListener('keydown', handleKeyDown);
+  return () => window.removeEventListener('keydown', handleKeyDown);
+}, []);
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -131,35 +175,49 @@ const confirmarEliminacion = (documentoId) => {
       <h2 className="text-3xl font-bold text-gray-800 mb-6">
          {departamentoActual?.nombre || "No seleccionado"}
       </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6 ">
+<div className={`grid grid-cols-1 md:grid-cols-2 ${user?.role_id === 1 || user?.role_id === 2 ? 'lg:grid-cols-3' : 'lg:grid-cols-2'} gap-4 mb-6`}>
+
         {/* Columna 1: Procesos Registrados */}
         <div className="bg-white p-6 rounded-lg shadow-md">
       <h3 className="text-xl font-semibold mb-4 text-gray-800">📁 Carpetas</h3>
 
-      {procesos.length > 0 ? (
+      {procesosOrdenados.length > 0 ? (
         <ul className="space-y-4">
-          {procesos.map((proceso) => (
-            <li
-              key={proceso.id}
-              className="p-4 bg-gray-100 shadow-sm rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
-            >
-              {/* Nombre de la carpeta */}
-              <p className="font-bold text-gray-700 flex items-center gap-2">
-                <Folder size={20} className="text-gray-600" />
-                {proceso.nombre}
-              </p>
+          {procesosOrdenados.map((proceso) => (
+        <li
+  key={proceso.id}
+  className={`p-4 rounded-xl transition border ${
+    procesoSeleccionado === proceso.id
+      ? 'bg-green-100 border-green-500'
+      : 'bg-white border-gray-200 hover:bg-gray-50'
+  } flex flex-col sm:flex-row justify-between sm:items-center gap-4`}
+>
+  {/* Nombre de la carpeta */}
+  <div className="flex items-center gap-2 text-lg font-semibold text-gray-800">
+    <Folder size={22} className="text-yellow-500" />
+    {proceso.nombre}
+  </div>
 
-              {/* Botón para ver documentación */}
-              <button
-                onClick={() => cargarDocumentacion(proceso.id)}
-                className="bg-gray-800 text-white px-4 py-2 rounded-md hover:bg-green-700 transition flex items-center gap-2 w-full sm:w-auto justify-center"
-              >
-                <Folder size={16} />
-                Ver Documentación
-              </button>
- 
+  {/* Acciones: Editar + Ver documentación */}
+  <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+    {user?.role_id === 1 && (
+      <button
+        onClick={() => abrirModalEdicion(proceso)}
+        className="text-sm text-blue-600 hover:underline"
+      >
+        Editar
+      </button>
+    )}
+    <button
+      onClick={() => cargarDocumentacion(proceso.id)}
+      className="bg-gray-800 text-white px-4 py-2 rounded-md hover:bg-green-700 transition flex items-center gap-2 text-sm"
+    >
+      <Folder size={12} />
+      Ver Documentación
+    </button>
+  </div>
+</li>
 
-            </li>
           ))}
         </ul>
       ) : (
@@ -439,7 +497,37 @@ const confirmarEliminacion = (documentoId) => {
           </div>
         )}
       </div>
+      {/* Modal para editar nombre de proceso */}{procesoEditando && (
+  <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center z-50">
+    <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-sm">
+      <h3 className="text-lg font-semibold mb-4">Editar nombre de carpeta</h3>
+      <input
+        type="text"
+        value={nuevoNombreProceso}
+        onChange={(e) => setNuevoNombreProceso(e.target.value)}
+        className="w-full p-2 border border-gray-300 rounded mb-4"
+      />
+      <div className="flex justify-end gap-2">
+        <button
+          onClick={() => setProcesoEditando(null)}
+          className="px-4 py-2 bg-gray-300 rounded"
+        >
+          Cancelar
+        </button>
+        <button
+          onClick={editarNombreProceso}
+          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+        >
+          Guardar
+        </button>
+      </div>
     </div>
+  </div>
+)}
+
+    </div>
+
+    
   );
 }
 
