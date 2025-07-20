@@ -137,8 +137,12 @@ const confirmarEliminacion = (documentoId) => {
   });
 }
 const procesosOrdenados = [...procesos].sort((a, b) => {
-  return ordenManual.indexOf(a.nombre) - ordenManual.indexOf(b.nombre);
+  const indexA = ordenManual.indexOf(a.nombre);
+  const indexB = ordenManual.indexOf(b.nombre);
+
+  return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
 });
+
 const abrirModalEdicion = (proceso) => {
   setProcesoEditando(proceso);
   setNuevoNombreProceso(proceso.nombre);
