@@ -28,6 +28,27 @@ const Dashboard = () => {
       console.error("Error al generar notificaciones:", error);
     }
   }
+const descargarpdf = async ()=>{
+  try {
+    const token = localStorage.getItem("token");
+    const response = await clienteAxios.get("api/dashboard/ordenespdf", {
+      headers: { Authorization: `Bearer ${token}` },
+      responseType: 'blob', // Importante para descargar archivos
+    });
+
+    // Crear un enlace temporal para descargar el PDF
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'ordenes_criticas.pdf'); // Nombre del archivo
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url); // Liberar memoria
+  } catch (error) {
+    console.error("Error al descargar PDF:", error);
+  }
+}
 
   // useEffect para cargar tareas y generar notificaciones
   useEffect(() => {
@@ -82,7 +103,11 @@ const Dashboard = () => {
       <div className="p-6 grid gap-6 col-span-1">
 
 
-
+        <div className="flex justify-between items-center mb-6">
+          <button onClick={descargarpdf} className="bg-blue-500 text-white px-4 py-2 rounded">
+            Descargar PDF
+          </button>
+        </div>
 
 
 
