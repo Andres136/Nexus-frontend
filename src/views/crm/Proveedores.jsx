@@ -87,6 +87,34 @@ const obtenerProveedores = async (page = 1) => {
         }
     }
   }
+
+ const descargarPendientes = async () => {
+  const token = localStorage.getItem("token");
+  try {
+    const response = await clienteAxios.get(
+      "/api/entregas/items-pendientes/pdf",
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        responseType: "blob", // 🔴 ESTO ES OBLIGATORIO
+      }
+    );
+
+    const blob = new Blob([response.data], { type: "application/pdf" });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "items_pendientes.pdf";
+    link.click();
+    window.URL.revokeObjectURL(url); // limpieza
+  } catch (error) {
+    console.error(error);
+    toast.error("Error al descargar PDF: " + error.message);
+  }
+};
+
+
   const handleEliminar = (id) => {
     Swal.fire({
       title: "¿Estás seguro?",
@@ -145,6 +173,13 @@ useEffect(() => {
     >
       Ver Referencias Excedidas
     </Link>
+
+    <button
+      onClick={descargarPendientes}
+      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-center"
+    >
+    Referencias Pendientes
+    </button>
   </div>
       <form onSubmit={handleSubmit} className="mb-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
