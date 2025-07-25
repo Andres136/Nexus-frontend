@@ -1,6 +1,6 @@
 
-import GraficaClientes from '../../components/crm/GraficaClientes'
 import ResumenDashboard from '../../components/crm/ResumenDashboard'
+import ResumenMeta from '../../components/crm/ResumenMeta'
 
 
 
@@ -9,8 +9,9 @@ export default function Kpi() {
 <> 
 <div className=' grid grid-cols-1 gap-4'>
 
+
   <div className=' col-span-1'>
-     <GraficaClientes />
+   <ResumenMeta />
 <ResumenDashboard />
   </div>
 </div>

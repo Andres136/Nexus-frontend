@@ -17,6 +17,7 @@ export default function ResumenDashboard() {
   const [selectedMonth, setSelectedMonth] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [metaData, setMetaData] = useState([]);
 
   useEffect(() => {
     clienteAxios.get('/api/estadisticas-comerciales')
@@ -32,6 +33,21 @@ export default function ResumenDashboard() {
       .catch(err => setError(err.message || 'Error al cargar datos'))
       .finally(() => setLoading(false));
   }, []);
+useEffect(() => {
+  if (selectedMonth) {
+    const filtered = data.filter(item => item.mes === selectedMonth);
+    setChartData(filtered);
+
+    // Para el gráfico de metas vs órdenes y cumplimiento
+    const metas = filtered.map(item => ({
+      usuario: item.usuario,
+      meta_individual: item.meta_individual,
+      total_ordenes: item.total_ordenes,
+      cumplimiento: item.cumplimiento,
+    }));
+    setMetaData(metas);
+  }
+}, [data, selectedMonth]);
 
   // Actualizar chartData cuando data o selectedMonth cambien
   useEffect(() => {
@@ -43,13 +59,20 @@ export default function ResumenDashboard() {
 
   if (loading) return <div className="text-center p-4">Cargando datos...</div>;
   if (error) return <div className="text-center p-4 text-red-500">Error: {error}</div>;
+// Opcional: transforma total_valor_ordenes a millones si no lo está ya
+const datosGrafico = data.map((item) => ({
+  ...item,
+  total_valor_ordenes: (item.total_valor_ordenes / 1000000).toFixed(2), // convierte a millones
+}));
 
   // Métricas a mostrar
   const metrics = [
     { key: 'total_gestiones', name: 'Gestiones', color: '#8884d8' },
     { key: 'total_cotizaciones', name: 'Cotizaciones', color: '#82ca9d' },
     { key: 'total_ordenes', name: 'Órdenes', color: '#ffc658' },
-    { key: 'total_clientes', name: 'Clientes Nuevos', color: '#ff7361' }
+    { key: 'total_clientes', name: 'Clientes Nuevos', color: '#ff7361' },
+    { key: 'cumplimiento', name: 'Cumplimiento (%)', color: '#d0ed57' },
+    { key: 'total_valor_ordenes', name: 'Valor Órdenes (M)', color: '#a4de6c' }
   ];
 
   return (
@@ -79,7 +102,18 @@ export default function ResumenDashboard() {
           >
             <XAxis dataKey="usuario" />
             <YAxis />
-            <Tooltip />
+            <Tooltip
+  formatter={(value, name) => {
+    if (name === 'Cumplimiento %') {
+      return [`${value.toFixed(2)}%`, name];
+    } else if (name === 'Valor Órdenes (M)') {
+      return [`$${parseFloat(value).toLocaleString('es-CO')} M`, name];
+    } else {
+      return [`${value}`, name];
+    }
+  }}
+/>
+
             <Legend />
             {metrics.map(m => (
               <Bar
@@ -89,6 +123,7 @@ export default function ResumenDashboard() {
                 fill={m.color}
                 barSize={20}
               />
+
             ))}
           </BarChart>
         </ResponsiveContainer>
