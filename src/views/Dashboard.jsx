@@ -132,7 +132,7 @@ const descargarpdf = async ()=>{
         {/* Flujo de estados */}
         <div className="bg-white p-4 rounded shadow w-full overflow-x-auto mb-6">
           <h3 className="font-semibold mb-4">Flujo de estados</h3>
-          <div className="min-w-[300px]">
+    <div style={{ minWidth: `${estados.length * 130}px` }}>
             <ApexChart
               type="bar"
               height={300}
