@@ -50,11 +50,9 @@ export default function Navbar() {
         <h1 className="text-left leading-tight">
           <Link to="/" className="block group">
             <span className="text-2xl font-extrabold text-white tracking-wide group-hover:text-green-400 transition">
-              SETAS ETS
+             Nexus 
             </span>
-            <span className="block text-sm text-green-400 font-medium group-hover:text-white transition">
-              Entorno de Tecnología y Sostenibilidad
-            </span>
+        
           </Link>
         </h1>
 

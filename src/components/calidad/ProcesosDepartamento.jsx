@@ -17,6 +17,16 @@ const [nuevoNombreProceso, setNuevoNombreProceso] = useState('');
   const [acordeonAbierto, setAcordeonAbierto] = useState("");
 
   const [usuariosDepartamento, setUsuariosDepartamento] = useState();
+  // Dentro de ProcesosDepartamento, junto al resto de useState:
+const [filtroDocs, setFiltroDocs] = useState('');
+// Añade junto a los otros useState:
+const [editingDocId, setEditingDocId] = useState(null);
+const [newDocName, setNewDocName] = useState('');
+const [inputValue, setInputValue] = useState('');   // lo que escribe el usuario
+const [searchTerm, setSearchTerm] = useState('');   // el término al que filtrar
+
+
+
 
   const toggleAcordeon = (seccion) => {
     setAcordeonAbierto((prev) => (prev === seccion ? "" : seccion));
@@ -105,6 +115,23 @@ const cargarUsuariosDepartamento = async (departamentoId) => {
       }
 }
 
+//Actualizar el nombre del documento
+const guardarNombreDocumento = async (docId) => {
+  const token = localStorage.getItem('token');
+  try {
+    await clienteAxios.put(
+      `/api/documentos/${docId}`,
+      { nombre: newDocName },
+      { headers: { Authorization: `Bearer ${token}` }}
+    );
+    toast.success('Nombre de documento actualizado');
+    setEditingDocId(null);
+    cargarDocumentacion(procesoSeleccionado);
+  } catch (error) {
+    console.error('Error al actualizar documento', error);
+    toast.error('No se pudo actualizar el nombre');
+  }
+};
 
 //Eliminar documento
 const eliminarDocumento = async (documentoId) => {
@@ -172,6 +199,12 @@ useEffect(() => {
   window.addEventListener('keydown', handleKeyDown);
   return () => window.removeEventListener('keydown', handleKeyDown);
 }, []);
+// Filtra por nombre (case-insensitive)
+const docsFiltrados = searchTerm
+  ? documentacion.filter(doc =>
+      doc.nombre.toLowerCase() === searchTerm.toLowerCase()
+    )
+  : documentacion;
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -182,18 +215,18 @@ useEffect(() => {
 <div className={`grid grid-cols-1 md:grid-cols-2 ${user?.role_id === 1 || user?.role_id === 2 ? 'lg:grid-cols-3' : 'lg:grid-cols-2'} gap-4 mb-6`}>
 
         {/* Columna 1: Procesos Registrados */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
-      <h3 className="text-xl font-semibold mb-4 text-gray-800">📁 Carpetas</h3>
+       <section className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition">
+      <h3 className="text-2xl font-bold mb-6 text-gray-800 border-b pb-2">📁 Carpetas</h3>
 
       {procesosOrdenados.length > 0 ? (
-        <ul className="space-y-4">
+        <ul className="flex flex-col divide-y divide-gray-200">
           {procesosOrdenados.map((proceso) => (
         <li
   key={proceso.id}
   className={`p-4 rounded-xl transition border ${
     procesoSeleccionado === proceso.id
-      ? 'bg-green-100 border-green-500'
-      : 'bg-white border-gray-200 hover:bg-gray-50'
+      ? 'bg-green-100 border-green-500 py-4 flex items-center justify-between'
+      : 'bg-white border-gray-200 hover:bg-gray-50 flex items-center justify-between'
   } flex flex-col sm:flex-row justify-between sm:items-center gap-4`}
 >
   {/* Nombre de la carpeta */}
@@ -227,65 +260,119 @@ useEffect(() => {
       ) : (
         <p className="text-gray-500">No hay Carpetas disponibles.</p>
       )}
-    </div>
+    </section>
 
         {/* Columna 2: Documentación Disponible */}
-    <div className="bg-white p-6 rounded-lg shadow-md max-h-[70vh] overflow-y-auto">
-      <h3 className="text-xl font-semibold mb-4 text-gray-800">
-        {procesoActual?.nombre || "No has seleccionado una carpeta"}
-      </h3>
+ 
+  <section className="flex flex-col bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition min-h-0">
+  <h3 className="text-xl font-semibold mb-4 text-gray-800">
+    {procesoActual?.nombre || "No has seleccionado una carpeta"}
+  </h3>
 
-      {documentacion.length > 0 ? (
-        <ul className="space-y-4">
-          {documentacion.map((doc) => (
-            <li
-              key={doc.id}
-              className="p-4 bg-gray-100 shadow-sm rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
-            >
-              {/* Texto de la documentación */}
-              <div className="w-full">
-                <p className="font-bold text-lg text-gray-700">{doc.nombre}</p>
-                <p className="text-gray-500 text-sm">Versión: {doc.version}</p>
-                <p className="text-gray-500 text-sm">
-                  Observaciones: {doc.observaciones || "N/A"}
-                </p>
-                <p className="text-gray-500 text-sm">Subido por: {doc.usuarios.name}</p>
-                <p className="text-gray-500 text-sm">
-                  Fecha de subida: {formatDate(doc.created_at)}
-                </p>
-              </div>
-
-              {/* Botón de descarga */}
-              <a
-                href={`${clienteAxios.defaults.baseURL}/api/documentos/descargar/${doc.id}`}
-                download
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition flex items-center gap-2 w-full sm:w-auto justify-center"
-              >
-                <Download size={16} />
-                Descargar
-              </a>
-              {user?.role_id === 1 && (
+  {/* Buscador */}
+ <div className="flex items-center justify-between mb-4">
+  <input
+    type="text"
+    placeholder="Buscar documento por nombre..."
+    value={inputValue}
+    onChange={e => setInputValue(e.target.value)}
+    className="border p-2 rounded w-full mr-2"
+  />
   <button
-    onClick={() => confirmarEliminacion(doc.id)}
-    className="bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-700 transition"
+    onClick={() => setSearchTerm(inputValue.trim())}
+    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
   >
-    Eliminar
+    Buscar
   </button>
-)}
+</div>
 
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="text-gray-500">No hay documentación disponible.</p>
-      )}
-    </div>
+
+ <div className="flex-1 overflow-y-auto">
+
+{docsFiltrados.length > 0 ? (
+  <ul className="space-y-4">
+    {docsFiltrados.map((doc) => (
+      <li key={doc.id} className="p-4 bg-gray-100 rounded-lg flex flex-col sm:flex-row justify-between gap-4">
+        <div className="w-full">
+          {/* Inline editing del nombre */}
+          {editingDocId === doc.id ? (
+            <>
+              <input
+                type="text"
+                value={newDocName}
+                onChange={e => setNewDocName(e.target.value)}
+                className="p-2 border rounded w-full mb-2"
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={() => guardarNombreDocumento(doc.id)}
+                  className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                >
+                  Guardar
+                </button>
+                <button
+                  onClick={() => setEditingDocId(null)}
+                  className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="flex items-center gap-2">
+              <p className="font-bold text-lg text-gray-700">{doc.nombre}</p>
+              {user?.role_id === 1 && (
+                <button
+                  onClick={() => {
+                    setEditingDocId(doc.id);
+                    setNewDocName(doc.nombre);
+                  }}
+                  className="text-sm text-blue-600 hover:underline"
+                >
+                  Editar
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Resto de metadatos */}
+          <p className="text-gray-500 text-sm">Versión: {doc.version}</p>
+          <p className="text-gray-500 text-sm">Observaciones: {doc.observaciones || 'N/A'}</p>
+          <p className="text-gray-500 text-sm">Subido por: {doc.usuarios.name}</p>
+          <p className="text-gray-500 text-sm">Fecha: {formatDate(doc.created_at)}</p>
+        </div>
+
+        {/* Botones descargar/eliminar */}
+        <div className="flex flex-col sm:flex-row gap-2">
+          <a
+            href={`${clienteAxios.defaults.baseURL}/api/documentos/descargar/${doc.id}`}
+            download target="_blank" rel="noopener noreferrer"
+           className="bg-gray-800 text-white px-4 py-3 rounded hover:bg-gray-900 flex items-center gap-2 h-10"
+          >
+            <Download size={16}/> Descargar
+          </a>
+          {user?.role_id === 1 && (
+            <button
+              onClick={() => confirmarEliminacion(doc.id)}
+       className="bg-red-600 text-white px-4 py-3 rounded hover:bg-red-700 h-10"
+            >
+              Eliminar
+            </button>
+          )}
+        </div>
+      </li>
+    ))}
+  </ul>
+) : (
+  <p className="text-gray-500">No hay documentación disponible.</p>
+)}</div>
+</section>
+
+
 
         {/* Columna 3: Formularios de Registro (solo para administradores) */}
         {departamentoActual && (user?.role_id === 1 || user?.role_id === 2)   &&(
-          <div className="bg-white p-4 rounded-lg shadow-md">
+          <section className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition">
             <div>
               <h3 className='text-xl font-semibold mb-4'>
                 Formulario de Registro para : {departamentoActual?.nombre || "No hay un proceso seleccionado"}
@@ -325,12 +412,24 @@ useEffect(() => {
 
               {/* Acordeón: Registrar Documentación */}
               <div className="mt-6">
-                <button
-                  className="w-full text-left p-4 font-semibold text-white bg-gray-500 rounded-lg focus:outline-none"
-                  onClick={() => toggleAcordeon("documentacion")}
-                >
-                   {procesoActual?.nombre || <span className='text-white'>No se ha seleccionado una Carpeta</span>}
-                </button>
+               <button
+  className="w-full text-left p-4 font-semibold text-white bg-gray-500 rounded-lg focus:outline-none"
+  onClick={() => toggleAcordeon("documentacion")}
+  disabled={!procesoActual}       // opcional, para bloquear si no hay proceso
+>
+ { procesoActual ? (
+    <span className="text-gray-100">
+      {`${procesoActual.nombre} – Sube un archivo`}
+    </span>
+  ) : (
+    <span className="text-white">
+      No se ha seleccionado una Carpeta
+    </span>
+  )
+}
+
+</button>
+
                 {acordeonAbierto === "documentacion" && (
                   <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg mt-2">
                     <div className="mb-4">
@@ -498,7 +597,7 @@ useEffect(() => {
                 )}
               </div>
             </div>
-          </div>
+          </section>
         )}
       </div>
       {/* Modal para editar nombre de proceso */}{procesoEditando && (

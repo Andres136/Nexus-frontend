@@ -42,19 +42,23 @@ export default function ResumenMeta() {
     }
   };
 
-  const obtenerDatosGrafico = async () => {
+  const obtenerDatosGrafico = async (userId = null, mesFiltro = null) => {
     const token = localStorage.getItem('token');
 
     try {
       const response = await clienteAxios.get('/api/meta-mensual/resumen', {
         headers: { Authorization: `Bearer ${token}` },
+        params: {
+          user_id: userId,
+          mes: mesFiltro
+        }
       });
 
       const data = response.data.data.map(item => ({
         mes: item.mes,
         meta: item.meta_millones,
         ordenes: item.ordenes_millones,
-        cumplimiento: item.cumplimiento * 100 // porcentaje
+        cumplimiento: item.cumplimiento
       }));
 
       setDatosGrafico(data);
@@ -63,16 +67,12 @@ export default function ResumenMeta() {
     }
   };
 
+  // Dentro de tu componente, antes del return:
+  const periodo = `${anio}-${String(mes).padStart(2, '0')}`;
   useEffect(() => {
-    obtenerDatosGrafico();
-  }, []);
-// Calcular cumplimiento general acumulado
-const cumplimientoGeneral = (() => {
-  const totalMeta = datosGrafico.reduce((acc, item) => acc + item.meta, 0);
-  const totalOrdenes = datosGrafico.reduce((acc, item) => acc + item.ordenes, 0);
-  if (totalMeta === 0) return 0;
-  return ((totalOrdenes / totalMeta) * 100).toFixed(2);
-})();
+    obtenerDatosGrafico(null, periodo);
+  }, [periodo]);
+
 
   return (
     <div className="max-w-4xl mx-auto mt-10 bg-white p-6 rounded shadow-md">
@@ -94,18 +94,18 @@ const cumplimientoGeneral = (() => {
 
         <div>
           <label className="block font-semibold">Mes</label>
-          <select
-            value={mes}
-            onChange={(e) => setMes(e.target.value)}
-            className="w-full border px-3 py-2 rounded"
-            required
-          >
-            {[...Array(12)].map((_, i) => (
-              <option key={i + 1} value={i + 1}>
-                {new Date(0, i).toLocaleString('es-CO', { month: 'long' })}
-              </option>
-            ))}
-          </select>
+       <select
+  value={mes}
+  onChange={e => setMes(Number(e.target.value))}
+  className="w-full border px-3 py-2 rounded"
+>
+  {[...Array(12)].map((_, i) => (
+    <option key={i+1} value={i+1}>
+      {new Date(0,i).toLocaleString('es-CO',{month:'long'})}
+    </option>
+  ))}
+</select>
+
         </div>
 
         <div>
@@ -144,20 +144,26 @@ const cumplimientoGeneral = (() => {
     <CartesianGrid strokeDasharray="3 3" />
     <XAxis dataKey="mes" />
 
-    <YAxis yAxisId="left" />
-    <YAxis
-      yAxisId="right"
-      orientation="right"
-      tickFormatter={(value) => `${value}%`}
-    />
+ <YAxis yAxisId="left" 
+       domain={[0, 'dataMax + 1']}       // margen superior dinámico  
+/>
+<YAxis yAxisId="right"
+       orientation="right"
+       domain={[0, 100]}                 // siempre 0 a 100%
+       tickFormatter={v => `${v}%`}     
+/>
 
-    <Tooltip
-      formatter={(value, name) =>
-        name === 'Cumplimiento %'
-          ? [`${value.toFixed(2)}%`, name]
-          : [`$${value.toLocaleString('es-CO')} M`, name]
-      }
-    />
+
+  <Tooltip
+  formatter={(value, name) => {
+    if (name === 'Cumplimiento %') {
+      return [`${value.toFixed(2)}%`, name];
+    }
+    // Meta y órdenes están en millones
+    return [`$${value.toLocaleString('es-CO')} M`, name];
+  }}
+/>
+
     <Legend />
 
     {/* Barras de Meta y Órdenes */}
@@ -177,13 +183,20 @@ const cumplimientoGeneral = (() => {
     </Bar>
 
     {/* Línea de cumplimiento */}
-    <Line
-      yAxisId="right"
-      type="monotone"
-      dataKey="cumplimiento"
-      stroke="#f59e0b"
-      name="Cumplimiento %"
-    />
+  <Line
+  yAxisId="right"
+  type="monotone"
+  dataKey="cumplimiento"
+  stroke="#f59e0b"
+  name="Cumplimiento %"
+>
+  <LabelList
+    dataKey="cumplimiento"
+    position="top"
+    formatter={(v) => `${v.toFixed(1)}%`}
+  />
+</Line>
+
   </BarChart>
 </ResponsiveContainer>
 

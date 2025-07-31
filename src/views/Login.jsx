@@ -33,7 +33,14 @@ login(data, setErrores);
     >
       {/* Left Column */}
       <div className="md:w-1/2 w-full text-white flex flex-col justify-center items-center h-full bg-opacity-60 bg-black">
-        <h1 className="text-5xl font-bold mb-4 text-center">Software de Gestión Setasplast</h1>
+     <h1
+  className="
+    text-6xl md:text-7xl font-extrabold leading-tight
+    text-white
+    stroke-1 stroke-gray-300
+    drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]
+  "
+>Nexus </h1>
         <p className="text-lg text-center max-w-md">
           Optimiza y gestiona los procesos de tu empresa con nuestra solución.
         </p>
