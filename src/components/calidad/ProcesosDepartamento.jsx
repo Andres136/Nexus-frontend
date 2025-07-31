@@ -200,11 +200,11 @@ useEffect(() => {
   return () => window.removeEventListener('keydown', handleKeyDown);
 }, []);
 // Filtra por nombre (case-insensitive)
-const docsFiltrados = searchTerm
-  ? documentacion.filter(doc =>
-      doc.nombre.toLowerCase() === searchTerm.toLowerCase()
-    )
-  : documentacion;
+// Reemplaza tu docsFiltrados actual por esto:
+const docsFiltrados = documentacion.filter(doc =>
+  doc.nombre.toLowerCase().includes(inputValue.toLowerCase())
+);
+
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -271,18 +271,19 @@ const docsFiltrados = searchTerm
 
   {/* Buscador */}
  <div className="flex items-center justify-between mb-4">
-  <input
-    type="text"
-    placeholder="Buscar documento por nombre..."
-    value={inputValue}
-    onChange={e => setInputValue(e.target.value)}
-    className="border p-2 rounded w-full mr-2"
-  />
+ <input
+  type="text"
+  placeholder="Buscar documento..."
+  value={inputValue}
+  onChange={e => setInputValue(e.target.value)}
+  className="border p-2 rounded w-full"
+/>
+
   <button
     onClick={() => setSearchTerm(inputValue.trim())}
     className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
   >
-    Buscar
+  Refrescar
   </button>
 </div>
 
