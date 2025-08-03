@@ -281,7 +281,7 @@ const docsFiltrados = documentacion.filter(doc =>
 
   <button
     onClick={() => setSearchTerm(inputValue.trim())}
-    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+    className="bg-blue-600 text-white px-4 p-4 rounded hover:bg-blue-700 transition"
   >
   Refrescar
   </button>

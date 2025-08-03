@@ -10,9 +10,13 @@ export default function TopClientes() {
   const [mes, setMes] = useState('');
 
   useEffect(() => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1; // Enero = 0, por eso sumamos 1
+
     const fetchTopClientes = async () => {
       try {
-        const response = await clienteAxios.get('/api/top-clients?year=2025&month=6');
+        const response = await clienteAxios.get(`/api/top-clients?year=${year}&month=${month}`);
         setData(response.data.clientes_top);
         setMes(response.data.mes);
       } catch (error) {

@@ -226,27 +226,6 @@ const descargarpdf = async ()=>{
 
         <TopClientes/>
 
-        {/* Órdenes por usuario */}
-        <div className="bg-white p-4 rounded shadow w-full overflow-x-auto mb-6">
-          <h3 className="font-semibold mb-4">Órdenes por usuario</h3>
-          <div className="min-w-[300px]">
-            <ApexChart
-              type="bar"
-              height={300}
-              series={[
-                {
-                  name: 'Órdenes',
-                  data: Object.values(data.por_usuario),
-                },
-              ]}
-              options={{
-                chart: { toolbar: { show: false } },
-                xaxis: { categories: Object.keys(data.por_usuario) },
-                colors: ['#10b981'],
-              }}
-            />
-          </div>
-        </div>
       </div>
    
     </div>
