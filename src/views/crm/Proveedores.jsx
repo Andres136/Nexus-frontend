@@ -3,6 +3,7 @@ import clienteAxios from "../../config/axios"
 import { toast } from "react-toastify"
 import Swal from "sweetalert2"
 import { Link } from "react-router-dom"
+import Select from "react-select"
 
 export default function Proveedores() {
 
@@ -23,7 +24,7 @@ const [proveedores, setProveedores] = useState([])
 const [search, setSearch] = useState("")
 const [currentPage, setCurrentPage] = useState(1)
 const [lastPage, setLastPage] = useState(1)
-
+const [proveedoresFiltrados, setProveedoresFiltrados] = useState([]);
 
 const handleChange = (e) => {
   setForm({
@@ -132,7 +133,7 @@ const descargarPendientes = async () => {
       cancelButtonColor: "#3085d6",
       confirmButtonText: "Sí, eliminar",
       cancelButtonText: "Cancelar"
-    }).then(async (result) => {
+    }).then(async (result) => {setLastPage(1) // No hay paginación, así que siempre será 1
       if (result.isConfirmed) {
         const token = localStorage.getItem("token")
         try {
@@ -148,13 +149,35 @@ const descargarPendientes = async () => {
     })
   }
   
+
+ //Cargar todos los proveedores al iniciar sin paginación
+useEffect(() => {
+  const fetchProveedores = async () => {
+    const token = localStorage.getItem("token");
+    try {
+      const { data } = await clienteAxios.get("/api/proveedores-all", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      // data.proveedores es un array
+      setProveedoresFiltrados(Array.isArray(data.proveedores) ? data.proveedores : []);
+    } catch (error) {
+      console.error("Error al cargar proveedores:", error);
+      toast.error("Error al cargar proveedores");
+      setProveedoresFiltrados([]); // fallback seguro
+    }
+  };
+  fetchProveedores();
+}, []);
+
+
+
   
   
 useEffect(() => {
   obtenerProveedores()
 }
 , [currentPage])
-
+const opcionesFiltro = proveedoresFiltrados.map(p => ({ value: p.id, label: p.nombre }));
 
   return (
     <div className="container mx-auto mt-10">
@@ -182,19 +205,22 @@ useEffect(() => {
     </Link>
 
    {/* Filtros de reportes */}
-<div className="flex flex-col sm:flex-row gap-4 mb-6">
-  {/* ...tus enlaces... */}
 
-  <select
-    value={proveedorFiltro}
-    onChange={(e) => setProveedorFiltro(e.target.value)}
-    className="border px-3 py-2 rounded"
-  >
-    <option value="">Todos los proveedores</option>
-    {proveedores.map(p => (
-      <option key={p.id} value={p.id}>{p.nombre}</option>
-    ))}
-  </select>
+<div className="flex flex-col sm:flex-row gap-4 mb-6">
+  <div className="w-full sm:w-72">
+    <Select
+      options={opcionesFiltro}
+      value={
+        proveedorFiltro
+          ? opcionesFiltro.find(o => o.value === Number(proveedorFiltro))
+          : null
+      }
+      onChange={(opt) => setProveedorFiltro(opt?.value ? String(opt.value) : "")}
+      isClearable
+      placeholder="Filtrar por proveedor…"
+      classNamePrefix="rs"  // evita conflictos de estilos
+    />
+  </div>
 
   <button
     onClick={descargarPendientes}
