@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import clienteAxios from "../../config/axios";
 import { toast } from "react-toastify";
 import { useProveedores } from "../../hooks/useProveedores";
@@ -9,7 +9,8 @@ import { Link } from "react-router-dom";
 export default function FormOrdenesProveedores() {
   
   const { proveedores } = useProveedores();
-   
+
+  const [proveedoresFiltro, setProveedoresFiltro] = useState("");
   const [errores, setErrores] = useState({});
   const [erroresDetalles, setErroresDetalles] = useState({});
   const [formData, setFormData] = useState({
@@ -81,6 +82,30 @@ export default function FormOrdenesProveedores() {
     }
   };
 
+  //Carga los proveedores al cargar el componente
+  useEffect(() => {
+    const cargarProveedores = async () => {
+      const token = localStorage.getItem("token");
+      try {
+        const response = await clienteAxios.get("/api/proveedores", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const opciones = response.data.proveedores.map((p) => ({
+          value: p.id,
+          label: p.nombre,
+        }));
+        setProveedoresFiltro(opciones);
+        console.log("Proveedores cargados:", opciones);
+        
+      } catch (error) {
+        if (error.name !== "CanceledError" && error.name !== "AbortError") {
+          toast.error("Error al cargar proveedores");
+        }
+      }
+    };
+    cargarProveedores();
+  }, []);
+
   return (
     <div className="grid grid-cols-1 bg-white rounded-xl">
  <div className="text-left">
@@ -109,9 +134,9 @@ export default function FormOrdenesProveedores() {
             } rounded-md p-2 w-full`}
           >
             <option value="">Seleccione un proveedor</option>
-            {proveedores.data?.map((proveedor) => (
-              <option key={proveedor.id} value={proveedor.id}>
-                {proveedor.nombre}
+            {proveedoresFiltro.map((proveedor) => (
+              <option key={proveedor.value} value={proveedor.value}>
+                {proveedor.label}
               </option>
             ))}
           </select>
