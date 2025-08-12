@@ -156,19 +156,25 @@ export default function FormOrdenesProveedores() {
         </div>
         <div>
           <label className="block mb-2 text-sm font-medium text-gray-700">
-            Observaciones
+            Seleciona una empresa
           </label>
-          <textarea
-            name="observaciones"
-            value={formData.observaciones}
-            onChange={handleInputChange}
-            className={`border ${
-              errores.observaciones ? "border-red-500" : "border-gray-300"
-            } rounded-md p-2 w-full`}
-          />
-          {errores.observaciones && (
-            <p className="text-red-500 text-sm">{errores.observaciones[0]}</p>
-          )}
+        
+  <select
+    name="observaciones"
+    value={formData.observaciones ?? ""}
+    onChange={handleInputChange}
+    className={`border ${
+      errores.observaciones ? "border-red-500" : "border-gray-300"
+    } rounded-md p-2 w-full bg-white`}
+  >
+    <option value="">Seleccione…</option>
+    <option value="SETASPLAST">Setasplast</option>
+    <option value="GLOBAL">Global</option>
+  </select>
+
+  {errores.observaciones && (
+    <p className="text-red-500 text-sm">{errores.observaciones[0]}</p>
+  )}
         </div>
       </div>
       

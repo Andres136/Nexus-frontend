@@ -12,10 +12,12 @@ const [form, setForm] = useState({
   telefono: "",
   direccion: "",
   correo: "",
-  cuidad: "",
+  ciudad: "",
   observaciones: "",
 
 })
+// estados
+const [proveedorFiltro, setProveedorFiltro] = useState(""); // '' = todos
 
 const [proveedores, setProveedores] = useState([])
 const [search, setSearch] = useState("")
@@ -74,7 +76,7 @@ const obtenerProveedores = async (page = 1) => {
         telefono: "",
         direccion: "",
         correo: "",
-        cuidad: "",
+        ciudad: "",
         observaciones: "",
       })
   
@@ -88,16 +90,17 @@ const obtenerProveedores = async (page = 1) => {
     }
   }
 
- const descargarPendientes = async () => {
+const descargarPendientes = async () => {
   const token = localStorage.getItem("token");
   try {
     const response = await clienteAxios.get(
       "/api/entregas/items-pendientes/pdf",
       {
-        headers: {
-          Authorization: `Bearer ${token}`,
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: "blob",
+        params: {
+          proveedor_id: proveedorFiltro || undefined, // si '' no lo envía
         },
-        responseType: "blob", // 🔴 ESTO ES OBLIGATORIO
       }
     );
 
@@ -107,10 +110,14 @@ const obtenerProveedores = async (page = 1) => {
     link.href = url;
     link.download = "items_pendientes.pdf";
     link.click();
-    window.URL.revokeObjectURL(url); // limpieza
+    window.URL.revokeObjectURL(url);
   } catch (error) {
-    console.error(error);
-    toast.error("Error al descargar PDF: " + error.message);
+    if (error?.response?.status === 404) {
+      toast.info("No hay ítems pendientes para el filtro seleccionado.");
+    } else {
+      console.error(error);
+      toast.error("Error al descargar PDF");
+    }
   }
 };
 
@@ -146,7 +153,7 @@ const obtenerProveedores = async (page = 1) => {
 useEffect(() => {
   obtenerProveedores()
 }
-, [])
+, [currentPage])
 
 
   return (
@@ -174,12 +181,29 @@ useEffect(() => {
       Ver Referencias Excedidas
     </Link>
 
-    <button
-      onClick={descargarPendientes}
-      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-center"
-    >
+   {/* Filtros de reportes */}
+<div className="flex flex-col sm:flex-row gap-4 mb-6">
+  {/* ...tus enlaces... */}
+
+  <select
+    value={proveedorFiltro}
+    onChange={(e) => setProveedorFiltro(e.target.value)}
+    className="border px-3 py-2 rounded"
+  >
+    <option value="">Todos los proveedores</option>
+    {proveedores.map(p => (
+      <option key={p.id} value={p.id}>{p.nombre}</option>
+    ))}
+  </select>
+
+  <button
+    onClick={descargarPendientes}
+    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-center"
+  >
     Referencias Pendientes
-    </button>
+  </button>
+</div>
+
   </div>
       <form onSubmit={handleSubmit} className="mb-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
