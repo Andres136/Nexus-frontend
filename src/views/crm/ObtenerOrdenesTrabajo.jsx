@@ -79,6 +79,7 @@ useEffect(() => {
             <th className="px-4 py-3 text-left">ID</th>
             <th className="px-4 py-3 text-left">Cliente</th>
             <th className="px-4 py-3 text-left">Fecha de Entrega</th>
+            <th className="px-4 py-3 text-left">Fecha Creacion</th>
          <th className="px-4 py-3 text-left">Sede</th>
            <th className="px-4 py-3 text-left">Direcion de Entrega</th>
             <th className="px-4 py-3 text-left">Observaciones</th>
@@ -94,6 +95,14 @@ useEffect(() => {
               <td className="px-4 py-3">{orden.id}</td>
               <td className="px-4 py-3">{orden.cliente.nombre}</td>
               <td className="px-4 py-3">{orden.fecha_entrega}</td>
+           <td className="px-4 py-3">
+  {new Date(orden.created_at).toLocaleDateString('es-CO', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  })}
+</td>
+
               <td className="px-4 py-3">{orden?.orden_compra?.sede?.nombre || "Sin sede"}</td>
 
 

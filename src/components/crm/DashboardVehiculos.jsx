@@ -118,12 +118,13 @@ const formatoPesosColombianos = (valor) => {
         </div>
         <div className="bg-purple-500 text-white p-4 rounded-2xl shadow flex items-center gap-4">
   <FileBarChart2 className="w-10 h-10" />
-  <div>
+  <Link
+    to="/auth/crm/vehiculos-all">
     <h2 className="text-lg">📄 Documentos</h2>
     <p className="text-sm">❌ Vencidos: {data.documentos_estado?.vencidos ?? 0}</p>
     <p className="text-sm">⚠️ Por vencer: {data.documentos_estado?.por_vencer ?? 0}</p>
     <p className="text-sm">✅ Vigentes: {data.documentos_estado?.vigentes ?? 0}</p>
-  </div>
+  </Link>
 </div>
 
 
