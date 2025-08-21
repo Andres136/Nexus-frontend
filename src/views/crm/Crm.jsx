@@ -163,7 +163,7 @@ const filteredMenuLinks = menuLinks.filter((link) => {
       <div className="flex bg-gray-100 min-h-screen">
         {/* Barra lateral con hover en pantallas grandes */}
         <aside
-          className={`fixed top-[5.3rem] left-0 h-screen bg-gray-900 text-white shadow-lg transition-all duration-300 z-50
+          className={`fixed top-[4rem] left-0 h-screen bg-gray-900 text-white shadow-lg transition-all duration-300 z-50
     ${isExpanded ? "translate-x-0 w-64" : "-translate-x-full w-16"}
     md:translate-x-0 md:${isExpanded ? "w-64" : "w-16"}
     overflow-y-auto pt-6`}

@@ -1,6 +1,4 @@
 
-
-
 import { useCallback, useState, useEffect } from "react";
 import OrdenCompraMultiItem from "../../components/crm/OrdenCompraMultiItem";
 import clienteAxios from "../../config/axios";
@@ -122,6 +120,8 @@ const [observacionDetectada, setObservacionDetectada] = useState(false); // evit
           });
 
       toast.success(response.data.message);
+      
+     
       const ordenId = response.data.orden_compra_id || id;
 
       // Descargar PDF

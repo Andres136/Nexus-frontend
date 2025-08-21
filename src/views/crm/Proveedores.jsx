@@ -5,6 +5,9 @@ import Swal from "sweetalert2"
 import { Link } from "react-router-dom"
 import Select from "react-select"
 
+import ModalRegistroProcesoBolsa from "../../components/crm/ModalRegistroProcesoBolsa"
+
+
 export default function Proveedores() {
 
 const [form, setForm] = useState({
@@ -184,6 +187,9 @@ const opcionesFiltro = proveedoresFiltrados.map(p => ({ value: p.id, label: p.no
       <h1 className="text-2xl font-bold mb-4">Proveedores</h1>
 
        {/* 🔗 Botones de enlace arriba del formulario */}
+
+
+       
   <div className="flex flex-col sm:flex-row gap-4 mb-6">
     <Link
       to="/auth/crm/proveedores-ordenes-compra"
@@ -205,7 +211,7 @@ const opcionesFiltro = proveedoresFiltrados.map(p => ({ value: p.id, label: p.no
     </Link>
 
    {/* Filtros de reportes */}
-
+<ModalRegistroProcesoBolsa />
 <div className="flex flex-col sm:flex-row gap-4 mb-6">
   <div className="w-full sm:w-72">
     <Select
@@ -228,9 +234,13 @@ const opcionesFiltro = proveedoresFiltrados.map(p => ({ value: p.id, label: p.no
   >
     Referencias Pendientes
   </button>
+
 </div>
 
+
+
   </div>
+  
       <form onSubmit={handleSubmit} className="mb-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <input
@@ -378,6 +388,7 @@ const opcionesFiltro = proveedoresFiltrados.map(p => ({ value: p.id, label: p.no
     Siguiente →
   </button>
 </div>
+
 
       </div>
   )

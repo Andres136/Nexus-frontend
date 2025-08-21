@@ -25,6 +25,7 @@ export function useVehiculos() {
       setCargando(false);
     }
   };
+  
 
   //Obtener  conductores
   const obtenerConductores = async () => {
@@ -35,7 +36,6 @@ export function useVehiculos() {
       const { data } = await clienteAxios.get('/api/conductores', {
         headers: { Authorization: `Bearer ${token}` },
       });
-      console.log('Conductores obtenidos:', data);
       setConductores(data);
     } catch (err) {
       console.error(err);

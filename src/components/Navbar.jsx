@@ -24,7 +24,7 @@ export default function Navbar() {
 
   return (
     <nav
-      className="sticky top-0 z-50 bg-gray-800 text-white shadow-md p-4"
+      className="sticky top-0 z-50 bg-gray-900 text-white shadow-md p-4"
       role="navigation"
       aria-label="Menú principal"
     >

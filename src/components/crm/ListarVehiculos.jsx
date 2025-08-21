@@ -6,8 +6,10 @@ import { useAuth } from "../../hooks/useAuth";
 
 import { useListarVehiculos } from "../../hooks/useListarVehiculos";
 
+
 export default function ListarVehiculos() {
   const { user } = useAuth({ middleware: "auth" });
+  console.log("Usuario actual:", user);
   const navigate = useNavigate();
 
   const {
@@ -29,8 +31,14 @@ export default function ListarVehiculos() {
     eliminarVehiculo,
 
     // util de documentos
-    diasHasta, estadoDoc, resumenDocumentos,
+    diasHasta, estadoDoc, resumenDocumentos, eliminarRegistro
   } = useListarVehiculos();
+// Agregar después de la línea del hook
+const calcularPaginacionInterna = (items, itemsPorPagina = 3) => {
+  const total = items?.length || 0;
+  const totalPaginas = Math.ceil(total / itemsPorPagina) || 1;
+  return { total, totalPaginas };
+};
 
   return (
     <div className="p-4 grid grid-cols-1 gap-4">
@@ -265,6 +273,7 @@ export default function ListarVehiculos() {
                                   <th>Soporte</th>
                                   <th>Trabajo</th>
                                   <th>Costo</th>
+                                  <th>Acciones</th>
                                 </tr>
                               )}
                               {seccion === "documentos" && (
@@ -275,6 +284,7 @@ export default function ListarVehiculos() {
                                   <th>Estado</th>
                                   <th>PDF</th>
                                   <th>Guardar</th>
+                                  <th>Eliminar</th>
                                 </tr>
                               )}
                               {seccion === "inspecciones" && (
@@ -283,6 +293,7 @@ export default function ListarVehiculos() {
                                   <th>Responsable</th>
                                   <th>Estado</th>
                                   <th>Archivo</th>
+                                  <th>Acciones</th>
                                 </tr>
                               )}
                             </thead>
@@ -333,6 +344,16 @@ export default function ListarVehiculos() {
                                       </td>
                                       <td>{item.descripcion_trabajo}</td>
                                       <td>${parseFloat(item.costo).toLocaleString("es-CO")}</td>
+                                      <td>
+                                         {user.id && user.role_id === 1 && (
+                                           <button
+                                             onClick={() => eliminarRegistro(item.id, 'mantenimientos')}
+                                             className="text-red-600 hover:underline"
+                                           >
+                                             Eliminar
+                                           </button>
+                                         )}
+                                      </td>
                                     </>
                                   )}
 
@@ -406,6 +427,16 @@ export default function ListarVehiculos() {
                                           Guardar
                                         </button>
                                       </td>
+                                      <td>
+                                        {user.id && user.role_id === 1 && (
+                                          <button
+                                            onClick={() => eliminarRegistro(item.id, 'documentos')}
+                                            className="text-red-600 hover:underline"
+                                          >
+                                            Eliminar
+                                          </button>
+                                        )}
+                                      </td>
                                     </>
                                   )}
 
@@ -430,6 +461,16 @@ export default function ListarVehiculos() {
                                           <span className="text-gray-400 italic">No adjunto</span>
                                         )}
                                       </td>
+                                      <td>
+                                        {user.id && user.role_id === 1 && (
+                                          <button
+                                            onClick={() => eliminarRegistro(item.id, 'inspecciones')}
+                                            className="text-red-600 hover:underline"
+                                          >
+                                            Eliminar
+                                          </button>
+                                        )}
+                                      </td>
                                     </>
                                   )}
                                 </tr>
@@ -439,42 +480,60 @@ export default function ListarVehiculos() {
                         </div>
 
                         {/* Paginación interna de sección */}
-                        <div className="flex justify-center gap-3 mt-2">
-                          <button
-                            onClick={() =>
-                              actualizarPagina(
-                                vehiculo.id,
-                                seccion,
-                                Math.max(obtenerPagina(vehiculo.id, seccion) - 1, 1)
-                              )
-                            }
-                            className="px-2 py-1 bg-gray-200 rounded"
-                          >
-                            ⬅️
-                          </button>
-                          <span className="text-sm px-2 py-1 border rounded">
-                            Página {obtenerPagina(vehiculo.id, seccion)}
-                          </span>
-                          <button
-                            onClick={() =>
-                              actualizarPagina(
-                                vehiculo.id,
-                                seccion,
-                                obtenerPagina(vehiculo.id, seccion) + 1
-                              )
-                            }
-                            className="px-2 py-1 bg-gray-200 rounded"
-                            disabled={
-                              filtrarYPaginar(
-                                vehiculo[seccion],
-                                obtenerFecha(vehiculo.id, seccion),
-                                obtenerPagina(vehiculo.id, seccion)
-                              ).length < 3
-                            }
-                          >
-                            ➡️
-                          </button>
-                        </div>
+                        {/* Paginación interna de sección MEJORADA */}
+                        {(() => {
+                          const { total, totalPaginas } = calcularPaginacionInterna(vehiculo[seccion]);
+                          const paginaActual = obtenerPagina(vehiculo.id, seccion);
+                          
+                          return (
+                            <div className="flex justify-center items-center gap-3 mt-3 bg-gray-50 p-3 rounded">
+                              <button
+                                onClick={() =>
+                                  actualizarPagina(
+                                    vehiculo.id,
+                                    seccion,
+                                    Math.max(paginaActual - 1, 1)
+                                  )
+                                }
+                                disabled={paginaActual === 1}
+                                className="flex items-center px-3 py-1 bg-gray-300 hover:bg-gray-400 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed rounded transition-colors text-sm"
+                              >
+                                ⬅️ Anterior
+                              </button>
+                              
+                              <div className="flex items-center space-x-2">
+                                <span className="text-sm px-3 py-1 bg-blue-50 border border-blue-200 rounded font-medium">
+                                  Página {paginaActual} de {totalPaginas}
+                                </span>
+                                
+                                <span className="text-xs text-gray-600 px-2 py-1 bg-gray-100 rounded">
+                                  {total} {seccion}
+                                </span>
+                                
+                                {/* Indicador cuando todo está en una página */}
+                                {totalPaginas === 1 && total > 0 && (
+                                  <span className="text-xs text-green-600 px-2 py-1 bg-green-50 rounded">
+                                    ✅ Todos en una página
+                                  </span>
+                                )}
+                              </div>
+                              
+                              <button
+                                onClick={() =>
+                                  actualizarPagina(
+                                    vehiculo.id,
+                                    seccion,
+                                    paginaActual + 1
+                                  )
+                                }
+                                disabled={paginaActual >= totalPaginas}
+                                className="flex items-center px-3 py-1 bg-gray-300 hover:bg-gray-400 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed rounded transition-colors text-sm"
+                              >
+                                Siguiente ➡️
+                              </button>
+                            </div>
+                          );
+                        })()}
                       </div>
                     ))}
                   </div>

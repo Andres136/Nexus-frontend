@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { useVehiculos } from "../hooks/useVehiculos";
 import { toast } from "react-toastify";
 import clienteAxios from "../config/axios";
-import ObtenerDatosConductores from "./crm/ObtenerDatosConductores";
-import { redirect, useNavigate } from "react-router-dom";
+import Select from "react-select";
+import {  useNavigate } from "react-router-dom";
 
 export default function Conductores() {
   const { conductores, obtenerConductores } = useVehiculos();
@@ -101,19 +101,15 @@ export default function Conductores() {
     {/* Usuario */}
     <div>
       <label className="font-semibold text-sm">Usuario</label>
-      <select
-        name="user_id"
-        value={formData.user_id}
-        onChange={handleChange}
-        className="w-full border p-2 rounded"
-      >
-        <option value="">Seleccione un usuario</option>
-        {conductores.map((conductor) => (
-          <option key={conductor.id} value={conductor.id}>
-            {conductor.name} {conductor.last_name}
-          </option>
-        ))}
-      </select>
+      <Select
+        options={conductores.map((conductor) => ({
+          value: conductor.id,
+          label: `${conductor.name}`,
+        }))}
+        value={formData.user_id ? { value: formData.user_id, label: `${conductores.find(c => c.id === formData.user_id)?.name} ${conductores.find(c => c.id === formData.user_id)?.last_name}` } : null}
+        onChange={(selected) => setFormData((prev) => ({ ...prev, user_id: selected?.value || '' }))}
+        className="w-full"
+      />
       {errores.user_id && <p className="text-red-500 text-sm">{errores.user_id[0]}</p>}
     </div>
 

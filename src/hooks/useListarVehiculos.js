@@ -221,6 +221,42 @@ export function useListarVehiculos() {
     }
   }, [tokenHeader, fetchVehiculos]);
 
+
+  const eliminarRegistro = useCallback(async (registroId, tipoSeccion) => {
+    const confirmResult = await Swal.fire({
+      title: "¿Estás seguro?",
+      text: "Esta acción no se puede deshacer",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar",
+    });
+    if (!confirmResult.isConfirmed) return;
+
+    try {
+      const endpoints = {
+        mantenimientos: `/api/mantenimientos/${registroId}`,
+        documentos: `/api/documentos-vehiculos/${registroId}`,
+        inspecciones: `/api/inspecciones/${registroId}`
+      };
+      const response = await fetch(`${import.meta.env.VITE_API_URL}${endpoints[tipoSeccion]}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          ...tokenHeader
+        }
+      });
+      if (!response.ok) throw new Error('Error al eliminar el registro');
+      await Swal.fire("¡Eliminado!", "El registro fue eliminado correctamente.", "success");
+      fetchVehiculos();
+    } catch (error) {
+      console.error("Error al eliminar el registro:", error);
+      Swal.fire("Error", "Hubo un problema al intentar eliminar el registro.", "error");
+    }
+  }, [tokenHeader, fetchVehiculos]);
+
   return {
     // datos
     vehiculos, loading, search, page,
@@ -236,6 +272,6 @@ export function useListarVehiculos() {
     obtenerPagina, obtenerFecha, filtrarYPaginar,
     eliminarVehiculo,
     // util docs (para el siguiente paso de links/urgentes)
-    diasHasta, estadoDoc, resumenDocumentos,
+    diasHasta, estadoDoc, resumenDocumentos,eliminarRegistro
   };
 }
