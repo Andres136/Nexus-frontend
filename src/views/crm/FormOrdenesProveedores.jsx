@@ -1,14 +1,13 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import clienteAxios from "../../config/axios";
 import { toast } from "react-toastify";
-import { useProveedores } from "../../hooks/useProveedores";
 import DetallesOrdenCompraProveedores from "../../components/crm/DetallesOrdenCompraProveedores";
 import { Link } from "react-router-dom";
-
+import Select from "react-select";
 
 export default function FormOrdenesProveedores() {
   
-  const { proveedores } = useProveedores();
+  const [proveedores, setProveedores] = useState([]);
   
    
   const [errores, setErrores] = useState({});
@@ -82,6 +81,35 @@ export default function FormOrdenesProveedores() {
     }
   };
 
+
+  // Cargar proveedores con cancelación
+    useEffect(() => {
+      const ac = new AbortController();
+      const fetchProveedores = async () => {
+        const token = localStorage.getItem("token");
+        try {
+          const res = await clienteAxios.get("/api/proveedores-all", {
+            
+            headers: { Authorization: `Bearer ${token}` },
+            signal: ac.signal,
+          });
+    
+          const opciones = res.data.proveedores.map((p) => ({
+            value: p.id,
+            label: p.nombre,
+          }));
+     
+          setProveedores(opciones);
+        } catch (err) {
+          if (err.name !== "CanceledError" && err.name !== "AbortError") {
+            toast.error("Error al cargar proveedores");
+          }
+        }
+      };
+      fetchProveedores();
+      return () => ac.abort();
+    }, []);
+
   return (
     <div className="grid grid-cols-1 bg-white rounded-xl">
  <div className="text-left">
@@ -101,21 +129,17 @@ export default function FormOrdenesProveedores() {
           <label className="block mb-2 text-sm font-medium text-gray-700">
             Proveedor
           </label>
-          <select
+          <Select
             name="proveedor_id"
-            value={formData.proveedor_id}
-            onChange={handleInputChange}
+            options={proveedores}
+            value={proveedores.find((p) => p.value === formData.proveedor_id)}
+            onChange={(selected) =>
+              setFormData({ ...formData, proveedor_id: selected.value })
+            }
             className={`border ${
               errores.proveedor_id ? "border-red-500" : "border-gray-300"
             } rounded-md p-2 w-full`}
-          >
-            <option value="">Seleccione un proveedor</option>
-            {proveedores.data?.map((proveedor) => (
-              <option key={proveedor.id} value={proveedor.id}>
-                {proveedor.nombre}
-              </option>
-            ))}
-          </select>
+          />
           {errores.proveedor_id && (
             <p className="text-red-500 text-sm">{errores.proveedor_id[0]}</p>
           )}
