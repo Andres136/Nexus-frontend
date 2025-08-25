@@ -177,9 +177,9 @@ useEffect(() => {
   
   
 useEffect(() => {
-  obtenerProveedores()
+  obtenerProveedores(currentPage)
 }
-, [currentPage])
+, [currentPage,search])
 const opcionesFiltro = proveedoresFiltrados.map(p => ({ value: p.id, label: p.nombre }));
 
   return (
