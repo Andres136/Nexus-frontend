@@ -28,7 +28,7 @@ export default function CotizacionForm({modo}) {
     
     ❖ Nuestros paquetes van rotulados con el nombre de la empresa, número de unidades del paquete, medida de la bolsa, color, calibre y código de barras.
     
-    ❖ Para el caso de las bolsas marcadas es importante que el “cliché” lo aporte el cliente. En caso de no tenerlos, se cotiza como valor adicional y los mismos son propiedad del cliente.
+    ❖ Para el caso de las bolsas marcadas es importante que el “Cirel” lo aporte el cliente. En caso de no tenerlos, se cotiza como valor adicional y los mismos son propiedad del cliente.
     
     ❖ Apoyando la mitigación del impacto ambiental, todos nuestros productos son fabricados a partir de materiales Biodegradables y 100% reciclables, certificados y respaldados con fichas técnicas.
     

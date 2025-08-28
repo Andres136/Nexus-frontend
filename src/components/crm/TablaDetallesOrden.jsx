@@ -1,22 +1,29 @@
 // components/TablaDetallesOrden.jsx
+import { useMemo } from "react";
 import { formatCurrency } from "../../helpers";
 
 export default function TablaDetallesOrden({
   detalles,
+  entregas,
   errores,
   revisados,
   handleChangeDetalle,
   handleCheckboxChange,
   valorTotal = 0,
-}) {
-  return (
+}) 
+
+
+{
+//Normalizar Entregas
+
+  return (                                          
     <div className="overflow-x-auto">
  <table className="min-w-max w-full border border-gray-300 rounded-lg mt-2">
 
         <thead className="bg-gray-800 text-white text-sm">
           <tr>
             {["Item", "Ancho cm", "Largo cm", "Calibre", "Cliente Clb", "Peso Bolsa", "# Bolsas",
-              "Cant. Req. (Kg)", "Descripción", "Cantidad", "Cant. Enviada", "Faltantes",
+              "Cant. Req. (Kg)", "Descripción", "Cantidad", "Cant. Enviada", "Faltantes", "Entregas",
               "Valor Unit.", "Valor Total", "Revisado"].map((head) => (
                 <th key={head} className="px-4 py-2 text-left whitespace-nowrap">{head}</th>
             ))}
@@ -61,6 +68,35 @@ export default function TablaDetallesOrden({
                   ? detalle.faltantesTemporal
                   : detalle.faltantes}
               </td>
+       <td className="px-4 py-2 align-top text-xs text-gray-700">
+  {(() => {
+    const entregasDetalle = entregas.filter(e => e.detalle_id === detalle.id);
+
+    if (entregasDetalle.length === 0) {
+      return (
+        <div className="text-gray-400 italic text-center py-2">
+          No hay entregas
+        </div>
+      );
+    }
+
+    return entregasDetalle.map((e) => (
+      <div
+        key={e.id}
+        className="flex items-center justify-between gap-2 border-b border-gray-200 py-1"
+      >
+        <span>{e.cantidad} u.</span>
+        <span className="text-gray-500">{e.usuario?.name}</span>
+        <span className="text-[10px] text-gray-400">
+          {new Date(e.fecha_entrega).toLocaleDateString("es-CO")}
+        </span>
+      </div>
+    ));
+  })()}
+</td>
+
+
+
               <td className="px-4 py-2 text-right">{formatCurrency(detalle.valor_unitario)}</td>
               <td className="px-4 py-2 text-right">{formatCurrency(detalle.valor_total)}</td>
               <td className="px-4 py-2 text-center">

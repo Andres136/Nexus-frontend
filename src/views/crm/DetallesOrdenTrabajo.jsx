@@ -6,6 +6,7 @@ export default function DetallesOrdenTrabajo() {
   const {
     orden,
     detalles,
+    entregas,
     observaciones,
     setObservaciones,
     errores,
@@ -57,6 +58,7 @@ export default function DetallesOrdenTrabajo() {
         handleChangeDetalle={handleChangeDetalle}
         handleCheckboxChange={handleCheckboxChange}
         valorTotal={orden.orden_compra?.valor_total}
+        entregas={entregas}
       />
 
       <div className="mt-4">

@@ -61,6 +61,8 @@ export default function useDetallesOrdenTrabajo() {
 
   const [revisados, setRevisados] = useState({});
   const [detalles, setDetalles] = useState([]);
+  const [entregas, setEntregas] = useState([]);
+
   useEffect(() => {
     const fetchOrden = async () => {
       try {
@@ -68,6 +70,8 @@ export default function useDetallesOrdenTrabajo() {
         const response = await clienteAxios.get(`/api/orden-trabajo/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
+
+        console.log('Detalles:', response.data);
         setOrden(response.data);
       } catch (error) {
         toast.error("No se pudo cargar la orden de trabajo.");
@@ -78,6 +82,37 @@ export default function useDetallesOrdenTrabajo() {
   
     fetchOrden();
   }, [id]);
+
+  //Obtener entregas con el numero de orden de trabajo
+  // Obtener entregas con el número de orden de trabajo
+useEffect(() => {
+  const fetchEntregas = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const { data } = await clienteAxios.get(`/api/entregas/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      // data puede ser {entregas: [...] } o directamente un array
+      const lista = Array.isArray(data) ? data : (data?.entregas ?? []);
+      // opcional: normaliza tipos
+      const normalizadas = lista.map(e => ({
+        ...e,
+        cantidad: parseFloat(e.cantidad ?? 0),
+        faltante: parseFloat(e.faltante ?? 0),
+        detalle_id: e.detalle_id ?? e.detalle?.id ?? null,
+      }));
+
+      console.log('Entregas normalizadas:', normalizadas);
+      setEntregas(normalizadas);     // 👈 ahora es SIEMPRE un array
+    } catch (error) {
+      toast.error("No se pudo cargar las entregas.");
+    }
+  };
+
+  fetchEntregas();
+}, [id]);
+
 
   useEffect(() => {
     if (!orden || !orden.orden_compra) return;
@@ -161,7 +196,7 @@ export default function useDetallesOrdenTrabajo() {
       const response = await clienteAxios.post(`/api/orden-trabajo/${ordenCompraId}`, payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
-
+      console.log(response.data);
       toast.success(response.data.message || "Orden de Trabajo actualizada");
       if (response.data.ordenTrabajo?.detalles) {
         const nuevosDetalles = response.data.ordenTrabajo.detalles.map((d) => {
@@ -198,31 +233,52 @@ export default function useDetallesOrdenTrabajo() {
       doc.text(`Fecha de entrega: ${orden.fecha_entrega}`, 14, 47);
       doc.text(`Generado por el Asesor: ${orden.user?.name || "N/A"}`, 14, 53);
 
-      const tableData = detalles.map((d) => [
-        d.observaciones || "",
-        d.ancho_cm,
-        d.largo_cm,
-        d.descripcion || "",
-        d.calibre,
-        d.cliente_clb,
-        d.cantidad_requerida_kg?.toFixed(2) || 0,
-        d.cantidad,
-        d.cantidadEnviada,
-        d.faltantesTemporal ?? d.faltantes,
-        formatCurrency(d.valor_unitario),
-        formatCurrency(d.valor_total),
-      ]);
 
-      autoTable(doc, {
-        startY: 60,
-        head: [[
-          "Item", "Ancho", "Largo", "Descripcion", "Calibre"," Cliente CLB",
-          "Cant. Req. (Kg)", "Cantidad", "Enviada", "Faltantes",
-          "Valor Unit.", "Valor Total"
-        ]],
-        body: tableData,
-        styles: { fontSize: 8 },
-      });
+     const tableBody = [];
+
+detalles.forEach((d, idx) => {
+  // Fila principal del detalle
+  tableBody.push([
+    d.observaciones || "",
+    d.ancho_cm,
+    d.largo_cm,
+    d.descripcion || "",
+    d.calibre,
+    d.cliente_clb,
+    d.cantidad_requerida_kg?.toFixed(2) || 0,
+    d.cantidad,
+    d.cantidadEnviada,
+    d.faltantesTemporal ?? d.faltantes,
+    formatCurrency(d.valor_unitario),
+    formatCurrency(d.valor_total),
+    "" // Celda vacía para entregas en la fila principal
+  ]);
+
+  // Filtra entregas por detalle
+  const entregasDetalle = entregas.filter(e => e.detalle_id === d.id);
+
+  // Si hay entregas, agrega una fila debajo del item
+  if (entregasDetalle.length > 0) {
+    const entregasTexto = entregasDetalle.map(e =>
+      `Cant: ${e.cantidad} | Fecha: ${e.fecha_entrega ? new Date(e.fecha_entrega).toLocaleDateString() : ""} | Usuario: ${e.usuario?.name || "N/A"}`
+    ).join('\n');
+
+    tableBody.push([
+      { content: `Entregas:\n${entregasTexto}`, colSpan: 13, styles: { fontStyle: 'italic', textColor: [32, 128, 64], fontSize: 8, fillColor: [240, 255, 240] } }
+    ]);
+  }
+});
+
+autoTable(doc, {
+  startY: 60,
+  head: [[
+    "Item", "Ancho", "Largo", "Descripcion", "Calibre", "Cliente CLB",
+    "Cant. Req. (Kg)", "Cantidad", "Enviada", "Faltantes",
+    "Valor Unit.", "Valor Total"
+  ]],
+  body: tableBody,
+  styles: { fontSize: 8 },
+});
       const totalKg = detalles.reduce(
         (acc, d) => acc + (parseFloat(d.cantidad_requerida_kg) || 0),
         0
@@ -237,6 +293,10 @@ export default function useDetallesOrdenTrabajo() {
       doc.text("Observaciones generales:", 14, y);
       doc.setFontSize(10);
       doc.text(doc.splitTextToSize(observaciones || "Sin observaciones", 180), 14, y + 6);
+
+// ... después de la tabla principal y antes de doc.save()
+
+
 
       doc.save(`Orden_Trabajo_${orden.id}.pdf`);
     } catch (error) {
@@ -261,6 +321,11 @@ export default function useDetallesOrdenTrabajo() {
     setRevisados(nuevos);
   };
   
+//Obtener entregas
+
+
+
+//Llamar a la función para obtener entregas al cargar el componente
 
   return {
     orden,
@@ -269,10 +334,13 @@ export default function useDetallesOrdenTrabajo() {
     setObservaciones,
     errores,
     loading,
+    entregas,
     handleGuardarYGenerarPDF,
     handleChangeDetalle,
     handleCheckboxChange,
     handleSeleccionarTodo, // 👈 aquí la expones
+
+
     revisados,
   };
 }

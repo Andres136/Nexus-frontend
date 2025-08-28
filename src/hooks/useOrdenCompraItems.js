@@ -93,7 +93,8 @@ export default function useCotizacionItems({ errores = {}, onChange, initialItem
 
   useEffect(() => {
     onChange?.(rows);
-  }, [rows]);
+  }, [rows]);    
+           
 
   const handleInputChange = (_uuid, field, value) => {
     setRows(rows.map((r) => {

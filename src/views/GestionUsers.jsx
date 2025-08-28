@@ -32,6 +32,10 @@ export default function GestionUsers() {
     >
       + Registrar Usuario
     </button>
+
+    <Link to="/admin/usuarios" className="text-blue-500 hover:underline">
+      ✏️ Actualizar Usuario
+    </Link>
   <Modal isOpen={isUserModalOpen} onClose={() => setUserModalOpen(false)}>
   <RegisterUsers 
     onClose={() => setUserModalOpen(false)} 
