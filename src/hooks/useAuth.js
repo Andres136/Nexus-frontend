@@ -75,10 +75,12 @@ export const useAuth = ({ middleware, url }) => {
   
       // 3. Éxito
       toast.success(response.data.message);
+      console.log(response.data);
       setErrores({});
       return true;
   
     } catch (error) {
+      console.log(error);
       if (error.response?.status === 422) {
         // Validación
         const erroresPorCampo = {};

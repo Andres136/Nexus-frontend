@@ -46,6 +46,7 @@ import CargaFotosVehiculo from "../components/crm/vehiculos/CargarFotosVehiculos
 import Conductores from "../components/Conductores";
 import ObtenerDatosConductores from "../components/crm/ObtenerDatosConductores";
 import RevisionesPage from "../views/crm/RevisionesPage";
+import Sedes from "../views/Sedes";
 
 
 
@@ -118,6 +119,7 @@ export default function Router() {
     <Route element={<ProtectedRoute allowedRoles={[1]} />}>
       <Route path="/admin" element={<AdminLayout />}>
         <Route path="users" element={<GestionUsers />} />
+        <Route path="sedes" element={<Sedes />} />
         <Route path="rendimiento" element={<KpiTareas />} />
           <Route path="tareas" element={<Tareas />} />
        <Route path="errores" element={<Errores />} />

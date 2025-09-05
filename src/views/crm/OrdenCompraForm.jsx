@@ -327,6 +327,24 @@ const opcionesClientes = clientesTodos.map(c => ({
  </button>
  
   )}
+
+
+  {modo === "edicion" && [1, 2, 4].includes(user?.role_id) && id && (
+  <button
+    type="button"
+    onClick={() => {
+      const link = document.createElement('a');
+      link.href = `${import.meta.env.VITE_API_URL}/api/orden-compras/${encodeURIComponent(id)}/pdf`;
+      link.setAttribute('download', `orden_compra_${id}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    }}
+    className="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded ml-2"
+  >
+    Descargar Orden PDF
+  </button>
+)}
 </div>
 
 

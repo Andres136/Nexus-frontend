@@ -24,18 +24,32 @@ export default function GestionUsers() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
   {/* Bloque 1: Registrar Usuarios */}
   <div className={`p-6 rounded-2xl shadow-md transition-colors ${darkMode ? "bg-gray-800 text-white" : "bg-white text-gray-800"}`}>
+
+
     <h3 className="text-xl font-bold mb-2">👤 Registrar Usuarios</h3>
     <p className="mb-4 text-sm text-gray-400 dark:text-gray-300">Gestiona el registro de nuevos usuarios en el sistema.</p>
-    <button
+    <div className="flex flex-col sm:flex-row gap-4">
+       <button
       onClick={() => setUserModalOpen(true)}
-      className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+      className="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
     >
       + Registrar Usuario
-    </button>
+    </button> 
 
-    <Link to="/admin/usuarios" className="text-blue-500 hover:underline">
-      ✏️ Actualizar Usuario
-    </Link>
+        <Link
+        to="/admin/sedes"
+        className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 text-center rounded-lg transition-colors"
+      >
+    Sedes
+      </Link>
+
+
+      <Link
+        to="/admin/usuarios"
+        className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 text-center rounded-lg transition-colors"
+      >
+        Cargos
+      </Link>
   <Modal isOpen={isUserModalOpen} onClose={() => setUserModalOpen(false)}>
   <RegisterUsers 
     onClose={() => setUserModalOpen(false)} 
@@ -43,6 +57,10 @@ export default function GestionUsers() {
   />
 </Modal>
 
+    </div>
+  
+
+ 
   </div>
 
   {/* Bloque 2: Registrar Departamentos */}

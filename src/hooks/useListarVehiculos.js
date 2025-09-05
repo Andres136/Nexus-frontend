@@ -40,6 +40,7 @@ export function useListarVehiculos() {
         `/api/vehiculos-all?search=${encodeURIComponent(search)}&page=${page}`,
         { headers: tokenHeader }
       );
+  
       if (!cancelRef.current.canceled) setVehiculos(data.vehiculos);
     } catch (e) {
       console.error("Error fetching vehiculos:", e);
@@ -72,6 +73,7 @@ export function useListarVehiculos() {
       if (!cancelRef.current.canceled) {
         setFotosPorVehiculo((prev) => ({ ...prev, [vehiculoId]: data }));
       }
+
     } catch (e) {
       console.error("Error al cargar fotos del vehículo", e);
     }
@@ -256,6 +258,12 @@ export function useListarVehiculos() {
       Swal.fire("Error", "Hubo un problema al intentar eliminar el registro.", "error");
     }
   }, [tokenHeader, fetchVehiculos]);
+  // dentro del hook useListarVehiculos
+const toYMD = (d) => (d ? String(d).slice(0, 10) : "");
+
+const getFechaEdit = (doc, campo) =>
+  edicionFechas[doc.id]?.[campo] ?? toYMD(doc[campo]) ?? "";
+
 
   return {
     // datos
@@ -272,6 +280,6 @@ export function useListarVehiculos() {
     obtenerPagina, obtenerFecha, filtrarYPaginar,
     eliminarVehiculo,
     // util docs (para el siguiente paso de links/urgentes)
-    diasHasta, estadoDoc, resumenDocumentos,eliminarRegistro
+    diasHasta, estadoDoc, resumenDocumentos,eliminarRegistro,getFechaEdit,
   };
 }

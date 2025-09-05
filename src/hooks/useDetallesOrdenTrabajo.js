@@ -213,6 +213,7 @@ useEffect(() => {
       }
     } catch (error) {
       setErrores(error.response?.data?.errors || {});
+      console.error(error);
       toast.error("Error al guardar la orden de trabajo");
     } finally {
       setLoading(false);

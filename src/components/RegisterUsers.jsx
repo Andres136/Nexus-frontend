@@ -1,8 +1,9 @@
-import { createRef, useEffect, useState } from "react";
+import { createRef, useEffect, useId, useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 import clienteAxios from "../config/axios";
 import { toast } from "react-toastify";
-
+import { useSedes } from "../hooks/useSedes";
+import Select from 'react-select';
 export default function RegisterUsers({ onClose }) {
     const nameRef = createRef   ();
     const emailRef = createRef();
@@ -11,20 +12,27 @@ export default function RegisterUsers({ onClose }) {
     const telefonoRef = createRef();
     const departamento_idRef = createRef();
     const imagenRef = createRef();
-    const sedeNombreRef = createRef();
-const sedeDireccionRef = createRef();
-
+    const sede_idRef = createRef();
 
     const [errores, setErrores] = useState({});
     const { register } = useAuth({ middleware: "guest" });
-
+    const { sedes } = useSedes();
+    console.log(sedes);
 
     const [departamentos, setDepartamentos] = useState([]);
     const [roles, setRoles] = useState([]);
+    const [sede, setSede] = useState(null);
+
+    const sedeInputId = useId();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-      
+          
+
+         if(!sede?.value){
+            setErrores(prev => ({ ...prev, sede_id: "Seleccione una sede" }));
+         }
+
         // 1) Armar FormData
         const formData = new FormData();
         formData.append("name", nameRef.current.value);
@@ -33,10 +41,8 @@ const sedeDireccionRef = createRef();
         formData.append("role_id", role_idRef.current.value);
         formData.append("telefono", telefonoRef.current.value);
         formData.append("departamento_id", departamento_idRef.current.value);
-        // Agregar sede si es necesario
-        formData.append("sede_nombre", sedeNombreRef.current?.value || "");
-        formData.append("sede_direccion", sedeDireccionRef.current?.value || "");
-      
+        formData.append("sede_id", sede?.value);
+
         // 2) Si seleccionaron archivo, lo agregamos
         if (imagenRef.current.files[0]) {
           formData.append("imagen", imagenRef.current.files[0]);
@@ -190,35 +196,21 @@ const sedeDireccionRef = createRef();
   />
   {errores.imagen && <small className="text-red-500">{errores.imagen}</small>}
 </div>
-<div>
-  <label htmlFor="sede_nombre" className="block text-sm font-medium text-gray-700">
-    Nombre de la sede
-  </label>
-  <input
-    type="text"
-    id="sede_nombre"
-    name="sede_nombre"
-    ref={sedeNombreRef}
-    placeholder="Ingrese el nombre de la sede"
-    className="mt-1 block w-full h-10 shadow-sm sm:text-sm border-gray-300 rounded-md"
-  />
-  {errores.sede_nombre && <small className="text-red-500">{errores.sede_nombre}</small>}
-</div>
+      <div>
+        <label htmlFor={sedeInputId} className="block text-sm font-medium text-gray-700">
+          Sede
+        </label>
+        <Select
+          inputId={sedeInputId}                 // asocia el label
+          name="sede_id"
+          options={(sedes ?? []).map(s => ({ value: s.id, label: s.nombre }))}
+          value={sede}                          // controlado
+          onChange={setSede}                    // guarda {value,label}
+          className="mt-1"
+        />
+        {errores.sede_id && <small className="text-red-500">{errores.sede_id}</small>}
+      </div>
 
-<div>
-  <label htmlFor="sede_direccion" className="block text-sm font-medium text-gray-700">
-    Dirección de la sede
-  </label>
-  <input
-    type="text"
-    id="sede_direccion"
-    name="sede_direccion"
-    ref={sedeDireccionRef}
-    placeholder="Ingrese la dirección de la sede"
-    className="mt-1 block w-full h-10 shadow-sm sm:text-sm border-gray-300 rounded-md"
-  />
-  {errores.sede_direccion && <small className="text-red-500">{errores.sede_direccion}</small>}
-</div>
 
             <div>
                 <button
