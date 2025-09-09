@@ -3,20 +3,23 @@
 /* eslint-disable camelcase */
 /* eslint-disable no-console */
 import { useEffect, useRef, useState } from "react";
-
+import apiClient from "../../services/api";
 import clienteAxios from "../../config/axios";
 import { toast } from "react-toastify";
+import Select from "react-select";
+import { Await } from "react-router-dom";
+
 
 export default function ActualizarDepartamentos({ onClose, departamentoId,  }) {
   const [errores, setErrores] = useState({});
- 
-
   const nombreRef = useRef(null);
   const descripcionRef = useRef(null);
   const iconoRef = useRef(null);
   const macroprocesos_idRef = useRef(null);
   const [macroprocesos, setMacroprocesos] = useState([]);
   const [cargando, setCargando] = useState(false);
+  const [users, setUsers] = useState([]);
+  const [responsable_id, setResponsable_id] = useState(null); 
 
   // Cargar datos del departamento
   useEffect(() => {
@@ -34,12 +37,14 @@ export default function ActualizarDepartamentos({ onClose, departamentoId,  }) {
                 if (nombreRef.current) nombreRef.current.value = dept.nombre || "";
                 if (descripcionRef.current) descripcionRef.current.value = dept.descripcion || "";
                 if (macroprocesos_idRef.current) macroprocesos_idRef.current.value = dept.macroprocesos_id || "";
-            })
+            const responsableUser = users.find(user => user.id === dept.responsable_id);
+        setResponsable_id(responsableUser ? { value: responsableUser.id, label: responsableUser.name } : null);
+      })
             .catch((error) => {
                 console.error("Error al cargar el departamento", error);
             });
     }
-}, [departamentoId]); // 👈 Se ejecutará cada vez que `departamentoId` cambie
+}, [departamentoId, users]); // 👈 Se ejecutará cada vez que `departamentoId` cambie
 
   // Obtener lista de macroprocesos
   useEffect(() => {
@@ -56,6 +61,21 @@ export default function ActualizarDepartamentos({ onClose, departamentoId,  }) {
       });
   }, []);
 
+  //Obtener usuarios de apiCliente
+
+  useEffect(()=>{
+const fetchUsers = async()=>{
+  try {
+    const response = await apiClient.get("/conductores");
+    setUsers(response.data);
+    
+  } catch (error) {
+    console.error("Error al cargar usuarios", error);
+  }
+}
+  fetchUsers();
+  }, []);
+
   // Manejar el envío del formulario
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -68,6 +88,9 @@ export default function ActualizarDepartamentos({ onClose, departamentoId,  }) {
     formData.append("macroprocesos_id", macroprocesos_idRef.current.value);
     if (iconoRef.current.files[0]) {
       formData.append("icono", iconoRef.current.files[0]);
+    }
+    if(responsable_id?.value){
+      formData.append("responsable_id", responsable_id.value);
     }
     formData.append("_method", "PUT"); // Laravel interpretará esto como un PUT
 
@@ -122,6 +145,18 @@ export default function ActualizarDepartamentos({ onClose, departamentoId,  }) {
         />
         {errores.icono && <small className="text-red-600">{errores.icono}</small>}
       </div>
+       <div>
+      <label htmlFor="responsable_id" className="block text-sm font-medium text-gray-700">Responsable</label>
+      <Select
+        id="responsable_id"
+        name="responsable_id"
+        value={responsable_id}
+        onChange={setResponsable_id}
+        placeholder="Seleccione un Responsable"
+        options={users.map(user => ({ value: user.id, label: user.name }))}
+        className="mt-1 block w-full"
+      />
+     </div>
 
       <div>
         <label htmlFor="macroprocesos_id" className="block text-sm font-medium text-gray-700">Macroproceso</label>

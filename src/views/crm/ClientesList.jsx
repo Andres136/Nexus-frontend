@@ -69,6 +69,7 @@ const [clienteHistorial, setClienteHistorial] = useState(null);
             <thead className="bg-gray-200">
               <tr>
                 <th className="border border-gray-300 px-4 py-2">Id</th>
+                <th className="border border-gray-300 px-4 py-2">Fecha creacion</th>
                 <th className="border border-gray-300 px-4 py-2">Nombre</th>
                 <th className="border border-gray-300 px-4 py-2">Email</th>
                 <th className="border border-gray-300 px-4 py-2 min-w-[150px]">
@@ -89,6 +90,9 @@ const [clienteHistorial, setClienteHistorial] = useState(null);
                       {cliente.id}
                     </td>
                     <td className="border border-gray-300 px-4 py-2">
+                      {formatearFecha(cliente.created_at)}
+                    </td>
+                    <td className="border border-gray-300 px-4 py-2">
                       {cliente.nombre}
                     </td>
                     <td className="border border-gray-300 px-4 py-2">
@@ -103,15 +107,19 @@ const [clienteHistorial, setClienteHistorial] = useState(null);
                     <td className="border border-gray-300 px-4 py-2 text-center">
                       {cliente.nit}
                     </td>
-                    <td className="border border-gray-300 px-4 py-2 flex flex-wrap justify-center gap-2">
+                    <td className="border border-gray-300 px-4 py-2">
+                      <div className="flex flex-wrap justify-center gap-2">
+
+                      
                       <button
-                        className=" w-full sm:w-auto max-w-full bg-green-700 text-white px-3 py-1 rounded-lg flex items-center gap-2 hover:bg-gray-600 transition"
+                      title="Editar"
+                        className=" p-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition"
                         onClick={async () => {
                           setSelectedUser(cliente.id);
                           setUserModalOpen(true);
                         }}
                       >
-                        <FaEdit /> Editar
+                        <FaEdit /> 
                       </button>
 
                       <Modal
@@ -126,7 +134,8 @@ const [clienteHistorial, setClienteHistorial] = useState(null);
                      {/* Solo mostrar el botón si el usuario tiene rol 1 */}
         {user.role_id === 1 && (
           <button
-            className="w-full sm:w-auto max-w-full bg-red-500 text-white px-3 py-1 rounded-lg flex items-center gap-2 hover:bg-red-600 transition"
+            title="Eliminar"
+            className="p-2 rounded-full bg-red-600 text-white hover:bg-red-700 transition"
             onClick={() => {
               Swal.fire({
                 title: "¿Estás seguro?",
@@ -145,18 +154,19 @@ const [clienteHistorial, setClienteHistorial] = useState(null);
               });
             }}
           >
-            <FaTrash /> Eliminar
+            <FaTrash /> 
           </button>
         )}
 
                       <button
-                        className="w-full sm:w-auto max-w-full bg-green-700 text-white px-3 py-1 rounded-lg flex items-center gap-2 hover:bg-green-600 transition"
+                        title="Gestionar"
+                        className="p-2 rounded-full bg-green-600 text-white hover:bg-green-700 transition"
                         onClick={async () => {
                           setSelectedUser(cliente.id);
                           setGestionarModalOpen(true);
                         }}
                       >
-                        <FaTasks /> Gestionar
+                        <FaTasks /> 
                       </button>
                       <Modal
                         isOpen={isGestionarModalOpen}
@@ -169,16 +179,17 @@ const [clienteHistorial, setClienteHistorial] = useState(null);
                       </Modal>
 
                       <button
+  title="Historial"
   onClick={async () => {
     const historial = await consultarHistorialCliente(cliente.id);
     console.log(historial); // debería mostrar el objeto completo
     setClienteHistorial(historial);
   }}
-  className="w-full sm:w-auto max-w-full bg-gray-700 text-white px-3 py-1 rounded-lg flex items-center gap-2 hover:bg-green-700 transition"
+  className="p-2 rounded-full bg-gray-700 text-white hover:bg-gray-800 transition"
 >
-  Historial <FaHistory />
+   <FaHistory />
 </button>
-
+</div>
                     </td>
                   </tr>
                 ))

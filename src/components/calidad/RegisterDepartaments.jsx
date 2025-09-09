@@ -1,6 +1,8 @@
 import { createRef, useEffect, useState } from "react"
 import useSystem from "../../hooks/useSystem"
 import clienteAxios from "../../config/axios"
+import apiClient from "../../services/api"
+import Select from 'react-select'
 
 
 
@@ -14,7 +16,27 @@ export default function RegisterDepartaments({onClose}) {
   const descripcionRef = createRef()
   const iconoRef = createRef()
   const macroprocesos_idRef = createRef()
-  const [data, setData] = useState([])  
+  const [data, setData] = useState([])
+
+
+// Funcion para enviar el formulario
+
+   //Traer  usuarios
+   const [users, setUsers] = useState([])
+   const [responsable_id, setResponsable_id] = useState(null)
+
+   useEffect(() => {
+     const fetchUsers = async () => {
+       try {
+         const response = await apiClient.get('/conductores');
+         console.log(response.data);
+         setUsers(response.data);
+       } catch (error) {
+         console.error("Error fetching users:", error);
+       }
+     }
+      fetchUsers();
+    }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -22,7 +44,8 @@ export default function RegisterDepartaments({onClose}) {
       nombre: nombreRef.current.value,
       descripcion: descripcionRef.current.value,
       icono: iconoRef.current.files[0],
-      macroprocesos_id: macroprocesos_idRef.current.value
+      macroprocesos_id: macroprocesos_idRef.current.value,
+      responsable_id: responsable_id ? responsable_id.value : null,
     }
 
     const success = await handleRegisterDepartaments(data, setErrores)
@@ -83,6 +106,18 @@ useEffect(() => {
          {errores.descripcion && <small className='text-red-600'>{errores.descripcion}</small>} 
       </div>
      
+     <div>
+      <label htmlFor="responsable_id" className="block text-sm font-medium text-gray-700">Responsable</label>
+      <Select
+        id="responsable_id"
+        name="responsable_id"
+        value={responsable_id}
+        onChange={setResponsable_id}
+        placeholder="Seleccione un Responsable"
+        options={users.map(user => ({ value: user.id, label: user.name }))}
+        className="mt-1 block w-full"
+      />
+     </div>
 
       <div>
   <label className=' block text-sm font-mediun text-gray-700'>Imagen</label>

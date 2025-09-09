@@ -251,7 +251,7 @@ export const useAuth = ({ middleware, url }) => {
     }
   };
   
-  
+ 
 
   return {
     login,
