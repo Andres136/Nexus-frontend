@@ -8,6 +8,7 @@ import clienteAxios from "../../config/axios";
 import { toast } from "react-toastify";
 import Select from "react-select";
 import { Await } from "react-router-dom";
+import { usersApi } from "../../services/api";
 
 
 export default function ActualizarDepartamentos({ onClose, departamentoId,  }) {
@@ -66,7 +67,7 @@ export default function ActualizarDepartamentos({ onClose, departamentoId,  }) {
   useEffect(()=>{
 const fetchUsers = async()=>{
   try {
-    const response = await apiClient.get("/conductores");
+    const response = await usersApi.getAll();
     setUsers(response.data);
     
   } catch (error) {

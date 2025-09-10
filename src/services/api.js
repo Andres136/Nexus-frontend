@@ -1,11 +1,11 @@
 import axios from "axios";
-
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+console.log("🔎 Variables de entorno:", import.meta.env); // 👈 verifica lo que Vite carga
+console.log("✅ API BASE URL:", import.meta.env.VITE_API_URL); // 👈 i
+const VITE_API_URL = import.meta.env.VITE_API_URL;
 
 
 const apiClient = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: VITE_API_URL ,
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
@@ -45,37 +45,37 @@ apiClient.interceptors.response.use(
 
 //Obtener todos los usuarios
 export const usersApi={
-    getAll:()=>apiClient.get('/conductores'),
+    getAll:()=>apiClient.get('/api/conductores'),
 }
 
 //Api para registro de indicadores por procesos o departamentos
 export const indicadoresApi={
-  getAll:()=>apiClient.get('/indicadores'),
-  getById:(id)=>apiClient.get(`/indicadores/${id}`),
-  create:(data)=>apiClient.post('/indicadores',data),
-  update:(id,data)=>apiClient.put(`/indicadores/${id}`,data),
-  delete:(id)=>apiClient.delete(`/indicadores/${id}`),
+  getAll:()=>apiClient.get('/api/indicadores'),
+  getById:(id)=>apiClient.get(`/api/indicadores/${id}`),
+  create:(data)=>apiClient.post('/api/indicadores',data),
+  update:(id,data)=>apiClient.put(`/api/indicadores/${id}`,data),
+  delete:(id)=>apiClient.delete(`/api/indicadores/${id}`),
 }
 
 //Api para registrar los valores de los indicadores
 export const valoresIndicadoresApi={
-  getAll:(params)=>apiClient.get('/registro-indicadores', { params }),
-  getById:(id)=>apiClient.get(`/registro-indicadores/${id}`),
-  create:(data)=>apiClient.post('/registro-indicadores',data,{
+  getAll:(params)=>apiClient.get('/api/registro-indicadores', { params }),
+  getById:(id)=>apiClient.get(`/api/registro-indicadores/${id}`),
+  create:(data)=>apiClient.post('/api/registro-indicadores',data,{
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
-  update:(id,data)=>apiClient.put(`/registro-indicadores/${id}`,data),
-  delete:(id)=>apiClient.delete(`/registro-indicadores/${id}`),
+  update:(id,data)=>apiClient.put(`/api/registro-indicadores/${id}`,data),
+  delete:(id)=>apiClient.delete(`/api/registro-indicadores/${id}`),
 
 }
 
 //Api para obtener los departamentos
 export const departamentosApi={
-  getAll:()=>apiClient.get('/departamentos'),
-  getById:(id)=>apiClient.get(`/departamentos/${id}`),
-  create:(data)=>apiClient.post('/departamentos',data),
-  update:(id,data)=>apiClient.put(`/departamentos/${id}`,data),
-  delete:(id)=>apiClient.delete(`/departamentos/${id}`),
+  getAll:()=>apiClient.get('/api/departamentos'),
+  getById:(id)=>apiClient.get(`/api/departamentos/${id}`),
+  create:(data)=>apiClient.post('/api/departamentos',data),
+  update:(id,data)=>apiClient.put(`/api/departamentos/${id}`,data),
+  delete:(id)=>apiClient.delete(`/api/departamentos/${id}`),
 
 }
 //Api para traer todos los indicadores por departamento
