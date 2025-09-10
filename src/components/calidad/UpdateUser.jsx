@@ -91,6 +91,10 @@ export default function UpdateUser({ onClose, userId }) {
         if (telefonoRef.current) telefonoRef.current.value = usuario.telefono ?? "";
         if (role_idRef.current) role_idRef.current.value = usuario.role_id ?? "";
         if (departamento_idRef.current) departamento_idRef.current.value = usuario.departamento_id ?? "";
+        if (usuario.sede_id && sedes) {
+          const sedeUsuario = sedes.find(s => s.id === usuario.sede_id);
+          if (sedeUsuario) setSede({ value: sedeUsuario.id, label: sedeUsuario.nombre });
+        }
       }
     };
     cargar();

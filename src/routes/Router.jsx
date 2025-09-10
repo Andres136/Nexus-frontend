@@ -47,6 +47,9 @@ import Conductores from "../components/Conductores";
 import ObtenerDatosConductores from "../components/crm/ObtenerDatosConductores";
 import RevisionesPage from "../views/crm/RevisionesPage";
 import Sedes from "../views/Sedes";
+import Indicadores from "../views/calidad/Indicadores";
+import RegisterValorIndicador from "../views/calidad/RegisterValorIndicador";
+import DashboardIndicadores from "../views/calidad/DashboardIndicadores";
 
 
 
@@ -63,9 +66,11 @@ export default function Router() {
         <Route path="procesos/:departamentoId" element={<ProcesosDepartamento />} />
           <Route path="rendimiento" element={<KpiTareas />} />
           <Route path="tareas" element={<Tareas />} />
-       <Route path="errores" element={<Errores />} />
+          <Route path="dashboard/indicadores" element={<DashboardIndicadores />} />
+       <Route path="novedades" element={<Errores />} />
         <Route path="departamentos" element={<DepartatamentosUpdate />} />
-     
+      <Route path="indicadores" element={<Indicadores/>} />
+ 
       </Route>
   
       <Route path="/auth/crm" element={<Crm />}>
@@ -79,7 +84,9 @@ export default function Router() {
         <Route path="/auth/crm/vehiculos-inspecciones" element={<InspecionVehiculos />} />
         <Route path="/auth/crm/vehiculos-all" element={<ListarVehiculos />} />
         <Route path="/auth/crm/vehiculos/:id/editar" element={<EditarVehiculo/>} />
- 
+     <Route path="indicadores" element={<Indicadores/>} />
+     <Route path="registrar-valor-indicador" element={<RegisterValorIndicador />} />
+
 <Route
   path="/auth/crm/editar-compra/:id"
   element={<OrdenCompraForm modo="edicion" />}
@@ -122,8 +129,10 @@ export default function Router() {
         <Route path="sedes" element={<Sedes />} />
         <Route path="rendimiento" element={<KpiTareas />} />
           <Route path="tareas" element={<Tareas />} />
-       <Route path="errores" element={<Errores />} />
+       <Route path="novedades" element={<Errores />} />
         <Route path="departamentos" element={<DepartatamentosUpdate />} />
+      <Route path="indicadores" element={<Indicadores/>} />
+      <Route path="dashboard/indicadores" element={<DashboardIndicadores />} />
       </Route>
     </Route>
   

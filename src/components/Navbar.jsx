@@ -1,26 +1,57 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-
+import { departamentosApi } from "../services/api";
 import { useAuth } from "../hooks/useAuth";
-import { Home, FolderKanban, ListChecks, Bell, Building2 } from "lucide-react";
+import { Home, FolderKanban, ListChecks, Bell, Building2,LucideIndianRupee } from "lucide-react";
+
 
 export default function Navbar() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [departamento, setDepartamento] = useState(null);
 
   const { logout, user } = useAuth({ middleware: "auth" });
 
+//Consultar  a departamento
+
+useEffect(() => {
+  const fetchDepartamento = async () => {
+   
+    try {
+      const res = await departamentosApi.getById(user.departamento_id);
+     
+      setDepartamento(res.data);
+    } catch (error) {
+      console.error("Error fetching departamento:", error);
+    }
+  }
+
+  if (user?.departamento_id) {
+    fetchDepartamento();
+  }
+}, [user?.departamento_id]);
+ const isResponsable = departamento?.responsable_id === user?.id;
+  console.log("Is Responsable:", isResponsable); // Verifica si es responsable en consola
   const navLinks = [
     { name: "Inicio", to: "/", icon: Home, allowedRoles: [1,10,11] },
     { name: "Procesos", to: "/auth/procesos", icon: FolderKanban, alwaysVisible: true },
     { name: "Tareas", to: "tareas", icon: ListChecks, allowedRoles: [1,2, 10,11] },
-    { name: "Novedades", to: "errores", icon: Bell, allowedRoles: [1,2, 10,11] },
+    { name: "Novedades", to: "novedades", icon: Bell, allowedRoles: [1,2, 10,11] },
     { name: "CRM", to: "/auth/crm", icon: Building2, allowedRoles: [1,2, 4, 5, 6, 7, 9,10,11] },
-    {name: "KPI", to: "rendimiento", icon: Building2, allowedRoles: [1,2,10,11] },
+    {name: "KPI", to: "dashboard/indicadores", icon: Building2, allowedRoles: [1,2] },
+    { name: "Indicadores", to: "indicadores", icon: LucideIndianRupee, allowedRoles: [1,2], onlyIfResponsable: true }, // ← nueva propiedad
   ];
 
-  const filteredNavLinks = navLinks.filter(
-    (link) => link.alwaysVisible || !link.allowedRoles || link.allowedRoles.includes(user?.role_id)
-  );
+
+  
+const filteredNavLinks = navLinks.filter((link) => {
+  if (link.alwaysVisible) return true;
+  if (link.onlyIfResponsable) {
+    return isResponsable;
+  }
+  return !link.allowedRoles || link.allowedRoles.includes(user?.role_id);
+});
+
+
 
   return (
     <nav

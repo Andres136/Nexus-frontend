@@ -8,6 +8,8 @@ const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     "Content-Type": "application/json",
+    Accept: "application/json",
+    
   },
 });
 
@@ -44,6 +46,41 @@ apiClient.interceptors.response.use(
 //Obtener todos los usuarios
 export const usersApi={
     getAll:()=>apiClient.get('/conductores'),
+}
+
+//Api para registro de indicadores por procesos o departamentos
+export const indicadoresApi={
+  getAll:()=>apiClient.get('/indicadores'),
+  getById:(id)=>apiClient.get(`/indicadores/${id}`),
+  create:(data)=>apiClient.post('/indicadores',data),
+  update:(id,data)=>apiClient.put(`/indicadores/${id}`,data),
+  delete:(id)=>apiClient.delete(`/indicadores/${id}`),
+}
+
+//Api para registrar los valores de los indicadores
+export const valoresIndicadoresApi={
+  getAll:(params)=>apiClient.get('/registro-indicadores', { params }),
+  getById:(id)=>apiClient.get(`/registro-indicadores/${id}`),
+  create:(data)=>apiClient.post('/registro-indicadores',data,{
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  update:(id,data)=>apiClient.put(`/registro-indicadores/${id}`,data),
+  delete:(id)=>apiClient.delete(`/registro-indicadores/${id}`),
+
+}
+
+//Api para obtener los departamentos
+export const departamentosApi={
+  getAll:()=>apiClient.get('/departamentos'),
+  getById:(id)=>apiClient.get(`/departamentos/${id}`),
+  create:(data)=>apiClient.post('/departamentos',data),
+  update:(id,data)=>apiClient.put(`/departamentos/${id}`,data),
+  delete:(id)=>apiClient.delete(`/departamentos/${id}`),
+
+}
+//Api para traer todos los indicadores por departamento
+export const indicadoresDepartamentoApi={
+  getAll:(params)=>apiClient.get('/rendimiento-indicadores', { params })
 }
 
 export default apiClient;
