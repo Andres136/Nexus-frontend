@@ -80,7 +80,7 @@ export const departamentosApi={
 }
 //Api para traer todos los indicadores por departamento
 export const indicadoresDepartamentoApi={
-  getAll:(params)=>apiClient.get('/rendimiento-indicadores', { params })
+  getAll:(params)=>apiClient.get('/api/rendimiento-indicadores', { params })
 }
 
 export default apiClient;
