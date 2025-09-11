@@ -38,6 +38,7 @@ export default function RegisterValorIndicador() {
   const fetchValores = useCallback(async () => {
     try {
       const res = await valoresIndicadoresApi.getAll({ mes, anio });
+      console.log("Valores:", res.data.data);
       setValores(res.data.data || []);
     } catch (error) {
       setValores([]);
@@ -69,11 +70,11 @@ export default function RegisterValorIndicador() {
        try {
            const response = await valoresIndicadoresApi.create(formDataToSubmit);
 
-
+           fetchValores();
             // Agrega el nuevo valor al inicio del array
             setValores(prev => [response.data.data, ...prev]);
         toast.success(response?.data?.message ?? "Valor registrado", {
-            className: "bg-green-400 text-white font-bold",
+            className: "bg-green-200 text-white font-bold",
             progressClassName: "bg-green-300"
         });
         setFormData({

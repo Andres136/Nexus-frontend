@@ -20,6 +20,7 @@ export default function DashboardIndicadores() {
   const [data, setData] = useState([]);
   const [mes, setMes] = useState(new Date().getMonth() + 1);
   const [anio, setAnio] = useState(new Date().getFullYear());
+  const [showFullObs, setShowFullObs] = useState(false);
 
   const meses = [
     "Enero",
@@ -48,19 +49,7 @@ export default function DashboardIndicadores() {
     fetchData();
   }, [mes, anio]);
 
-  const EstadoIcon = ({ estado }) => {
-    if (estado === "ok")
-      return (
-        <CheckCircleIcon className="text-green-600" size={20} title="OK" />
-      );
-    if (estado === "medio")
-      return (
-        <AlertTriangle className="text-yellow-500" size={20} title="Medio" />
-      );
-    if (estado === "critico")
-      return <XCircle className="text-red-600" size={20} title="Crítico" />;
-    return <span className="text-gray-400 italic text-sm">Sin estado</span>;
-  };
+
 
   // Agrupar indicadores por departamento
   const indicadoresAgrupados = data.reduce((acc, item) => {
@@ -222,7 +211,7 @@ function getPeriodoLabel(frecuencia, mes, anio) {
                           <h4 className="font-semibold text-lg text-gray-800">
                             {item.nombre || "—"}
                           </h4>
-                          <EstadoIcon estado={registro?.estado} />
+                         
                         </div>
 
                       <p className="text-xs text-gray-500 mb-1">
@@ -304,13 +293,23 @@ function getPeriodoLabel(frecuencia, mes, anio) {
                               <FileDiffIcon size={20} />
                             </a>
                           )}
-                          {!registro?.documento && registro?.observaciones && (
-                            <div className="mt-2">
-                              <p className="text-xs text-gray-500 italic">
-                                Observaciones: {registro.observaciones}
-                              </p>
-                            </div>
-                          )}
+                       
+{!registro?.documento && registro?.observaciones && (
+  <div className="mt-2 bg-gray-50 rounded p-2 text-xs text-gray-500 italic">
+    Observaciones:{" "}
+    {showFullObs || registro.observaciones.length <= 120
+      ? registro.observaciones
+      : registro.observaciones.slice(0, 120) + "... "}
+    {registro.observaciones.length > 120 && (
+      <button
+        className="text-blue-600 underline ml-1"
+        onClick={() => setShowFullObs((v) => !v)}
+      >
+        {showFullObs ? "Ver menos" : "Ver más"}
+      </button>
+    )}
+  </div>
+)}
                         </div>
                       </div>
                     );
