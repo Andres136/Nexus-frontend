@@ -22,8 +22,18 @@ export default function DashboardIndicadores() {
   const [anio, setAnio] = useState(new Date().getFullYear());
 
   const meses = [
-    "Enero","Febrero","Marzo","Abril","Mayo","Junio",
-    "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"
+    "Enero",
+    "Febrero",
+    "Marzo",
+    "Abril",
+    "Mayo",
+    "Junio",
+    "Julio",
+    "Agosto",
+    "Septiembre",
+    "Octubre",
+    "Noviembre",
+    "Diciembre",
   ];
 
   useEffect(() => {
@@ -40,9 +50,13 @@ export default function DashboardIndicadores() {
 
   const EstadoIcon = ({ estado }) => {
     if (estado === "ok")
-      return <CheckCircleIcon className="text-green-600" size={20} title="OK" />;
+      return (
+        <CheckCircleIcon className="text-green-600" size={20} title="OK" />
+      );
     if (estado === "medio")
-      return <AlertTriangle className="text-yellow-500" size={20} title="Medio" />;
+      return (
+        <AlertTriangle className="text-yellow-500" size={20} title="Medio" />
+      );
     if (estado === "critico")
       return <XCircle className="text-red-600" size={20} title="Crítico" />;
     return <span className="text-gray-400 italic text-sm">Sin estado</span>;
@@ -103,7 +117,9 @@ export default function DashboardIndicadores() {
             className="border rounded px-2 py-1"
           >
             {meses.map((m, i) => (
-              <option key={i + 1} value={i + 1}>{m}</option>
+              <option key={i + 1} value={i + 1}>
+                {m}
+              </option>
             ))}
           </select>
         </div>
@@ -128,101 +144,144 @@ export default function DashboardIndicadores() {
         </div>
       ) : (
         <div className="space-y-10 max-h-[75vh] overflow-y-auto pr-2">
-          {Object.entries(indicadoresAgrupados).map(([departamento, indicadores]) => (
-            <div key={departamento}>
-              <h3 className="text-xl font-bold text-gray-700 mb-4 border-b pb-1">
-                {departamento}
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
-                {indicadores.map((item) => {
-                  const aplicaFrecuencia = validarFrecuencia(item.frecuencia);
+          {Object.entries(indicadoresAgrupados).map(
+            ([departamento, indicadores]) => (
+              <div key={departamento}>
+                <h3 className="text-xl font-bold text-gray-700 mb-4 border-b pb-1">
+                  {departamento}
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
+                  {indicadores.map((item) => {
+                    const aplicaFrecuencia = validarFrecuencia(item.frecuencia);
 
-                  if (!aplicaFrecuencia) {
+                    if (!aplicaFrecuencia) {
+                      return (
+                        <div
+                          key={item.id}
+                          className="bg-white rounded-xl shadow p-4 border flex flex-col justify-center items-center"
+                        >
+                          <h4 className="font-semibold text-lg text-gray-800 mb-2">
+                            {item.nombre || "—"}
+                          </h4>
+                          <p className="text-xs text-gray-500 mb-2">
+                            Frecuencia: {item.frecuencia || "—"}
+                          </p>
+                          <div className="text-gray-400 italic text-sm mt-8 mb-8 text-center">
+                            No aplica este mes según la frecuencia (
+                            {item.frecuencia})
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    const registro = item.registro;
+                    const valor = registro ? parseFloat(registro.valor) : null;
+                    const meta = item.meta ? parseFloat(item.meta) : null;
+                    const tieneDatos = valor !== null && !isNaN(meta);
+
                     return (
-                      <div key={item.id} className="bg-white rounded-xl shadow p-4 border flex flex-col justify-center items-center">
-                        <h4 className="font-semibold text-lg text-gray-800 mb-2">
-                          {item.nombre || "—"}
-                        </h4>
-                        <p className="text-xs text-gray-500 mb-2">
+                      <div
+                        key={item.id}
+                        className="bg-white rounded-xl shadow p-4 border"
+                      >
+                        <div className="flex justify-between items-center mb-2">
+                          <h4 className="font-semibold text-lg text-gray-800">
+                            {item.nombre || "—"}
+                          </h4>
+                          <EstadoIcon estado={registro?.estado} />
+                        </div>
+
+                        <p className="text-xs text-gray-500 mb-1">
                           Frecuencia: {item.frecuencia || "—"}
                         </p>
-                        <div className="text-gray-400 italic text-sm mt-8 mb-8 text-center">
-                          No aplica este mes según la frecuencia ({item.frecuencia})
+                        {registro?.fecha && (
+                          <p className="text-xs text-gray-400 mb-2">
+                            Último registro: {formatFecha(registro.fecha)}
+                          </p>
+                        )}
+
+                        {/* Gráfico */}
+                        <div className="h-40">
+                          {tieneDatos ? (
+                            <ResponsiveContainer width="100%" height="100%">
+                              <BarChart
+                                layout="vertical"
+                                data={[
+                                  {
+                                    name: "Comparativo",
+                                    Valor: valor,
+                                    Meta: meta,
+                                  },
+                                ]}
+                                margin={{
+                                  top: 10,
+                                  right: 20,
+                                  bottom: 10,
+                                  left: 20,
+                                }}
+                              >
+                                <XAxis
+                                  type="number"
+                                  domain={[0, Math.max(valor, meta) * 1.2]}
+                                  hide
+                                />
+                                <YAxis type="category" dataKey="name" hide />
+                                <Tooltip formatter={(v) => v.toFixed(2)} />
+                                <Bar
+                                  dataKey="Meta"
+                                  fill="#D1D5DB"
+                                  radius={[0, 4, 4, 0]}
+                                />
+                                <Bar
+                                  dataKey="Valor"
+                                  fill="#3B82F6"
+                                  radius={[0, 4, 4, 0]}
+                                />
+                              </BarChart>
+                            </ResponsiveContainer>
+                          ) : (
+                            <div className="text-red-500 italic text-sm text-center mt-6">
+                              Sin registro este mes
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Pie */}
+                        <div className="flex justify-between items-center mt-4">
+                          <div>
+                            <p className="text-xs text-gray-500">
+                              Valor: {valor ?? "—"}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              Meta: {meta ?? "—"}
+                            </p>
+                          </div>
+                          {registro?.documento && (
+                            <a
+                              href={`${clienteAxios.defaults.baseURL}/api/registro-indicadores/descargar/${registro.id}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title="Descargar análisis"
+                              className="text-blue-600 hover:text-blue-800"
+                            >
+                              <FileDiffIcon size={20} />
+                            </a>
+                          )}
+                          {!registro?.documento && registro?.observaciones && (
+                            <div className="mt-2">
+                              <p className="text-xs text-gray-500 italic">
+                                Observaciones: {registro.observaciones}
+                              </p>
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
-                  }
-
-                  const registro = item.registro;
-                  const valor = registro ? parseFloat(registro.valor) : null;
-                  const meta = item.meta ? parseFloat(item.meta) : null;
-                  const tieneDatos = valor !== null && !isNaN(meta);
-
-                  return (
-                    <div key={item.id} className="bg-white rounded-xl shadow p-4 border">
-                      <div className="flex justify-between items-center mb-2">
-                        <h4 className="font-semibold text-lg text-gray-800">
-                          {item.nombre || "—"}
-                        </h4>
-                        <EstadoIcon estado={registro?.estado} />
-                      </div>
-
-                      <p className="text-xs text-gray-500 mb-1">
-                        Frecuencia: {item.frecuencia || "—"}
-                      </p>
-                      {registro?.fecha && (
-                        <p className="text-xs text-gray-400 mb-2">
-                          Último registro: {formatFecha(registro.fecha)}
-                        </p>
-                      )}
-
-                      {/* Gráfico */}
-                      <div className="h-40">
-                        {tieneDatos ? (
-                          <ResponsiveContainer width="100%" height="100%">
-                            <BarChart
-                              layout="vertical"
-                              data={[{ name: "Comparativo", Valor: valor, Meta: meta }]}
-                              margin={{ top: 10, right: 20, bottom: 10, left: 20 }}
-                            >
-                              <XAxis type="number" domain={[0, Math.max(valor, meta) * 1.2]} hide />
-                              <YAxis type="category" dataKey="name" hide />
-                              <Tooltip formatter={(v) => v.toFixed(2)} />
-                              <Bar dataKey="Meta" fill="#D1D5DB" radius={[0, 4, 4, 0]} />
-                              <Bar dataKey="Valor" fill="#3B82F6" radius={[0, 4, 4, 0]} />
-                            </BarChart>
-                          </ResponsiveContainer>
-                        ) : (
-                          <div className="text-red-500 italic text-sm text-center mt-6">
-                            Sin registro este mes
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Pie */}
-                      <div className="flex justify-between items-center mt-4">
-                        <div>
-                          <p className="text-xs text-gray-500">Valor: {valor ?? "—"}</p>
-                          <p className="text-xs text-gray-500">Meta: {meta ?? "—"}</p>
-                        </div>
-                        {registro?.documento && (
-                          <a
-                            href={`${clienteAxios.defaults.baseURL}/api/registro-indicadores/descargar/${registro.id}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            title="Descargar análisis"
-                            className="text-blue-600 hover:text-blue-800"
-                          >
-                            <FileDiffIcon size={20} />
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          )}
         </div>
       )}
     </div>

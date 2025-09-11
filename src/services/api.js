@@ -1,6 +1,5 @@
 import axios from "axios";
-console.log("🔎 Variables de entorno:", import.meta.env); // 👈 verifica lo que Vite carga
-console.log("✅ API BASE URL:", import.meta.env.VITE_API_URL); // 👈 i
+
 const VITE_API_URL = import.meta.env.VITE_API_URL;
 
 
@@ -55,6 +54,7 @@ export const indicadoresApi={
   create:(data)=>apiClient.post('/api/indicadores',data),
   update:(id,data)=>apiClient.put(`/api/indicadores/${id}`,data),
   delete:(id)=>apiClient.delete(`/api/indicadores/${id}`),
+getIndicadoresDepartamento: (params) => apiClient.get('/api/indicadoresAdmin', { params }),
 }
 
 //Api para registrar los valores de los indicadores
@@ -80,7 +80,7 @@ export const departamentosApi={
 }
 //Api para traer todos los indicadores por departamento
 export const indicadoresDepartamentoApi={
-  getAll:(params)=>apiClient.get('/api/rendimiento-indicadores', { params })
+  getAll:(params, page)=>apiClient.get('/api/rendimiento-indicadores', { params: { ...params, page } })
 }
 
 export default apiClient;
