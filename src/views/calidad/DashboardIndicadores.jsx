@@ -100,7 +100,41 @@ export default function DashboardIndicadores() {
       day: "2-digit",
     });
   };
-
+function getPeriodoLabel(frecuencia, mes, anio) {
+  const meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+  mes = Number(mes);
+  switch (frecuencia?.toLowerCase()) {
+    case "trimestral": {
+      const trimestre = Math.ceil(mes / 3);
+      const inicio = (trimestre - 1) * 3;
+      return `${meses[inicio]} - ${meses[inicio + 2]} ${anio}`;
+    }
+    case "bimestral": {
+      const bimestre = Math.ceil(mes / 2);
+      const inicio = (bimestre - 1) * 2;
+      return `${meses[inicio]} - ${meses[inicio + 1]} ${anio}`;
+    }
+    case "cuatrimestral": {
+      const cuatrimestre = Math.ceil(mes / 4);
+      const inicio = (cuatrimestre - 1) * 4;
+      return `${meses[inicio]} - ${meses[inicio + 3]} ${anio}`;
+    }
+    case "semestral": {
+      if (mes <= 6) return `Ene - Jun ${anio}`;
+      return `Jul - Dic ${anio}`;
+    }
+    case "anual":
+      return `Ene - Dic ${anio}`;
+    case "mensual":
+      return `${meses[mes - 1]} ${anio}`;
+    case "quincenal": {
+      // Puedes mejorar esto si tienes info de la quincena seleccionada
+      return mes ? `${meses[mes - 1]} (Quincenal) ${anio}` : "Quincenal";
+    }
+    default:
+      return "";
+  }
+}
   return (
     <div className="max-w-7xl mx-auto p-6">
       <h2 className="text-2xl font-bold mb-6 text-gray-800">
@@ -191,14 +225,17 @@ export default function DashboardIndicadores() {
                           <EstadoIcon estado={registro?.estado} />
                         </div>
 
-                        <p className="text-xs text-gray-500 mb-1">
-                          Frecuencia: {item.frecuencia || "—"}
-                        </p>
-                        {registro?.fecha && (
-                          <p className="text-xs text-gray-400 mb-2">
-                            Último registro: {formatFecha(registro.fecha)}
-                          </p>
-                        )}
+                      <p className="text-xs text-gray-500 mb-1">
+  Frecuencia: {item.frecuencia || "—"}{" "}
+  <span className="text-[11px] text-gray-400">
+    ({getPeriodoLabel(item.frecuencia, mes, anio)})
+  </span>
+</p>
+{registro?.fecha && (
+  <p className="text-xs text-gray-400 mb-2">
+    Último registro: {formatFecha(registro.fecha)}
+  </p>
+)}
 
                         {/* Gráfico */}
                         <div className="h-40">

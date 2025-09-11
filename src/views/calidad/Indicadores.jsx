@@ -190,9 +190,6 @@ export default function Indicadores() {
       className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 ${err("frecuencia") ? "border-red-500" : ""}`}
     >
       <option value="">Selecciona una frecuencia</option>
-      <option value="Diario">Diario</option>
-      <option value="Semanal">Semanal</option>
-      <option value="Quincenal">Quincenal</option>
       <option value="Mensual">Mensual</option>
       <option value="Bimestral">Bimestral</option>
       <option value="Trimestral">Trimestral</option>
