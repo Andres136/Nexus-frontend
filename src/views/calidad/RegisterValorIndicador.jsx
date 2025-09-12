@@ -38,7 +38,7 @@ export default function RegisterValorIndicador() {
   const fetchValores = useCallback(async () => {
     try {
       const res = await valoresIndicadoresApi.getAll({ mes, anio });
-      console.log("Valores:", res.data.data);
+  
       setValores(res.data.data || []);
     } catch (error) {
       setValores([]);

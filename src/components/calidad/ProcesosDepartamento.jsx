@@ -107,7 +107,7 @@ const cargarUsuariosDepartamento = async (departamentoId) => {
           headers: { Authorization: `Bearer ${token}` },
         
         });
-        console.log('Usuarios del departamento:', response.data);
+        
         setUsuariosDepartamento(response.data);
       } catch (error) {
         console.error('Error al cargar los usuarios del departamento:', error);

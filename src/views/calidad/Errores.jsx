@@ -6,6 +6,9 @@ import {
 } from "recharts";
 import { ArrowUpCircle, ArrowDownCircle } from "lucide-react";
 
+
+
+
 export default function ErroresDashboard() {
     const [kpis, setKpis] = useState({
         totalErrores: 0,
@@ -26,16 +29,45 @@ export default function ErroresDashboard() {
         const token = localStorage.getItem('token');
         try {
             const response = await clienteAxios.get('/api/errores/kpi', {
+ 
                 headers: { Authorization: `Bearer ${token}` }
             });
+            console.log("KPIs obtenidos:", response.data);
             setKpis(response.data);
         } catch (error) {
             console.log("Error obteniendo KPIs:", error);
         }
     };
+function DescripcionCorta({ texto, max = 100 }) {
+  const [expandido, setExpandido] = useState(false);
 
-    // Colores para el gráfico de pastel
-    const COLORS = ["#6B7280", "#EF4444", "#10B981", "#3B82F6", "#F59E0B"];
+  if (!texto || texto.length === 0) {
+    return <span className="italic text-gray-400">Sin descripción</span>;
+  }
+
+  // Si viene como array, conviértelo a string
+  const contenido = Array.isArray(texto) ? texto.join(", ") : texto;
+
+  if (contenido.length <= max) {
+    return <span>{contenido}</span>;
+  }
+
+  return (
+    <span>
+      {expandido ? contenido : contenido.slice(0, max) + "... "}
+      <button
+        className="text-blue-600 underline text-xs ml-1"
+        onClick={() => setExpandido((v) => !v)}
+        type="button"
+      >
+        {expandido ? "Ver menos" : "Leer más"}
+      </button>
+    </span>
+  );
+}
+
+// Colores para el gráfico de pastel
+const COLORS = ["#6B7280", "#EF4444", "#10B981", "#3B82F6", "#F59E0B"];
 
     return (
         <div className="p-6 min-h-screen bg-gray-50">
@@ -124,6 +156,7 @@ export default function ErroresDashboard() {
         <thead>
           <tr className="bg-gray-100 text-gray-600 uppercase text-xs md:text-sm leading-normal">
             <th className="py-3 px-4 md:px-6 text-left whitespace-nowrap">Departamento</th>
+            <th className="py-3 px-4 md:px-6 text-left whitespace-nowrap">Descripcion</th>
             <th className="py-3 px-4 md:px-6 text-center whitespace-nowrap">Mes Anterior</th>
             <th className="py-3 px-4 md:px-6 text-center whitespace-nowrap">Mes Actual</th>
             <th className="py-3 px-4 md:px-6 text-center whitespace-nowrap">Diferencia</th>
@@ -142,6 +175,10 @@ export default function ErroresDashboard() {
                 className="border-b border-gray-200 hover:bg-gray-50"
               >
                 <td className="py-3 px-4 md:px-6">{actual.departamento_nombre}</td>
+                <td className="py-3 px-4 md:px-6">
+                  <DescripcionCorta texto={actual.descripciones} />
+                </td>
+
                 <td className="py-3 px-4 md:px-6 text-center">{anterior.total}</td>
                 <td className="py-3 px-4 md:px-6 text-center">{actual.total}</td>
                 <td
