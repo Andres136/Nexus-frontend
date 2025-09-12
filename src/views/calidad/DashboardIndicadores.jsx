@@ -22,6 +22,7 @@ export default function DashboardIndicadores() {
   const [mes, setMes] = useState(new Date().getMonth() + 1);
   const [anio, setAnio] = useState(new Date().getFullYear());
   const [showFullObs, setShowFullObs] = useState(false);
+  const [departamentoFiltro, setDepartamentoFiltro] = useState("Todos");
 
   const meses = [
     "Enero",
@@ -152,6 +153,8 @@ export default function DashboardIndicadores() {
       return "critico";
     }
   }
+
+  const departamentosUnicos = Object.keys(indicadoresAgrupados);
   return (
     <div className="max-w-7xl mx-auto p-6">
       <div className="flex items-center justify-between mb-6">
@@ -181,6 +184,20 @@ export default function DashboardIndicadores() {
             ))}
           </select>
         </div>
+
+        <div>
+  <label className="block text-sm text-gray-700">Departamento</label>
+  <select
+    value={departamentoFiltro}
+    onChange={e => setDepartamentoFiltro(e.target.value)}
+    className="border rounded px-2 py-1"
+  >
+    <option value="Todos">Todos</option>
+    {departamentosUnicos.map(dep => (
+      <option key={dep} value={dep}>{dep}</option>
+    ))}
+  </select>
+</div>
         <div>
           <label className="block text-sm text-gray-700">Año</label>
           <input
@@ -202,7 +219,12 @@ export default function DashboardIndicadores() {
         </div>
       ) : (
         <div className="space-y-10 max-h-[75vh] overflow-y-auto pr-2">
-          {Object.entries(indicadoresAgrupados).map(
+          {Object.entries(indicadoresAgrupados)
+          .filter(([departamento]) =>
+            departamentoFiltro === "Todos" ? true : departamento === departamentoFiltro
+          )
+          .map(
+
             ([departamento, indicadores]) => (
               <div key={departamento}>
                 <h3 className="text-xl font-bold text-gray-700 mb-4 border-b pb-1">
