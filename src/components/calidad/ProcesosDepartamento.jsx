@@ -577,10 +577,9 @@ const docsFiltrados = documentacion.filter(doc =>
                 </button>
                 {acordeonAbierto === "errores" && (
                   <div className="p-4">
-                    <input
-                      type="text"
+                    <textarea
                       ref={nuevErrorDescripcionRef}
-                      placeholder="Descripción del error"
+                      placeholder="Descripción de la novedad"
                       className={`p-3 border rounded-lg w-full ${
                         error.descripcion ? "border-red-500" : "border-gray-300"
                       }`}

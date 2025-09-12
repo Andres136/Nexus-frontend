@@ -15,6 +15,7 @@ import {
 import { indicadoresDepartamentoApi } from "../../services/api";
 import { useEffect, useState } from "react";
 import clienteAxios from "../../config/axios";
+import { Link } from "react-router-dom";
 
 export default function DashboardIndicadores() {
   const [data, setData] = useState([]);
@@ -126,10 +127,17 @@ function getPeriodoLabel(frecuencia, mes, anio) {
 }
   return (
     <div className="max-w-7xl mx-auto p-6">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800">
-        Indicadores por Departamento
-      </h2>
-
+   <div className="flex items-center justify-between mb-6">
+  <h2 className="text-2xl font-bold text-gray-800">
+    Indicadores por Departamento
+  </h2>
+  <Link
+    to="/auth/rendimiento"
+    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm"
+  >
+    Ver tareas
+  </Link>
+</div>
       {/* Filtros */}
       <div className="flex flex-wrap gap-4 mb-6 border p-4 rounded bg-gray-50">
         <div>

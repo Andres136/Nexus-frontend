@@ -2,9 +2,12 @@ import { useEffect, useState } from "react";
 import { valoresIndicadoresApi } from "../../services/api";
 import clienteAxios from "../../config/axios";
 import { FileDownIcon } from "lucide-react";
+import { useAuth } from "../../hooks/useAuth";
+import Swal from "sweetalert2";
+
 
 export default function ValoresIndicadores({ valores, setValores, mes, setMes, anio, setAnio }) {
-  
+  const { user } = useAuth({ middleware: "auth" }); // no pases options si tu hook no las usa
   const [loading, setLoading] = useState(false);
   const meses = [
     "Enero",
@@ -39,6 +42,40 @@ export default function ValoresIndicadores({ valores, setValores, mes, setMes, a
   useEffect(() => {
     fetchValores();
   }, [mes, anio]);
+
+  //Funcion para extraer el role_id del usuario
+  const roleId = user?.role_id;
+
+  // Mostrar solo si el usuario tiene role_id 1 o 2
+  if (![1, 2].includes(roleId)) {
+    return null;
+  }
+
+
+  //Funcion para eliminar un valor de indicador con Swal
+  const handleDelete = async(id)=>{
+    Swal.fire({
+      title: "¿Estás seguro?",
+      text: "Esta acción no se puede deshacer.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await valoresIndicadoresApi.delete(id);
+          Swal.fire("Eliminado", "El valor del indicador ha sido eliminado.", "success");
+          fetchValores(); // Refresca la lista después de eliminar
+        } catch (error) {
+          console.error("Error al eliminar el valor del indicador:", error);
+          Swal.fire("Error", "Hubo un problema al eliminar el valor del indicador.", "error");
+        }
+      }
+    });
+  }
 
   return (
     <div className="max-w-4xl mx-auto p-4">
@@ -96,6 +133,10 @@ export default function ValoresIndicadores({ valores, setValores, mes, setMes, a
                 <th className="px-4 py-2">Estado</th>
                 <th className="px-4 py-2">Fecha</th>
                 <th className="px-4 py-2">Análisis</th>
+                {/* solo mostrar para role_id 1 y 2 */}
+                {roleId === 1 || roleId === 2 ? (
+                  <th className="px-4 py-2">Acciones</th>
+                ) : null}
               </tr>
             </thead>
             <tbody>
@@ -140,6 +181,19 @@ export default function ValoresIndicadores({ valores, setValores, mes, setMes, a
                       <div className="flex justify-center">—</div>
                     )}
                   </td>
+
+                  {roleId === 1 || roleId === 2 ? (
+                    <td className="px-4 py-2">
+                      <div className="flex justify-center">
+                        <button
+                          onClick={() => handleDelete(v.id)}
+                          className="text-red-600 hover:text-red-800"
+                        >
+                        Eliminar
+                        </button>
+                      </div>
+                    </td>
+                  ) : null}
                 </tr>
               ))}
             </tbody>

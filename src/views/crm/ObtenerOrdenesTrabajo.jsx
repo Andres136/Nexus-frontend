@@ -100,7 +100,7 @@ if (isLoading)
 
        
 
-           <table className=" col-span-2 w-full border border-gray-300 rounded-lg overflow-hidden">
+           <table className="text-sm col-span-2 w-full border border-gray-300 rounded-lg overflow-hidden">
         <thead className="bg-gray-800 text-white text-sm">
           <tr>
             <th className="px-4 py-3 text-left">ID</th>
@@ -121,7 +121,14 @@ if (isLoading)
             <tr key={orden.id} className="border-t border-gray-300">
               <td className="px-4 py-3">{orden.id}</td>
               <td className="px-4 py-3">{orden.cliente.nombre}</td>
-              <td className="px-4 py-3">{orden.fecha_entrega}</td>
+          <td className="px-4 py-3">
+  {orden.fecha_entrega}
+  {orden.orden_compra?.fecha_despacho && (
+    <div className="text-xs text-gray-500 mt-1">
+      Completado: {orden.orden_compra.fecha_despacho}
+    </div>
+  )}
+</td>
            <td className="px-4 py-3">
   {new Date(orden.created_at).toLocaleDateString('es-CO', {
     year: 'numeric',

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { departamentosApi } from "../services/api";
 import { useAuth } from "../hooks/useAuth";
-import { Home, FolderKanban, ListChecks, Bell, Building2,LucideIndianRupee } from "lucide-react";
+import { Home, FolderKanban, ListChecks, Bell, Building2,LucideIndianRupee, BarChart2 } from "lucide-react";
 
 
 export default function Navbar() {
@@ -35,10 +35,10 @@ useEffect(() => {
     { name: "Inicio", to: "/", icon: Home, allowedRoles: [1,10,11] },
     { name: "Procesos", to: "/auth/procesos", icon: FolderKanban, alwaysVisible: true },
     { name: "Tareas", to: "tareas", icon: ListChecks, allowedRoles: [1,2, 10,11] },
-    { name: "Novedades", to: "novedades", icon: Bell, allowedRoles: [1,2, 10,11] },
+    { name: "Novedades", to: "novedades", icon: Bell,Bell: [1,2, 10,11] },
     { name: "CRM", to: "/auth/crm", icon: Building2, allowedRoles: [1,2, 4, 5, 6, 7, 9,10,11] },
-    {name: "KPI", to: "dashboard/indicadores", icon: Building2, allowedRoles: [1,2] },
-    { name: "Indicadores", to: "indicadores", icon: LucideIndianRupee, allowedRoles: [1,2], onlyIfResponsable: true }, // ← nueva propiedad
+    {name: "KPIS", to: "dashboard/indicadores", icon: Building2, allowedRoles: [1,2] },
+    { name: "Indicadores", to: "indicadores", icon: BarChart2, allowedRoles: [1,2], onlyIfResponsable: true }, // ← nueva propiedad
   ];
 
 
