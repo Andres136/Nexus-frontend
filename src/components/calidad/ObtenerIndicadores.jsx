@@ -33,7 +33,7 @@ export default function ObtenerIndicadores({
 
   const fetchIndicadores = async (depId = "", page = 1) => {
     const res = await indicadoresApi.getIndicadoresDepartamento({ departamento_id: depId, page });
-
+       
     setIndicadores(res.data.data || []);
     setPaginacion({
       last_page: res.data.last_page,
@@ -146,10 +146,14 @@ export default function ObtenerIndicadores({
                   <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700 border">
                     Descripción
                   </th>
+                  <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700 border">
+                    Tipo de Meta
+                  </th>
                   {puedeEditar && (
                     <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700 border">
                       Acciones
                     </th>
+                
                   )}
                 </tr>
               </thead>
@@ -177,6 +181,9 @@ export default function ObtenerIndicadores({
                     <td className="px-4 py-2">{indicador.frecuencia}</td>
                     <td className="px-4 py-2">
                       {indicador.descripcion || "—"}
+                    </td>
+                    <td className="px-4 py-2">
+                      {indicador.tipo_meta || "—"}
                     </td>
                     {puedeEditar && (
                       <td className="px-4 py-2">

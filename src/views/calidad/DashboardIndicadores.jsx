@@ -50,8 +50,6 @@ export default function DashboardIndicadores() {
     fetchData();
   }, [mes, anio]);
 
-
-
   // Agrupar indicadores por departamento
   const indicadoresAgrupados = data.reduce((acc, item) => {
     const depto = item.departamento?.nombre || "Sin Departamento";
@@ -90,54 +88,83 @@ export default function DashboardIndicadores() {
       day: "2-digit",
     });
   };
-function getPeriodoLabel(frecuencia, mes, anio) {
-  const meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-  mes = Number(mes);
-  switch (frecuencia?.toLowerCase()) {
-    case "trimestral": {
-      const trimestre = Math.ceil(mes / 3);
-      const inicio = (trimestre - 1) * 3;
-      return `${meses[inicio]} - ${meses[inicio + 2]} ${anio}`;
+  function getPeriodoLabel(frecuencia, mes, anio) {
+    const meses = [
+      "Ene",
+      "Feb",
+      "Mar",
+      "Abr",
+      "May",
+      "Jun",
+      "Jul",
+      "Ago",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dic",
+    ];
+    mes = Number(mes);
+    switch (frecuencia?.toLowerCase()) {
+      case "trimestral": {
+        const trimestre = Math.ceil(mes / 3);
+        const inicio = (trimestre - 1) * 3;
+        return `${meses[inicio]} - ${meses[inicio + 2]} ${anio}`;
+      }
+      case "bimestral": {
+        const bimestre = Math.ceil(mes / 2);
+        const inicio = (bimestre - 1) * 2;
+        return `${meses[inicio]} - ${meses[inicio + 1]} ${anio}`;
+      }
+      case "cuatrimestral": {
+        const cuatrimestre = Math.ceil(mes / 4);
+        const inicio = (cuatrimestre - 1) * 4;
+        return `${meses[inicio]} - ${meses[inicio + 3]} ${anio}`;
+      }
+      case "semestral": {
+        if (mes <= 6) return `Ene - Jun ${anio}`;
+        return `Jul - Dic ${anio}`;
+      }
+      case "anual":
+        return `Ene - Dic ${anio}`;
+      case "mensual":
+        return `${meses[mes - 1]} ${anio}`;
+      case "quincenal": {
+        // Puedes mejorar esto si tienes info de la quincena seleccionada
+        return mes ? `${meses[mes - 1]} (Quincenal) ${anio}` : "Quincenal";
+      }
+      default:
+        return "";
     }
-    case "bimestral": {
-      const bimestre = Math.ceil(mes / 2);
-      const inicio = (bimestre - 1) * 2;
-      return `${meses[inicio]} - ${meses[inicio + 1]} ${anio}`;
-    }
-    case "cuatrimestral": {
-      const cuatrimestre = Math.ceil(mes / 4);
-      const inicio = (cuatrimestre - 1) * 4;
-      return `${meses[inicio]} - ${meses[inicio + 3]} ${anio}`;
-    }
-    case "semestral": {
-      if (mes <= 6) return `Ene - Jun ${anio}`;
-      return `Jul - Dic ${anio}`;
-    }
-    case "anual":
-      return `Ene - Dic ${anio}`;
-    case "mensual":
-      return `${meses[mes - 1]} ${anio}`;
-    case "quincenal": {
-      // Puedes mejorar esto si tienes info de la quincena seleccionada
-      return mes ? `${meses[mes - 1]} (Quincenal) ${anio}` : "Quincenal";
-    }
-    default:
-      return "";
   }
-}
+
+  function calcularEstado(valor, meta, tipoMeta) {
+    if (valor == null || meta == null || !tipoMeta) return "";
+    meta = Number(meta);
+    valor = Number(valor);
+
+    if (tipoMeta === "mayor") {
+      if (valor >= meta) return "ok";
+      if (valor >= meta * 0.8) return "medio"; // 80% de la meta
+      return "critico";
+    } else {
+      if (valor <= meta) return "ok";
+      if (valor <= meta * 1.2) return "medio"; // hasta 20% por encima
+      return "critico";
+    }
+  }
   return (
     <div className="max-w-7xl mx-auto p-6">
-   <div className="flex items-center justify-between mb-6">
-  <h2 className="text-2xl font-bold text-gray-800">
-    Indicadores por Departamento
-  </h2>
-  <Link
-    to="/auth/rendimiento"
-    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm"
-  >
-    Ver tareas
-  </Link>
-</div>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold text-gray-800">
+          Indicadores por Departamento
+        </h2>
+        <Link
+          to="/auth/rendimiento"
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm"
+        >
+          Ver tareas
+        </Link>
+      </div>
       {/* Filtros */}
       <div className="flex flex-wrap gap-4 mb-6 border p-4 rounded bg-gray-50">
         <div>
@@ -219,20 +246,19 @@ function getPeriodoLabel(frecuencia, mes, anio) {
                           <h4 className="font-semibold text-lg text-gray-800">
                             {item.nombre || "—"}
                           </h4>
-                         
                         </div>
 
-                      <p className="text-xs text-gray-500 mb-1">
-  Frecuencia: {item.frecuencia || "—"}{" "}
-  <span className="text-[11px] text-gray-400">
-    ({getPeriodoLabel(item.frecuencia, mes, anio)})
-  </span>
-</p>
-{registro?.fecha && (
-  <p className="text-xs text-gray-400 mb-2">
-    Último registro: {formatFecha(registro.fecha)}
-  </p>
-)}
+                        <p className="text-xs text-gray-500 mb-1">
+                          Frecuencia: {item.frecuencia || "—"}{" "}
+                          <span className="text-[11px] text-gray-400">
+                            ({getPeriodoLabel(item.frecuencia, mes, anio)})
+                          </span>
+                        </p>
+                        {registro?.fecha && (
+                          <p className="text-xs text-gray-400 mb-2">
+                            Último registro: {formatFecha(registro.fecha)}
+                          </p>
+                        )}
 
                         {/* Gráfico */}
                         <div className="h-40">
@@ -282,14 +308,47 @@ function getPeriodoLabel(frecuencia, mes, anio) {
 
                         {/* Pie */}
                         <div className="flex justify-between items-center mt-4">
-                          <div>
-                            <p className="text-xs text-gray-500">
-                              Valor: {valor ?? "—"}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              Meta: {meta ?? "—"}
-                            </p>
-                          </div>
+                        <div>
+  <p className="text-xs text-gray-500">
+    Valor: {valor ?? "—"}
+  </p>
+  <p className="text-xs text-gray-500 flex items-center gap-2">
+    Meta:{" "}
+    {item.tipo_meta === "mayor" ? (
+      <span className="text-gray-500 mr-1">≥</span>
+    ) : (
+      <span className="text-gray-500 mr-1">≤</span>
+    )}
+    {meta ?? "—"}
+  </p>
+  {/* Estado visual en línea aparte */}
+  {valor !== null && meta !== null && (
+    <div className="mt-1">
+      {(() => {
+        const estado = calcularEstado(valor, meta, item.tipo_meta);
+        if (estado === "ok")
+          return (
+            <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-semibold">
+              OK
+            </span>
+          );
+        if (estado === "medio")
+          return (
+            <span className="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded text-xs font-semibold">
+              Medio
+            </span>
+          );
+        if (estado === "critico")
+          return (
+            <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded text-xs font-semibold">
+              Crítico
+            </span>
+          );
+        return null;
+      })()}
+    </div>
+  )}
+</div>
                           {registro?.documento && (
                             <a
                               href={`${clienteAxios.defaults.baseURL}/api/registro-indicadores/descargar/${registro.id}`}
@@ -301,23 +360,24 @@ function getPeriodoLabel(frecuencia, mes, anio) {
                               <FileDiffIcon size={20} />
                             </a>
                           )}
-                       
-{!registro?.documento && registro?.observaciones && (
-  <div className="mt-2 bg-gray-50 rounded p-2 text-xs text-gray-500 italic">
-    Observaciones:{" "}
-    {showFullObs || registro.observaciones.length <= 120
-      ? registro.observaciones
-      : registro.observaciones.slice(0, 120) + "... "}
-    {registro.observaciones.length > 120 && (
-      <button
-        className="text-blue-600 underline ml-1"
-        onClick={() => setShowFullObs((v) => !v)}
-      >
-        {showFullObs ? "Ver menos" : "Ver más"}
-      </button>
-    )}
-  </div>
-)}
+
+                          {!registro?.documento && registro?.observaciones && (
+                            <div className="mt-2 bg-gray-50 rounded p-2 text-xs text-gray-500 italic">
+                              Observaciones:{" "}
+                              {showFullObs ||
+                              registro.observaciones.length <= 120
+                                ? registro.observaciones
+                                : registro.observaciones.slice(0, 120) + "... "}
+                              {registro.observaciones.length > 120 && (
+                                <button
+                                  className="text-blue-600 underline ml-1"
+                                  onClick={() => setShowFullObs((v) => !v)}
+                                >
+                                  {showFullObs ? "Ver menos" : "Ver más"}
+                                </button>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     );

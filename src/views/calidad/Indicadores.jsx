@@ -16,7 +16,8 @@ export default function Indicadores() {
     formula: "",
     meta: "",
     frecuencia: "",
-    descripcion: ""
+    descripcion: "",
+    tipo_meta: "",
   });
 
   const handleEdit = (indicador) => {
@@ -26,7 +27,8 @@ export default function Indicadores() {
       formula: indicador.formula,
       meta: indicador.meta,
       frecuencia: indicador.frecuencia,
-      descripcion: indicador.descripcion
+      descripcion: indicador.descripcion,
+      tipo_meta: indicador.tipo_meta
     });
   };
 
@@ -70,7 +72,8 @@ export default function Indicadores() {
         formula: "",
         meta: "",
         frecuencia: "",
-        descripcion: ""
+        descripcion: "",
+        tipo_meta: ""
       });
       // Aquí podrías actualizar la lista de indicadores si la tienes en este componente
     } catch (err) {
@@ -93,7 +96,8 @@ export default function Indicadores() {
       formula: "",
       meta: "",
       frecuencia: "",
-      descripcion: ""
+      descripcion: "",
+      tipo_meta: "",
     });
     setErrors({});
   };
@@ -157,6 +161,8 @@ export default function Indicadores() {
     {err("formula") && <p className="text-red-500 text-sm mt-1">{err("formula")}</p>}
   </div>
 
+
+
   <div className="mb-4">
     <label
       htmlFor="meta"
@@ -199,6 +205,26 @@ export default function Indicadores() {
     </select>
     {err("frecuencia") && <p className="text-red-500 text-sm mt-1">{err("frecuencia")}</p>}
   </div>  
+
+  <div className="mb-4">
+    <label
+      htmlFor="tipo_meta"
+      className="block text-sm font-medium text-gray-700">
+      Tipo de Meta
+    </label>
+    <select
+      id="tipo_meta"
+      name="tipo_meta"
+      value={formData.tipo_meta}
+      onChange={handleChange}
+      className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 ${err("tipo_meta") ? "border-red-500" : ""}`}
+    >
+      <option value="">Selecciona un tipo de meta</option>
+      <option value="mayor">Mayor</option>
+      <option value="menor">Menor</option>
+    </select>
+    {err("tipo_meta") && <p className="text-red-500 text-sm mt-1">{err("tipo_meta")}</p>}
+  </div>
 
   <div className="mb-4">
 
