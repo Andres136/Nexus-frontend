@@ -83,4 +83,45 @@ export const indicadoresDepartamentoApi={
   getAll:(params, page)=>apiClient.get('/api/rendimiento-indicadores', { params: { ...params, page } })
 }
 
+//Api para traer los productos de siigo
+export const siigoSetasApi={
+  getProducts:(params)=>apiClient.get('/api/products-setas', { params }),
+}
+
+//Api para traer los productos de siigo global
+export const siigoGlobalApi={
+  getProducts:(params)=>apiClient.get('/api/products-global', { params }),
+}
+
+
+//Api para traer las sedes
+export const sedesApi={
+  getAll:()=>apiClient.get('/api/sedes'),
+  getById:(id)=>apiClient.get(`/api/sedes/${id}`),
+  create:(data)=>apiClient.post('/api/sedes',data),
+  update:(id,data)=>apiClient.put(`/api/sedes/${id}`,data),
+  delete:(id)=>apiClient.delete(`/api/sedes/${id}`),
+
+}
+
+
+//Api Empresa
+export const empresaApi={
+  getAll:()=>apiClient.get('/api/empresas'),
+  getById:(id)=>apiClient.get(`/api/empresas/${id}`),
+  create:(data)=>apiClient.post('/api/empresas',data,{
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  // Actualizar empresa (Opción 2: POST con override _method=PUT)
+  updatePost: (id, data) => {
+    if (data instanceof FormData) {
+      data.append("_method", "PUT"); // override
+    }
+    return apiClient.post(`/api/empresas/${id}`, data, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+  delete:(id)=>apiClient.delete(`/api/empresas/${id}`),
+
+}
 export default apiClient;

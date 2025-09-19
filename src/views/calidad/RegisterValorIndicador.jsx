@@ -74,8 +74,8 @@ export default function RegisterValorIndicador() {
             // Agrega el nuevo valor al inicio del array
             setValores(prev => [response.data.data, ...prev]);
         toast.success(response?.data?.message ?? "Valor registrado", {
-            className: "bg-green-200 text-white font-bold",
-            progressClassName: "bg-green-300"
+       className: "bg-green-100 text-green-800 border border-green-300 font-medium rounded-md",
+  progressClassName: "bg-green-400"
         });
         setFormData({
             indicador_id: "",

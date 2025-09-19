@@ -45,10 +45,10 @@ export default function GestionUsers() {
 
 
       <Link
-        to="/admin/usuarios"
+        to="/admin/empresas"
         className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 text-center rounded-lg transition-colors"
       >
-        Cargos
+    Empresas
       </Link>
   <Modal isOpen={isUserModalOpen} onClose={() => setUserModalOpen(false)}>
   <RegisterUsers 

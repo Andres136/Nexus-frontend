@@ -4,116 +4,106 @@ import clienteAxios from "../config/axios";
 import { toast } from "react-toastify";
 
 const SystemContext = createContext();
-const SystemProvider =({children}) => {
-    const [darkMode, setDarkMode] = useState(false)
-    const toggleDarkMode = () => setDarkMode(!darkMode)
-    const [obtenerOrdenesCompra, setObtenerOrdenesCompra] = useState([])
-    const [paginaActual, setPaginaActual] = useState(1)
+const SystemProvider = ({ children }) => {
+  const [darkMode, setDarkMode] = useState(false);
+  const toggleDarkMode = () => setDarkMode(!darkMode);
+  const [obtenerOrdenesCompra, setObtenerOrdenesCompra] = useState([]);
+  const [paginaActual, setPaginaActual] = useState(1);
   //  const [totalPaginas, setTotalPaginas] = useState(1)
-    const [busquedaOrdenesCompra, setBusquedaOrdenesCompra] = useState('')
+  const [busquedaOrdenesCompra, setBusquedaOrdenesCompra] = useState("");
 
-
-
-
-
-const handleRegisterDepartaments = async (data, setErrores) => {
-    const token = localStorage.getItem('token')
+  const handleRegisterDepartaments = async (data, setErrores) => {
+    const token = localStorage.getItem("token");
     try {
-        const response = await clienteAxios.post('/api/departamentos', data, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-                Authorization: `Bearer ${token}`
-            }
-        })
-        console.log(response.data)
-        setErrores({})
-        toast(response.data.message)
-        return true
+      const response = await clienteAxios.post("/api/departamentos", data, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      console.log(response.data);
+      setErrores({});
+      toast(response.data.message);
+      return true;
     } catch (error) {
-
-    if(error.response && error.response.data.errors){   
-       const erroresPorCampo={}
-       Object.keys(error.response.data.errors).forEach((campo)=>{
-        erroresPorCampo[campo]=error.response.data.errors[campo][0]
-
-       })
-       setErrores(erroresPorCampo)
-       console.log(" Errores por campo: ",erroresPorCampo)
+      if (error.response && error.response.data.errors) {
+        const erroresPorCampo = {};
+        Object.keys(error.response.data.errors).forEach((campo) => {
+          erroresPorCampo[campo] = error.response.data.errors[campo][0];
+        });
+        setErrores(erroresPorCampo);
+        console.log(" Errores por campo: ", erroresPorCampo);
+      }
+      return false;
     }
-    return false
-}
-}
+  };
 
- const handlerConsultarUsuarios = async () => {    
+  const handlerConsultarUsuarios = async () => {
     try {
-        const response = await clienteAxios.get('/api/users')
-        console.log(response.data)
+      const response = await clienteAxios.get("/api/users");
+      console.log(response.data);
     } catch (error) {
-        console.log(error)
+      console.log(error);
     }
-}
+  };
 
-
-// Consultar ordenes de compra
-
-// obtener ordenes de compra con react query
-
-// 🔹 Función para obtener órdenes de compra
-const fetOrdenesCompra = async ({ queryKey }) => {
+  // 🔹 Función para obtener órdenes de compra
+  const fetOrdenesCompra = async ({ queryKey }) => {
     const [, page, search] = queryKey; // ✅ Extraer correctamente page y search
     const token = localStorage.getItem("token");
 
     try {
-        const response = await clienteAxios.get(`/api/orden-compras?page=${page}&search=${search}`, {
-            headers: { Authorization: `Bearer ${token}` },
-        });
-       ;
-        return response.data;
+      const response = await clienteAxios.get(
+        `/api/orden-compras?page=${page}&search=${search}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      return response.data;
     } catch (error) {
-        console.error("Error al obtener órdenes de compra:", error);
-        throw new Error("Error al obtener órdenes de compra");
+      console.error("Error al obtener órdenes de compra:", error);
+      throw new Error("Error al obtener órdenes de compra");
     }
-};
+  };
 
-// 🔹 React Query para obtener órdenes de compra
-const { data: ordenesCompra, isLoading, isError, refetch } = useQuery({
+  // 🔹 React Query para obtener órdenes de compra
+  const {
+    data: ordenesCompra,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
     queryKey: ["ordenesCompra", paginaActual, busquedaOrdenesCompra], // ✅ Mantener el queryKey correcto
     queryFn: fetOrdenesCompra, // ✅ Llamar la función sin argumentos
     keepPreviousData: true, // ✅ Mantener los datos anteriores
     staleTime: 60000, // Cachea datos por 60 segundos
     refetchOnWindowFocus: false,
-});
+  });
 
-//Guardar  Ordenes de trabajo
+  //Api para traer los productos de siigo
 
-
-
-
-    return (
-        <SystemContext.Provider value={{
-
-            darkMode,   
-            obtenerOrdenesCompra,
-             paginaActual,
-             busquedaOrdenesCompra,
-             ordenesCompra,
-             isError,
-             isLoading,
-            setBusquedaOrdenesCompra,
-            toggleDarkMode,
-            handleRegisterDepartaments,
-            handlerConsultarUsuarios,
-            setObtenerOrdenesCompra,  
-             setPaginaActual,
-            refetchOrdenesCompra:refetch,
-           
-          
-     
-            
-        }}>
-            {children}
-        </SystemContext.Provider>
-    )
-}
-export {SystemProvider} 
-export default SystemContext
+  return (
+    <SystemContext.Provider
+      value={{
+        darkMode,
+        obtenerOrdenesCompra,
+        paginaActual,
+        busquedaOrdenesCompra,
+        ordenesCompra,
+        isError,
+        isLoading,
+        setBusquedaOrdenesCompra,
+        toggleDarkMode,
+        handleRegisterDepartaments,
+        handlerConsultarUsuarios,
+        setObtenerOrdenesCompra,
+        setPaginaActual,
+        refetchOrdenesCompra: refetch,
+      }}
+    >
+      {children}
+    </SystemContext.Provider>
+  );
+};
+export { SystemProvider };
+export default SystemContext;

@@ -8,11 +8,14 @@ export default function ObtenerIndicadores({
   onSelect,
   indicadores,
   setIndicadores,
+  fetchIndicadores
+
 }) {
   const { user } = useAuth({ middleware: "auth" }); // no pases options si tu hook no las usa
   const [departamentoId, setDepartamentoId] = useState("");
   const [departamentos, setDepartamentos] = useState([]);
   const [pagina, setPagina] = useState(1);
+  
   const [paginacion, setPaginacion] = useState({
     last_page: 1,
     current_page: 1,
@@ -31,18 +34,9 @@ export default function ObtenerIndicadores({
     }
   };
 
-  const fetchIndicadores = async (depId = "", page = 1) => {
-    const res = await indicadoresApi.getIndicadoresDepartamento({ departamento_id: depId, page });
-       
-    setIndicadores(res.data.data || []);
-    setPaginacion({
-      last_page: res.data.last_page,
-      current_page: res.data.current_page,
-      total: res.data.total,
-      per_page: res.data.per_page,
-    });
-
-  };
+useEffect(() => {
+  setPagina(1);
+}, [departamentoId]);
   useEffect(() => {
     fetchIndicadores(departamentoId, pagina);
   }, [departamentoId, pagina]);
@@ -70,6 +64,7 @@ export default function ObtenerIndicadores({
           setIndicadores(
             indicadores.filter((indicador) => indicador.id !== id)
           );
+
           Swal.fire("Eliminado", "El indicador ha sido eliminado.", "success");
         } catch (error) {
           console.error("Error eliminando indicador:", error);

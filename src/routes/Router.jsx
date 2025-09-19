@@ -50,6 +50,7 @@ import Sedes from "../views/Sedes";
 import Indicadores from "../views/calidad/Indicadores";
 import RegisterValorIndicador from "../views/calidad/RegisterValorIndicador";
 import DashboardIndicadores from "../views/calidad/DashboardIndicadores";
+import Empresas from "../components/Empresas";
 
 
 
@@ -126,6 +127,7 @@ export default function Router() {
     <Route element={<ProtectedRoute allowedRoles={[1]} />}>
       <Route path="/admin" element={<AdminLayout />}>
         <Route path="users" element={<GestionUsers />} />
+        
         <Route path="sedes" element={<Sedes />} />
         <Route path="rendimiento" element={<KpiTareas />} />
           <Route path="tareas" element={<Tareas />} />
@@ -133,6 +135,7 @@ export default function Router() {
         <Route path="departamentos" element={<DepartatamentosUpdate />} />
       <Route path="indicadores" element={<Indicadores/>} />
       <Route path="dashboard/indicadores" element={<DashboardIndicadores />} />
+      <Route path="empresas" element={<Empresas/>} />
       </Route>
     </Route>
   

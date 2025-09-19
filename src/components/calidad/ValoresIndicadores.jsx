@@ -47,11 +47,11 @@ export default function ValoresIndicadores({ valores, setValores, mes, setMes, a
   const roleId = user?.role_id;
 
   // Mostrar solo si el usuario tiene role_id 1 o 2
-  if (![1, 2].includes(roleId)) {
-    return null;
-  }
+const esRegistrador = valores.some(v => v.user_id === user?.id);
 
-
+if (![1, 2].includes(roleId) && !esRegistrador) {
+  return null;
+}
   //Funcion para eliminar un valor de indicador con Swal
   const handleDelete = async(id)=>{
     Swal.fire({

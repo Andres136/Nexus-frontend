@@ -20,6 +20,14 @@ export default function Indicadores() {
     tipo_meta: "",
   });
 
+  const [paginacion, setPaginacion] = useState({
+    last_page: 1,
+    current_page: 1,
+    total: 0,
+    per_page: 10,
+  }); 
+
+
   const handleEdit = (indicador) => {
     setEditId(indicador.id);
     setFormData({
@@ -40,7 +48,18 @@ export default function Indicadores() {
       setErrors(s => ({ ...s, [name]: undefined }));
     }
   };
+  const fetchIndicadores = async (depId = "", page = 1) => {
+    const res = await indicadoresApi.getIndicadoresDepartamento({ departamento_id: depId, page });
+       
+    setIndicadores(res.data.data || []);
+    setPaginacion({
+      last_page: res.data.last_page,
+      current_page: res.data.current_page,
+      total: res.data.total,
+      per_page: res.data.per_page,
+    });
 
+  };
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -62,8 +81,8 @@ export default function Indicadores() {
         // Creando
         response = await indicadoresApi.create(formData);
         toast.success(response?.data?.message ?? "Indicador creado", {
-          className: "bg-blue-400 text-white font-bold",
-          progressClassName: "bg-blue-300"
+      className: "bg-green-100 text-green-800 border border-green-300 font-medium rounded-md",
+      progressClassName: "bg-green-400"
         });
       }
       // Limpia formulario
@@ -75,6 +94,8 @@ export default function Indicadores() {
         descripcion: "",
         tipo_meta: ""
       });
+
+      await fetchIndicadores();
       // Aquí podrías actualizar la lista de indicadores si la tienes en este componente
     } catch (err) {
       const { response } = err || {};
@@ -268,6 +289,10 @@ export default function Indicadores() {
     setIndicadores={setIndicadores}
     onSelect={handleEdit}
     puedeEditar={true} // Cambia esto según los permisos del usuario
+    fetchIndicadores={fetchIndicadores}
+    paginacion={paginacion}
+    pagina={paginacion.current_page}
+    setPagina={(p) => fetchIndicadores("", p)}
   />
 </div>
 </div>
