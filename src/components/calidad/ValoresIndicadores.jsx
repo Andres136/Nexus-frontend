@@ -47,11 +47,9 @@ export default function ValoresIndicadores({ valores, setValores, mes, setMes, a
   const roleId = user?.role_id;
 
   // Mostrar solo si el usuario tiene role_id 1 o 2
+const esAdmin = [1, 2].includes(roleId);
 const esRegistrador = valores.some(v => v.user_id === user?.id);
-
-if (![1, 2].includes(roleId) && !esRegistrador) {
-  return null;
-}
+const puedeVerTabla = esAdmin || esRegistrador;
   //Funcion para eliminar un valor de indicador con Swal
   const handleDelete = async(id)=>{
     Swal.fire({
@@ -131,105 +129,86 @@ if (![1, 2].includes(roleId) && !esRegistrador) {
         </button>
       </div>
 
-      {loading ? (
-        <div className="text-center text-gray-500 py-8">Cargando...</div>
-      ) : valores.length === 0 ? (
-        <div className="text-center text-gray-500 py-8">
-          No hay valores registrados para este mes.
-        </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full border text-sm bg-white rounded shadow">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="px-4 py-2">Indicador</th>
-                <th className="px-4 py-2">Valor</th>
-                <th className="px-4 py-2">Meta</th>
-                <th className="px-4 py-2">Estado</th>
-                <th className="px-4 py-2">Fecha</th>
-                <th className="px-4 py-2">Análisis</th>
-                {/* solo mostrar para role_id 1 y 2 */}
-                {roleId === 1 || roleId === 2 ? (
-                  <th className="px-4 py-2">Acciones</th>
-                ) : null}
-              </tr>
-            </thead>
-            <tbody>
-              {valores.map((v) => (
-                <tr key={v.id}>
-                  <td className="px-4 py-2">{v.indicador?.nombre}</td>
-                  <td className="px-4 py-2">{v.valor}</td>
+ 
+{!puedeVerTabla ? (
+  <div className="text-center text-gray-500 py-8">
+    No tienes permisos para ver los valores de indicadores.
+  </div>
+) : loading ? (
+  <div className="text-center text-gray-500 py-8">Cargando...</div>
+) : valores.length === 0 ? (
+  <div className="text-center text-gray-500 py-8">
+    No hay valores registrados para este mes.
+  </div>
+) : (
+  <div className="overflow-x-auto">
+    <table className="min-w-full border text-sm bg-white rounded shadow">
+      <thead className="bg-gray-100">
+        <tr>
+          <th className="px-4 py-2">Indicador</th>
+          <th className="px-4 py-2">Valor</th>
+          <th className="px-4 py-2">Meta</th>
+          <th className="px-4 py-2">Estado</th>
+          <th className="px-4 py-2">Fecha</th>
+          <th className="px-4 py-2">Análisis</th>
+          {esAdmin && <th className="px-4 py-2">Acciones</th>}
+        </tr>
+      </thead>
+      <tbody>
+        {valores.map((v) => (
+          <tr key={v.id}>
+            <td className="px-4 py-2">{v.indicador?.nombre}</td>
+            <td className="px-4 py-2">{v.valor}</td>
+            <td className="px-4 py-2">
+              {v.indicador?.tipo_meta === "mayor" ? "≥" : "≤"} {v.indicador?.meta}
+            </td>
+            <td className="px-4 py-2">
+              {(() => {
+                const estado = calcularEstado(v.valor, v.indicador?.meta, v.indicador?.tipo_meta);
+                const clases = {
+                  ok: "bg-green-100 text-green-700",
+                  medio: "bg-yellow-100 text-yellow-700",
+                  critico: "bg-red-100 text-red-700"
+                };
+                return estado ? (
+                  <span className={`${clases[estado]} px-2 py-1 rounded text-xs font-semibold`}>
+                    {estado.toUpperCase()}
+                  </span>
+                ) : "—";
+              })()}
+            </td>
+            <td className="px-4 py-2">
+              {new Date(v.fecha).toLocaleDateString("es-CO")}
+            </td>
+            <td className="px-4 py-2">
+              {v.documento ? (
+                <a
+                  href={`${clienteAxios.defaults.baseURL}/api/registro-indicadores/descargar/${v.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-800"
+                >
+                  <FileDownIcon className="inline-block" size={20} />
+                </a>
+              ) : "—"}
+            </td>
+            {esAdmin && (
               <td className="px-4 py-2">
-  {v.indicador?.tipo_meta === "mayor" ? (
-    <span className="text-gray-500 mr-1">≥</span>
-  ) : (
-    <span className="text-gray-500 mr-1">≤</span>
-  )}
-  {v.indicador?.meta}
-</td>
-                  
-               <td className="px-4 py-2">
-  {(() => {
-    const estado = calcularEstado(v.valor, v.indicador?.meta, v.indicador?.tipo_meta);
-    if (estado === "ok")
-      return (
-        <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-semibold">
-          OK
-        </span>
-      );
-    if (estado === "medio")
-      return (
-        <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs font-semibold">
-          Medio
-        </span>
-      );
-    if (estado === "critico")
-      return (
-        <span className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-semibold">
-          Crítico
-        </span>
-      );
-    return null;
-  })()}
-</td>
-                  <td className="px-4 py-2">{v.fecha}</td>
-                  <td className="px-4 py-2">
-                    {v.documento ? (
-                      <div className="flex justify-center">
-                        <a
-                          href={`${clienteAxios.defaults.baseURL}/api/registro-indicadores/descargar/${v.id}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-800"
-                          download
-                          title="Descargar documento"
-                        >
-                          <FileDownIcon className="inline-block" size={20} />
-                        </a>
-                      </div>
-                    ) : (
-                      <div className="flex justify-center">—</div>
-                    )}
-                  </td>
-
-                  {roleId === 1 || roleId === 2 ? (
-                    <td className="px-4 py-2">
-                      <div className="flex justify-center">
-                        <button
-                          onClick={() => handleDelete(v.id)}
-                          className="text-red-600 hover:text-red-800"
-                        >
-                        Eliminar
-                        </button>
-                      </div>
-                    </td>
-                  ) : null}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+                <button
+                  onClick={() => handleDelete(v.id)}
+                  disabled={loading}
+                  className="bg-red-100 text-red-700 px-2 py-1 rounded hover:bg-red-200"
+                >
+                  Eliminar
+                </button>
+              </td>
+            )}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+)}
     </div>
   );
 }
