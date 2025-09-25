@@ -51,6 +51,9 @@ import Indicadores from "../views/calidad/Indicadores";
 import RegisterValorIndicador from "../views/calidad/RegisterValorIndicador";
 import DashboardIndicadores from "../views/calidad/DashboardIndicadores";
 import Empresas from "../components/Empresas";
+import VistaPrevia from "../components/crm/VistaPrevia";
+import UpdateOcProvedor from "../components/crm/UpdateOcProvedor";
+import Bodegas from "../components/Bodegas";
 
 
 
@@ -107,6 +110,8 @@ export default function Router() {
         <Route path="ordenes-compra-proveedor" element={<ObtenerOrdenesProveedores/>} />
         <Route path="/auth/crm/ordenes-proveedor-entregas/:id/registrar-entrega" element={<RegistrarEntregaProveedor />} />
         <Route path="/auth/crm/ordenes-proveedor-entregas/:id/editar" element={<RegistrarEntregaProveedor modo="editar" />} />
+        <Route path="/auth/crm/ordenes-proveedor-preview/:id" element={<VistaPrevia />} />
+        <Route path="/auth/crm/oc-provedor-update/:id" element={<UpdateOcProvedor />} />
 
         <Route path="cotizaciones" element={<CotizacionForm/>} />
         <Route path="mis-ordenes" element={<MisOrdenesComerciales/>} />
@@ -136,6 +141,7 @@ export default function Router() {
       <Route path="indicadores" element={<Indicadores/>} />
       <Route path="dashboard/indicadores" element={<DashboardIndicadores />} />
       <Route path="empresas" element={<Empresas/>} />
+      <Route path="bodegas" element={<Bodegas/>} />
       </Route>
     </Route>
   

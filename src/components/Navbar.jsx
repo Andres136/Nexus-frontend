@@ -30,7 +30,7 @@ useEffect(() => {
   }
 }, [user?.departamento_id]);
  const isResponsable = departamento?.responsable_id === user?.id;
-  console.log("Is Responsable:", isResponsable); // Verifica si es responsable en consola
+  // Verifica si es responsable en consola
   const navLinks = [
     { name: "Inicio", to: "/", icon: Home, allowedRoles: [1,10,11] },
     { name: "Procesos", to: "/auth/procesos", icon: FolderKanban, alwaysVisible: true },

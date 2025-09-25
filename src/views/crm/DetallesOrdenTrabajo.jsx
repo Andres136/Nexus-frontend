@@ -22,7 +22,7 @@ export default function DetallesOrdenTrabajo() {
 
   return (
     <div className="p-6 bg-white rounded-xl">
-      <ApiInventario />
+    
       <h2 className="text-2xl font-bold mb-4">
         Orden de Trabajo #{orden.id} - {orden.cliente?.nombre}
       </h2>

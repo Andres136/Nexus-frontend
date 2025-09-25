@@ -2,11 +2,6 @@ import { useEffect, useState } from "react";
 import clienteAxios from "../config/axios";
 
 
-
-
-
-
-
 export function useEntregasProveedores(){
 
 

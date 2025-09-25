@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
-import { useEmpresas } from "../hooks/Useempresas";
+import { useEmpresas } from "../hooks/useEmpresas";
 import { FaEdit, FaTrash, FaPlus, FaBuilding } from "react-icons/fa";
 import Modal from "../components/calidad/Modal";
-import axios from "axios";
 import clienteAxios from "../config/axios";
 
 export default function Empresas() {

@@ -104,6 +104,15 @@ export const sedesApi={
 
 }
 
+//Api gestionar las bodegas
+export const bodegasApi={
+  getAll:()=>apiClient.get('/api/bodegas'),
+  getById:(id)=>apiClient.get(`/api/bodegas/${id}`),
+  create:(data)=>apiClient.post('/api/bodegas',data),
+  update:(id,data)=>apiClient.put(`/api/bodegas/${id}`,data),
+  delete:(id)=>apiClient.delete(`/api/bodegas/${id}`),
+
+}
 
 //Api Empresa
 export const empresaApi={
@@ -123,5 +132,22 @@ export const empresaApi={
   },
   delete:(id)=>apiClient.delete(`/api/empresas/${id}`),
 
+}
+
+//Api para traer todos los productos sin paginar
+export const productsApi={
+  getAll:(params={})=>apiClient.get('/api/products-all', { params }),
+}
+//Ordenes de compra a proveedores API
+export const ordenesCompraProveedoresApi={
+//Peticion al pdf al crear la orden de compra
+  getPdf:(id)=>apiClient.get(`/api/orden-compras-proveedor/${id}/pdf`,{
+ responseType: "arraybuffer", // 👈 en vez de blob
+ 
+
+
+  }),
+  sendEmailWithPdf: (id) => 
+  apiClient.post(`/api/ordenes-compra-proveedor/${id}/enviar-email`),
 }
 export default apiClient;
