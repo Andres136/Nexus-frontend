@@ -117,7 +117,7 @@ export default function Router() {
         <Route path="mis-ordenes" element={<MisOrdenesComerciales/>} />
         <Route path="mis-cotizaciones" element={<MisCotizaciones/>} />
         <Route path="/auth/crm/editar-cotizacion/:id" element={<CotizacionForm modo="edicion" />} />
-        <Route path="/auth/crm/referencias-excedidas" element={<ReferenciasExcedidas/>} />
+        <Route path="/auth/crm/referencias-faltantes" element={<ReferenciasExcedidas/>} />
         <Route path="/auth/crm/vehiculos/:id/fotos" element= {<CargaFotosVehiculo />} />
         <Route path="/auth/crm/conductores" element={<ObtenerDatosConductores/>} />
         <Route path="/auth/crm/crear-datos-conductores" element={<Conductores/>} />

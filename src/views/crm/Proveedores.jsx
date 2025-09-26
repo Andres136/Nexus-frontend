@@ -204,10 +204,10 @@ const opcionesFiltro = proveedoresFiltrados.map(p => ({ value: p.id, label: p.no
       Ver Órdenes Registradas
     </Link>
     <Link
-      to="/auth/crm/referencias-excedidas"
+      to="/auth/crm/referencias-faltantes"
       className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded text-center"
     >
-      Ver Referencias Excedidas
+      Ver Referencias Faltantes
     </Link>
 
    {/* Filtros de reportes */}
