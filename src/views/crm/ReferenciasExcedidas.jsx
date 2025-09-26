@@ -17,10 +17,10 @@ export default function ReferenciasExcedidas() {
         const response = await clienteAxios.get("/api/referencias-excedidas", {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setReferencias(response.data.referencias_excedidas);
+        setReferencias(response.data.referencias_faltantes);
       } catch (error) {
         console.error(error);
-        toast.error("Error al obtener referencias excedidas");
+        toast.error("Error al obtener referencias faltantes");
       }
     };
 
@@ -47,7 +47,7 @@ export default function ReferenciasExcedidas() {
   return (
     <div className="my-6 px-4">
       <h3 className="text-lg font-bold mb-4 text-red-600">
-        Resultados de Entregas Excedidas
+        Referencias con Cantidades Faltantes
       </h3>
       <button
   onClick={() => navigate(-1)} // 👈 vuelve a la ruta anterior
@@ -80,7 +80,7 @@ export default function ReferenciasExcedidas() {
                 <th className="border px-4 py-2">Descripción</th>
                 <th className="border px-4 py-2">Solicitada</th>
                 <th className="border px-4 py-2">Entregada</th>
-                <th className="border px-4 py-2 text-red-600">Excedente</th>
+                <th className="border px-4 py-2 text-red-600">Faltantes</th>
               </tr>
             </thead>
             <tbody>
@@ -95,7 +95,7 @@ export default function ReferenciasExcedidas() {
                   <td className="border px-4 py-2">{ref.cantidad_solicitada}</td>
                   <td className="border px-4 py-2">{ref.cantidad_entregada}</td>
                   <td className="border px-4 py-2 text-red-600 font-bold">
-                    {ref.excedente}
+                    {ref.cantidad_faltante}
                   </td>
                 </tr>
               ))}
