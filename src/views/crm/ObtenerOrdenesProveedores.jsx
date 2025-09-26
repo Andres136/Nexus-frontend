@@ -18,7 +18,12 @@ export default function ObtenerOrdenesProveedores() {
     setPagina(1);
     obtenerOrdenes(1, searchTerm);
   };
-  console.log(ordenes);
+
+  //Formatear fecha
+  const formatearFecha = (fecha) => {
+    const opciones = { year: "numeric", month: "2-digit", day: "2-digit" };
+    return new Date(fecha).toLocaleDateString("col-CO", opciones);
+  };
   return (
     <div className="grid grid-cols-1 ">
 
@@ -55,7 +60,8 @@ export default function ObtenerOrdenesProveedores() {
             <tr>
               <th className="border px-4 py-2">Número O-C</th>
               <th className="border px-4 py-2">Fecha </th>
-               <th className="border px-4 py-2">Observaciones</th>
+              <th className="border px-4 py-2">Empresa</th>
+              <th className="border px-4 py-2">Observaciones</th>
               <th className="border px-4 py-2">Proveedor</th>
               <th className="border px-4 py-2">Estado</th>
               <th className="border px-4 py-2">Usuario</th>
@@ -66,7 +72,8 @@ export default function ObtenerOrdenesProveedores() {
             {ordenes.data?.map((orden) => (
               <tr key={orden.id}>
                 <td className="border px-4 py-2">{orden.numero_orden}</td>
-                <td className="border px-4 py-2">{orden.fecha}</td>
+                <td className="border px-4 py-2">{formatearFecha(orden.fecha)}</td>
+                <td className="border px-4 py-2">{orden.empresa?.nombre}</td>
                 <td className="border px-4 py-2">
                   {orden.observaciones || "Sin observaciones"}
                 </td>

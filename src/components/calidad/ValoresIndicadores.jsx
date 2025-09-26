@@ -44,7 +44,7 @@ export default function ValoresIndicadores({ valores, setValores, mes, setMes, a
       setValores(res.data.data || []);
     } catch (error) {
       setValores([]);
-      console.error("Error fetching valores:", error);
+  
     }
     setLoading(false);
   };
@@ -52,7 +52,7 @@ export default function ValoresIndicadores({ valores, setValores, mes, setMes, a
   const fetchdepartamentos = async () => {
     try {
       const res = await departamentosApi.getAll();
-      console.log("Departamentos fetched successfully:", res.data);
+ 
       setDepartamentos(res.data);
     } catch (error) {
       setDepartamentos([]);
