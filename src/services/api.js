@@ -116,7 +116,7 @@ export const bodegasApi={
 
 //Api Empresa
 export const empresaApi={
-  getAll:()=>apiClient.get('/api/empresas'),
+  getAll:()=>apiClient.get('/api/empresas-all'),
   getById:(id)=>apiClient.get(`/api/empresas/${id}`),
   create:(data)=>apiClient.post('/api/empresas',data,{
     headers: { 'Content-Type': 'multipart/form-data' }
