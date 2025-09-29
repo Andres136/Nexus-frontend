@@ -175,9 +175,11 @@ export default function OrdenesCompraClient() {
                   <td className="border px-2 py-1">{orden.cliente}</td>
                   <td className="border px-2 py-1">{orden.creador}</td>
                   <td className="border px-2 py-1">{orden.fecha_entrega}</td>
-                  <td className="border px-2 py-1">
-                    {orden.fecha_despacho ?? "-"}
-                  </td>
+                   <td className="border px-2 py-1">
+          {orden.fecha_despacho
+            ? orden.fecha_despacho
+            : orden.fecha_actualizacion ?? "-"}
+        </td>
                   <td
                     className={`border px-2 py-1 font-semibold ${
                       orden.vencida
