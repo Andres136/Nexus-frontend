@@ -28,6 +28,7 @@ export default function RegisterValorIndicador() {
       try {
         const res = await indicadoresApi.getAll();
         setIndicadores(res.data.data || []);
+
       } catch (error) {
         console.error("Error fetching indicadores:", error);
       }

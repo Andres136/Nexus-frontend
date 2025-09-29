@@ -150,4 +150,10 @@ export const ordenesCompraProveedoresApi={
   sendEmailWithPdf: (id) => 
   apiClient.post(`/api/ordenes-compra-proveedor/${id}/enviar-email`),
 }
+
+
+//Api para auditor 
+export const auditApi={
+  getAuditData:(params)=>apiClient.get('/api/audit-ordenes-compra', { params }),
+}
 export default apiClient;

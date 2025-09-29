@@ -1,15 +1,20 @@
 import { useEffect, useState } from "react";
 import { valoresIndicadoresApi, departamentosApi} from "../../services/api";
 import clienteAxios from "../../config/axios";
-import { FileDownIcon } from "lucide-react";
+import { FileDownIcon, X } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import Swal from "sweetalert2";
+
 
 
 export default function ValoresIndicadores({ valores, setValores, mes, setMes, anio, setAnio }) {
   const { user } = useAuth({ middleware: "auth" });
     const [departamentoId, setDepartamentoId] = useState("");
-  const [departamentos, setDepartamentos] = useState([]); // no pases options si tu hook no las usa
+  const [departamentos, setDepartamentos] = useState([]);
+    const [selectedObservacion, setSelectedObservacion] = useState(null);
+   // no pases options si tu hook no las usa
+
+
   const [loading, setLoading] = useState(false);
   const meses = [
     "Enero",
@@ -26,6 +31,8 @@ export default function ValoresIndicadores({ valores, setValores, mes, setMes, a
     "Diciembre",
   ];
 
+
+  
   const fetchValores = async () => {
     setLoading(true);
     try {
@@ -226,18 +233,37 @@ const puedeVerTabla = esAdmin || esRegistrador;
             <td className="px-4 py-2">
               {new Date(v.fecha).toLocaleDateString("es-CO")}
             </td>
-            <td className="px-4 py-2">
-              {v.documento ? (
-                <a
-                  href={`${clienteAxios.defaults.baseURL}/api/registro-indicadores/descargar/${v.id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:text-blue-800"
-                >
-                  <FileDownIcon className="inline-block" size={20} />
-                </a>
-              ) : "—"}
-            </td>
+ <td className="px-4 py-2">
+                  {v.documento ? (
+                    <a
+                      href={`${clienteAxios.defaults.baseURL}/api/registro-indicadores/descargar/${v.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-800"
+                    >
+                      <FileDownIcon className="inline-block" size={20} />
+                    </a>
+                  ) : v.observaciones ? (
+                    <div>
+                      <span className="text-gray-700">
+                        {v.observaciones.length > 50
+                          ? `${v.observaciones.substring(0, 50)}...`
+                          : v.observaciones}
+                      </span>
+                      {v.observaciones.length > 50 && (
+                        <button
+                          onClick={() => setSelectedObservacion(v.observaciones)}
+                          className="ml-2 text-blue-600 hover:text-blue-800 text-xs underline"
+                        >
+                          Ver más
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    "—"
+                  )}
+                </td>
+
             {esAdmin && (
               <td className="px-4 py-2">
                 <button
@@ -255,6 +281,29 @@ const puedeVerTabla = esAdmin || esRegistrador;
     </table>
   </div>
 )}
+      {/* 👇 Modal Tailwind */}
+      {selectedObservacion && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white rounded-lg shadow-lg max-w-lg w-full p-6 relative">
+            <button
+              onClick={() => setSelectedObservacion(null)}
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+            >
+              <X size={20} />
+            </button>
+            <h3 className="text-lg font-semibold mb-4">Observaciones</h3>
+            <p className="text-gray-700 whitespace-pre-line">{selectedObservacion}</p>
+            <div className="mt-6 text-right">
+              <button
+                onClick={() => setSelectedObservacion(null)}
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

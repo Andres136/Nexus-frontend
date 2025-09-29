@@ -4,6 +4,8 @@ import { useDashboardMonthly } from '../hooks/useDashboardMonthly';
 import { useEffect, useState } from 'react';
 import clienteAxios from '../config/axios';
 import TopClientes from '../components/calidad/TopClientes';
+import OrdenesCompraClient from '../components/auditoria/OrdenesCompraClient';
+import { Link } from 'react-router-dom';
 
 const Dashboard = () => {
   const today = new Date();
@@ -237,6 +239,12 @@ const Dashboard = () => {
           <h3 className="font-semibold mb-4">
             Estadísticas {month}/{year}
           </h3>
+         <Link
+  to="/auth/crm/ordenes-compra-auditor"
+  className="inline-flex items-center px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded shadow hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+>
+  Ver detalles
+</Link>
           <ApexChart
             type="pie"
             height={300}
@@ -250,6 +258,7 @@ const Dashboard = () => {
 
         <TopClientes />
       </div>
+      <OrdenesCompraClient />
     </div>
   );
 };

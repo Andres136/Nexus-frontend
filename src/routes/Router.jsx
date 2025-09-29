@@ -54,6 +54,7 @@ import Empresas from "../components/Empresas";
 import VistaPrevia from "../components/crm/VistaPrevia";
 import UpdateOcProvedor from "../components/crm/UpdateOcProvedor";
 import Bodegas from "../components/Bodegas";
+import OrdenesCompraClient from "../components/auditoria/OrdenesCompraClient";
 
 
 
@@ -121,6 +122,7 @@ export default function Router() {
         <Route path="/auth/crm/vehiculos/:id/fotos" element= {<CargaFotosVehiculo />} />
         <Route path="/auth/crm/conductores" element={<ObtenerDatosConductores/>} />
         <Route path="/auth/crm/crear-datos-conductores" element={<Conductores/>} />
+        <Route path="/auth/crm/ordenes-compra-auditor" element={<OrdenesCompraClient />} />
         <Route
   path="/auth/crm/conductores/:conductorId/revisiones"
   element={<RevisionesPage />}

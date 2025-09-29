@@ -1,9 +1,13 @@
 import { FaSearch } from "react-icons/fa";
 import useOrdenesTrabajo from "../../hooks/useOrdenesTrabajo";
 import { Link } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export default function ObtenerOrdenesTrabajo() {
+  // Estados locales temporales para los filtros
+  const [busquedaLocal, setBusquedaLocal] = useState("");
+  const [fechaLocal, setFechaLocal] = useState("");
+
   const {
     ordenesTrabajo,
     isLoading,
@@ -17,19 +21,21 @@ export default function ObtenerOrdenesTrabajo() {
   sede,
   setSede,
   } = useOrdenesTrabajo();
+  // Función para aplicar los filtros
+  const aplicarFiltros = () => {
+    setBusqueda(busquedaLocal);
+    setFecha(fechaLocal);
+    setPagina(1); // Reiniciar a la primera página al aplicar filtros
+  };
+
   const limpiarFiltros = () => {
+    setBusquedaLocal("");
+    setFechaLocal("");
     setBusqueda("");
     setFecha("");
     setSede("");
-    // Reiniciar la página a 1 al limpiar los filtros
-    // Esto es importante para que al limpiar los filtros, la paginación vuelva a la primera página
-    // y no se quede en una página que no tiene resultados
-    setPagina(1);
+    setPagina(1); // Reiniciar la página al limpiar los filtros
   };
-  
-useEffect(() => {
-  setPagina(1);
-}, [busqueda, fecha]);
 
 // ...existing code...
 if (isLoading)
@@ -90,11 +96,18 @@ if (isLoading)
     />
   </div>
   <button
-    onClick={limpiarFiltros}
-    className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg"
-  >
-    Limpiar
-  </button>
+            onClick={aplicarFiltros} // Aplicar filtros al presionar el botón
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
+          >
+            Buscar
+          </button>
+
+          <button
+            onClick={limpiarFiltros}
+            className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg"
+          >
+            Limpiar
+          </button>
 </div>
 
 
