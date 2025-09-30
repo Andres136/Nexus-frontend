@@ -22,7 +22,6 @@ export default function OrdenesCompraClient() {
     async function fetchData() {
       try {
         const response = await auditApi.getAuditData(filters);
-     
         setAuditoria(response.data.auditoria || []);
       } catch (error) {
         console.error("Error al cargar datos de auditoría:", error);
@@ -32,19 +31,18 @@ export default function OrdenesCompraClient() {
   }, [filters]);
 
   // Filtrado
-const filteredData = auditoria.filter((orden) => {
-  return (
-    (!filters.estado || orden.estado_final === filters.estado) &&
-    (!filters.cliente ||
-      orden.cliente?.toLowerCase().includes(filters.cliente.toLowerCase())) &&
-    (!filters.sede ||
-      (orden.sede &&
-        orden.sede.toLowerCase().includes(filters.sede.toLowerCase()))) &&
-    (!filters.soloVencidas || orden.estado_final === "Vencida") &&
-    (!filters.soloNoATiempo || orden.no_entregado_a_tiempo === true)
-  );
-});
-
+  const filteredData = auditoria.filter((orden) => {
+    return (
+      (!filters.estado || orden.estado_final === filters.estado) &&
+      (!filters.cliente ||
+        orden.cliente?.toLowerCase().includes(filters.cliente.toLowerCase())) &&
+      (!filters.sede ||
+        (orden.sede &&
+          orden.sede.toLowerCase().includes(filters.sede.toLowerCase()))) &&
+      (!filters.soloVencidas || orden.estado_final.includes("Vencida")) &&
+      (!filters.soloNoATiempo || orden.no_entregado_a_tiempo === true)
+    );
+  });
 
   const totalPages = Math.ceil(filteredData.length / pageSize);
   const paginatedData = filteredData.slice(
@@ -61,7 +59,6 @@ const filteredData = auditoria.filter((orden) => {
     setCurrentPage(1);
   };
 
-  // Total de no entregadas a tiempo dentro del filtro actual
   const totalNoATiempo = filteredData.filter(
     (orden) => orden.no_entregado_a_tiempo === true
   ).length;
@@ -105,20 +102,19 @@ const filteredData = auditoria.filter((orden) => {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Estado</label>
-         <select
-  name="estado"
-  value={filters.estado}
-  onChange={handleFilterChange}
-  className="mt-1 w-full border-gray-300 rounded-md shadow-sm"
->
-  <option value="">Todos</option>
-  <option value="Pendiente">Pendiente</option>
-  <option value="Completada">Completada</option>
-
-  <option value="Entrega Parcial">Entrega Parcial</option>
-
-</select>
-
+            <select
+              name="estado"
+              value={filters.estado}
+              onChange={handleFilterChange}
+              className="mt-1 w-full border-gray-300 rounded-md shadow-sm"
+            >
+              <option value="">Todos</option>
+              <option value="Pendiente">Pendiente</option>
+              <option value="Completada">Completada</option>
+              <option value="Despachada a tiempo">Despachada a tiempo</option>
+              <option value="Despachada fuera de tiempo">Despachada fuera de tiempo</option>
+              <option value="Vencida sin despacho">Vencida sin despacho</option>
+            </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Cliente</label>
@@ -189,8 +185,7 @@ const filteredData = auditoria.filter((orden) => {
               <th className="border px-2 py-1">Entrega</th>
               <th className="border px-2 py-1">Despacho</th>
               <th className="border px-2 py-1">Estado</th>
-       <th className="border px-2 py-1">Entregado a tiempo</th>
-
+              <th className="border px-2 py-1">Entregado a tiempo</th>
               <th className="border px-2 py-1">Sede</th>
               <th className="border px-2 py-1">Acciones</th>
             </tr>
@@ -204,7 +199,7 @@ const filteredData = auditoria.filter((orden) => {
               </tr>
             ) : (
               paginatedData.map((orden) => {
-                const estadoVisual = orden.vencida ? "Vencida" : orden.estado;
+                const estadoVisual = orden.estado_final;
 
                 return (
                   <tr key={orden.id} className="hover:bg-gray-50">
@@ -215,18 +210,20 @@ const filteredData = auditoria.filter((orden) => {
                     <td className="border px-2 py-1 text-center">
                       {orden.fecha_despacho}
                     </td>
-                <td
-  className={`border px-2 py-1 font-semibold text-center ${
-    orden.estado_final === "Vencida"
-      ? "text-red-600"
-      : orden.estado_final === "Completada"
-      ? "text-green-600"
-      : "text-yellow-600"
-  }`}
->
-  {orden.estado_final}
-</td>
-
+                    <td
+                      className={`border px-2 py-1 font-semibold text-center ${
+                        estadoVisual.includes("Vencida")
+                          ? "text-red-600"
+                          : estadoVisual.includes("fuera de tiempo")
+                          ? "text-orange-600"
+                          : estadoVisual.includes("Completada") ||
+                            estadoVisual.includes("a tiempo")
+                          ? "text-green-600"
+                          : "text-yellow-600"
+                      }`}
+                    >
+                      {estadoVisual}
+                    </td>
                     <td className="border px-2 py-1 text-center">
                       {orden.no_entregado_a_tiempo ? (
                         <span className="text-red-600 font-semibold">No</span>
@@ -262,7 +259,6 @@ const filteredData = auditoria.filter((orden) => {
               key={`details-${orden.id}`}
               className="border rounded-lg p-4 bg-gray-50 shadow-md mt-4"
             >
-              {/* Detalles de Productos */}
               <div className="mb-4">
                 <h4 className="text-lg font-semibold text-gray-800 mb-2 flex items-center gap-2">
                   <span className="text-blue-500">📦</span> Detalles de Productos
@@ -279,7 +275,6 @@ const filteredData = auditoria.filter((orden) => {
                 </ul>
               </div>
 
-              {/* Orden de Trabajo */}
               {orden.orden_trabajo && (
                 <div className="border-t pt-4">
                   <h4 className="text-lg font-semibold text-gray-800 mb-2 flex items-center gap-2">
