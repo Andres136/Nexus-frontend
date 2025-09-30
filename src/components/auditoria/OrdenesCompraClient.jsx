@@ -185,7 +185,7 @@ export default function OrdenesCompraClient() {
               <th className="border px-2 py-1">Entrega</th>
               <th className="border px-2 py-1">Despacho</th>
               <th className="border px-2 py-1">Estado</th>
-              <th className="border px-2 py-1">Entregado a tiempo</th>
+         
               <th className="border px-2 py-1">Sede</th>
               <th className="border px-2 py-1">Acciones</th>
             </tr>
@@ -224,13 +224,7 @@ export default function OrdenesCompraClient() {
                     >
                       {estadoVisual}
                     </td>
-                    <td className="border px-2 py-1 text-center">
-                      {orden.no_entregado_a_tiempo ? (
-                        <span className="text-red-600 font-semibold">No</span>
-                      ) : (
-                        <span className="text-green-600 font-semibold">Sí</span>
-                      )}
-                    </td>
+                 
                     <td className="border px-2 py-1">{orden.sede ?? "-"}</td>
                     <td className="border px-2 py-1 text-center">
                       <button
