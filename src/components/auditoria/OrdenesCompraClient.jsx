@@ -32,20 +32,19 @@ export default function OrdenesCompraClient() {
   }, [filters]);
 
   // Filtrado
-  const filteredData = auditoria.filter((orden) => {
-    const estadoVisual = orden.vencida ? "Vencida" : orden.estado;
+const filteredData = auditoria.filter((orden) => {
+  return (
+    (!filters.estado || orden.estado_final === filters.estado) &&
+    (!filters.cliente ||
+      orden.cliente?.toLowerCase().includes(filters.cliente.toLowerCase())) &&
+    (!filters.sede ||
+      (orden.sede &&
+        orden.sede.toLowerCase().includes(filters.sede.toLowerCase()))) &&
+    (!filters.soloVencidas || orden.estado_final === "Vencida") &&
+    (!filters.soloNoATiempo || orden.no_entregado_a_tiempo === true)
+  );
+});
 
-    return (
-      (!filters.estado || estadoVisual === filters.estado) &&
-      (!filters.cliente ||
-        orden.cliente?.toLowerCase().includes(filters.cliente.toLowerCase())) &&
-      (!filters.sede ||
-        (orden.sede &&
-          orden.sede.toLowerCase().includes(filters.sede.toLowerCase()))) &&
-      (!filters.soloVencidas || orden.vencida === true) &&
-      (!filters.soloNoATiempo || orden.no_entregado_a_tiempo === true)
-    );
-  });
 
   const totalPages = Math.ceil(filteredData.length / pageSize);
   const paginatedData = filteredData.slice(
@@ -106,17 +105,20 @@ export default function OrdenesCompraClient() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Estado</label>
-            <select
-              name="estado"
-              value={filters.estado}
-              onChange={handleFilterChange}
-              className="mt-1 w-full border-gray-300 rounded-md shadow-sm"
-            >
-              <option value="">Todos</option>
-              <option value="Pendiente">Pendiente</option>
-              <option value="Completado">Completado</option>
-              <option value="Vencida">Vencida</option>
-            </select>
+         <select
+  name="estado"
+  value={filters.estado}
+  onChange={handleFilterChange}
+  className="mt-1 w-full border-gray-300 rounded-md shadow-sm"
+>
+  <option value="">Todos</option>
+  <option value="Pendiente">Pendiente</option>
+  <option value="Completada">Completada</option>
+
+  <option value="Entrega Parcial">Entrega Parcial</option>
+
+</select>
+
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Cliente</label>
