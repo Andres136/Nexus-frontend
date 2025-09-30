@@ -13,6 +13,9 @@ const Dashboard = () => {
   const [year, setYear] = useState(today.getFullYear());
   const { data, error, isLoading } = useDashboard();
   const { data: monthly, isLoading: loading2, error: error2 } = useDashboardMonthly(month, year);
+console.log(monthly);
+
+
 
   // Tooltip externo
   const [tipOpen, setTipOpen] = useState(false);

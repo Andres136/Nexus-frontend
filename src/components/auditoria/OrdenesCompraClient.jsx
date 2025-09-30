@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { auditApi } from "../../services/api";
 import { FaFilter } from "react-icons/fa";
-import { formatDate } from "../../helpers";
 
 export default function OrdenesCompraClient() {
   const [auditoria, setAuditoria] = useState([]);
@@ -23,6 +22,7 @@ export default function OrdenesCompraClient() {
     async function fetchData() {
       try {
         const response = await auditApi.getAuditData(filters);
+     
         setAuditoria(response.data.auditoria || []);
       } catch (error) {
         console.error("Error al cargar datos de auditoría:", error);
@@ -31,13 +31,14 @@ export default function OrdenesCompraClient() {
     fetchData();
   }, [filters]);
 
+  // Filtrado
   const filteredData = auditoria.filter((orden) => {
+    const estadoVisual = orden.vencida ? "Vencida" : orden.estado;
+
     return (
-      (!filters.estado || orden.estado === filters.estado) &&
+      (!filters.estado || estadoVisual === filters.estado) &&
       (!filters.cliente ||
-        orden.cliente
-          ?.toLowerCase()
-          .includes(filters.cliente.toLowerCase())) &&
+        orden.cliente?.toLowerCase().includes(filters.cliente.toLowerCase())) &&
       (!filters.sede ||
         (orden.sede &&
           orden.sede.toLowerCase().includes(filters.sede.toLowerCase()))) &&
@@ -45,9 +46,6 @@ export default function OrdenesCompraClient() {
       (!filters.soloNoATiempo || orden.no_entregado_a_tiempo === true)
     );
   });
-
-
-
 
   const totalPages = Math.ceil(filteredData.length / pageSize);
   const paginatedData = filteredData.slice(
@@ -63,12 +61,11 @@ export default function OrdenesCompraClient() {
     }));
     setCurrentPage(1);
   };
-  // Total de no entregadas a tiempo dentro del filtro actual (mes, año, etc.)
-const totalNoATiempo = filteredData.filter(
-  (orden) => orden.no_entregado_a_tiempo === true
-).length;
 
-
+  // Total de no entregadas a tiempo dentro del filtro actual
+  const totalNoATiempo = filteredData.filter(
+    (orden) => orden.no_entregado_a_tiempo === true
+  ).length;
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -118,6 +115,7 @@ const totalNoATiempo = filteredData.filter(
               <option value="">Todos</option>
               <option value="Pendiente">Pendiente</option>
               <option value="Completado">Completado</option>
+              <option value="Vencida">Vencida</option>
             </select>
           </div>
           <div>
@@ -156,30 +154,29 @@ const totalNoATiempo = filteredData.filter(
             </label>
           </div>
           <div className="flex items-center mt-6">
-  <input
-    type="checkbox"
-    id="soloNoATiempo"
-    name="soloNoATiempo"
-    checked={filters.soloNoATiempo}
-    onChange={handleFilterChange}
-    className="mr-2"
-  />
-  <label htmlFor="soloNoATiempo" className="text-sm font-medium">
-    Solo no entregadas a tiempo
-  </label>
-</div>
-
+            <input
+              type="checkbox"
+              id="soloNoATiempo"
+              name="soloNoATiempo"
+              checked={filters.soloNoATiempo}
+              onChange={handleFilterChange}
+              className="mr-2"
+            />
+            <label htmlFor="soloNoATiempo" className="text-sm font-medium">
+              Solo no entregadas a tiempo
+            </label>
+          </div>
         </div>
       </div>
 
       {/* Tabla */}
       <div className="bg-white p-4 rounded-lg shadow-md">
         <div className="mb-4">
-  <p className="text-gray-700">
-    <span className="font-semibold">Total de órdenes no entregadas a tiempo:</span>{" "}
-    {totalNoATiempo}
-  </p>
-</div>
+          <p className="text-gray-700">
+            <span className="font-semibold">Total de órdenes no entregadas a tiempo:</span>{" "}
+            {totalNoATiempo}
+          </p>
+        </div>
 
         <table className="min-w-full border border-gray-300 text-sm">
           <thead className="bg-gray-100">
@@ -188,9 +185,10 @@ const totalNoATiempo = filteredData.filter(
               <th className="border px-2 py-1">Cliente</th>
               <th className="border px-2 py-1">Creador</th>
               <th className="border px-2 py-1">Entrega</th>
-              <th className="border px-2 py-1">Despacho/Actualización</th>
+              <th className="border px-2 py-1">Despacho</th>
               <th className="border px-2 py-1">Estado</th>
-              <th className="border px-2 py-1">No a tiempo</th>
+       <th className="border px-2 py-1">Entregado a tiempo</th>
+
               <th className="border px-2 py-1">Sede</th>
               <th className="border px-2 py-1">Acciones</th>
             </tr>
@@ -203,104 +201,107 @@ const totalNoATiempo = filteredData.filter(
                 </td>
               </tr>
             ) : (
-              paginatedData.map((orden) => (
-                <tr key={orden.id} className="hover:bg-gray-50">
-                  <td className="border px-2 py-1">{orden.id}</td>
-                  <td className="border px-2 py-1">{orden.cliente}</td>
-                  <td className="border px-2 py-1">{orden.creador}</td>
-                  <td className="border px-2 py-1">{orden.fecha_entrega}</td>
-                  <td className="border px-2 py-1 text-center">
-                    {orden.fecha_despacho
-                      ? orden.fecha_despacho
-                      : orden.fecha_actualizacion ?? "-"}
-                  </td>
-                  <td
-                    className={`border px-2 py-1 font-semibold text-center ${
-                      orden.vencida
-                        ? "text-red-600"
-                        : orden.estado === "Completado"
-                        ? "text-green-600"
-                        : "text-yellow-600"
-                    }`}
-                  >
-                    {orden.vencida ? "Vencida" : orden.estado}
-                  </td>
-                  <td className="border px-2 py-1 text-center">
-                    {orden.no_entregado_a_tiempo ? (
-                      <span className="text-red-600 font-semibold">No</span>
-                    ) : (
-                      <span className="text-green-600 font-semibold">Sí</span>
-                    )}
-                  </td>
-                  <td className="border px-2 py-1">{orden.sede ?? "-"}</td>
-                  <td className="border px-2 py-1 text-center">
-                    <button
-                      className="inline-flex items-center px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded shadow hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
-                      onClick={() =>
-                        setExpanded(expanded === orden.id ? null : orden.id)
-                      }
-                    >
-                      {expanded === orden.id ? "Ocultar" : "Ver detalles"}
-                    </button>
-                  </td>
-                </tr>
-              ))
+              paginatedData.map((orden) => {
+                const estadoVisual = orden.vencida ? "Vencida" : orden.estado;
+
+                return (
+                  <tr key={orden.id} className="hover:bg-gray-50">
+                    <td className="border px-2 py-1">{orden.id}</td>
+                    <td className="border px-2 py-1">{orden.cliente}</td>
+                    <td className="border px-2 py-1">{orden.creador}</td>
+                    <td className="border px-2 py-1">{orden.fecha_entrega}</td>
+                    <td className="border px-2 py-1 text-center">
+                      {orden.fecha_despacho}
+                    </td>
+                <td
+  className={`border px-2 py-1 font-semibold text-center ${
+    orden.estado_final === "Vencida"
+      ? "text-red-600"
+      : orden.estado_final === "Completada"
+      ? "text-green-600"
+      : "text-yellow-600"
+  }`}
+>
+  {orden.estado_final}
+</td>
+
+                    <td className="border px-2 py-1 text-center">
+                      {orden.no_entregado_a_tiempo ? (
+                        <span className="text-red-600 font-semibold">No</span>
+                      ) : (
+                        <span className="text-green-600 font-semibold">Sí</span>
+                      )}
+                    </td>
+                    <td className="border px-2 py-1">{orden.sede ?? "-"}</td>
+                    <td className="border px-2 py-1 text-center">
+                      <button
+                        className="inline-flex items-center px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded shadow hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+                        onClick={() =>
+                          setExpanded(expanded === orden.id ? null : orden.id)
+                        }
+                      >
+                        {expanded === orden.id ? "Ocultar" : "Ver detalles"}
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
       </div>
-{/* Fila expandida */}
-{expanded &&
-  paginatedData
-    .filter((o) => o.id === expanded)
-    .map((orden) => (
-      <div
-        key={`details-${orden.id}`}
-        className="border rounded-lg p-4 bg-gray-50 shadow-md mt-4"
-      >
-        {/* Detalles de Productos */}
-        <div className="mb-4">
-          <h4 className="text-lg font-semibold text-gray-800 mb-2 flex items-center gap-2">
-            <span className="text-blue-500">📦</span> Detalles de Productos
-          </h4>
-          <ul className="list-disc pl-6 space-y-2">
-            {orden.detalles.map((d, i) => (
-              <li key={i} className="text-sm text-gray-700">
-                <span className="font-medium">{d.producto}</span> → Solicitado:{" "}
-                <span className="font-semibold">{d.cantidad_solicitada ?? 0}</span>, Enviado:{" "}
-                <span className="font-semibold">{d.cantidad_enviada}</span>, Faltantes:{" "}
-                <span className="font-semibold text-red-500">{d.faltantes}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
 
-        {/* Orden de Trabajo */}
-        {orden.orden_trabajo && (
-          <div className="border-t pt-4">
-            <h4 className="text-lg font-semibold text-gray-800 mb-2 flex items-center gap-2">
-              <span className="text-green-500">🛠️</span> Orden de Trabajo
-            </h4>
-            <div className="text-sm text-gray-700 space-y-1">
-              <p>
-                <span className="font-medium">ID:</span> {orden.orden_trabajo.id}
-              </p>
-              <p>
-                <span className="font-medium">Creada:</span> {orden.orden_trabajo.fecha_creacion}
-              </p>
-              <p>
-                <span className="font-medium">Actualizada:</span>{" "}
-                {orden.orden_trabajo.fecha_actualizacion}
-              </p>
+      {/* Fila expandida */}
+      {expanded &&
+        paginatedData
+          .filter((o) => o.id === expanded)
+          .map((orden) => (
+            <div
+              key={`details-${orden.id}`}
+              className="border rounded-lg p-4 bg-gray-50 shadow-md mt-4"
+            >
+              {/* Detalles de Productos */}
+              <div className="mb-4">
+                <h4 className="text-lg font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                  <span className="text-blue-500">📦</span> Detalles de Productos
+                </h4>
+                <ul className="list-disc pl-6 space-y-2">
+                  {orden.detalles.map((d, i) => (
+                    <li key={i} className="text-sm text-gray-700">
+                      <span className="font-medium">{d.producto}</span> → Solicitado:{" "}
+                      <span className="font-semibold">{d.cantidad_solicitada ?? 0}</span>, Enviado:{" "}
+                      <span className="font-semibold">{d.cantidad_enviada}</span>, Faltantes:{" "}
+                      <span className="font-semibold text-red-500">{d.faltantes}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Orden de Trabajo */}
+              {orden.orden_trabajo && (
+                <div className="border-t pt-4">
+                  <h4 className="text-lg font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                    <span className="text-green-500">🛠️</span> Orden de Trabajo
+                  </h4>
+                  <div className="text-sm text-gray-700 space-y-1">
+                    <p>
+                      <span className="font-medium">ID:</span> {orden.orden_trabajo.id}
+                    </p>
+                    <p>
+                      <span className="font-medium">Creada:</span>{" "}
+                      {orden.orden_trabajo.fecha_creacion}
+                    </p>
+                    <p>
+                      <span className="font-medium">Actualizada:</span>{" "}
+                      {orden.orden_trabajo.fecha_actualizacion}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
-        )}
-      </div>
-    ))}
-
+          ))}
 
       {/* Paginación */}
-
       <div className="flex justify-center items-center mt-4 gap-4">
         <button
           onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
@@ -328,9 +329,6 @@ const totalNoATiempo = filteredData.filter(
           Siguiente
         </button>
       </div>
-
-      {/* Detalles expandibles */}
-      
     </div>
   );
 }
