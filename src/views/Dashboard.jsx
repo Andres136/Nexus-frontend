@@ -106,8 +106,9 @@ console.log(monthly);
     { name: 'Vencidas', value: data.vencidas, clientes: data.vencidas_detalle || [] },
     { name: 'Entrega Parcial', value: data.entrega_parcial, clientes: data.entrega_parcial_detalle || [] },
   ];
+const { total_despachadas = 0, vencidas = 0, pendientes = 0 } = monthly || {};
 
-  const { despachadas, vencidas, pendientes } = monthly;
+
 
   return (
     <div className="grid grid-cols-1 w-full px-4">
@@ -248,15 +249,33 @@ console.log(monthly);
 >
   Ver detalles
 </Link>
-          <ApexChart
-            type="pie"
-            height={300}
-            series={[despachadas, vencidas, pendientes]}
-            options={{
-              labels: ['Despachadas', 'Vencidas', 'Pendientes'],
-              legend: { position: 'bottom' },
-            }}
-          />
+<ApexChart
+  type="donut"
+  height={300}
+  series={[total_despachadas, vencidas, pendientes]}
+  options={{
+    labels: ['Despachadas', 'Vencidas', 'Pendientes'],
+    legend: { position: 'bottom' },
+    colors: ['#16a34a', '#dc2626', '#f59e0b'],
+    plotOptions: {
+      pie: {
+        donut: {
+          labels: {
+            show: true,
+            total: {
+              show: true,
+              label: 'Órdenes',
+              formatter: (w) =>
+                w.globals.seriesTotals.reduce((a, b) => a + b, 0),
+            },
+          },
+        },
+      },
+    },
+  }}
+/>
+
+
         </div>
 
         <TopClientes />

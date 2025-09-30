@@ -43,13 +43,14 @@ export default function ValoresIndicadores({ valores, setValores, mes, setMes, a
         params.departamento_id = departamentoId;
       }
 
-      console.log('Enviando parámetros:', params); // ✅ DEBUG
+      
 
       const res = await valoresIndicadoresApi.getAll(params);
-      console.log('Respuesta recibida:', res.data); // ✅ DEBUG
+    
       
       setValores(res.data.data || []);
     } catch (error) {
+      console.error("Error fetching valores:", error);    
       setValores([]);
   
     }
