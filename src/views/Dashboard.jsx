@@ -280,7 +280,7 @@ const { total_despachadas = 0, vencidas = 0, pendientes = 0 } = monthly || {};
 
         <TopClientes />
       </div>
-      <OrdenesCompraClient />
+   
     </div>
   );
 };

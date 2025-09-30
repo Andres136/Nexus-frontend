@@ -31,18 +31,19 @@ export default function OrdenesCompraClient() {
   }, [filters]);
 
   // Filtrado
-  const filteredData = auditoria.filter((orden) => {
-    return (
-      (!filters.estado || orden.estado_final === filters.estado) &&
-      (!filters.cliente ||
-        orden.cliente?.toLowerCase().includes(filters.cliente.toLowerCase())) &&
-      (!filters.sede ||
-        (orden.sede &&
-          orden.sede.toLowerCase().includes(filters.sede.toLowerCase()))) &&
-      (!filters.soloVencidas || orden.estado_final.includes("Vencida")) &&
-      (!filters.soloNoATiempo || orden.no_entregado_a_tiempo === true)
-    );
-  });
+const filteredData = auditoria.filter((orden) => {
+  return (
+    (!filters.estado || orden.estado_final.includes(filters.estado)) &&
+    (!filters.cliente ||
+      orden.cliente?.toLowerCase().includes(filters.cliente.toLowerCase())) &&
+    (!filters.sede ||
+      (orden.sede &&
+        orden.sede.toLowerCase().includes(filters.sede.toLowerCase()))) &&
+    (!filters.soloVencidas || orden.estado_final.includes("Vencida")) &&
+    (!filters.soloNoATiempo || orden.no_entregado_a_tiempo === true)
+  );
+});
+
 
   const totalPages = Math.ceil(filteredData.length / pageSize);
   const paginatedData = filteredData.slice(
@@ -108,12 +109,12 @@ export default function OrdenesCompraClient() {
               onChange={handleFilterChange}
               className="mt-1 w-full border-gray-300 rounded-md shadow-sm"
             >
-              <option value="">Todos</option>
-              <option value="Pendiente">Pendiente</option>
-              <option value="Completada">Completada</option>
-              <option value="Despachada a tiempo">Despachada a tiempo</option>
-              <option value="Despachada fuera de tiempo">Despachada fuera de tiempo</option>
-              <option value="Vencida sin despacho">Vencida sin despacho</option>
+        <option value="">Todos</option>
+<option value="Pendiente">Pendiente</option>
+<option value="Completada">Completada</option>
+<option value="Despachada">Despachada</option>
+<option value="Vencida">Vencida</option>
+
             </select>
           </div>
           <div>
@@ -138,32 +139,7 @@ export default function OrdenesCompraClient() {
               className="mt-1 w-full border-gray-300 rounded-md shadow-sm"
             />
           </div>
-          <div className="flex items-center mt-6">
-            <input
-              type="checkbox"
-              id="soloVencidas"
-              name="soloVencidas"
-              checked={filters.soloVencidas}
-              onChange={handleFilterChange}
-              className="mr-2"
-            />
-            <label htmlFor="soloVencidas" className="text-sm font-medium">
-              Solo vencidas
-            </label>
-          </div>
-          <div className="flex items-center mt-6">
-            <input
-              type="checkbox"
-              id="soloNoATiempo"
-              name="soloNoATiempo"
-              checked={filters.soloNoATiempo}
-              onChange={handleFilterChange}
-              className="mr-2"
-            />
-            <label htmlFor="soloNoATiempo" className="text-sm font-medium">
-              Solo no entregadas a tiempo
-            </label>
-          </div>
+      
         </div>
       </div>
 
