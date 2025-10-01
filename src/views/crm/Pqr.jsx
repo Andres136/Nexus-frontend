@@ -97,6 +97,7 @@ export default function Pqr() {
       fetchPqrs(); // Recarga la tabla
       setMensajeSeleccionado(null); // Cierra el modal
     } catch (error) {
+           console.log(error);
       toast.error("Error al asignar responsable.");
       console.error(error);
     }
@@ -122,7 +123,8 @@ export default function Pqr() {
           toast.success("PQR eliminada correctamente");
           fetchPqrs();
         } catch (error) {
-          console.error("❌ Error al eliminar PQR", error);
+          console.log("❌ Error al eliminar PQR", error);
+     
           toast.error("Error al eliminar PQR");
         }
       }

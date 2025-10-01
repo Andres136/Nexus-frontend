@@ -16,7 +16,7 @@ export default function OrdenesCompraClient() {
   });
 
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 5;
+  const [pageSize, setPageSize] = useState(5);
 
   useEffect(() => {
     async function fetchData() {
@@ -31,19 +31,18 @@ export default function OrdenesCompraClient() {
   }, [filters]);
 
   // Filtrado
-const filteredData = auditoria.filter((orden) => {
-  return (
-    (!filters.estado || orden.estado_final.includes(filters.estado)) &&
-    (!filters.cliente ||
-      orden.cliente?.toLowerCase().includes(filters.cliente.toLowerCase())) &&
-    (!filters.sede ||
-      (orden.sede &&
-        orden.sede.toLowerCase().includes(filters.sede.toLowerCase()))) &&
-    (!filters.soloVencidas || orden.estado_final.includes("Vencida")) &&
-    (!filters.soloNoATiempo || orden.no_entregado_a_tiempo === true)
-  );
-});
-
+  const filteredData = auditoria.filter((orden) => {
+    return (
+      (!filters.estado || orden.estado_final.includes(filters.estado)) &&
+      (!filters.cliente ||
+        orden.cliente?.toLowerCase().includes(filters.cliente.toLowerCase())) &&
+      (!filters.sede ||
+        (orden.sede &&
+          orden.sede.toLowerCase().includes(filters.sede.toLowerCase()))) &&
+      (!filters.soloVencidas || orden.vencida === true) &&
+      (!filters.soloNoATiempo || orden.no_entregado_a_tiempo === true)
+    );
+  });
 
   const totalPages = Math.ceil(filteredData.length / pageSize);
   const paginatedData = filteredData.slice(
@@ -60,15 +59,47 @@ const filteredData = auditoria.filter((orden) => {
     setCurrentPage(1);
   };
 
-  const totalNoATiempo = filteredData.filter(
-    (orden) => orden.no_entregado_a_tiempo === true
-  ).length;
+  const getEstadoColor = (estado, vencida, noATiempo) => {
+    if (vencida) return "text-red-600"; // vencidas
+    if (noATiempo) return "text-orange-600"; // entregadas fuera de tiempo
+    if (estado.includes("a tiempo")) return "text-green-600";
+    if (estado.includes("Pendiente")) return "text-yellow-600";
+    return "text-gray-600";
+  };
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <h2 className="text-3xl font-bold mb-6 text-gray-800">
         Auditoría de Órdenes de Compra
       </h2>
+
+      {/* Resumen */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="bg-white shadow rounded p-4 text-center">
+          <p className="text-sm text-gray-500">Total</p>
+          <p className="text-2xl font-bold">{filteredData.length}</p>
+        </div>
+        <div className="bg-green-100 shadow rounded p-4 text-center">
+          <p className="text-sm text-gray-700">A tiempo</p>
+          <p className="text-xl font-bold text-green-700">
+            {filteredData.filter((o) =>
+              o.estado_final.includes("a tiempo")
+            ).length}
+          </p>
+        </div>
+        <div className="bg-orange-100 shadow rounded p-4 text-center">
+          <p className="text-sm text-gray-700">Fuera de tiempo</p>
+          <p className="text-xl font-bold text-orange-700">
+            {filteredData.filter((o) => o.no_entregado_a_tiempo).length}
+          </p>
+        </div>
+        <div className="bg-red-100 shadow rounded p-4 text-center">
+          <p className="text-sm text-gray-700">Vencidas</p>
+          <p className="text-xl font-bold text-red-700">
+            {filteredData.filter((o) => o.vencida).length}
+          </p>
+        </div>
+      </div>
 
       {/* Filtros */}
       <div className="mb-6 bg-white p-4 rounded-lg shadow-md">
@@ -109,12 +140,10 @@ const filteredData = auditoria.filter((orden) => {
               onChange={handleFilterChange}
               className="mt-1 w-full border-gray-300 rounded-md shadow-sm"
             >
-        <option value="">Todos</option>
-<option value="Pendiente">Pendiente</option>
-<option value="Completada">Completada</option>
-<option value="Despachada">Despachada</option>
-<option value="Vencida">Vencida</option>
-
+              <option value="">Todos</option>
+              <option value="Pendiente">Pendiente</option>
+              <option value="Completada">Completada</option>
+              <option value="Despachada">Despachada</option>
             </select>
           </div>
           <div>
@@ -139,19 +168,37 @@ const filteredData = auditoria.filter((orden) => {
               className="mt-1 w-full border-gray-300 rounded-md shadow-sm"
             />
           </div>
-      
+          <div className="flex items-center mt-6">
+            <input
+              type="checkbox"
+              id="soloVencidas"
+              name="soloVencidas"
+              checked={filters.soloVencidas}
+              onChange={handleFilterChange}
+              className="mr-2"
+            />
+            <label htmlFor="soloVencidas" className="text-sm font-medium">
+              Solo vencidas
+            </label>
+          </div>
+          <div className="flex items-center mt-6">
+            <input
+              type="checkbox"
+              id="soloNoATiempo"
+              name="soloNoATiempo"
+              checked={filters.soloNoATiempo}
+              onChange={handleFilterChange}
+              className="mr-2"
+            />
+            <label htmlFor="soloNoATiempo" className="text-sm font-medium">
+              Solo no entregadas a tiempo
+            </label>
+          </div>
         </div>
       </div>
 
       {/* Tabla */}
       <div className="bg-white p-4 rounded-lg shadow-md">
-        <div className="mb-4">
-          <p className="text-gray-700">
-            <span className="font-semibold">Total de órdenes no entregadas a tiempo:</span>{" "}
-            {totalNoATiempo}
-          </p>
-        </div>
-
         <table className="min-w-full border border-gray-300 text-sm">
           <thead className="bg-gray-100">
             <tr>
@@ -161,7 +208,6 @@ const filteredData = auditoria.filter((orden) => {
               <th className="border px-2 py-1">Entrega</th>
               <th className="border px-2 py-1">Despacho</th>
               <th className="border px-2 py-1">Estado</th>
-         
               <th className="border px-2 py-1">Sede</th>
               <th className="border px-2 py-1">Acciones</th>
             </tr>
@@ -174,47 +220,37 @@ const filteredData = auditoria.filter((orden) => {
                 </td>
               </tr>
             ) : (
-              paginatedData.map((orden) => {
-                const estadoVisual = orden.estado_final;
-
-                return (
-                  <tr key={orden.id} className="hover:bg-gray-50">
-                    <td className="border px-2 py-1">{orden.id}</td>
-                    <td className="border px-2 py-1">{orden.cliente}</td>
-                    <td className="border px-2 py-1">{orden.creador}</td>
-                    <td className="border px-2 py-1">{orden.fecha_entrega}</td>
-                    <td className="border px-2 py-1 text-center">
-                      {orden.fecha_despacho}
-                    </td>
-                    <td
-                      className={`border px-2 py-1 font-semibold text-center ${
-                        estadoVisual.includes("Vencida")
-                          ? "text-red-600"
-                          : estadoVisual.includes("fuera de tiempo")
-                          ? "text-orange-600"
-                          : estadoVisual.includes("Completada") ||
-                            estadoVisual.includes("a tiempo")
-                          ? "text-green-600"
-                          : "text-yellow-600"
-                      }`}
+              paginatedData.map((orden) => (
+                <tr key={orden.id} className="hover:bg-gray-50">
+                  <td className="border px-2 py-1">{orden.id}</td>
+                  <td className="border px-2 py-1">{orden.cliente}</td>
+                  <td className="border px-2 py-1">{orden.creador}</td>
+                  <td className="border px-2 py-1">{orden.fecha_entrega}</td>
+                  <td className="border px-2 py-1 text-center">
+                    {orden.fecha_despacho ?? "-"}
+                  </td>
+                  <td
+                    className={`border px-2 py-1 font-semibold text-center ${getEstadoColor(
+                      orden.estado_final,
+                      orden.vencida,
+                      orden.no_entregado_a_tiempo
+                    )}`}
+                  >
+                    {orden.estado_final}
+                  </td>
+                  <td className="border px-2 py-1">{orden.sede ?? "-"}</td>
+                  <td className="border px-2 py-1 text-center">
+                    <button
+                      className="inline-flex items-center px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded shadow hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+                      onClick={() =>
+                        setExpanded(expanded === orden.id ? null : orden.id)
+                      }
                     >
-                      {estadoVisual}
-                    </td>
-                 
-                    <td className="border px-2 py-1">{orden.sede ?? "-"}</td>
-                    <td className="border px-2 py-1 text-center">
-                      <button
-                        className="inline-flex items-center px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded shadow hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
-                        onClick={() =>
-                          setExpanded(expanded === orden.id ? null : orden.id)
-                        }
-                      >
-                        {expanded === orden.id ? "Ocultar" : "Ver detalles"}
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })
+                      {expanded === orden.id ? "Ocultar" : "Ver detalles"}
+                    </button>
+                  </td>
+                </tr>
+              ))
             )}
           </tbody>
         </table>
@@ -269,32 +305,50 @@ const filteredData = auditoria.filter((orden) => {
           ))}
 
       {/* Paginación */}
-      <div className="flex justify-center items-center mt-4 gap-4">
-        <button
-          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-          disabled={currentPage === 1}
-          className={`px-3 py-1 rounded ${
-            currentPage === 1
-              ? "bg-gray-300 cursor-not-allowed"
-              : "bg-blue-500 text-white hover:bg-blue-600"
-          }`}
-        >
-          Anterior
-        </button>
-        <span>
-          Página {currentPage} de {totalPages}
-        </span>
-        <button
-          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-          disabled={currentPage === totalPages}
-          className={`px-3 py-1 rounded ${
-            currentPage === totalPages
-              ? "bg-gray-300 cursor-not-allowed"
-              : "bg-blue-500 text-white hover:bg-blue-600"
-          }`}
-        >
-          Siguiente
-        </button>
+      <div className="flex justify-between items-center mt-4 gap-4">
+        <div>
+          <label className="mr-2">Registros por página:</label>
+          <select
+            value={pageSize}
+            onChange={(e) => setPageSize(Number(e.target.value))}
+            className="border rounded px-2 py-1"
+          >
+            {[5, 10, 20, 50].map((size) => (
+              <option key={size} value={size}>
+                {size}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className={`px-3 py-1 rounded ${
+              currentPage === 1
+                ? "bg-gray-300 cursor-not-allowed"
+                : "bg-blue-500 text-white hover:bg-blue-600"
+            }`}
+          >
+            Anterior
+          </button>
+          <span>
+            Página {currentPage} de {totalPages}
+          </span>
+          <button
+            onClick={() =>
+              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+            }
+            disabled={currentPage === totalPages}
+            className={`px-3 py-1 rounded ${
+              currentPage === totalPages
+                ? "bg-gray-300 cursor-not-allowed"
+                : "bg-blue-500 text-white hover:bg-blue-600"
+            }`}
+          >
+            Siguiente
+          </button>
+        </div>
       </div>
     </div>
   );
