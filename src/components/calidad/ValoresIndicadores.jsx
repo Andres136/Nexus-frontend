@@ -200,35 +200,28 @@ const puedeVerTabla = esAdmin || esRegistrador;
         {valores.map((v) => (
           <tr key={v.id}>
             <td className="px-4 py-2">{v.indicador?.nombre}</td>
-<td className="px-4 py-2">
-  {v.resultado ? (
-    <span
-      className={`${
-        v.resultado.includes("días")
-          ? "text-blue-700 font-medium"
-          : v.resultado.includes("%")
-          ? "text-gray-800"
-          : "text-gray-700"
-      }`}
-    >
-      {(() => {
-        // Detectar número dentro del texto
-        const match = v.resultado.match(/([\d.]+)/);
-        if (match) {
-          const numero = Math.floor(parseFloat(match[1])); // 🔹 redondea al piso
-          return v.resultado
-            .replace(match[1], numero) // reemplaza el número original
-            .replace(".", ""); // limpia posibles puntos sobrantes
-        }
-        return v.resultado;
-      })()}
-    </span>
-  ) : v.valor ? (
-    Math.floor(Number(v.valor))
-  ) : (
-    "—"
-  )}
+           <td className="px-4 py-2 text-gray-800">
+  {(() => {
+    const valor = Number(v.valor);
+    const nombre = v.indicador?.nombre?.toLowerCase() || "";
+    const formula = v.indicador?.formula?.toLowerCase() || "";
+
+    // 🔹 Detectar si es indicador de días
+    if (nombre.includes("dia") || formula.includes("dia")) {
+      return `${Math.floor(valor)} días`;
+    }
+
+    // 🔹 Detectar si es porcentaje (por nombre o fórmula)
+    if (nombre.includes("%") || formula.includes("%") || formula.includes("porc")) {
+      return `${Math.round(valor)}%`;
+    }
+
+    // 🔹 Si no es días ni porcentaje, solo mostrar valor limpio
+    return valor % 1 === 0 ? valor : valor.toFixed(2);
+  })()}
 </td>
+
+
 
 
 
