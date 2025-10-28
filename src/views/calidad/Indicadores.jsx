@@ -127,8 +127,8 @@ export default function Indicadores() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-2 sm:p-4 lg:p-6">
-      <div className="max-w-7xl mx-auto">
-        
+      <div className="max-w-screen-2xl mx-auto">
+
         {/* ✅ Header mejorado responsivo */}
         <div className="bg-gradient-to-r from-green-600 to-green-700 text-white p-4 sm:p-6 rounded-lg shadow-lg mb-4 sm:mb-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">

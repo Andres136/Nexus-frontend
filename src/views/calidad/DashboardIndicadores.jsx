@@ -350,25 +350,37 @@ const tieneDatos = valor !== null && !isNaN(meta);
       </span>
     </p>
 
-    {estado && (
-      <div className="mt-1">
-        {estado === "ok" && (
+{estado && (
+  <div className="mt-1">
+    {(() => {
+      const estadoLower = estado.toLowerCase();
+      if (estadoLower.includes("ok"))
+        return (
           <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-semibold">
             OK
           </span>
-        )}
-        {estado === "medio" && (
+        );
+      if (estadoLower.includes("medio"))
+        return (
           <span className="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded text-xs font-semibold">
-            Medio
+            MEDIO
           </span>
-        )}
-        {estado === "critico" && (
+        );
+      if (estadoLower.includes("crítico") || estadoLower.includes("critico"))
+        return (
           <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded text-xs font-semibold">
-            Crítico
+            CRÍTICO
           </span>
-        )}
-      </div>
-    )}
+        );
+      return (
+        <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs font-semibold">
+          SIN DATOS
+        </span>
+      );
+    })()}
+  </div>
+)}
+
   </div>
 
   {registro?.documento && (

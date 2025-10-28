@@ -188,7 +188,7 @@ const puedeVerTabla = esAdmin || esRegistrador;
       <thead className="bg-gray-100">
         <tr>
           <th className="px-4 py-2">Indicador</th>
-          <th className="px-4 py-2">Valor</th>
+          <th className="px-4 py-2">Resultado</th>
           <th className="px-4 py-2">Meta</th>
           <th className="px-4 py-2">Estado</th>
           <th className="px-4 py-2">Fecha</th>
@@ -200,26 +200,24 @@ const puedeVerTabla = esAdmin || esRegistrador;
         {valores.map((v) => (
           <tr key={v.id}>
             <td className="px-4 py-2">{v.indicador?.nombre}</td>
-           <td className="px-4 py-2 text-gray-800">
-  {(() => {
-    const valor = Number(v.valor);
-    const nombre = v.indicador?.nombre?.toLowerCase() || "";
-    const formula = v.indicador?.formula?.toLowerCase() || "";
+<td className="px-4 py-2 text-gray-800">
+  {v.resultado ? (
+    v.resultado // ← el backend ya devuelve “40 días” o “80%” formateado correctamente
+  ) : (
+    (() => {
+      const valor = Number(v.valor);
+      const nombre = v.indicador?.nombre?.toLowerCase() || "";
+      const formula = v.indicador?.formula?.toLowerCase() || "";
 
-    // 🔹 Detectar si es indicador de días
-    if (nombre.includes("dia") || formula.includes("dia")) {
-      return `${Math.floor(valor)} días`;
-    }
+      if (nombre.includes("dia") || formula.includes("dia")) return `${Math.round(valor)} días`;
+      if (nombre.includes("porcentaje") || nombre.includes("eficiencia") || nombre.includes("cumplimiento") || formula.includes("/") || formula.includes("porc")) return `${Math.round(valor)}%`;
 
-    // 🔹 Detectar si es porcentaje (por nombre o fórmula)
-    if (nombre.includes("%") || formula.includes("%") || formula.includes("porc")) {
-      return `${Math.round(valor)}%`;
-    }
-
-    // 🔹 Si no es días ni porcentaje, solo mostrar valor limpio
-    return valor % 1 === 0 ? valor : valor.toFixed(2);
-  })()}
+      return Math.round(valor);
+    })()
+  )}
 </td>
+
+
 
 
 
@@ -228,7 +226,7 @@ const puedeVerTabla = esAdmin || esRegistrador;
             <td className="px-4 py-2">
               {v.indicador?.tipo_meta === "mayor" ? "≥" : "≤"} {v.indicador?.meta}
             </td>
-     <td className="px-4 py-2">
+ <td className="px-4 py-2">
   {v.estado ? (
     <span
       className={`px-2 py-1 rounded text-xs font-semibold
@@ -248,6 +246,7 @@ const puedeVerTabla = esAdmin || esRegistrador;
     "—"
   )}
 </td>
+
 
             <td className="px-4 py-2">
               {new Date(v.fecha).toLocaleDateString("es-CO")}
