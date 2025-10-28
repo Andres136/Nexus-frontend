@@ -43,6 +43,7 @@ export default function DashboardIndicadores() {
     const fetchData = async () => {
       try {
         const res = await indicadoresDepartamentoApi.getAll({ mes, anio });
+        console.log("Datos de indicadores por departamento:", res.data);
         setData(res.data.data || []);
       } catch (error) {
         console.error("Error fetching indicadores por departamento:", error);
@@ -241,15 +242,15 @@ export default function DashboardIndicadores() {
                     }
 
               const registro = item.registro;
-const valor = registro?.resultado
-  ? registro.resultado
-      .toString()
-      .replace(/([\d.]+)/, (num) => Math.floor(Number(num)))
-  : registro?.valor
-  ? Math.floor(Number(registro.valor))
-  : null;
-const meta = item.meta ? parseFloat(item.meta) : null;
-const estado = registro?.estado || null;
+
+const valor = registro?.porcentaje_meta
+  ? `${Math.round(registro.porcentaje_meta)}%`
+  : registro?.resultado || "—";
+
+const estado = registro?.estado?.toLowerCase() || "sin datos";
+const meta = parseFloat(item.meta) || 0;
+
+
 const tieneDatos = valor !== null && !isNaN(meta);
 
 
@@ -352,34 +353,24 @@ const tieneDatos = valor !== null && !isNaN(meta);
 
 {estado && (
   <div className="mt-1">
-    {(() => {
-      const estadoLower = estado.toLowerCase();
-      if (estadoLower.includes("ok"))
-        return (
-          <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-semibold">
-            OK
-          </span>
-        );
-      if (estadoLower.includes("medio"))
-        return (
-          <span className="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded text-xs font-semibold">
-            MEDIO
-          </span>
-        );
-      if (estadoLower.includes("crítico") || estadoLower.includes("critico"))
-        return (
-          <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded text-xs font-semibold">
-            CRÍTICO
-          </span>
-        );
-      return (
-        <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs font-semibold">
-          SIN DATOS
-        </span>
-      );
-    })()}
+    {estado === "ok" && (
+      <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-semibold">
+        OK
+      </span>
+    )}
+    {estado === "medio" && (
+      <span className="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded text-xs font-semibold">
+        MEDIO
+      </span>
+    )}
+    {["crítico", "critico"].includes(estado) && (
+      <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded text-xs font-semibold">
+        CRÍTICO
+      </span>
+    )}
   </div>
 )}
+
 
   </div>
 
