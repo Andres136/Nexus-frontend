@@ -8,38 +8,9 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import LOGO from "/public/images/SETAS.png";
 import clienteAxios from "../config/axios";
+import { calcularCamposBolsa } from "../helpers/utils/calculoBolsa";
 
-const FACTOR_PULGADA = 0.393701;
 
-/* ------------- SOLO ESTA FUNCIÓN CAMBIA ------------- */
-function calcularCampos(detalle) {
-  const largo_cm = parseFloat(detalle.largo_cm) || 0;
-  const ancho_cm = parseFloat(detalle.ancho_cm) || 0;
-  const calibre  = parseFloat(detalle.calibre ) || 0;
-  const faltantes = parseFloat(detalle.faltantes) || 0;
-
-  let peso_bolsa = 0,
-      numero_bolsas = 0,
-      cantidad_requerida_kg = 0;
-
-  if (largo_cm > 0 && ancho_cm > 0 && calibre > 0) {
-    // 1. Convertir a pulgadas y redondear (política de planta)
-    const largoIn = Math.round(largo_cm * FACTOR_PULGADA);
-    const anchoIn = Math.round(ancho_cm * FACTOR_PULGADA);
-
-    // 2. Resultado intermedio sin dividir todavía
-    const resultado = largoIn * anchoIn * 302 * calibre;
-
-    // 3. “Correr la coma” --> dividir por 10 000 y TRUNCAR
-    peso_bolsa = Math.max(1, Math.floor(resultado / 10_000)); // gramos
-
-    // 4. Bolsas por kilo y kg requeridos
-    numero_bolsas         = Math.round(1000 / peso_bolsa);              // bolsas/kg
-    cantidad_requerida_kg = Math.ceil(faltantes * peso_bolsa) / 1000;   // kg
-  }
-
-  return { peso_bolsa, numero_bolsas, cantidad_requerida_kg };
-}
 /* ---------------------------------------------------- */
 
 
@@ -59,7 +30,7 @@ export default function useDetallesOrdenTrabajo() {
   const [errores, setErrores] = useState({});
   const [observaciones, setObservaciones] = useState("");
 
-  const [revisados, setRevisados] = useState({});
+
   const [detalles, setDetalles] = useState([]);
   const [entregas, setEntregas] = useState([]);
 
@@ -70,8 +41,7 @@ export default function useDetallesOrdenTrabajo() {
         const response = await clienteAxios.get(`/api/orden-trabajo/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-
-        console.log('Detalles:', response.data);
+        console.log('Respuesta de la API orden trabajo:', response.data);
         setOrden(response.data);
       } catch (error) {
         toast.error("No se pudo cargar la orden de trabajo.");
@@ -103,7 +73,7 @@ useEffect(() => {
         detalle_id: e.detalle_id ?? e.detalle?.id ?? null,
       }));
 
-      console.log('Entregas normalizadas:', normalizadas);
+     
       setEntregas(normalizadas);     // 👈 ahora es SIEMPRE un array
     } catch (error) {
       toast.error("No se pudo cargar las entregas.");
@@ -123,7 +93,7 @@ useEffect(() => {
     const detallesCalculados = arrayDetalles
       .map((detalle) => {
         if (!detalle) return null;
-        const calc = calcularCampos(detalle);
+        const calc = calcularCamposBolsa(detalle);
         return {
           ...detalle,
           cantidadEnviada: detalle.cantidad_enviada || 0,
@@ -136,12 +106,7 @@ useEffect(() => {
 
     setDetalles(detallesCalculados);
     setObservaciones(orden.observaciones || "");
-    setRevisados(
-      detallesCalculados.reduce((acc, d) => {
-        acc[d.id] = false;
-        return acc;
-      }, {})
-    );
+
   }, [orden]);
 
   const handleChangeDetalle = (index, field, value) => {
@@ -151,7 +116,7 @@ useEffect(() => {
 
       nuevos[index][field] = value;
       if (["largo_cm", "ancho_cm", "calibre", "cantidad", "valor_unitario"].includes(field)) {
-        const calc = calcularCampos(nuevos[index]);
+        const calc = calcularCamposBolsa(nuevos[index]);
         nuevos[index] = { ...nuevos[index], ...calc };
       }
       if (field === "cantidadEnviada") {
@@ -163,15 +128,10 @@ useEffect(() => {
     });
   };
 
-  const handleCheckboxChange = (id) => {
-    setRevisados((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
+
 
   const handleGuardarOrden = async () => {
-    if (!Object.values(revisados).every((v) => v)) {
-      toast.error("Por favor revisa todos los detalles antes de guardar");
-      return;
-    }
+  
 
     try {
       setLoading(true);
@@ -196,11 +156,15 @@ useEffect(() => {
       const response = await clienteAxios.post(`/api/orden-trabajo/${ordenCompraId}`, payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      console.log(response.data);
+ 
       toast.success(response.data.message || "Orden de Trabajo actualizada");
+      if (response.data.pdf_url) {
+        // Si se generó un PDF, actualizar el estado
+        setOrden((prev) => ({ ...prev, pdf_url: response.data.pdf_url }));
+      }
       if (response.data.ordenTrabajo?.detalles) {
         const nuevosDetalles = response.data.ordenTrabajo.detalles.map((d) => {
-          const calc = calcularCampos(d);
+          const calc = calcularCamposBolsa(d);
           return {
             ...d,
             cantidadEnviada: d.cantidad_enviada || 0,
@@ -307,19 +271,16 @@ autoTable(doc, {
   };
 
   const handleGuardarYGenerarPDF = async () => {
-    if (!Object.values(revisados).every((v) => v)) {
-      toast.error("Por favor revisa todos los detalles antes de guardar");
-      return;
-    }
+
     await handleGuardarOrden();
-    await handleGenerarPDF();
+  
   };
   const handleSeleccionarTodo = (checked) => {
     const nuevos = {};
     detalles.forEach((detalle) => {
       nuevos[detalle.id] = checked;
     });
-    setRevisados(nuevos);
+
   };
   
 //Obtener entregas
@@ -338,10 +299,8 @@ autoTable(doc, {
     entregas,
     handleGuardarYGenerarPDF,
     handleChangeDetalle,
-    handleCheckboxChange,
+ 
     handleSeleccionarTodo, // 👈 aquí la expones
 
-
-    revisados,
   };
 }

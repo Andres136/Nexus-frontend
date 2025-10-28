@@ -2,6 +2,7 @@ import { FaSearch } from "react-icons/fa";
 import useOrdenesTrabajo from "../../hooks/useOrdenesTrabajo";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { debounce } from "lodash";
 
 export default function ObtenerOrdenesTrabajo() {
   // Estados locales temporales para los filtros
@@ -37,6 +38,20 @@ export default function ObtenerOrdenesTrabajo() {
     setPagina(1); // Reiniciar la página al limpiar los filtros
   };
 
+
+  useEffect(()=>{
+    const handler = debounce(() => {
+      setBusqueda(busquedaLocal);
+      setFecha(fechaLocal);
+      setPagina(1); // Reiniciar a la primera página al aplicar filtros
+    }, 500);
+    handler();
+    return () => {
+      handler.cancel();
+    };
+  }, [busquedaLocal, fechaLocal])
+
+  
 // ...existing code...
 if (isLoading)
   return (
@@ -82,8 +97,8 @@ if (isLoading)
       placeholder="Buscar por cliente..."
       autoFocus
       className="border px-3 py-2 rounded-lg w-full"
-      value={busqueda}
-      onChange={(e) => setBusqueda(e.target.value)}
+      value={busquedaLocal}
+      onChange={(e) => setBusquedaLocal(e.target.value)}
     />
   </div>
 
@@ -122,7 +137,7 @@ if (isLoading)
             <th className="px-4 py-3 text-left">Fecha Creacion</th>
          <th className="px-4 py-3 text-left">Sede</th>
            <th className="px-4 py-3 text-left">Direcion de Entrega</th>
-            <th className="px-4 py-3 text-left">Observaciones</th>
+        
             <th className="px-4 py-3 text-left">Estado</th>
             <th className="px-4 py-3 text-left">Acciones</th>
       
@@ -131,8 +146,23 @@ if (isLoading)
         </thead>
         <tbody>
           {ordenesTrabajo?.data?.map((orden) => (
+            
             <tr key={orden.id} className="border-t border-gray-300">
-              <td className="px-4 py-3">{orden.id}</td>
+                     {/* Indicador visual */}
+        <td className="px-4 py-3 flex items-center gap-2">
+          <span
+            className={`inline-block w-3 h-3 rounded-full ${
+              orden.movimientos_stock && orden.movimientos_stock.length > 0 ? "bg-green-500" : "bg-red-500"
+            }`}
+            title={
+              orden.movimientos_stock && orden.movimientos_stock.length > 0
+                ? "Stock descontado"
+                : "Stock pendiente por descontar"
+            }
+          ></span>
+          {orden.id}
+        </td>
+              
               <td className="px-4 py-3">{orden.cliente.nombre}</td>
           <td className="px-4 py-3">
   {orden.fecha_entrega}
@@ -154,7 +184,7 @@ if (isLoading)
 
 
               <td className="px-4 py-3"> {orden?.orden_compra?.ubicacion_entrega || "No especificado"}</td>
-                <td className="px-4 py-3">{orden.observaciones}</td>
+           
                 <td className="px-4 py-3">
   {orden.estado.nombre === "Pendiente" ? (
     <span className="text-red-700 bg-red-100 px-3 py-1 rounded-full text-sm font-semibold">

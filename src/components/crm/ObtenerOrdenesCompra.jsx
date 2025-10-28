@@ -105,7 +105,7 @@ export default function ObtenerOrdenesCompra() {
             <th className="border border-gray-300 px-4 py-2">Fecha de Creacion</th>
             <th className="border border-gray-300 px-4 py-2">Fecha Entrega</th>
             <th className="border border-gray-300 px-4 py-2">Estado</th>
-            <th className="border border-gray-300 px-4 py-2">Observaciones</th>
+           
             <th className="border border-gray-300 px-4 py-2">Dirección de Entrega</th>
             <th className="border border-gray-300 px-4 py-2">Acciones</th>
         
@@ -147,7 +147,7 @@ export default function ObtenerOrdenesCompra() {
     )}
   </td>
 
-              <td className="border border-gray-300 px-4 py-2">{orden.observaciones}</td>
+             
               <td className="border border-gray-300 px-4 py-2">{orden.ubicacion_entrega}</td>
               <td className="border px-4 py-2">
     <div className="flex justify-center items-center space-x-2">

@@ -4,7 +4,7 @@ import { useGestionProcesos } from '../../hooks/useGestionProcesos';
 import { useAuth } from '../../hooks/useAuth';
 import clienteAxios from '../../config/axios';
 import { toast } from 'react-toastify';
-import { Download, Folder } from 'lucide-react';
+import { Download, Folder, Search } from 'lucide-react';
 import Swal from 'sweetalert2';
 
 function ProcesosDepartamento() {
@@ -78,6 +78,7 @@ const ordenManual = [
     registrarTarea,
     registrarError,
     formatDate,
+    moverAObsoletos,
   } = useGestionProcesos();
 
   // Cuando el componente monte o cambie el departamentoId, cargamos los procesos
@@ -150,16 +151,16 @@ const eliminarDocumento = async (documentoId) => {
 const confirmarEliminacion = (documentoId) => {
   Swal.fire({
     title: '¿Estás seguro?',
-    text: "Esta acción eliminará el documento permanentemente",
+    text: "Esta acción no se puede deshacer.",
     icon: 'warning',
     showCancelButton: true,
     confirmButtonColor: '#d33',
     cancelButtonColor: '#3085d6',
-    confirmButtonText: 'Sí, eliminar',
+    confirmButtonText: 'Sí, mover a obsoletos',
     cancelButtonText: 'Cancelar'
   }).then((result) => {
     if (result.isConfirmed) {
-      eliminarDocumento(documentoId);
+      moverAObsoletos(documentoId);
     }
   });
 }
@@ -270,20 +271,28 @@ const docsFiltrados = documentacion.filter(doc =>
   </h3>
 
   {/* Buscador */}
- <div className="flex items-center justify-between mb-4">
- <input
-  type="text"
-  placeholder="Buscar documento..."
-  value={inputValue}
-  onChange={e => setInputValue(e.target.value)}
-  className="border p-2 rounded w-full"
-/>
-
+<div className="flex items-center justify-between mb-4 gap-2">
+  <div className="relative flex-1">
+    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="8" strokeWidth="2" />
+        <path strokeWidth="2" d="M21 21l-4.35-4.35" />
+      </svg>
+    </span>
+    <input
+      type="text"
+      placeholder="Buscar documento..."
+      value={inputValue}
+      onChange={e => setInputValue(e.target.value)}
+      className="border pl-10 pr-4 py-2 rounded-lg w-full focus:ring-2 focus:ring-blue-200 transition"
+    />
+  </div>
   <button
     onClick={() => setSearchTerm(inputValue.trim())}
-    className="bg-blue-600 text-white px-4 p-4 rounded hover:bg-blue-700 transition"
+    className="ml-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-2 transition"
+    title="Refrescar"
   >
-  Refrescar
+   <Search size={16} />
   </button>
 </div>
 
@@ -357,7 +366,7 @@ const docsFiltrados = documentacion.filter(doc =>
               onClick={() => confirmarEliminacion(doc.id)}
        className="bg-red-600 text-white px-4 py-3 rounded hover:bg-red-700 h-10"
             >
-              Eliminar
+              Mover
             </button>
           )}
         </div>

@@ -1,13 +1,11 @@
 import { useEffect, useState } from "react";
-import { Trash2 } from "lucide-react";
+import { Trash2, Search, Plus } from "lucide-react";
 import { useProducts } from "../../hooks/useProducts";
 import Select from "react-select";
-import { Search } from "lucide-react";
 
 export default function DetallesOrdenCompraProveedores({
   onChange,
   errores = {},
-  
 }) {
   const [detalles, setDetalles] = useState([
     {
@@ -17,7 +15,7 @@ export default function DetallesOrdenCompraProveedores({
       cantidad_entregada: 0,
       code: "",
       producto_id: null,
-      
+      campo_seleccionado: "description",
     },
   ]);
 
@@ -25,7 +23,6 @@ export default function DetallesOrdenCompraProveedores({
   const [selectorAbierto, setSelectorAbierto] = useState(null);
 
   const { products, isLoading, isFetching, isEmpty } = useProducts({ search });
-
 
   // Enviar al padre
   useEffect(() => {
@@ -35,7 +32,19 @@ export default function DetallesOrdenCompraProveedores({
   const handleInputChange = (index, field, value) => {
     const nuevos = [...detalles];
     nuevos[index][field] =
-      field === "cantidad_solicitada" ? parseFloat(value) : value;
+      field === "cantidad_solicitada" ? parseFloat(value) || 0 : value;
+    setDetalles(nuevos);
+  };
+
+  const handleCampoSeleccionado = (index, campo) => {
+    const nuevos = [...detalles];
+    const producto = products.find((p) => p.id === nuevos[index].producto_id);
+    
+    if (producto) {
+      nuevos[index].campo_seleccionado = campo;
+      nuevos[index].descripcion = campo === "name" ? producto.name : producto.description;
+    }
+    
     setDetalles(nuevos);
   };
 
@@ -49,162 +58,249 @@ export default function DetallesOrdenCompraProveedores({
         cantidad_entregada: 0,
         code: "",
         producto_id: null,
+        campo_seleccionado: "description",
       },
     ]);
   };
 
   const eliminarItem = (index) => {
     const nuevos = detalles.filter((_, i) => i !== index);
-    // Recalcular los ítems
     const conReorden = nuevos.map((d, i) => ({ ...d, item: i + 1 }));
     setDetalles(conReorden);
   };
 
   return (
-    <div className="mt-8">
-      <h3 className="text-xl font-semibold mb-4">Detalles de Productos</h3>
-
-      <table className="min-w-full text-sm border border-gray-300 bg-white rounded shadow overflow-x-auto">
-        <thead>
-          <tr className="bg-gray-100 text-left">
-            <th className="p-2 border">Acciones</th>
-            <th className="p-2 border">Item</th>
-            <th className="p-2 border">Buscar</th>
-            <th className="p-2 border">Código</th>
-            <th className="p-2 border">Descripción</th>
-            <th className="p-2 border">Cantidad Solicitada</th>
-          </tr>
-        </thead>
-        <tbody>
-          {detalles.map((detalle, index) => (
-            <tr key={index} className="hover:bg-gray-50">
-              {/* Acciones */}
-              <td className="p-2 border text-center">
-                <button
-                  onClick={() => eliminarItem(index)}
-                  className="text-red-500 hover:text-red-700"
-                  title="Eliminar"
-                >
-                  <Trash2 size={18} />
-                </button>
-              </td>
-
-              {/* Item */}
-              <td className="p-2 border text-center">{detalle.item}</td>
-
-              {/* Selector de producto */}
-              <td className="p-2 border">
-                {selectorAbierto === index ? (
-                  <div className="flex items-center gap-2">
-                    <Search size={18} className="text-blue-500" />
-                    <Select
-                      autoFocus
-                      isLoading={isLoading || isFetching}
-                      options={products.map((p) => ({
-                        value: p.id,
-                        code: p.code,
-                        description:
-                          p.description || p.name || "Sin descripción",
-                        label: `${p.code} - ${
-                          p.description || p.name || "Sin descripción"
-                        }`,
-                      }))}
-                      onInputChange={(value) => setSearch(value)}
-                      onChange={(option) => {
-                        const nuevos = [...detalles];
-                        nuevos[index].producto_id = option.value;
-                        nuevos[index].code = option.code;
-                        nuevos[index].descripcion = option.description; // Ya viene con fallback
-                        setDetalles(nuevos);
-                        setSelectorAbierto(null);
-                      }}
-                      placeholder="Buscar producto..."
-                      noOptionsMessage={() =>
-                        isEmpty
-                          ? "No se encontraron productos"
-                          : "Escribe para buscar"
-                      }
-                      className="w-64 text-left"
-                      styles={{
-    menuPortal: (base) => ({ ...base, zIndex: 9999 }), // 👈 esto hace que se pinte encima
-  }}
-  menuPortalTarget={document.body} // 👈 renderiza el menú fuera del contenedor
-                    />
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setSelectorAbierto(
-                        selectorAbierto === index ? null : index
-                      )
-                    }
-                    className="text-blue-500 hover:text-blue-700 flex items-center gap-1"
-                    title="Seleccionar producto"
-                  >
-                    <Search size={18} />
-                    <span className="text-sm">Buscar</span>
-                  </button>
-                )}
-              </td>
-
-              {/* Código */}
-              <td className="p-2 border">
-                <input
-                  type="text"
-                  value={detalle.code || ""}
-                  readOnly
-                  className="w-full border rounded p-1 bg-gray-100 cursor-not-allowed"
-                />
-              </td>
-
-              {/* Descripción */}
-              <td className="p-2 border">
-                <input
-                  type="text"
-                  value={detalle.descripcion}
-                  readOnly
-                  className="w-full border rounded p-1 bg-gray-100 cursor-not-allowed"
-                />
-                {errores?.[index]?.descripcion && (
-                  <p className="text-red-500 text-xs">
-                    {errores[index].descripcion[0]}
-                  </p>
-                )}
-              </td>
-
-              {/* Cantidad */}
-              <td className="p-2 border">
-                <input
-                  type="number"
-                  value={detalle.cantidad_solicitada}
-                  onChange={(e) =>
-                    handleInputChange(
-                      index,
-                      "cantidad_solicitada",
-                      e.target.value
-                    )
-                  }
-                  className="w-full border rounded p-1"
-                />
-                {errores?.[index]?.cantidad_solicitada && (
-                  <p className="text-red-500 text-xs">
-                    {errores[index].cantidad_solicitada[0]}
-                  </p>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      <div className="mt-4">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <h3 className="text-xl font-semibold text-gray-900">Detalles de Productos</h3>
         <button
           onClick={agregarItem}
-          className="bg-gray-700 hover:bg-green-700 text-white px-4 py-2 rounded"
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
         >
-          + Agregar Ítem
+          <Plus className="w-4 h-4" />
+          Agregar Producto
         </button>
+      </div>
+
+      {/* Tabla responsive */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Acciones
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  #
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[300px]">
+                  Producto
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Código
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">
+                  Descripción
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Campo a Usar
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Cantidad
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {detalles.map((detalle, index) => (
+                <tr key={index} className="hover:bg-gray-50 transition-colors">
+                  {/* Acciones */}
+                  <td className="px-4 py-3">
+                    <button
+                      onClick={() => eliminarItem(index)}
+                      className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                      title="Eliminar producto"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </td>
+
+                  {/* Item número */}
+                  <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                    {detalle.item}
+                  </td>
+
+                  {/* Selector de producto */}
+                  <td className="px-4 py-3">
+                    {selectorAbierto === index ? (
+                      <div className="relative">
+                        <Select
+                          autoFocus
+                          isLoading={isLoading || isFetching}
+                          options={products.map((p) => ({
+                            value: p.id,
+                            code: p.code,
+                            name: p.name,
+                            description: p.description || "Sin descripción",
+                            label: `${p.code} - ${p.name}`,
+                          }))}
+                          onInputChange={(value) => setSearch(value)}
+                          onChange={(option) => {
+                            if (option) {
+                              const nuevos = [...detalles];
+                              nuevos[index].producto_id = option.value;
+                              nuevos[index].code = option.code;
+                              
+                              const campoActual = nuevos[index].campo_seleccionado;
+                              nuevos[index].descripcion = campoActual === "name" 
+                                ? option.name 
+                                : option.description;
+                              
+                              setDetalles(nuevos);
+                            }
+                            setSelectorAbierto(null);
+                          }}
+                          onBlur={() => setSelectorAbierto(null)}
+                          placeholder="Buscar producto..."
+                          noOptionsMessage={() =>
+                            isEmpty
+                              ? "No se encontraron productos"
+                              : "Escribe para buscar"
+                          }
+                          className="min-w-[280px]"
+                          styles={{
+                            menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                          }}
+                          menuPortalTarget={document.body}
+                        />
+                      </div>
+                    ) : (
+                      <div
+                        onClick={() => setSelectorAbierto(index)}
+                        className="cursor-pointer min-h-[38px] flex items-center px-3 py-2 border border-gray-300 rounded-lg hover:border-blue-500 transition-colors"
+                      >
+                        {detalle.producto_id ? (
+                          <div className="flex-1">
+                            <div className="font-medium text-gray-900">
+                              {products.find((p) => p.id === detalle.producto_id)?.name || "Producto no encontrado"}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {detalle.code}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-gray-500 flex items-center gap-2">
+                            <Search className="w-4 h-4" />
+                            <span>Seleccionar producto...</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </td>
+
+                  {/* Código */}
+                  <td className="px-4 py-3">
+                    <input
+                      type="text"
+                      value={detalle.code || ""}
+                      readOnly
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 cursor-not-allowed"
+                    />
+                  </td>
+
+                  {/* Descripción */}
+                  <td className="px-4 py-3">
+                    <textarea
+                      value={detalle.descripcion}
+                      readOnly
+                      rows={2}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 cursor-not-allowed resize-none"
+                    />
+                    {errores?.[index]?.descripcion && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errores[index].descripcion[0]}
+                      </p>
+                    )}
+                  </td>
+
+                  {/* Selector de campo a usar */}
+                  <td className="px-4 py-3">
+                    <div className="space-y-2">
+                      <label className="flex items-center">
+                        <input
+                          type="radio"
+                          name={`campo_${index}`}
+                          value="name"
+                          checked={detalle.campo_seleccionado === "name"}
+                          onChange={() => handleCampoSeleccionado(index, "name")}
+                          disabled={!detalle.producto_id}
+                          className="mr-2 text-blue-600"
+                        />
+                        <span className="text-xs text-gray-700">Usar Nombre</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input
+                          type="radio"
+                          name={`campo_${index}`}
+                          value="description"
+                          checked={detalle.campo_seleccionado === "description"}
+                          onChange={() => handleCampoSeleccionado(index, "description")}
+                          disabled={!detalle.producto_id}
+                          className="mr-2 text-blue-600"
+                        />
+                        <span className="text-xs text-gray-700">Usar Descripción</span>
+                      </label>
+                    </div>
+                  </td>
+
+                  {/* Cantidad */}
+                  <td className="px-4 py-3">
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={detalle.cantidad_solicitada}
+                      onChange={(e) =>
+                        handleInputChange(
+                          index,
+                          "cantidad_solicitada",
+                          e.target.value
+                        )
+                      }
+                      className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="0"
+                    />
+                    {errores?.[index]?.cantidad_solicitada && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errores[index].cantidad_solicitada[0]}
+                      </p>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Mensaje cuando no hay productos */}
+        {detalles.length === 0 && (
+          <div className="text-center py-8">
+            <div className="text-gray-500">
+              <Search className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <p>No hay productos agregados</p>
+              <p className="text-sm">Haz clic en "Agregar Producto" para comenzar</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Resumen en mobile */}
+      <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 lg:hidden">
+        <div className="text-center">
+          <div className="text-sm text-gray-600">Total de productos</div>
+          <div className="text-lg font-semibold text-gray-900">{detalles.length}</div>
+        </div>
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { productsApi } from "../services/api";
+import { inventariosApi, productsApi } from "../services/api";
 
 export const useProducts = ({ search = "", options = {} } = {}) => {
   const {
@@ -38,6 +38,9 @@ export const useProducts = ({ search = "", options = {} } = {}) => {
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     ...queryOptions
   });
+
+
+ 
 
   return {
     products: data ?? [],

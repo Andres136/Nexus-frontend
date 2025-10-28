@@ -1,53 +1,19 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import {  useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import clienteAxios from "../../config/axios";
 import { formatCurrency } from "../../helpers";
 import useSystem from "../../hooks/useSystem";
+import { useProducts } from "../../hooks/useProducts";
+import Select from "react-select";
+import { calcularCamposBolsa } from "../../helpers/utils/calculoBolsa";
 
-// Reutilizamos la lógica de cálculo
-const FACTOR_PULGADA = 0.393701;
-function calcularCampos(detalle) {
-  const largo_cm  = parseFloat(detalle.largo_cm)  || 0;
-  const ancho_cm  = parseFloat(detalle.ancho_cm)  || 0;
-  const calibre   = parseFloat(detalle.calibre)   || 0;
-  const cantidad  = parseFloat(detalle.cantidad)  || 0;
-  const unitario  = parseFloat(detalle.valor_unitario) || 0;
-
-  //Convertir metros a centimetros
-
-  let peso_bolsa             = 0;
-  let numero_bolsas          = 0;
-  let cantidad_requerida_kg  = 0;
-  let valor_total            = 0;
-
-  if (largo_cm > 0 && ancho_cm > 0 && calibre > 0) {
-    const largoIn = Math.round(largo_cm * FACTOR_PULGADA);
-    const anchoIn = Math.round(ancho_cm * FACTOR_PULGADA);
-    const resultado = Math.round((largoIn * anchoIn * 302) / 10);
-    // Peso en gramos
-    peso_bolsa = Math.ceil((resultado * calibre) / 1000);
-
-    if (peso_bolsa > 0) {
-      numero_bolsas = Math.max(1, Math.round(1000 / peso_bolsa));
-      cantidad_requerida_kg = Math.ceil(cantidad * peso_bolsa) / 1000;
-    }
-  }
-
-  valor_total = cantidad * unitario ; 
-
-  return {
-    peso_bolsa,
-    numero_bolsas,
-    cantidad_requerida_kg,
-    valor_total
-  };
-}
 
 // Función para crear un nuevo detalle "vacío"
 function createNewItem() {
   return {
-    id: null,            // Sin id para que el backend cree un nuevo detalle
+    id: null,// Sin id para que el backend cree un nuevo detalle
+    product_id: null,  
     largo_cm: 0,
     ancho_cm: 0,
     calibre: 0,
@@ -64,6 +30,7 @@ function createNewItem() {
 
 export default function DetallesOrdenesCompra() {
   const { id } = useParams();
+    const { products, isLoading,isError, isEmpty } = useProducts();
   const { ordenesCompra } = useSystem();
   const [sedes, setSedes] = useState([]);
   const [sedeId, setSedeId] = useState("");
@@ -72,6 +39,9 @@ export default function DetallesOrdenesCompra() {
   const [loading, setLoading] = useState(false);
   const [errores, setErrores] = useState({});
   const [forzarEntregaParcial, setForzarEntregaParcial] = useState(false);
+    const [searchTerm, setSearchTerm] = useState("");
+  
+  
 
 
 
@@ -90,7 +60,7 @@ export default function DetallesOrdenesCompra() {
             return {
               ...det,
               observaciones: ` ${index + 1}`,
-              ...calcularCampos(det)
+              ...calcularCamposBolsa(det)
             };
           });
     
@@ -105,7 +75,7 @@ export default function DetallesOrdenesCompra() {
     newDetalles[index][field] = value;
 
     // Recalculamos con la función "calcularCampos"
-    const recalculados = calcularCampos(newDetalles[index]);
+   const recalculados = calcularCamposBolsa(newDetalles[index]);
 
     // Insertamos los valores calculados en el objeto
     newDetalles[index] = {
@@ -119,7 +89,7 @@ export default function DetallesOrdenesCompra() {
   const agregarItem = () => {
     const newItem = createNewItem();
     // Calculamos los campos (aunque estén en 0) y asignamos observaciones con el número consecutivo
-    const calculados = calcularCampos(newItem);
+    const calculados = calcularCamposBolsa(newItem);
     const itemConNumero = { 
       ...newItem, 
       ...calculados,
@@ -159,6 +129,7 @@ export default function DetallesOrdenesCompra() {
           detalles: detalles.map((det) => ({
             // Si det.id existe, actualiza; si es null, crea nuevo
             id: det.id,
+            product_id: det.product_id,
             largo_cm: det.largo_cm,
             ancho_cm: det.ancho_cm,
             calibre: det.calibre,
@@ -186,11 +157,21 @@ export default function DetallesOrdenesCompra() {
       // setObservaciones("");
 
     } catch (error) {
-      if (error.response && error.response.data) {
-        setErrores(error.response.data.errors || {});
-      } else {
-        toast.error("Ocurrió un error al generar la orden de trabajo");
-      }
+      console.error("Error al generar la orden de trabajo:", error);
+  if (error.response && error.response.data) {
+  const data = error.response.data;
+
+  if (data.errors) {
+    // Caso típico de Laravel con "errors"
+    setErrores(data.errors);
+  } else if (data.error) {
+    // Caso donde viene un solo "error"
+    setErrores({ sede_id: data.error });
+  }
+} else {
+  toast.error("Ocurrió un error al generar la orden de trabajo");
+}
+
     } finally {
       setLoading(false);
     }
@@ -219,35 +200,91 @@ export default function DetallesOrdenesCompra() {
 
   return (
     <div className="min-h-screen  text-gray-900 p-6">
+<div className="bg-white rounded-md shadow-sm border border-gray-200 p-3 mb-4">
+
+{/* Cliente */}
+<h2 className="text-2xl font-semibold mb-4">
+  {ordenSeleccionada ? (
+    <>
+      Detalles de la Orden de Compra #{ordenSeleccionada.id} -{" "}
+      {ordenSeleccionada.cliente?.nombre || "Cliente desconocido"}
+    </>
+  ) : (
+    "Detalles de la Orden de Compra"
+  )}
+</h2>
+
+
+<div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+  
+  {/* Fecha de entrega */}
+  <div className="bg-gray-50 rounded-md p-2 flex items-center gap-2 md:col-span-1">
+    <div className="w-6 h-6 bg-blue-100 rounded flex items-center justify-center">
+      <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg>
+    </div>
+    <div>
+      <p className="text-xs font-medium text-gray-600">Fecha de Entrega</p>
+      <p className="text-sm font-semibold text-gray-900">
+        {ordenSeleccionada?.fecha_entrega || "No disponible"}
+      </p>
+    </div>
+  </div>
+
+  {/* Asesor Comercial */}
+  <div className="bg-gray-50 rounded-md p-2 flex items-center gap-2 md:col-span-1">
+    <div className="w-6 h-6 bg-green-100 rounded flex items-center justify-center">
+      <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+      </svg>
+    </div>
+    <div>
+      <p className="text-xs font-medium text-gray-600">Asesor Comercial</p>
+      <p className="text-sm font-semibold text-gray-900">
+        {ordenSeleccionada?.user?.name || "No disponible"}
+      </p>
+    </div>
+  </div>
+
+  {/* Dirección de entrega */}
+  <div className="bg-gray-50 rounded-md p-2 flex items-start gap-2 md:col-span-1">
+    <div className="w-6 h-6 bg-orange-100 rounded flex items-center justify-center mt-0.5">
+      <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+    </div>
+    <div>
+      <p className="text-xs font-medium text-gray-600">Dirección de Entrega</p>
+      <p className="text-sm font-semibold text-gray-900">
+        {ordenSeleccionada?.ubicacion_entrega || "No disponible"}
+      </p>
+    </div>
+  </div>
+
+  {/* Observaciones */}
+  <div className="bg-gray-50 rounded-md p-2 flex items-start gap-2 md:col-span-1">
+    <div className="w-6 h-6 bg-purple-100 rounded flex items-center justify-center mt-0.5">
+      <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 4h2a2 2 0 012 2v2m-4-4v2m-4-2v2m-4-2v2m0 4v2m4-2v2m4-2v2m4-2v2" />
+      </svg>
+    </div>
+    <div>
+      <p className="text-xs font-medium text-gray-600">Observaciones</p>
+      <p className="text-sm font-semibold text-gray-900">
+        {ordenSeleccionada?.observaciones || "No disponible"}
+      </p>
+    </div>
+  </div>
+</div>
+
+</div>
 
   <div className="grid grid-cols-2 gap-4">
 
 
-      <div className=" col-span-2 flex items-center justify-between gap-4 mb-4">
-        <div className="">
-             <h1 className="text-2xl font-semibold">
-          Detalles {ordenSeleccionada ? `Cliente ${ordenSeleccionada?.cliente?.nombre}` : ""}
-        </h1>
-        <p className="text-gray-500 font-extrabold">
-          Fecha de Entrega: {ordenSeleccionada?.fecha_entrega || "No disponible"}
-        </p>
-        <p className="text-gray-500 font-extrabold">
-          Asesor Comercial: {ordenSeleccionada?.user?.name || "No disponible"}
-        </p>
-        <p className="text-gray-500 font-extrabold">
-    Observaciones: {ordenSeleccionada?.observaciones || "No disponible"} 
-        </p>
-        <p className="text-gray-500 font-extrabold"> Direcion de Entrega {ordenSeleccionada?.ubicacion_entrega || "No disponible"}</p>
-
-      
-        </div>
-       <Link
-          to="/auth/crm/obtener-ordenes-compras"
-          className="bg-gray-800 text-white px-3 py-2 rounded-lg hover:bg-green-700 transition"
-        >
-          Regresar
-        </Link>
-      </div>
+    
       <div className="col-span-2">
 
       {/* Si no hay orden */}
@@ -264,13 +301,14 @@ export default function DetallesOrdenesCompra() {
                 <tr>
                   <th className="border border-gray-300 px-2 py-1">Acciones</th>
                   <th className="border border-gray-300 px-2 py-1">Item</th>
+                  <th className="border border-gray-300 px-2 py-1">Producto</th>
                  <th className="border border-gray-300 px-2 py-1">Ancho cm</th>
                  <th className="border border-gray-300 px-2 py-1">Largo cm</th>  
                   <th className="border border-gray-300 px-2 py-1">Calibre</th>
                   <th className="border border-gray-300 px-2 py-1">Peso Bolsa</th>
                   <th className="border border-gray-300 px-2 py-1"># Bolsas</th>
                   <th className="border border-gray-300 px-2 py-1">Cliente Clb</th>
-                  <th className="border border-gray-300 px-2 py-1">Cant Req. (Kg)</th>
+                  <th className="border border-gray-300 px-2 py-1"> (Kg)</th>
                   <th className="border border-gray-300 px-2 py-1">Descripción</th>
                   <th className="border border-gray-300 px-2 py-1">Cantidad</th>
                   <th className="border border-gray-300 px-2 py-1">Valor Unitario</th>
@@ -297,6 +335,65 @@ export default function DetallesOrdenesCompra() {
                         }
                         className="w-full border border-gray-300 rounded px-1"
                       />
+                    </td>
+                    <td className="border border-gray-300 px-2 py-1">
+ <Select
+    options={products
+      .filter(product => 
+        !searchTerm || 
+        (product.name?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (product.code?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (product.code_id?.toLowerCase().includes(searchTerm.toLowerCase()))
+      )
+      .map((product) => ({
+        value: product.id,
+        label: `${product.code || product.code_id || 'Sin código'} - ${product.name || 'Sin nombre'}`,
+        code: product.code || product.code_id,
+        name: product.name,
+      }))
+    }
+    value={
+      detalle.product_id && products.length > 0
+        ? {
+            value: detalle.product_id,
+            label: (() => {
+              const product = products.find((p) => p.id === detalle.product_id);
+              return product 
+                ? `${product.code || product.code_id || 'Sin código'} - ${product.name || 'Sin nombre'}`
+                : "Producto no encontrado";
+            })(),
+          }
+        : null
+    }
+    onChange={(selected) => {
+      const productId = selected ? selected.value : null;
+      handleChangeDetalle(index, "product_id", productId);
+      
+      // Opcional: llenar descripción automáticamente
+  
+    }}
+    onInputChange={(inputValue) => setSearchTerm(inputValue)}
+    isLoading={isLoading}
+    isDisabled={isError}
+    isClearable
+    placeholder="Buscar producto..."
+    noOptionsMessage={() => {
+      if (isLoading) return "Cargando productos...";
+      if (isError) return "Error al cargar productos";
+      if (isEmpty) return "No se encontraron productos";
+      return "Escribe para buscar";
+    }}
+    className="min-w-[200px]"
+    styles={{
+      menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+      control: (base) => ({
+        ...base,
+        minHeight: '32px',
+        fontSize: '14px',
+      }),
+    }}
+    menuPortalTarget={document.body}
+  />
                     </td>
               
                     {/* Ancho */}
@@ -423,36 +520,55 @@ export default function DetallesOrdenesCompra() {
             )}
           </div>
 
-          <div className="mb-4">
-  <label className="font-semibold text-sm text-gray-700">Selecciona la sede:</label>
-  <select
-    className="w-full border border-gray-300 rounded p-2 mt-1"
-    value={sedeId}
-    onChange={(e) => setSedeId(e.target.value)}
-  >
-    <option value="">-- Selecciona una sede --</option>
-    {sedes.map((sede) => (
-      <option key={sede.id} value={sede.id}>
-        {sede.nombre}
-      </option>
-    ))}
-  </select>
-  {errores.sede_id && <p className="text-red-500 text-sm">{errores.sede_id}</p>}
-</div>
+{/* Selección de sede y entregas parciales */}
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
 
-<div className="mb-4">
-  <label className="inline-flex items-center">
+  {/* Selección de sede */}
+  <div className="bg-gray-50 rounded-md p-3 border border-gray-200">
+    <label className="block text-xs font-medium text-gray-600 mb-1">
+      Selecciona la sede
+    </label>
+    <select
+      className={`w-full border rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none ${
+        errores.sede_id ? "border-red-500" : "border-gray-300"
+      }`}
+      value={sedeId}
+      onChange={(e) => setSedeId(e.target.value)}
+    >
+      <option value="">-- Selecciona una sede --</option>
+      {sedes.map((sede) => (
+        <option key={sede.id} value={sede.id}>
+          {sede.nombre}
+        </option>
+      ))}
+    </select>
+    {errores.sede_id && (
+      <p className="text-red-500 text-xs mt-1">
+        {Array.isArray(errores.sede_id) ? errores.sede_id[0] : errores.sede_id}
+      </p>
+    )}
+  </div>
+
+  {/* Checkbox de entregas parciales */}
+  <div className="bg-gray-50 rounded-md p-3 border border-gray-200 flex items-center">
     <input
       type="checkbox"
-      className="form-checkbox h-5 w-5 text-green-600"
+      id="entregasParciales"
+      className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
       checked={forzarEntregaParcial}
       onChange={(e) => setForzarEntregaParcial(e.target.checked)}
     />
-    <span className="ml-2 text-gray-700 font-semibold">
+    <label
+      htmlFor="entregasParciales"
+      className="ml-2 text-sm text-gray-700 font-medium cursor-pointer"
+    >
       Cliente requiere entregas parciales
-    </span>
-  </label>
+    </label>
+  </div>
 </div>
+
+
+
 
           {/* Botón Generar Orden de Trabajo */}
           <button

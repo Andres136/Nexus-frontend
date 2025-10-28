@@ -19,8 +19,8 @@ export default function useOrdenesTrabajo() {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      
       console.log("Órdenes de trabajo obtenidas:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error obteniendo órdenes de trabajo:", error);

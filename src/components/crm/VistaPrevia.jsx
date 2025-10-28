@@ -80,7 +80,7 @@ export default function VistaPrevia() {
       <button
   onClick={async () => {
     try {
-      await ordenesCompraProveedoresApi(id);
+      await ordenesCompraProveedoresApi.sendEmailWithPdf(id);
       toast.success("📧 Correo enviado correctamente al proveedor");
     } catch (err) {
       toast.error("❌ Error al enviar el correo");

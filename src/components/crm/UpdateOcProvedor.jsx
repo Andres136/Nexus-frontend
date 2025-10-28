@@ -7,18 +7,23 @@ import { useEmpresas } from "../../hooks/useEmpresas";
 import Select from "react-select";
 import { Trash2, Search, Plus } from "lucide-react";
 import clienteAxios from "../../config/axios";
+import { useContext } from "react";
+import { ProductContext } from "../../context/ProductContext";
 
 export default function UpdateOcProvedor() {
   const navigate = useNavigate();
   const { id } = useParams();
-    const [search, setSearch] = useState("");
+  const [search, setSearch] = useState("");
   const { products, isLoading, isFetching, isEmpty } = useProducts({ search });
   const { proveedoresAll } = useEntregasProveedores();
   const { empresas } = useEmpresas();
+  const { stockUserOrder, getStockForUserAndOrder } = useContext(ProductContext);
 
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [errores, setErrores] = useState({});
+  const [modalOpen, setModalOpen] = useState(false);
+
 
   const [selectorAbierto, setSelectorAbierto] = useState(null);
 
@@ -26,7 +31,6 @@ export default function UpdateOcProvedor() {
     proveedor_id: null,
     empresa_id: null,
     observaciones: "",
- 
     detalles: [
       {
         item: 1,
@@ -34,11 +38,12 @@ export default function UpdateOcProvedor() {
         cantidad_solicitada: 0,
         code: "",
         producto_id: null,
+        campo_seleccionado: "description", // Nuevo campo
       }
     ],
   });
 
-  // ✅ Cargar datos de la orden existente
+  //  Cargar datos de la orden existente
   useEffect(() => {
     const cargarOrden = async () => {
       setCargando(true);
@@ -48,22 +53,21 @@ export default function UpdateOcProvedor() {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        console.log("Datos cargados:", res.data);
+       // console.log("Datos cargados:", res.data);
         
-        // La respuesta puede tener diferentes estructuras
         const orden = res.data.orden || res.data;
         const detalles = orden.detalles || orden.productos || [];
 
-        console.log("Detalles encontrados:", detalles);
-        console.log("empresa_id formData:", formData.empresa_id, typeof formData.empresa_id);
-console.log("empresas:", empresas);
-
+        //console.log("Detalles encontrados:", detalles);
 
         setFormData({
           proveedor_id: orden.proveedor_id,
           empresa_id: orden.empresa?.id || orden.empresa_id || null,
           observaciones: orden.observaciones || "",
           numero_orden: orden.numero_orden || "",
+          sede_id: orden.sede_id || null,
+        
+     
           detalles: detalles.length > 0 ? detalles.map((detalle, index) => ({
             id: detalle.id || null,
             item: index + 1,
@@ -71,6 +75,7 @@ console.log("empresas:", empresas);
             cantidad_solicitada: parseFloat(detalle.cantidad_solicitada) || 0,
             code: detalle.code || "",
             producto_id: detalle.producto_id || null,
+            campo_seleccionado: "description", // Por defecto description
           })) : [
             {
               item: 1,
@@ -78,6 +83,7 @@ console.log("empresas:", empresas);
               cantidad_solicitada: 0,
               code: "",
               producto_id: null,
+              campo_seleccionado: "description",
             }
           ]
         });
@@ -117,6 +123,22 @@ console.log("empresas:", empresas);
     }));
   };
 
+  // ✅ Manejar selección de campo (name o description)
+  const handleCampoSeleccionado = (index, campo) => {
+    const nuevosDetalles = [...formData.detalles];
+    const producto = products.find((p) => p.id === nuevosDetalles[index].producto_id);
+    
+    if (producto) {
+      nuevosDetalles[index].campo_seleccionado = campo;
+      nuevosDetalles[index].descripcion = campo === "name" ? producto.name : producto.description;
+    }
+    
+    setFormData(prev => ({
+      ...prev,
+      detalles: nuevosDetalles
+    }));
+  };
+
   // ✅ Agregar nuevo item
   const agregarItem = () => {
     setFormData(prev => ({
@@ -129,10 +151,24 @@ console.log("empresas:", empresas);
           cantidad_solicitada: 0,
           code: "",
           producto_id: null,
+          campo_seleccionado: "description", // Por defecto description
         }
       ]
     }));
   };
+
+  //Obtener stock de un producto especifico
+const fetchStockForProduct = async (productId) => {
+
+  try {
+  
+    await getStockForUserAndOrder(productId, { order_sede_id: formData.sede_id });
+
+    setModalOpen(true);
+  } catch (error) {
+    console.error(error);
+  }
+};
 
   // ✅ Eliminar item
   const eliminarItem = (index) => {
@@ -142,7 +178,6 @@ console.log("empresas:", empresas);
     }
 
     const nuevosDetalles = formData.detalles.filter((_, i) => i !== index);
-    // Reordenar items
     const detallesReordenados = nuevosDetalles.map((detalle, i) => ({
       ...detalle,
       item: i + 1
@@ -159,7 +194,12 @@ console.log("empresas:", empresas);
     const nuevosDetalles = [...formData.detalles];
     nuevosDetalles[index].producto_id = option.value;
     nuevosDetalles[index].code = option.code;
-    nuevosDetalles[index].descripcion = option.description;
+    
+    // Usar el campo seleccionado para la descripción
+    const campoActual = nuevosDetalles[index].campo_seleccionado;
+    nuevosDetalles[index].descripcion = campoActual === "name" 
+      ? option.name 
+      : option.description;
     
     setFormData(prev => ({
       ...prev,
@@ -182,14 +222,12 @@ console.log("empresas:", empresas);
         proveedor_id: formData.proveedor_id,
         empresa_id: formData.empresa_id,
         observaciones: formData.observaciones || "",
- 
         detalles: formData.detalles.map((detalle, index) => ({
           item: index + 1,
           descripcion: detalle.descripcion,
           cantidad_solicitada: detalle.cantidad_solicitada,
           code: detalle.code,
           producto_id: detalle.producto_id,
-
         }))
       };
 
@@ -318,12 +356,8 @@ console.log("empresas:", empresas);
           </div>
         </div>
 
-   
-
         {/* Detalles */}
         <div>
-       
-
           <div className="overflow-x-auto">
             <table className="min-w-full border border-gray-300 bg-white rounded">
               <thead>
@@ -332,7 +366,9 @@ console.log("empresas:", empresas);
                   <th className="p-3 border text-left">Item</th>
                   <th className="p-3 border text-left">Buscar Producto</th>
                   <th className="p-3 border text-left">Código</th>
+                  <th className="p-3 border text-left">Nombre</th>
                   <th className="p-3 border text-left">Descripción</th>
+                  <th className="p-3 border text-left">Campo a Usar</th>
                   <th className="p-3 border text-left">Cantidad</th>
                 </tr>
               </thead>
@@ -355,88 +391,131 @@ console.log("empresas:", empresas);
                     <td className="p-3 border text-center font-medium">
                       {detalle.item}
                     </td>
- {/* Selector de producto */}
-              <td className="p-2 border">
-                {selectorAbierto === index ? (
-                  <div className="flex items-center gap-2">
-                    <Search size={18} className="text-blue-500" />
-                    <Select
-                      autoFocus
-                      isLoading={isLoading || isFetching}
-                      options={products.map((p) => ({
-                        value: p.id,
-                        code: p.code,
-                        description:
-                          p.description || p.name || "Sin descripción",
-                        label: `${p.code} - ${
-                          p.description || p.name || "Sin descripción"
-                        }`,
-                      }))}
-                      onInputChange={(value) => setSearch(value)}
-                      onChange={(option) => {
-                        seleccionarProducto(index, option);
-                        setSelectorAbierto(null);
-                      }}
-                      placeholder="Buscar producto..."
-                      noOptionsMessage={() =>
-                        isEmpty
-                          ? "No se encontraron productos"
-                          : "Escribe para buscar"
-                      }
-                      className="min-w-[250px] flex-1"
-                  styles={{
-    menuPortal: (base) => ({ ...base, zIndex: 9999 }), // 👈 esto hace que se pinte encima
-  }}
-  menuPortalTarget={document.body} // 👈 renderiza el menú fuera del contenedor
-                      
-                    />
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setSelectorAbierto(
-                        selectorAbierto === index ? null : index
-                      )
-                    }
-                    className="text-blue-500 hover:text-blue-700 flex items-center gap-1"
-                    title="Seleccionar producto"
-                  >
-                    <Search size={18} />
-                    <span className="text-sm">Buscar</span>
-                  </button>
-                )}
-              </td>
 
+                    {/* Selector de producto */}
+                    <td className="p-2 border">
+                      {selectorAbierto === index ? (
+                        <div className="flex items-center gap-2">
+                          <Search size={18} className="text-blue-500" />
+                          <Select
+                            autoFocus
+                            isLoading={isLoading || isFetching}
+                            options={products.map((p) => ({
+                              value: p.id,
+                              code: p.code,
+                              name: p.name,
+                              description: p.description || "Sin descripción",
+                              label: `${p.code} - ${p.name}`,
+                            }))}
+                            onInputChange={(value) => setSearch(value)}
+                            onChange={async(option) => {
+                              seleccionarProducto(index, option);
+                              setSelectorAbierto(null);
+                              await fetchStockForProduct(option.value);
+
+                            }}
+                            placeholder="Buscar producto..."
+                            noOptionsMessage={() =>
+                              isEmpty
+                                ? "No se encontraron productos"
+                                : "Escribe para buscar"
+                            }
+                            className="min-w-[250px] flex-1"
+                            styles={{
+                              menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                            }}
+                            menuPortalTarget={document.body}
+                          />
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setSelectorAbierto(
+                              selectorAbierto === index ? null : index
+                            )
+                          }
+                          className="text-blue-500 hover:text-blue-700 flex items-center gap-1"
+                          title="Seleccionar producto"
+                        >
+                          <Search size={18} />
+                          <span className="text-sm">Buscar</span>
+                        </button>
+                      )}
+                    </td>
 
                     {/* Código */}
-                    <td className="p-3 border">
+           {/* Código */}
+<td className="p-3 border">
+  <input
+    type="text"
+    value={detalle.code || ""
+    }
+    readOnly
+    className="w-full border rounded p-2 bg-gray-100 text-center"
+    placeholder="Código"
+  />
+</td>
+
+                    {/* Nombre */}
+                    <td className="p-2 border">
                       <input
                         type="text"
-                        value={detalle.code || ""}
+                        value={
+                          products.find((p) => p.id === detalle.producto_id)?.name ||
+                          ""
+                        }
                         readOnly
-                        className="w-full border rounded p-2 bg-gray-100 text-center"
-                        placeholder="Auto"
+                        className="w-full border rounded p-1 bg-gray-100 cursor-not-allowed"
                       />
                     </td>
 
                     {/* Descripción */}
-                <td className="p-3 border">
-  <input
-    type="text"
-    readOnly
-    value={detalle.descripcion || ""}
-    // ✅ ELIMINAR: onChange ya no es necesario
-    className="w-full border rounded p-2 min-w-[200px] bg-gray-100 cursor-not-allowed"
-    placeholder="Descripción automática del producto"
-    title="La descripción se obtiene automáticamente al seleccionar el producto"
-  />
-  {errores[`detalles.${index}.descripcion`] && (
-    <p className="text-red-500 text-xs mt-1">
-      {errores[`detalles.${index}.descripcion`][0]}
-    </p>
-  )}
-</td>
+                    <td className="p-3 border">
+                      <input
+                        type="text"
+                        readOnly
+                        value={detalle.descripcion || ""}
+                        className="w-full border rounded p-2 min-w-[200px] bg-gray-100 cursor-not-allowed"
+                        placeholder="Descripción automática del producto"
+                        title="La descripción se obtiene automáticamente al seleccionar el producto"
+                      />
+                      {errores[`detalles.${index}.descripcion`] && (
+                        <p className="text-red-500 text-xs mt-1">
+                          {errores[`detalles.${index}.descripcion`][0]}
+                        </p>
+                      )}
+                    </td>
+
+                    {/* Campo a Usar */}
+                    <td className="p-2 border">
+                      <div className="space-y-2">
+                        <label className="flex items-center">
+                          <input
+                            type="radio"
+                            name={`campo_${index}`}
+                            value="name"
+                            checked={detalle.campo_seleccionado === "name"}
+                            onChange={() => handleCampoSeleccionado(index, "name")}
+                            disabled={!detalle.producto_id}
+                            className="mr-2"
+                          />
+                          <span className="text-xs">Usar Nombre</span>
+                        </label>
+                        <label className="flex items-center">
+                          <input
+                            type="radio"
+                            name={`campo_${index}`}
+                            value="description"
+                            checked={detalle.campo_seleccionado === "description"}
+                            onChange={() => handleCampoSeleccionado(index, "description")}
+                            disabled={!detalle.producto_id}
+                            className="mr-2"
+                          />
+                          <span className="text-xs">Usar Descripción</span>
+                        </label>
+                      </div>
+                    </td>
 
                     {/* Cantidad Solicitada */}
                     <td className="p-3 border">
@@ -463,7 +542,7 @@ console.log("empresas:", empresas);
           </div>
 
           <div className="mt-4">
-                 <button
+            <button
               onClick={agregarItem}
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition flex items-center gap-2"
             >
@@ -487,12 +566,10 @@ console.log("empresas:", empresas);
               </>
             ) : (
               <>
-                💾 Actualizar Orden
+                 Actualizar Orden
               </>
             )}
           </button>
-
-        
 
           <Link
             to={`/auth/crm/ordenes-proveedor-preview/${id}`}
@@ -503,6 +580,78 @@ console.log("empresas:", empresas);
         </div>
       </div>
 
+            {/* Modal de Stock */}
+{/* Modal de Stock */}
+{modalOpen && stockUserOrder && (
+  <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50">
+    <div className="bg-white rounded-2xl shadow-2xl p-6 w-[500px] relative">
+      {/* Botón cerrar */}
+      <button
+        className="absolute top-3 right-3 text-gray-400 hover:text-red-500"
+        onClick={() => setModalOpen(false)}
+      >
+        ✕
+      </button>
+
+      {/* Título */}
+      <h3 className="text-xl font-bold text-gray-800 mb-4">
+         Stock del producto #{stockUserOrder.producto_id}
+      </h3>
+
+      {/* Stock en la sede del usuario */}
+      {stockUserOrder.user_sede && (
+        <div className="mb-6 border rounded-lg p-4 bg-gray-50">
+          <h4 className="font-semibold text-gray-700 mb-2">
+             Mi sede:{" "}
+            <span className="text-green-700">
+              {stockUserOrder.user_sede?.sede_nombre || "No definida"}
+            </span>
+          </h4>
+          <p className="text-sm text-gray-500 mb-2">
+            <strong>Total:</strong>{" "}
+            <span className="text-green-700 font-semibold">
+              {stockUserOrder.user_sede.stock_total}
+            </span>
+          </p>
+          <ul className="divide-y divide-gray-200 text-sm">
+            {stockUserOrder.user_sede.resumen_por_bodega?.map((b) => (
+              <li key={b.bodega_id} className="flex justify-between py-1">
+                <span>{b.bodega_nombre}</span>
+                <span className="font-semibold">{b.stock_total}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Stock en la sede de la orden */}
+      {stockUserOrder.order_sede && (
+        <div className="border rounded-lg p-4 bg-gray-50">
+          <h4 className="font-semibold text-gray-700 mb-2">
+            📍 Sede de la orden:{" "}
+            <span className="text-blue-700">
+       {stockUserOrder.order_sede?.sede_nombre}
+            </span>
+          </h4>
+          <p className="text-sm text-gray-500 mb-2">
+            <strong>Total:</strong>{" "}
+            <span className="text-blue-700 font-semibold">
+              {stockUserOrder.order_sede.stock_total}
+            </span>
+          </p>
+          <ul className="divide-y divide-gray-200 text-sm">
+            {stockUserOrder.order_sede.resumen_por_bodega?.map((b) => (
+              <li key={b.bodega_id} className="flex justify-between py-1">
+                <span>{b.bodega_nombre}</span>
+                <span className="font-semibold">{b.stock_total}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  </div>
+)}
 
     </div>
   );

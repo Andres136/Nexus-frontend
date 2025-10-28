@@ -3,6 +3,8 @@ import { useEffect, useState, useRef } from 'react';
 import { toast } from 'react-toastify';
 import { useAuth } from './useAuth'; // Ajusta la ruta si es necesario
 import clienteAxios from '../config/axios';
+import { documentacionApi } from '../services/api';
+import { showToast } from '../helpers/utils/showToast';
 
 export function useGestionProcesos() {
   const { user } = useAuth({ middleware: 'auth' });
@@ -258,8 +260,38 @@ export function useGestionProcesos() {
     return new Date(dateString).toLocaleDateString(undefined, opciones);
   }
 
+//mover a obseletos
+async function moverAObsoletos(documentoId) {
+  const token = localStorage.getItem('token');
 
-  //Eliminar un documento de cada colaborador
+  try {
+    const res = await clienteAxios.post(
+      `/api/documentos/mover-obseletos/${documentoId}`,
+      {},
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    const carpeta = res.data.carpeta_obsoletos;
+    showToast('success', res.data.message || 'Documento movido a Obsoletos correctamente');
+
+    // ✅ Si la carpeta Obsoletos no estaba en la lista, la añadimos
+    setProcesos(prev => {
+      const existe = prev.some(p => p.id === carpeta.id);
+      return existe ? prev : [...prev, carpeta];
+    });
+
+    // ✅ Actualizamos la documentación actual
+    cargarDocumentacion(procesoSeleccionado);
+
+  } catch (error) {
+    console.error('Error al mover documento a Obsoletos:', error);
+    toast.error('Error al mover documento a Obsoletos');
+  }
+}
+
+
+
+
 
   
   // Retornamos todo lo que se necesita usar en los componentes:
@@ -302,6 +334,7 @@ export function useGestionProcesos() {
     registrarTarea,
     registrarError,
     formatDate,
+    moverAObsoletos,
     
   };
 }

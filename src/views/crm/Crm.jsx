@@ -95,7 +95,7 @@ export default function Crm() {
       roles: [1, 4, 5,10,11],
     },
     {
-      name: "Proveedores",
+      name: "Compras",
       to: "/auth/crm/proveedores",
       icon: UserGroupIcon,
       roles: [1, 4, 5, 6, 10,11],

@@ -138,21 +138,7 @@ export default function DashboardIndicadores() {
     }
   }
 
-  function calcularEstado(valor, meta, tipoMeta) {
-    if (valor == null || meta == null || !tipoMeta) return "";
-    meta = Number(meta);
-    valor = Number(valor);
 
-    if (tipoMeta === "mayor") {
-      if (valor >= meta) return "ok";
-      if (valor >= meta * 0.8) return "medio"; // 80% de la meta
-      return "critico";
-    } else {
-      if (valor <= meta) return "ok";
-      if (valor <= meta * 1.2) return "medio"; // hasta 20% por encima
-      return "critico";
-    }
-  }
 
   const departamentosUnicos = Object.keys(indicadoresAgrupados);
   return (
@@ -254,10 +240,18 @@ export default function DashboardIndicadores() {
                       );
                     }
 
-                    const registro = item.registro;
-                    const valor = registro ? parseFloat(registro.valor) : null;
-                    const meta = item.meta ? parseFloat(item.meta) : null;
-                    const tieneDatos = valor !== null && !isNaN(meta);
+              const registro = item.registro;
+const valor = registro?.resultado
+  ? registro.resultado
+      .toString()
+      .replace(/([\d.]+)/, (num) => Math.floor(Number(num)))
+  : registro?.valor
+  ? Math.floor(Number(registro.valor))
+  : null;
+const meta = item.meta ? parseFloat(item.meta) : null;
+const estado = registro?.estado || null;
+const tieneDatos = valor !== null && !isNaN(meta);
+
 
                     return (
                       <div
@@ -290,9 +284,9 @@ export default function DashboardIndicadores() {
                                 layout="vertical"
                                 data={[
                                   {
-                                    name: "Comparativo",
-                                    Valor: valor,
-                                    Meta: meta,
+                                     name: "Comparativo",
+    Valor: registro?.valor ? Number(registro.valor) : 0,
+    Meta: meta ?? 0,
                                   },
                                 ]}
                                 margin={{
@@ -302,13 +296,23 @@ export default function DashboardIndicadores() {
                                   left: 20,
                                 }}
                               >
-                                <XAxis
-                                  type="number"
-                                  domain={[0, Math.max(valor, meta) * 1.2]}
-                                  hide
-                                />
+                          <XAxis
+  type="number"
+  domain={[0, Math.max(Number(meta ?? 0), Number(registro?.valor ?? 0)) * 1.2]}
+  tickFormatter={(v) => Math.floor(v)}
+  hide
+/>
+
                                 <YAxis type="category" dataKey="name" hide />
-                                <Tooltip formatter={(v) => v.toFixed(2)} />
+                                <Tooltip   formatter={(v, name) => {
+    if (isNaN(v)) return "—";
+    const unidad = registro?.resultado?.includes("días")
+      ? " días"
+      : registro?.resultado?.includes("%")
+      ? " %"
+      : "";
+    return [Math.floor(v) + unidad, name];
+  }} />
                                 <Bar
                                   dataKey="Meta"
                                   fill="#D1D5DB"
@@ -328,79 +332,75 @@ export default function DashboardIndicadores() {
                           )}
                         </div>
 
-                        {/* Pie */}
-                        <div className="flex justify-between items-center mt-4">
-                        <div>
-  <p className="text-xs text-gray-500">
-    Valor: {valor ?? "—"}
-  </p>
-  <p className="text-xs text-gray-500 flex items-center gap-2">
-    Meta:{" "}
-    {item.tipo_meta === "mayor" ? (
-      <span className="text-gray-500 mr-1">≥</span>
-    ) : (
-      <span className="text-gray-500 mr-1">≤</span>
+                    {/* Pie */}
+<div className="flex justify-between items-center mt-4">
+  <div>
+    <p className="text-xs text-gray-500">
+      Valor: <span className="font-medium text-gray-700">{valor ?? "—"}</span>
+    </p>
+    <p className="text-xs text-gray-500 flex items-center gap-2">
+      Meta:
+      {item.tipo_meta === "mayor" ? (
+        <span className="text-gray-500 mr-1">≥</span>
+      ) : (
+        <span className="text-gray-500 mr-1">≤</span>
+      )}
+      <span className="font-medium text-gray-700">
+        {meta ?? "—"}
+      </span>
+    </p>
+
+    {estado && (
+      <div className="mt-1">
+        {estado === "ok" && (
+          <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-semibold">
+            OK
+          </span>
+        )}
+        {estado === "medio" && (
+          <span className="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded text-xs font-semibold">
+            Medio
+          </span>
+        )}
+        {estado === "critico" && (
+          <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded text-xs font-semibold">
+            Crítico
+          </span>
+        )}
+      </div>
     )}
-    {meta ?? "—"}
-  </p>
-  {/* Estado visual en línea aparte */}
-  {valor !== null && meta !== null && (
-    <div className="mt-1">
-      {(() => {
-        const estado = calcularEstado(valor, meta, item.tipo_meta);
-        if (estado === "ok")
-          return (
-            <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-semibold">
-              OK
-            </span>
-          );
-        if (estado === "medio")
-          return (
-            <span className="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded text-xs font-semibold">
-              Medio
-            </span>
-          );
-        if (estado === "critico")
-          return (
-            <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded text-xs font-semibold">
-              Crítico
-            </span>
-          );
-        return null;
-      })()}
+  </div>
+
+  {registro?.documento && (
+    <a
+      href={`${clienteAxios.defaults.baseURL}/api/registro-indicadores/descargar/${registro.id}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      title="Descargar análisis"
+      className="text-blue-600 hover:text-blue-800"
+    >
+      <FileDiffIcon size={20} />
+    </a>
+  )}
+
+  {!registro?.documento && registro?.observaciones && (
+    <div className="mt-2 bg-gray-50 rounded p-2 text-xs text-gray-500 italic">
+      Observaciones:{" "}
+      {showFullObs || registro.observaciones.length <= 120
+        ? registro.observaciones
+        : registro.observaciones.slice(0, 120) + "... "}
+      {registro.observaciones.length > 120 && (
+        <button
+          className="text-blue-600 underline ml-1"
+          onClick={() => setShowFullObs((v) => !v)}
+        >
+          {showFullObs ? "Ver menos" : "Ver más"}
+        </button>
+      )}
     </div>
   )}
 </div>
-                          {registro?.documento && (
-                            <a
-                              href={`${clienteAxios.defaults.baseURL}/api/registro-indicadores/descargar/${registro.id}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              title="Descargar análisis"
-                              className="text-blue-600 hover:text-blue-800"
-                            >
-                              <FileDiffIcon size={20} />
-                            </a>
-                          )}
 
-                          {!registro?.documento && registro?.observaciones && (
-                            <div className="mt-2 bg-gray-50 rounded p-2 text-xs text-gray-500 italic">
-                              Observaciones:{" "}
-                              {showFullObs ||
-                              registro.observaciones.length <= 120
-                                ? registro.observaciones
-                                : registro.observaciones.slice(0, 120) + "... "}
-                              {registro.observaciones.length > 120 && (
-                                <button
-                                  className="text-blue-600 underline ml-1"
-                                  onClick={() => setShowFullObs((v) => !v)}
-                                >
-                                  {showFullObs ? "Ver menos" : "Ver más"}
-                                </button>
-                              )}
-                            </div>
-                          )}
-                        </div>
                       </div>
                     );
                   })}

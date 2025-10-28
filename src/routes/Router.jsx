@@ -55,6 +55,8 @@ import VistaPrevia from "../components/crm/VistaPrevia";
 import UpdateOcProvedor from "../components/crm/UpdateOcProvedor";
 import Bodegas from "../components/Bodegas";
 import OrdenesCompraClient from "../components/auditoria/OrdenesCompraClient";
+import RegistrarInventario from "../views/crm/RegistrarInventario";
+import TrasladoInventario from "../views/crm/TrasladoInventario";
 
 
 
@@ -123,6 +125,8 @@ export default function Router() {
         <Route path="/auth/crm/conductores" element={<ObtenerDatosConductores/>} />
         <Route path="/auth/crm/crear-datos-conductores" element={<Conductores/>} />
         <Route path="/auth/crm/ordenes-compra-auditor" element={<OrdenesCompraClient />} />
+        <Route path="/auth/crm/registrar-inventario" element={<RegistrarInventario/>} />
+        <Route path="/auth/crm/traslado-inventario" element={<TrasladoInventario />} />
         <Route
   path="/auth/crm/conductores/:conductorId/revisiones"
   element={<RevisionesPage />}

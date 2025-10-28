@@ -137,16 +137,57 @@ export const empresaApi={
 //Api para traer todos los productos sin paginar
 export const productsApi={
   getAll:(params={})=>apiClient.get('/api/products-all', { params }),
+  getProducts:(params={})=>apiClient.get('/api/products', { params }),
+  getById:(id)=>apiClient.get(`/api/products/${id}`),
+  create:(data)=>apiClient.post('/api/products',data,{
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  update:(id,data)=>apiClient.put(`/api/products/${id}`,data,{
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  delete:(id)=>apiClient.delete(`/api/products/${id}`),
+getStock: (id, params = {}) => 
+  apiClient.get(`/api/stock-products/${id}`, { params }),
+
+getStockForUserAndOrder: (id, params = {}) => 
+  apiClient.get(`/api/stock-products-for-user/${id}`, { params }),
+
+postDescontarStock: (data) => 
+  apiClient.post('/api/products/descontar/stock', data),
+
+ 
+ registrarEntradaMasiva: (data) => apiClient.post('/api/products/importar-excel', data,{
+    headers: { 'Content-Type': 'multipart/form-data' }
+ }),
+getStockWithSuggestions: (id) => 
+  apiClient.get(`/api/stock-products-sugerencias/${id}`),
+
+
+postDescontarStockMasivo: (data) => 
+  apiClient.post('/api/products/descontar-stock-masivo', data),
+
+
+//Sincronizar productos con siigo
+sincronizarProductosSiigoGlobal: (data) => 
+  apiClient.post('/api/productos/sincronizar-siigo', data),
+
+sincronizarProductosSiigoSetas: (data) => 
+  apiClient.post('/api/productos/sincronizar-siigo-setas', data),
+
 }
 //Ordenes de compra a proveedores API
 export const ordenesCompraProveedoresApi={
 //Peticion al pdf al crear la orden de compra
   getPdf:(id)=>apiClient.get(`/api/orden-compras-proveedor/${id}/pdf`,{
  responseType: "arraybuffer", // 👈 en vez de blob
+
+//Registrar entrada de productos manualmente
  
-
-
   }),
+
+  //Registar entrada masiva de productos
+ 
+  
   sendEmailWithPdf: (id) => 
   apiClient.post(`/api/ordenes-compra-proveedor/${id}/enviar-email`),
 }
@@ -156,4 +197,35 @@ export const ordenesCompraProveedoresApi={
 export const auditApi={
   getAuditData:(params)=>apiClient.get('/api/audit-ordenes-compra', { params }),
 }
+
+
+//iNVEANTARIOS
+export const inventariosApi={
+  listar:(params={})=>apiClient.get('/api/inventarios', { params }),
+  exportar:(params={})=>apiClient.get('/api/inventarios/exportar', { params , responseType: 'blob' }),
+  getById:(id)=>apiClient.get(`/api/inventarios/${id}`),
+  create:(data)=>apiClient.post('/api/inventarios',data,{
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }), 
+  createTraslado:(data)=>apiClient.post('/api/traslados-internos',data),
+  sedesTraslados:()=>apiClient.get('/api/traslados-internos-sedes'),
+  ordenesCompraTraslados:()=>apiClient.get('/api/traslados-internos-ordenes-compra'),
+
+}
+
+//Documentacio SGI
+export const documentacionApi={
+  getAll:(params={})=>apiClient.get('/api/registrar-documentacion', { params }),
+  getById:(id)=>apiClient.get(`/api/registrar-documentacion/${id}`),
+  create:(data)=>apiClient.post('/api/registrar-documentacion',data,{
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  update:(id,data)=>apiClient.put(`/api/registrar-documentacion/${id}`,data,{
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  delete:(id)=>apiClient.delete(`/api/registrar-documentacion/${id}`),
+  moverAObseletos:(id)=>apiClient.post(`/api/documentos/mover-obseletos/${id}`),
+
+}
+
 export default apiClient;

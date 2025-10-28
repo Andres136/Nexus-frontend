@@ -8,8 +8,9 @@ import { useEmpresas } from "../../hooks/useEmpresas";
 
 
 
+
 export default function FormOrdenesProveedores() {
-  
+
   const [proveedores, setProveedores] = useState([]);
   const navigate = useNavigate();
   const { empresas } = useEmpresas();
@@ -20,6 +21,7 @@ export default function FormOrdenesProveedores() {
     proveedor_id: "",
     empresa_id: "",
     observaciones: "",
+    bodega_id: "",
     detalles: [],
   });
 
@@ -67,6 +69,7 @@ export default function FormOrdenesProveedores() {
         fecha: "",
         numero_orden: "",
         observaciones: "",
+        bodega_id: "",
         detalles: [],
       });
       setErrores({});

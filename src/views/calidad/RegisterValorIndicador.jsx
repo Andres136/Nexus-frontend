@@ -104,10 +104,17 @@ export default function RegisterValorIndicador() {
 
 <>
 <div>
-  <div className="bg-green-700 text-white p-4 shadow">
-    <h1 className="text-2xl font-bold text-center">Registro de Valores de Indicadores</h1>
-    <p className="text-center">Completa el siguiente formulario para registrar un nuevo valor.</p>
+<div className="bg-gradient-to-r from-green-700 to-green-500 text-white py-8 px-4 shadow-lg rounded-b-3xl mb-8 flex flex-col items-center">
+  <div className="flex items-center gap-4 mb-2">
+    <svg className="w-10 h-10 text-white opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeWidth="2" d="M9 17v-2a4 4 0 1 1 6 0v2m-3-6a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0 0v2m0 0v2m0-2h2m-2 0H7" />
+    </svg>
+    <h1 className="text-3xl font-extrabold tracking-tight drop-shadow">Registro de Valores de Indicadores</h1>
   </div>
+  <p className="text-lg text-green-100 font-medium text-center max-w-2xl">
+    Completa el siguiente formulario para registrar un nuevo valor de indicador de calidad.
+  </p>
+</div>
 
 <div className="grid grid-cols-1 md:grid-cols-5 gap-4 max-w-7xl mx-auto my-6">
   

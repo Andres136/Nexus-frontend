@@ -46,6 +46,7 @@ export default function ValoresIndicadores({ valores, setValores, mes, setMes, a
       
 
       const res = await valoresIndicadoresApi.getAll(params);
+      console.log("Valores fetched:", res.data);
     
       
       setValores(res.data.data || []);
@@ -60,6 +61,7 @@ export default function ValoresIndicadores({ valores, setValores, mes, setMes, a
   const fetchdepartamentos = async () => {
     try {
       const res = await departamentosApi.getAll();
+    
  
       setDepartamentos(res.data);
     } catch (error) {
@@ -111,21 +113,7 @@ const puedeVerTabla = esAdmin || esRegistrador;
     });
   }
 
-  function calcularEstado(valor, meta, tipoMeta) {
-  if (valor == null || meta == null || !tipoMeta) return "";
-  meta = Number(meta);
-  valor = Number(valor);
 
-  if (tipoMeta === "mayor") {
-    if (valor >= meta) return "ok";
-    if (valor >= meta * 0.8) return "medio"; // ejemplo: 80% de la meta
-    return "critico";
-  } else {
-    if (valor <= meta) return "ok";
-    if (valor <= meta * 1.2) return "medio"; // ejemplo: hasta 20% por encima
-    return "critico";
-  }
-}
   return (
     <div className="max-w-4xl mx-auto p-4">
       <h2 className="text-2xl font-bold mb-4 text-gray-800">
@@ -212,25 +200,62 @@ const puedeVerTabla = esAdmin || esRegistrador;
         {valores.map((v) => (
           <tr key={v.id}>
             <td className="px-4 py-2">{v.indicador?.nombre}</td>
-            <td className="px-4 py-2">{v.valor}</td>
+<td className="px-4 py-2">
+  {v.resultado ? (
+    <span
+      className={`${
+        v.resultado.includes("días")
+          ? "text-blue-700 font-medium"
+          : v.resultado.includes("%")
+          ? "text-gray-800"
+          : "text-gray-700"
+      }`}
+    >
+      {(() => {
+        // Detectar número dentro del texto
+        const match = v.resultado.match(/([\d.]+)/);
+        if (match) {
+          const numero = Math.floor(parseFloat(match[1])); // 🔹 redondea al piso
+          return v.resultado
+            .replace(match[1], numero) // reemplaza el número original
+            .replace(".", ""); // limpia posibles puntos sobrantes
+        }
+        return v.resultado;
+      })()}
+    </span>
+  ) : v.valor ? (
+    Math.floor(Number(v.valor))
+  ) : (
+    "—"
+  )}
+</td>
+
+
+
             <td className="px-4 py-2">
               {v.indicador?.tipo_meta === "mayor" ? "≥" : "≤"} {v.indicador?.meta}
             </td>
-            <td className="px-4 py-2">
-              {(() => {
-                const estado = calcularEstado(v.valor, v.indicador?.meta, v.indicador?.tipo_meta);
-                const clases = {
-                  ok: "bg-green-100 text-green-700",
-                  medio: "bg-yellow-100 text-yellow-700",
-                  critico: "bg-red-100 text-red-700"
-                };
-                return estado ? (
-                  <span className={`${clases[estado]} px-2 py-1 rounded text-xs font-semibold`}>
-                    {estado.toUpperCase()}
-                  </span>
-                ) : "—";
-              })()}
-            </td>
+     <td className="px-4 py-2">
+  {v.estado ? (
+    <span
+      className={`px-2 py-1 rounded text-xs font-semibold
+        ${
+          v.estado === "ok"
+            ? "bg-green-100 text-green-700"
+            : v.estado === "medio"
+            ? "bg-yellow-100 text-yellow-700"
+            : v.estado === "critico"
+            ? "bg-red-100 text-red-700"
+            : "bg-gray-100 text-gray-600"
+        }`}
+    >
+      {v.estado.toUpperCase()}
+    </span>
+  ) : (
+    "—"
+  )}
+</td>
+
             <td className="px-4 py-2">
               {new Date(v.fecha).toLocaleDateString("es-CO")}
             </td>

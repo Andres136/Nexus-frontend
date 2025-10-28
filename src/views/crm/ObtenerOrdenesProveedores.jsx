@@ -1,7 +1,10 @@
 import { useProveedores } from "../../hooks/useProveedores";
 import {  Link, useNavigate } from "react-router-dom";
 
+
 export default function ObtenerOrdenesProveedores() {
+
+
   const navigate = useNavigate();
   const {
     ordenes,
@@ -61,7 +64,8 @@ export default function ObtenerOrdenesProveedores() {
               <th className="border px-4 py-2">Número O-C</th>
               <th className="border px-4 py-2">Fecha </th>
               <th className="border px-4 py-2">Empresa</th>
-              <th className="border px-4 py-2">Observaciones</th>
+              <th className="border px-4 py-2">Sedes</th>
+              
               <th className="border px-4 py-2">Proveedor</th>
               <th className="border px-4 py-2">Estado</th>
               <th className="border px-4 py-2">Usuario</th>
@@ -74,9 +78,9 @@ export default function ObtenerOrdenesProveedores() {
                 <td className="border px-4 py-2">{orden.numero_orden}</td>
                 <td className="border px-4 py-2">{formatearFecha(orden.fecha)}</td>
                 <td className="border px-4 py-2">{orden.empresa?.nombre}</td>
-                <td className="border px-4 py-2">
-                  {orden.observaciones || "Sin observaciones"}
-                </td>
+               <td className="border px-4 py-2">{orden.sede_nombre || 'Sin sede'}</td>
+
+                
                 <td className="border px-4 py-2">{orden.proveedor?.nombre}</td>
                 <td className="border px-4 py-2 text-center">
               <span
@@ -108,7 +112,7 @@ export default function ObtenerOrdenesProveedores() {
                   <button
                     onClick={() =>
                       navigate(
-                        `/auth/crm/ordenes-proveedor-entregas/${orden.id}/editar`
+                        `/auth/crm/oc-provedor-update/${orden.id}`
                       )
                     }
                     className="bg-blue-500 text-white px-3 py-1 rounded"

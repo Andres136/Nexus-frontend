@@ -6,6 +6,7 @@ import { BrowserRouter } from 'react-router-dom'
 import { SystemProvider } from './context/SytemContext'
 import { ToastContainer } from 'react-toastify'
 import { QueryClient,QueryClientProvider } from '@tanstack/react-query'
+import { ProductProvider } from './context/ProductContext'
 const queryClient = new QueryClient()
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -14,8 +15,10 @@ createRoot(document.getElementById('root')).render(
 
       <BrowserRouter> 
     <SystemProvider> 
+      <ProductProvider>
          <Router />
           <ToastContainer />
+      </ProductProvider>
     </SystemProvider>
  
     </BrowserRouter> 

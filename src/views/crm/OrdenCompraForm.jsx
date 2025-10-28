@@ -6,7 +6,7 @@ import { toast } from "react-toastify";
 import { useClientes } from "../../hooks/useClientes";
 import { useAuth } from "../../hooks/useAuth";
 
-import { Link, useParams } from "react-router-dom";
+import { Link,  useParams } from "react-router-dom";
 import Select from 'react-select';
 
 
@@ -21,7 +21,7 @@ const [observacionDetectada, setObservacionDetectada] = useState(false); // evit
 
 
   const { user } = useAuth({middleware: "auth"});
-  console.log( "rol",user.role_id);
+
 
   const [formData, setFormData] = useState({
     fecha_entrega: "",
@@ -30,6 +30,7 @@ const [observacionDetectada, setObservacionDetectada] = useState(false); // evit
     observaciones: "",
     detalles: [],
   });
+
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -72,6 +73,7 @@ const [observacionDetectada, setObservacionDetectada] = useState(false); // evit
             observaciones: datos.observaciones,
             detalles: datos.detalles.map(detalle => ({
               id: detalle.id,
+              product_id: detalle.product_id,
               largo_cm: detalle.largo_cm,
               ancho_cm: detalle.ancho_cm,
               calibre: detalle.calibre,
@@ -132,6 +134,10 @@ const [observacionDetectada, setObservacionDetectada] = useState(false); // evit
       document.body.appendChild(link);
       link.click();
       link.remove();
+  
+      // Si estoy creando una nueva orden, reseteo el formulario
+
+      
 
       if (modo !== "edicion") {
         setFormData({

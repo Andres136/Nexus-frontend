@@ -152,7 +152,7 @@ const obtenerClientes = async (page = 1, search = "") => {
         headers: { Authorization: `Bearer ${token}` },
       });
         setClientesTodos(response.data.data || response.data);
-        console.log('todos ',response.data);
+    
 
     } catch (error) {
       console.error("Error al obtener los clientes:", error);
@@ -224,7 +224,7 @@ async function eliminarCliente(id){
 
 //Registrar gestion a cliente
 async function registrarGestionCliente(clienteId, gestion){
-    console.log('id del cliente gestion', clienteId);
+    
     const token = localStorage.getItem('token');
     try {
         const response = await clienteAxios.post(`/api/clientes/${clienteId}/seguimientos`, gestion, {
@@ -250,7 +250,7 @@ async function registrarGestionCliente(clienteId, gestion){
 
 //Consultar Historial de cliente por ID
 async function consultarHistorialCliente(clienteId){
-    console.log('id del cliente', clienteId)
+
     const token = localStorage.getItem('token');
     try {
         const response = await clienteAxios.get(`/api/clientes/${clienteId}`, {
