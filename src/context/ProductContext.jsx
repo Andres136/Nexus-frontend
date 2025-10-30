@@ -43,27 +43,31 @@ export const ProductProvider = ({ children }) => {
   const [urlPDF, setUrlPDF] = useState(null);
 
   // Query 1: Productos paginados
-  const {
-    data: productsData,
-    isLoading: isLoadingProducts,
-    isError: isErrorProducts,
-    error: errorProducts,
-    refetch: refetchProducts,
-    isFetching: isFetchingProducts,
-  } = useQuery({
-    queryKey: ["products", filters],
-    queryFn: async () => {
-      const res = await productsApi.getProducts(filters);
-      return res.data;
-    },
-    enabled: enabledQueries.products,
-    keepPreviousData: true,
-    staleTime: 5 * 60 * 1000,
-    cacheTime: 10 * 60 * 1000,
-    refetchOnWindowFocus: false,
-    retry: 2,
-    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 30000),
-  });
+const {
+  data: productsData,
+  isLoading: isLoadingProducts,
+  isError: isErrorProducts,
+  error: errorProducts,
+  refetch: refetchProducts,
+  isFetching: isFetchingProducts,
+} = useQuery({
+  queryKey: ["products", filters],
+  queryFn: async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.warn("⚠️ No hay token de autenticación. No se consultarán productos.");
+      return { data: [] }; // devuelve vacío sin romper nada
+    }
+
+    const res = await productsApi.getProducts(filters);
+    return res.data;
+  },
+  enabled: !!localStorage.getItem("token") && !!user, // 👈 evita ejecutar sin autenticación
+  keepPreviousData: true,
+  staleTime: 5 * 60 * 1000,
+  refetchOnWindowFocus: false,
+  retry: false,
+});
 
   // Query 2: Todos los productos (sin paginación)
   const {
