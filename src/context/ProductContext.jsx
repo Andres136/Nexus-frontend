@@ -1,11 +1,13 @@
-import { createContext, useState } from "react";
+import { createContext, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { inventariosApi, productsApi } from "../services/api";
+import {useAuth} from '../hooks/useAuth';
 
 export const ProductContext = createContext();
 
 export const ProductProvider = ({ children }) => {
   // Estado global de filtros
+    const { user } = useAuth( {middleware: 'auth'} );
   const [filters, setFilters] = useState({
     search: "",
     empresa_id: null,
@@ -13,6 +15,19 @@ export const ProductProvider = ({ children }) => {
     bodega_id: null,
     page: 1,
   });
+
+
+  //UseEffect 
+
+  useEffect(() => {
+  if (user?.sede_id && !filters.sede_id) {
+    setFilters(prev => ({ ...prev, sede_id: user.sede_id }));
+  }
+  if (user?.empresa_id && !filters.empresa_id) {
+    setFilters(prev => ({ ...prev, empresa_id: user.empresa_id }));
+  }
+}, [user]);
+
 
   // Estado para controlar qué queries ejecutar
   const [enabledQueries, setEnabledQueries] = useState({

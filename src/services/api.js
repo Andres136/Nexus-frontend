@@ -1,14 +1,13 @@
 import axios from "axios";
+import clienteAxios from "../config/axios";
 
-const VITE_API_URL = import.meta.env.VITE_API_URL;
+
 
 
 const apiClient = axios.create({
-  baseURL: VITE_API_URL ,
+  baseURL: clienteAxios.defaults.baseURL,
   headers: {
     "Content-Type": "application/json",
-    Accept: "application/json",
-    
   },
 });
 
@@ -136,9 +135,10 @@ export const empresaApi={
 
 //Api para traer todos los productos sin paginar
 export const productsApi={
-  getAll:(params={})=>apiClient.get('/api/products-all', { params }),
-  getProducts:(params={})=>apiClient.get('/api/products', { params }),
+ getAll:(params={})=>apiClient.get('/api/products-all', { params }),
+getProducts:(params={})=>apiClient.get('/api/products', { params }),
   getById:(id)=>apiClient.get(`/api/products/${id}`),
+
   create:(data)=>apiClient.post('/api/products',data,{
     headers: { 'Content-Type': 'multipart/form-data' }
   }),

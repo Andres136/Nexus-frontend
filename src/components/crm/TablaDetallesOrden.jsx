@@ -145,10 +145,10 @@ export default function TablaDetallesOrden({
       // ✅ USAR: resumen_por_bodega como en DetalleTraslado
       setBodegasDisponibles(stockInfo.stock?.resumen_por_bodega || []);
 
-      console.log(
+  /*    console.log(
         "Stock info actualizado en modal:",
         stockInfo.stock?.resumen_por_bodega
-      );
+      );*/
       setLoadingStock(false);
     }
   }, [stockInfo, modalOpen, detalleActivo]);

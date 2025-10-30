@@ -41,32 +41,37 @@ const SystemProvider = ({ children }) => {
   const handlerConsultarUsuarios = async () => {
     try {
       const response = await clienteAxios.get("/api/users");
-      console.log(response.data);
+      return response.data;
     } catch (error) {
       console.log(error);
     }
   };
 
   // 🔹 Función para obtener órdenes de compra
-  const fetOrdenesCompra = async ({ queryKey }) => {
-    const [, page, search] = queryKey; // ✅ Extraer correctamente page y search
-    const token = localStorage.getItem("token");
+const fetOrdenesCompra = async ({ queryKey }) => {
+  const [, page, search] = queryKey;
+  const token = localStorage.getItem("token");
 
-    try {
-      const response = await clienteAxios.get(
-        `/api/orden-compras?page=${page}&search=${search}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+  // 🔒 Validar autenticación
+  if (!token) {
+    console.warn("No hay token de autenticación. No se consultarán órdenes.");
+    throw new Error("Usuario no autenticado");
+  }
 
-      return response.data;
-      
-    } catch (error) {
-      console.error("Error al obtener órdenes de compra:", error);
-      throw new Error("Error al obtener órdenes de compra");
-    }
-  };
+  try {
+    const response = await clienteAxios.get(
+      `/api/orden-compras?page=${page}&search=${search}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error al obtener órdenes de compra:", error);
+    throw new Error("Error al obtener órdenes de compra");
+  }
+};
+
 
   // 🔹 React Query para obtener órdenes de compra
   const {
@@ -81,6 +86,9 @@ const SystemProvider = ({ children }) => {
     staleTime: 60000, // Cachea datos por 60 segundos
     refetchOnWindowFocus: false,
   });
+
+
+
 
   //Api para traer los productos de siigo
 

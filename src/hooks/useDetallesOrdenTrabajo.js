@@ -41,7 +41,7 @@ export default function useDetallesOrdenTrabajo() {
         const response = await clienteAxios.get(`/api/orden-trabajo/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        console.log('Respuesta de la API orden trabajo:', response.data);
+      //  console.log('Respuesta de la API orden trabajo:', response.data);
         setOrden(response.data);
       } catch (error) {
         toast.error("No se pudo cargar la orden de trabajo.");
