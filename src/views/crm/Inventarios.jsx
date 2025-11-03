@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { FiSearch, FiFilter, FiDownload, FiRefreshCw, FiPackage, FiTrendingUp, FiTrendingDown, FiAlertTriangle, FiPlus } from 'react-icons/fi';
+import { FiSearch, FiFilter, FiDownload, FiRefreshCw, FiPackage, FiTrendingUp, FiTrendingDown, FiAlertTriangle, FiPlus, FiAlertCircle } from 'react-icons/fi';
 import { BsBoxSeam, BsGraphUp, BsExclamationTriangle, BsFileEarmarkExcel } from 'react-icons/bs';
 import { Link } from 'react-router-dom';
 import { inventariosApi } from '../../services/api';
 import { useEmpresas } from '../../hooks/useEmpresas';
 import SincronizacionSiigoProductos from '../../components/crm/SincronizacionSiigoProductos';
+import Swal from 'sweetalert2';
 
 
 export default function Inventarios() {
@@ -90,7 +91,7 @@ export default function Inventarios() {
       const { data } = await inventariosApi.listar(params);
 
 
-    
+    console.log('Datos de inventarios recibidos:', data);
       setPagination(data.pagination);
       setInventarios(data.data);
 
@@ -174,6 +175,16 @@ setStats({
     }
   };
 
+  // 🔹 Calcular stock total de un producto específico
+const obtenerStockTotalProducto = (productoId) => {
+  const total = inventarios
+    .filter((item) => item.producto?.id === productoId)
+    .reduce((sum, item) => sum + Number(item.stock || 0), 0);
+
+  return total;
+};
+
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -242,6 +253,15 @@ setStats({
       >
         <FiPlus className="w-4 h-4" />
         <span className="hidden sm:inline">Traslado</span>
+      </Link>
+
+      {/* Botón Ordenes Faltantes */}
+      <Link
+        to="/auth/crm/ordenes-faltantes"
+        className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 active:scale-[0.98] transition-all duration-150 shadow-sm text-sm font-medium flex-1 sm:flex-none justify-center"
+      >
+        <FiAlertCircle className="w-4 h-4" />
+        <span className="hidden sm:inline">Ordenes Faltantes</span>
       </Link>
 
       {/* Componente Siigo */}
@@ -406,9 +426,22 @@ setStats({
                 <div key={item.id} className="border-b border-gray-200 p-4">
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-medium text-gray-900 truncate">
-                        {item.producto.name}
-                      </h3>
+                <div
+  onClick={() => {
+    const total = obtenerStockTotalProducto(item.producto.id);
+    Swal.fire({
+      title: ` Stock total de ${item.producto.name}`,
+      html: `<b>Stock total disponible:</b> ${total.toLocaleString()} unidades`,
+      icon: "info",
+      confirmButtonText: "Cerrar",
+      confirmButtonColor: "#2563eb",
+    });
+  }}
+  className="text-sm font-medium text-blue-600 hover:underline cursor-pointer"
+>
+  {item.producto.name}
+</div>
+
                       <p className="text-xs text-gray-500 truncate">
                         {item.producto.code} • {item.producto.categoria}
                       </p>
@@ -496,9 +529,22 @@ setStats({
                     <tr key={item.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
-                          <div className="text-sm font-medium text-gray-900">
-                            {item.producto.name}
-                          </div>
+                     <div
+  onClick={() => {
+    const total = obtenerStockTotalProducto(item.producto.id);
+    Swal.fire({
+      title: ` Stock total de ${item.producto.name}`,
+      html: `<b>Stock total disponible:</b> ${total.toLocaleString()} unidades`,
+    icon: "info",
+    confirmButtonText: "Cerrar",
+    confirmButtonColor: "#2563eb",
+    });
+  }}
+  className="text-sm font-medium text-blue-600 hover:underline cursor-pointer"
+>
+  {item.producto.name}
+</div>
+
                           <div className="text-sm text-gray-500">
                             {item.producto.code} • {item.producto.categoria}
                             <div className="text-xs text-gray-500">

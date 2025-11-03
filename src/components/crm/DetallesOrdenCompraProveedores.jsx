@@ -15,7 +15,7 @@ export default function DetallesOrdenCompraProveedores({
       cantidad_entregada: 0,
       code: "",
       producto_id: null,
-      campo_seleccionado: "description",
+      campo_seleccionado: "name",
     },
   ]);
 
@@ -58,7 +58,7 @@ export default function DetallesOrdenCompraProveedores({
         cantidad_entregada: 0,
         code: "",
         producto_id: null,
-        campo_seleccionado: "description",
+        campo_seleccionado: "name",
       },
     ]);
   };

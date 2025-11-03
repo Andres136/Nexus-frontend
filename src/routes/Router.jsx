@@ -26,7 +26,7 @@ import ObtenerOrdenesTrabajo from "../views/crm/ObtenerOrdenesTrabajo";
 import OrdenesFacturar from "../views/crm/OrdenesFacturar";
 import RegistroDocumentacion from "../views/crm/RegistroDocumentacion";
 import Vehiculos from "../views/crm/Vehiculos";
-import FormVehiculos from "../components/crm/FormVehiculos"
+import FormVehiculos from "../components/crm/FormVehiculos";
 import DocumentosVehiculos from "../components/crm/DocumentosVehiculos";
 import MantenimientosVehiculos from "../components/crm/MantenimientosVehiculos";
 import InspecionVehiculos from "../components/crm/InspecionVehiculos";
@@ -57,103 +57,186 @@ import Bodegas from "../components/Bodegas";
 import OrdenesCompraClient from "../components/auditoria/OrdenesCompraClient";
 import RegistrarInventario from "../views/crm/RegistrarInventario";
 import TrasladoInventario from "../views/crm/TrasladoInventario";
-
-
+import CreateQr from "../components/calidad/CreateQr";
+import OrdenesFaltantes from "../views/crm/OrdenesFaltantes";
 
 export default function Router() {
   return (
     <Routes>
-    {/* 🔹 Ruta de Login (Accesible para todos) */}
-    <Route path="/" element={<Login />} />
-  
-    {/* 🔹 Rutas bajo AuthLayout (Procesos y CRM) */}
-    <Route element={<ProtectedRoute allowedRoles={[1,2, 3, 4, 5, 6, 7, 8,9]} />}>
-      <Route path="/auth" element={<AuthLyout />}>
-        <Route path="procesos" element={<DepartamentosPage />} />
-        <Route path="procesos/:departamentoId" element={<ProcesosDepartamento />} />
+      {/* 🔹 Ruta de Login (Accesible para todos) */}
+      <Route path="/" element={<Login />} />
+
+      {/* 🔹 Rutas bajo AuthLayout (Procesos y CRM) */}
+      <Route
+        element={<ProtectedRoute allowedRoles={[1, 2, 3, 4, 5, 6, 7, 8, 9]} />}
+      >
+        <Route path="/auth" element={<AuthLyout />}>
+          <Route path="procesos" element={<DepartamentosPage />} />
+          <Route
+            path="procesos/:departamentoId"
+            element={<ProcesosDepartamento />}
+          />
           <Route path="rendimiento" element={<KpiTareas />} />
           <Route path="tareas" element={<Tareas />} />
-          <Route path="dashboard/indicadores" element={<DashboardIndicadores />} />
-       <Route path="novedades" element={<Errores />} />
-        <Route path="departamentos" element={<DepartatamentosUpdate />} />
-      <Route path="indicadores" element={<Indicadores/>} />
- 
+          <Route
+            path="dashboard/indicadores"
+            element={<DashboardIndicadores />}
+          />
+          <Route path="novedades" element={<Errores />} />
+          <Route path="departamentos" element={<DepartatamentosUpdate />} />
+          <Route path="indicadores" element={<Indicadores />} />
+        </Route>
+
+        <Route path="/auth/crm" element={<Crm />}>
+          <Route path="ordenes-trabajo" element={<ObtenerOrdenesTrabajo />} />
+          <Route path="crear-ordenes-compras" element={<OrdenCompraForm />} />
+          <Route
+            path="obtener-ordenes-compras"
+            element={<ObtenerOrdenesCompra />}
+          />
+          <Route path="vehiculos" element={<Vehiculos />} />
+          <Route
+            path="/auth/crm/vehiculos-register"
+            element={<FormVehiculos />}
+          />
+          <Route
+            path="/auth/crm/vehiculos-documentos"
+            element={<DocumentosVehiculos />}
+          />
+          <Route
+            path="/auth/crm/vehiculos-mantenimientos"
+            element={<MantenimientosVehiculos />}
+          />
+          <Route
+            path="/auth/crm/vehiculos-inspecciones"
+            element={<InspecionVehiculos />}
+          />
+          <Route path="/auth/crm/vehiculos-all" element={<ListarVehiculos />} />
+          <Route
+            path="/auth/crm/vehiculos/:id/editar"
+            element={<EditarVehiculo />}
+          />
+          <Route path="indicadores" element={<Indicadores />} />
+          <Route
+            path="registrar-valor-indicador"
+            element={<RegisterValorIndicador />}
+          />
+
+          <Route
+            path="/auth/crm/editar-compra/:id"
+            element={<OrdenCompraForm modo="edicion" />}
+          />
+
+          <Route path="gestion-clientes" element={<GestionClientes />} />
+          <Route path="reporte-inventarios" element={<Inventarios />} />
+          <Route path="notificaciones" element={<Notifycaciones />} />
+          <Route
+            path="detalles-compras/:id"
+            element={<DetallesOrdenesCompra />}
+          />
+          <Route
+            path="ordenes-trabajo/:id"
+            element={<DetallesOrdenTrabajo />}
+          />
+          <Route path="kpis" element={<Kpi />} />
+          <Route path="pqrs" element={<Pqr />} />
+          <Route path="ordenes-facturar" element={<OrdenesFacturar />} />
+          <Route
+            path="registrar-documentacion"
+            element={<RegistroDocumentacion />}
+          />
+          <Route path="ordenes-faltantes" element={<OrdenesFaltantes/>} />
+          <Route path="proveedores" element={<Proveedores />} />
+          <Route
+            path="proveedores-ordenes-compra"
+            element={<FormOrdenesProveedores />}
+          />
+          <Route
+            path="ordenes-compra-proveedor"
+            element={<ObtenerOrdenesProveedores />}
+          />
+          <Route
+            path="/auth/crm/ordenes-proveedor-entregas/:id/registrar-entrega"
+            element={<RegistrarEntregaProveedor />}
+          />
+          <Route
+            path="/auth/crm/ordenes-proveedor-entregas/:id/editar"
+            element={<RegistrarEntregaProveedor modo="editar" />}
+          />
+          <Route
+            path="/auth/crm/ordenes-proveedor-preview/:id"
+            element={<VistaPrevia />}
+          />
+          <Route
+            path="/auth/crm/oc-provedor-update/:id"
+            element={<UpdateOcProvedor />}
+          />
+
+          <Route path="cotizaciones" element={<CotizacionForm />} />
+          <Route path="mis-ordenes" element={<MisOrdenesComerciales />} />
+          <Route path="mis-cotizaciones" element={<MisCotizaciones />} />
+          <Route
+            path="/auth/crm/editar-cotizacion/:id"
+            element={<CotizacionForm modo="edicion" />}
+          />
+          <Route
+            path="/auth/crm/referencias-faltantes"
+            element={<ReferenciasExcedidas />}
+          />
+          <Route
+            path="/auth/crm/vehiculos/:id/fotos"
+            element={<CargaFotosVehiculo />}
+          />
+          <Route
+            path="/auth/crm/conductores"
+            element={<ObtenerDatosConductores />}
+          />
+          <Route
+            path="/auth/crm/crear-datos-conductores"
+            element={<Conductores />}
+          />
+          <Route
+            path="/auth/crm/ordenes-compra-auditor"
+            element={<OrdenesCompraClient />}
+          />
+          <Route
+            path="/auth/crm/registrar-inventario"
+            element={<RegistrarInventario />}
+          />
+          <Route
+            path="/auth/crm/traslado-inventario"
+            element={<TrasladoInventario />}
+          />
+          <Route
+            path="/auth/crm/conductores/:conductorId/revisiones"
+            element={<RevisionesPage />}
+          />
+        </Route>
       </Route>
-  
-      <Route path="/auth/crm" element={<Crm />}>
-        <Route path="ordenes-trabajo" element={<ObtenerOrdenesTrabajo/>} />
-        <Route path="crear-ordenes-compras" element={<OrdenCompraForm />} />
-        <Route path="obtener-ordenes-compras" element={<ObtenerOrdenesCompra />} />
-        <Route path="vehiculos" element={<Vehiculos />} />
-        <Route path="/auth/crm/vehiculos-register" element={<FormVehiculos/>}/>
-        <Route path="/auth/crm/vehiculos-documentos" element={<DocumentosVehiculos/>} />
-        <Route path="/auth/crm/vehiculos-mantenimientos" element={<MantenimientosVehiculos/>} />
-        <Route path="/auth/crm/vehiculos-inspecciones" element={<InspecionVehiculos />} />
-        <Route path="/auth/crm/vehiculos-all" element={<ListarVehiculos />} />
-        <Route path="/auth/crm/vehiculos/:id/editar" element={<EditarVehiculo/>} />
-     <Route path="indicadores" element={<Indicadores/>} />
-     <Route path="registrar-valor-indicador" element={<RegisterValorIndicador />} />
 
-<Route
-  path="/auth/crm/editar-compra/:id"
-  element={<OrdenCompraForm modo="edicion" />}
-/>
+      {/* 🔹 Rutas para Administradores (AdminLayout) */}
+      <Route element={<ProtectedRoute allowedRoles={[1]} />}>
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route path="users" element={<GestionUsers />} />
 
-        <Route path="gestion-clientes" element={<GestionClientes />} />
-        <Route path="reporte-inventarios" element={<Inventarios />} />
-        <Route path="notificaciones" element={<Notifycaciones />} />
-        <Route path="detalles-compras/:id" element={<DetallesOrdenesCompra />} />
-        <Route path="ordenes-trabajo/:id" element={<DetallesOrdenTrabajo />} />
-        <Route path="kpis" element={<Kpi />} />
-        <Route path="pqrs" element={<Pqr />} />
-        <Route path="ordenes-facturar" element={<OrdenesFacturar />} />
-        <Route path="registrar-documentacion" element={<RegistroDocumentacion />} />
-        <Route path="proveedores" element={<Proveedores />} />  
-        <Route path="proveedores-ordenes-compra" element={<FormOrdenesProveedores/>} />
-        <Route path="ordenes-compra-proveedor" element={<ObtenerOrdenesProveedores/>} />
-        <Route path="/auth/crm/ordenes-proveedor-entregas/:id/registrar-entrega" element={<RegistrarEntregaProveedor />} />
-        <Route path="/auth/crm/ordenes-proveedor-entregas/:id/editar" element={<RegistrarEntregaProveedor modo="editar" />} />
-        <Route path="/auth/crm/ordenes-proveedor-preview/:id" element={<VistaPrevia />} />
-        <Route path="/auth/crm/oc-provedor-update/:id" element={<UpdateOcProvedor />} />
-
-        <Route path="cotizaciones" element={<CotizacionForm/>} />
-        <Route path="mis-ordenes" element={<MisOrdenesComerciales/>} />
-        <Route path="mis-cotizaciones" element={<MisCotizaciones/>} />
-        <Route path="/auth/crm/editar-cotizacion/:id" element={<CotizacionForm modo="edicion" />} />
-        <Route path="/auth/crm/referencias-faltantes" element={<ReferenciasExcedidas/>} />
-        <Route path="/auth/crm/vehiculos/:id/fotos" element= {<CargaFotosVehiculo />} />
-        <Route path="/auth/crm/conductores" element={<ObtenerDatosConductores/>} />
-        <Route path="/auth/crm/crear-datos-conductores" element={<Conductores/>} />
-        <Route path="/auth/crm/ordenes-compra-auditor" element={<OrdenesCompraClient />} />
-        <Route path="/auth/crm/registrar-inventario" element={<RegistrarInventario/>} />
-        <Route path="/auth/crm/traslado-inventario" element={<TrasladoInventario />} />
-        <Route
-  path="/auth/crm/conductores/:conductorId/revisiones"
-  element={<RevisionesPage />}
-/>
-      </Route>
-    </Route>
-  
-    {/* 🔹 Rutas para Administradores (AdminLayout) */}
-    <Route element={<ProtectedRoute allowedRoles={[1]} />}>
-      <Route path="/admin" element={<AdminLayout />}>
-        <Route path="users" element={<GestionUsers />} />
-        
-        <Route path="sedes" element={<Sedes />} />
-        <Route path="rendimiento" element={<KpiTareas />} />
+          <Route path="sedes" element={<Sedes />} />
+          <Route path="rendimiento" element={<KpiTareas />} />
           <Route path="tareas" element={<Tareas />} />
-       <Route path="novedades" element={<Errores />} />
-        <Route path="departamentos" element={<DepartatamentosUpdate />} />
-      <Route path="indicadores" element={<Indicadores/>} />
-      <Route path="dashboard/indicadores" element={<DashboardIndicadores />} />
-      <Route path="empresas" element={<Empresas/>} />
-      <Route path="bodegas" element={<Bodegas/>} />
+          <Route path="novedades" element={<Errores />} />
+          <Route path="departamentos" element={<DepartatamentosUpdate />} />
+          <Route path="indicadores" element={<Indicadores />} />
+          <Route
+            path="dashboard/indicadores"
+            element={<DashboardIndicadores />}
+          />
+          <Route path="empresas" element={<Empresas />} />
+          <Route path="bodegas" element={<Bodegas />} />
+          <Route path="crear-qr" element={<CreateQr />} />
+        </Route>
       </Route>
-    </Route>
-  
-    {/* 🔹 Redirección si la ruta no existe */}
-    <Route path="*" element={<Navigate to="/" replace />} />
-  </Routes>
-  
+
+      {/* 🔹 Redirección si la ruta no existe */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }

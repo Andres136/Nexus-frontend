@@ -14,6 +14,7 @@ import {
   Box,
   Search,
   Eye,
+  Loader2,
 } from "lucide-react";
 
 export default function TablaDetallesOrden({
@@ -29,7 +30,7 @@ export default function TablaDetallesOrden({
     getStockProduct,
     stockInfo,
     getStockWithSuggestions,
-    stockSugerenciasInfo,
+
   } = useContext(ProductContext);
   const { products, isLoading, isFetching, isEmpty } = useProducts({ search });
   const [bodegasDisponibles, setBodegasDisponibles] = useState([]);
@@ -87,7 +88,7 @@ export default function TablaDetallesOrden({
 
     try {
       setLoadingStock(true);
-      const res = await getStockProduct(id); // sigue usando tu función global
+      const res = await productsApi.getStock(id); // sigue usando tu función global
       const data = res?.data?.stock;
       return data || null;
     } catch (err) {
@@ -796,9 +797,7 @@ export default function TablaDetallesOrden({
                         return bodegaInfo
                           ? {
                               value: b.bodega_id,
-                              label: `${bodegaInfo.bodega_nombre} - ${
-                                bodegaInfo.sede_nombre
-                              } (${formatNumber(
+                              label: `${bodegaInfo.bodega_nombre} -  (${formatNumber(
                                 bodegaInfo.stock_total
                               )} unidades)`,
                               bodega_nombre: bodegaInfo.bodega_nombre,
@@ -999,6 +998,7 @@ export default function TablaDetallesOrden({
                   onInputChange={(value) => setSearch(value)}
                   // ✅ CAMBIAR: onChange de productos equivalentes para usar resumen_por_bodega
                   onChange={async (selectedOptions) => {
+                    setLoadingStock(true);
                     const equivalentesExistentes =
                       detalleActivo.producto_equivalentes || [];
                     const idsSeleccionados = selectedOptions.map(
@@ -1018,24 +1018,36 @@ export default function TablaDetallesOrden({
                         )
                     );
 
-                    // ✅ CAMBIAR: Cargar stock y usar resumen_por_bodega
-                    const nuevosDatos = await Promise.all(
-                      nuevosSeleccionados.map(async (sel) => {
-                        const res = await getStockProduct(sel.value);
-                        const stockData = res?.data?.stock;
+// ✅ NUEVA VERSIÓN: Llama directamente al endpoint para obtener stock en tiempo real
+const nuevosDatos = await Promise.all(
+  nuevosSeleccionados.map(async (sel) => {
+    try {
+      const res = await productsApi.getStock(sel.value); // 🔹 llamada directa
+      const stockData = res?.data?.stock;
 
-                        return {
-                          id: sel.value,
-                          cantidad: 0,
-                          razon: "",
-                          stock: stockData?.stock_total ?? 0,
-                          // ✅ CAMBIAR: Usar resumen_por_bodega en lugar de inventarios
-                          resumen_por_bodega:
-                            stockData?.resumen_por_bodega || [],
-                          bodegas: [],
-                        };
-                      })
-                    );
+      return {
+        id: sel.value,
+        cantidad: 0,
+        razon: "",
+        stock: stockData?.stock_total ?? 0,
+        resumen_por_bodega: stockData?.resumen_por_bodega || [],
+        bodegas: [],
+      };
+    } catch (error) {
+      console.error("❌ Error al obtener stock del producto equivalente:", error);
+      showToast("error", "Error al obtener stock del producto equivalente");
+      return {
+        id: sel.value,
+        cantidad: 0,
+        razon: "",
+        stock: 0,
+        resumen_por_bodega: [],
+        bodegas: [],
+      };
+    }
+  })
+);
+
 
                     setDetalleActivo({
                       ...detalleActivo,
@@ -1044,6 +1056,7 @@ export default function TablaDetallesOrden({
                         ...nuevosDatos,
                       ],
                     });
+                    setLoadingStock(false);
                   }}
                   value={detalleActivo.producto_equivalentes?.map((eq) => {
                     const product = products.find((p) => p.id === eq.id);
@@ -1071,6 +1084,14 @@ export default function TablaDetallesOrden({
                 {/* Lista de equivalentes mejorada */}
                 {detalleActivo.producto_equivalentes?.length > 0 && (
                   <div className="mt-4 space-y-4">
+
+
+                  {loadingStock && (
+  <div className="text-blue-600 text-sm flex items-center gap-2">
+    <Loader2 className="w-4 h-4 animate-spin" /> Cargando stock disponible...
+  </div>
+)}
+
                     {detalleActivo.producto_equivalentes.map((eq, idx) => {
                       const product = products.find((p) => p.id === eq.id);
                       return (

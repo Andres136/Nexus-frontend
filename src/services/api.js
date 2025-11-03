@@ -227,5 +227,14 @@ export const documentacionApi={
   moverAObseletos:(id)=>apiClient.post(`/api/documentos/mover-obseletos/${id}`),
 
 }
+export const crearQrApi={
+  create:(data)=>apiClient.post('/api/eventos/crear-qr',data),
+}
+
+
+//Exportar ordenes con falta de Stock
+export const ordenesApi = {
+  getFaltantesPendientes: () => apiClient.get("/api/ordenes-compra/faltantes/pendientes"),
+};
 
 export default apiClient;

@@ -1,5 +1,6 @@
 import useDetallesOrdenTrabajo from "../../hooks/useDetallesOrdenTrabajo";
 import TablaDetallesOrden from "../../components/crm/TablaDetallesOrden";
+import { FiRefreshCw } from "react-icons/fi";
 
 
 export default function DetallesOrdenTrabajo() {
@@ -19,7 +20,12 @@ export default function DetallesOrdenTrabajo() {
   } = useDetallesOrdenTrabajo();
 
 
-  if (!orden) return <p>Cargando orden o no se encontró la orden.</p>;
+  if (!orden) return  <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="bg-white p-8 rounded-lg shadow-lg text-center">
+            <FiRefreshCw className="w-8 h-8 text-blue-600 animate-spin mx-auto mb-4" />
+            <p className="text-gray-600">Cargando inventarios...</p>
+          </div>
+        </div>;
 
   return (
     <div className="p-6 bg-white rounded-xl">

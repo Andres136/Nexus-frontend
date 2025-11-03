@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { departamentosApi } from "../services/api";
 import { useAuth } from "../hooks/useAuth";
-import { Home, FolderKanban, ListChecks, Bell, Building2,LucideIndianRupee, BarChart2 } from "lucide-react";
+import { Home, FolderKanban, ListChecks, Bell, Building2,LucideIndianRupee, BarChart2, QrCodeIcon } from "lucide-react";
 
 
 export default function Navbar() {
@@ -32,6 +32,7 @@ useEffect(() => {
  const isResponsable = departamento?.responsable_id === user?.id;
   // Verifica si es responsable en consola
   const navLinks = [
+    { name: "Crear QR", to: "/admin/crear-qr", icon: QrCodeIcon, allowedRoles: [1, 2, 10, 11] },
     { name: "Inicio", to: "/", icon: Home, allowedRoles: [1,10,11] },
     { name: "Procesos", to: "/auth/procesos", icon: FolderKanban, alwaysVisible: true },
     { name: "Tareas", to: "tareas", icon: ListChecks, allowedRoles: [1,2, 10,11] },

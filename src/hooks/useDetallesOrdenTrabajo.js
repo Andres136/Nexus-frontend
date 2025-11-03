@@ -6,7 +6,7 @@ import { toast } from "react-toastify";
 import { formatCurrency } from "../helpers";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import LOGO from "/public/images/SETAS.png";
+
 import clienteAxios from "../config/axios";
 import { calcularCamposBolsa } from "../helpers/utils/calculoBolsa";
 
