@@ -251,7 +251,25 @@ export default function OrdenesFaltantes() {
                       </div>
                       <div>
                         <h3 className="text-xl font-bold text-gray-800">
-                          {orden.codigo}
+                     
+
+                          <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+  {orden.codigo}
+  
+  {orden.ordenes_trabajo && orden.ordenes_trabajo.length > 0 && (
+    <div className="flex flex-wrap gap-2 ml-3">
+      {orden.ordenes_trabajo.map((ot) => (
+        <span
+          key={ot.id}
+          className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold"
+        >
+          {ot.codigo} — {ot.estado}
+        </span>
+      ))}
+    </div>
+  )}
+</h3>
+
                         </h3>
                         <div className="flex items-center gap-4 mt-1">
                           <span className={`px-3 py-1 rounded-full text-sm font-medium ${

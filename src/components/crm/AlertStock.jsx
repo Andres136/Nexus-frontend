@@ -11,6 +11,7 @@ import {
 
 export default function AlertStock() {
   const { ordenes, isLoading, error } = useOrdenesFaltantes();
+
   const [animateCards, setAnimateCards] = useState(false);
 
   // ✅ Animar las tarjetas cuando los datos se cargan
