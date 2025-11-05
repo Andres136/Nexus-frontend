@@ -20,13 +20,13 @@ export default function OrdenCompraMultiItem({ onDetallesChange, errores = {}, v
     code: p.code,
     name: p.name,
     description: p.description || "Sin descripción",
-    label: `${p.code} - ${p.name}`,
+    label: `${p.code}- ${p.name}- ${p.description || "Sin descripción"}`,
   }));
 
   const getSelectedProduct = (productId) => {
     return productOptions.find(p => p.value === productId) || null;
   };
-  console.log(errores);
+
   return (
     <div className="space-y-4">
       {/* Header */}
@@ -66,20 +66,55 @@ export default function OrdenCompraMultiItem({ onDetallesChange, errores = {}, v
               {/* Producto */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Producto</label>
-                <Select
-                  isLoading={isLoading || isFetching}
-                  options={productOptions}
-                  onInputChange={setSearchTerm}
-                  onChange={(selectedOption) =>
-                    handleInputChange(row._uuid, "product_id", selectedOption ? selectedOption.value : "")
-                  }
-                  value={getSelectedProduct(row.product_id)}
-                  placeholder="Buscar producto..."
-                  noOptionsMessage={() => isEmpty ? "No se encontraron productos" : "Escribe para buscar"}
-                  className="text-sm"
-                  menuPortalTarget={document.body}
-                  styles={{ menuPortal: (base) => ({ ...base, zIndex: 9999 }) }}
-                />
+                        <Select
+  isLoading={isLoading || isFetching}
+  options={products.map((p) => ({
+    value: p.id,
+    label: `${p.code || p.code_id || "Sin código"} - ${p.name || "Sin nombre"}`,
+    code: p.code,
+    name: p.name,
+  }))}
+  value={
+    row.product_id && products.length > 0
+      ? (() => {
+          const product = products.find((p) => p.id === row.product_id);
+          if (product) {
+            return {
+              value: product.id,
+              label: `${product.code || product.code_id || "Sin código"} - ${product.name || "Sin nombre"}`,
+            };
+          } 
+        })()
+      : null
+  }
+  onChange={(selectedOption) => {
+    handleInputChange(row._uuid, "product_id", selectedOption ? selectedOption.value : "");
+  }}
+  onInputChange={(inputValue) => setSearchTerm(inputValue)}
+  placeholder="Buscar producto por código o nombre..."
+  noOptionsMessage={() =>
+    isLoading
+      ? "Cargando productos..."
+      : isEmpty
+      ? "No se encontraron productos"
+      : "Escribe para buscar"
+  }
+  className="min-w-[250px]"
+  menuPortalTarget={document.body}
+  styles={{
+    menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+    control: (base, { data }) => ({
+      ...base,
+      minHeight: "32px",
+      fontSize: "14px",
+      borderColor: data?.isInvalid ? "#dc2626" : base.borderColor,
+    }),
+    singleValue: (base, { data }) => ({
+      ...base,
+      color: data?.isInvalid ? "#dc2626" : base.color,
+    }),
+  }}
+/>
               </div>
 
               {/* Dimensiones */}
@@ -245,20 +280,56 @@ export default function OrdenCompraMultiItem({ onDetallesChange, errores = {}, v
 
                 {/* Producto */}
                 <td className="px-4 py-3">
-                  <Select
-                    isLoading={isLoading || isFetching}
-                    options={productOptions}
-                    onInputChange={setSearchTerm}
-                    onChange={(selectedOption) =>
-                      handleInputChange(row._uuid, "product_id", selectedOption ? selectedOption.value : "")
-                    }
-                    value={getSelectedProduct(row.product_id)}
-                    placeholder="Buscar producto..."
-                    noOptionsMessage={() => isEmpty ? "No se encontraron productos" : "Escribe para buscar"}
-                    className="min-w-[200px]"
-                    menuPortalTarget={document.body}
-                    styles={{ menuPortal: (base) => ({ ...base, zIndex: 9999 }) }}
-                  />
+           <Select
+  isLoading={isLoading || isFetching}
+  options={products.map((p) => ({
+    value: p.id,
+    label: `${p.code || p.code_id || "Sin código"} - ${p.name || "Sin nombre"}`,
+    code: p.code,
+    name: p.name,
+  }))}
+  value={
+    row.product_id && products.length > 0
+      ? (() => {
+          const product = products.find((p) => p.id === row.product_id);
+          if (product) {
+            return {
+              value: product.id,
+              label: `${product.code || product.code_id || "Sin código"} - ${product.name || "Sin nombre"}`,
+            };
+          } 
+        })()
+      : null
+  }
+  onChange={(selectedOption) => {
+    handleInputChange(row._uuid, "product_id", selectedOption ? selectedOption.value : "");
+  }}
+  onInputChange={(inputValue) => setSearchTerm(inputValue)}
+  placeholder="Buscar producto por código o nombre..."
+  noOptionsMessage={() =>
+    isLoading
+      ? "Cargando productos..."
+      : isEmpty
+      ? "No se encontraron productos"
+      : "Escribe para buscar"
+  }
+  className="min-w-[250px]"
+  menuPortalTarget={document.body}
+  styles={{
+    menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+    control: (base, { data }) => ({
+      ...base,
+      minHeight: "32px",
+      fontSize: "14px",
+      borderColor: data?.isInvalid ? "#dc2626" : base.borderColor,
+    }),
+    singleValue: (base, { data }) => ({
+      ...base,
+      color: data?.isInvalid ? "#dc2626" : base.color,
+    }),
+  }}
+/>
+
                 </td>
 
                 {/* Dimensiones */}

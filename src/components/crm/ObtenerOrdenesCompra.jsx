@@ -155,19 +155,19 @@ export default function ObtenerOrdenesCompra() {
         to={`/auth/crm/detalles-compras/${orden.id}`}
         className="flex items-center justify-center bg-blue-600 text-white px-3 py-1 rounded"
       >
-        Ver
+        <FaEye />
       </Link>
       <Link
         to={`/auth/crm/editar-compra/${orden.id}`}
         className="flex items-center justify-center bg-yellow-500 text-white px-3 py-1 rounded"
       >
-        Editar
+        <FaEdit />
       </Link>
       <button
         onClick={() => eliminarOrdenCompra(orden.id)}
         className="flex items-center justify-center bg-red-600 text-white px-3 py-1 rounded"
       >
-        Eliminar
+        <FaTrash />
       </button>
     </div>
   </td>

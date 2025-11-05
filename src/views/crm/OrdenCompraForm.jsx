@@ -335,7 +335,7 @@ const opcionesClientes = clientesTodos.map(c => ({
   )}
 
 
-  {modo === "edicion" && [1, 2, 4].includes(user?.role_id) && id && (
+  {modo === "edicion" && [1, 2, 4, 7].includes(user?.role_id) && id && (
   <button
     type="button"
     onClick={() => {

@@ -30,7 +30,8 @@ function createNewItem() {
 
 export default function DetallesOrdenesCompra() {
   const { id } = useParams();
-    const { products, isLoading,isError, isEmpty } = useProducts();
+
+
   const { ordenesCompra } = useSystem();
   const [sedes, setSedes] = useState([]);
   const [sedeId, setSedeId] = useState("");
@@ -40,8 +41,8 @@ export default function DetallesOrdenesCompra() {
   const [errores, setErrores] = useState({});
   const [forzarEntregaParcial, setForzarEntregaParcial] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
-  
-  
+
+      const { products, isLoading,isError, isEmpty, isFetching } = useProducts({search: searchTerm});
 
 
 
@@ -190,13 +191,13 @@ export default function DetallesOrdenesCompra() {
         });
         setSedes(response.data);
       } catch (error) {
-        toast.error("Error al cargar las sedes");
+        toast.error("Error al cargar las sedes", error);
       }
     };
   
     obtenerSedes();
   }, []);
-  
+ 
 
   return (
     <div className="min-h-screen  text-gray-900 p-6">
@@ -337,63 +338,69 @@ export default function DetallesOrdenesCompra() {
                       />
                     </td>
                     <td className="border border-gray-300 px-2 py-1">
- <Select
-    options={products
-      .filter(product => 
-        !searchTerm || 
-        (product.name?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (product.code?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (product.code_id?.toLowerCase().includes(searchTerm.toLowerCase()))
-      )
-      .map((product) => ({
+<Select
+  options={products.map((product) => ({
+    value: product.id,
+    label: `${product.code || product.code_id || 'Sin código'} - ${product.name || 'Sin nombre'} - ${product.description || 'Sin descripción'}`,
+  }))}
+
+  value={(() => {
+    const product = products.find((p) => p.id === detalle.product_id);
+    if (product) {
+      // ✅ Si el producto está en la lista actual
+      return {
         value: product.id,
         label: `${product.code || product.code_id || 'Sin código'} - ${product.name || 'Sin nombre'}`,
-        code: product.code || product.code_id,
-        name: product.name,
-      }))
+      };
+    } else if (detalle.product) {
+      // ✅ Si el detalle ya trae el producto desde el backend (relación cargada)
+      return {
+        value: detalle.product.id,
+        label: `${detalle.product.code || 'Sin código'} - ${detalle.product.name || 'Sin nombre'}`,
+      };
+    } else if (detalle.product_id) {
+      // ✅ Si solo hay ID, mantenerlo visible temporalmente
+      return {
+        value: detalle.product_id,
+        label: `ID ${detalle.product_id} (sin datos)`,
+        isInvalid: true,
+      };
     }
-    value={
-      detalle.product_id && products.length > 0
-        ? {
-            value: detalle.product_id,
-            label: (() => {
-              const product = products.find((p) => p.id === detalle.product_id);
-              return product 
-                ? `${product.code || product.code_id || 'Sin código'} - ${product.name || 'Sin nombre'}`
-                : "Producto no encontrado";
-            })(),
-          }
-        : null
-    }
-    onChange={(selected) => {
-      const productId = selected ? selected.value : null;
-      handleChangeDetalle(index, "product_id", productId);
-      
-      // Opcional: llenar descripción automáticamente
-  
-    }}
-    onInputChange={(inputValue) => setSearchTerm(inputValue)}
-    isLoading={isLoading}
-    isDisabled={isError}
-    isClearable
-    placeholder="Buscar producto..."
-    noOptionsMessage={() => {
-      if (isLoading) return "Cargando productos...";
-      if (isError) return "Error al cargar productos";
-      if (isEmpty) return "No se encontraron productos";
-      return "Escribe para buscar";
-    }}
-    className="min-w-[200px]"
-    styles={{
-      menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-      control: (base) => ({
-        ...base,
-        minHeight: '32px',
-        fontSize: '14px',
-      }),
-    }}
-    menuPortalTarget={document.body}
-  />
+    return null;
+  })()}
+
+  onChange={(selected) => {
+    const productId = selected ? selected.value : null;
+    handleChangeDetalle(index, "product_id", productId);
+  }}
+
+  onInputChange={(inputValue) => setSearchTerm(inputValue)}
+  isLoading={isLoading}
+  isClearable
+  placeholder="Buscar producto..."
+  noOptionsMessage={() => {
+    if (isLoading) return "Cargando productos...";
+    if (isError) return "Error al cargar productos";
+    if (isEmpty) return "No se encontraron productos";
+    return "Escribe para buscar";
+  }}
+  className="min-w-[220px]"
+  menuPortalTarget={document.body}
+  styles={{
+    menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+    control: (base, { data }) => ({
+      ...base,
+      minHeight: '32px',
+      fontSize: '14px',
+      borderColor: data?.isInvalid ? '#dc2626' : base.borderColor,
+    }),
+    singleValue: (base, { data }) => ({
+      ...base,
+      color: data?.isInvalid ? '#dc2626' : base.color,
+    }),
+  }}
+/>
+
                     </td>
               
                     {/* Ancho */}
