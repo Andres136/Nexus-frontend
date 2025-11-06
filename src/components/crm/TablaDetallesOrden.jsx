@@ -5,6 +5,7 @@ import { useProducts } from "../../hooks/useProducts";
 import Select from "react-select";
 import { productsApi } from "../../services/api";
 import { showToast } from "../../helpers/utils/showToast";
+
 import {
   Package,
   AlertCircle,
@@ -15,6 +16,7 @@ import {
   Search,
   Eye,
   Loader2,
+  CheckCircle,
 } from "lucide-react";
 
 export default function TablaDetallesOrden({
@@ -27,11 +29,12 @@ export default function TablaDetallesOrden({
 }) {
   const [search, setSearch] = useState("");
   const {
-    getStockProduct,
+
     stockInfo,
     getStockWithSuggestions,
 
   } = useContext(ProductContext);
+ 
   const { products, isLoading, isFetching, isEmpty } = useProducts({ search });
   const [bodegasDisponibles, setBodegasDisponibles] = useState([]);
   const [productStock, setProductStock] = useState(null);
@@ -40,6 +43,7 @@ export default function TablaDetallesOrden({
   const [detalleActivo, setDetalleActivo] = useState(null);
   const [errors, setErrors] = useState({});
   const [pdfUrl, setPdfUrl] = useState(null);
+
 
   // AGREGAR: Estados para cache y tracking
   const [stockCache, setStockCache] = useState({});
@@ -156,6 +160,129 @@ export default function TablaDetallesOrden({
   useEffect(() => {
   setPdfUrl(null);
 }, [orden.id]);
+
+
+// 🔹 Prefetch de stock por producto (para poblar la columna Bodegas)
+useEffect(() => {
+  if (!detalles || detalles.length === 0) return;
+
+  const fetch = async () => {
+    for (const d of detalles) {
+      const productId = d.product_id || d.product?.id;
+      if (!productId) continue;
+
+      // si ya tenemos cache con bodegas, no vuelvas a pedir
+      const ya = stockCache[productId]?.producto_base?.resumen_por_bodega;
+      if (ya && ya.length > 0) continue;
+
+      try {
+        const res = await productsApi.getStock(productId);
+        const stockData = res?.data?.stock || null;
+        if (stockData) {
+          setStockCache(prev => ({
+            ...prev,
+            [productId]: {
+              ...(prev[productId] || {}),
+              producto_base: {
+                stock_total: stockData.stock_total ?? 0,
+                resumen_por_bodega: stockData.resumen_por_bodega ?? [],
+              }
+            }
+          }));
+        }
+      } catch (e) {
+        // silencioso
+      }
+    }
+  };
+
+  fetch();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [JSON.stringify(detalles)]);
+
+
+useEffect(() => {
+  (detalles || []).forEach((d, i) => {
+    if (Array.isArray(d.bodegas) && d.bodegas.length > 0) {
+      const total = d.bodegas.reduce((s, x) => s + (parseFloat(x.cantidad) || 0), 0);
+      if (total !== d.cantidad) {
+        handleChangeDetalle(i, "cantidad", parseFloat(total.toFixed(2)));
+      }
+    }
+  });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [JSON.stringify(detalles?.map(d => d.bodegas))]);
+
+const handleDescontarStockMasivo = async () => {
+  try {
+    setLoadingStock(true);
+    showToast("info", "Procesando descuento masivo de stock...");
+
+    // 🔹 Construir el payload con todos los productos visibles
+    const items = detalles.map((detalle) => ({
+      orden_trabajo_id: orden.id,
+      orden_compra_id: detalle.orden_compra_id,
+      producto_id: detalle.product_id,
+      cantidad: parseFloat(detalle.cantidad) || 0,
+      bodegas: (detalle.bodegas || []).map((b) => ({
+        bodega_id: b.bodega_id,
+        cantidad: parseFloat(b.cantidad) || 0,
+        bodega_nombre: b.bodega_nombre,
+        sede_nombre: b.sede_nombre,
+      })),
+      producto_equivalentes: (detalle.producto_equivalentes || []).map((eq) => ({
+        id: eq.id,
+        razon: eq.razon || "",
+        bodegas: (eq.bodegas || []).map((b) => ({
+          bodega_id: b.bodega_id,
+          cantidad: parseFloat(b.cantidad) || 0,
+          bodega_nombre: b.bodega_nombre,
+          sede_nombre: b.sede_nombre,
+        })),
+      })),
+    }));
+
+    // 🔹 Llamar tu endpoint Laravel
+    const res = await productsApi.postDescontarStockMasivo({ items });
+
+    if (res?.data?.success) {
+      showToast("success", "Descuento masivo completado correctamente ✅");
+
+      // Abrir todos los PDFs generados (uno por movimiento)
+    //Limpieza TOTAL DE LOS ESTADOS GLOBALES
+    setModalOpen(false);
+setProductStock(null);
+    setDetalleActivo(null);
+    setStockCache({});
+
+    } else {
+      showToast(
+        "warning",
+        res?.data?.error ||
+          "El proceso terminó con advertencias. Revisa los faltantes o errores parciales."
+      );
+      console.warn("⚠️ Errores parciales:", res?.data?.errores);
+    }
+  } catch (error) {
+    console.error("❌ Error en descuento masivo:", error);
+
+  // Validaciones del backend (422)
+  if (error.response?.status === 422 && error.response?.data?.errors) {
+    const backendErrors = error.response.data.errors;
+    setErrors(backendErrors);
+
+    // Notificación general, breve y no intrusiva
+    showToast(
+      "warning",
+      "Hay campos con errores. Revisa los productos resaltados."
+    );
+  } else {
+    showToast("error", "Error inesperado al procesar descuento masivo.");
+  }
+  } finally {
+    setLoadingStock(false);
+  }
+};
 
 
   const formatNumber = (num) =>
@@ -339,8 +466,8 @@ export default function TablaDetallesOrden({
               {[
                 "Item",
                 "Referencia",
-
-                "Ver Stock",
+                "Bodegas",
+              
                 "Ancho cm",
                 "Largo cm",
                 "Calibre",
@@ -386,7 +513,198 @@ export default function TablaDetallesOrden({
                   </div>
                 </td>
 
-                <td className="px-3 py-2 text-center align-middle">
+                {/* 🆕 COLUMNA "Bodegas" tipo DetalleTraslado */}
+<td className="px-3 py-3 align-top">
+
+
+
+  {(() => {
+    const productId = detalle.product_id || detalle.product?.id;
+    const base = stockCache[productId]?.producto_base;
+    const bodegasBase = base?.resumen_por_bodega || [];
+
+    // Si no hay stock en ninguna bodega, mostramos aviso y salimos
+    if ((bodegasBase.filter(b => (b.stock_total || 0) > 0)).length === 0) {
+      return (
+        <div className="text-xs text-gray-500 italic">
+          Sin stock en bodegas
+        </div>
+      );
+    }
+    return (
+
+      
+      <>
+
+      {/* Stock total disponible */}
+{(() => {
+  const totalStock = bodegasBase.reduce((sum, b) => sum + (b.stock_total || 0), 0);
+  return (
+    <div className="text-[11px] text-gray-500 mb-1">
+      Stock total: <span className="font-medium text-gray-700">{totalStock}</span> u
+    </div>
+  );
+})()}
+
+      <div className="flex items-center gap-2">  
+        <div className="flex-1">  
+          
+           <Select
+          isMulti
+          placeholder="Seleccionar bodegas..."
+          options={bodegasBase
+            .filter(b => (b.stock_total || 0) > 0)
+            .map(b => ({
+              value: b.bodega_id,
+              label: `${b.bodega_nombre} -  (${b.stock_total} u)`,
+              stock: b.stock_total,
+              nombre: b.bodega_nombre,
+              sede: b.sede_nombre,
+            }))
+          }
+          onChange={(selected) => {
+            const bodegas = (selected || []).map(sel => ({
+              bodega_id: sel.value,
+              bodega_nombre: sel.nombre,
+              sede_nombre: sel.sede,
+              stock: sel.stock,
+              cantidad: 0,
+            }));
+            // guarda la selección a nivel de detalle
+            handleChangeDetalle(index, "bodegas", bodegas);
+
+            setErrors((prev) => ({
+              ...prev,
+              [`items.${index}.bodegas`]: [],
+            }));
+          }}
+          value={(detalle.bodegas || []).map(b => ({
+            value: b.bodega_id,
+            label: `${b.bodega_nombre} - ${b.sede_nombre || ""} (${b.stock || 0} u)`,
+            stock: b.stock,
+            nombre: b.bodega_nombre,
+            sede: b.sede_nombre,
+          }))}
+          className="text-xs"
+          styles={{
+            control: (base) => ({ ...base, minHeight: '32px', fontSize: '12px' }),
+            multiValue: (base) => ({ ...base, fontSize: '11px' }),
+            menu: (base) => ({ ...base, zIndex: 9999 }),
+          }}
+          menuPortalTarget={document.body}
+          noOptionsMessage={() => "No hay bodegas con stock"}   />  
+    
+            </div> 
+                   
+          <button
+onClick={async () => {
+                        const productId =
+                          detalle.product_id || detalle.product?.id;
+                        const cacheData = stockCache[productId];
+
+                        const sugerencias =
+                          cacheData?.sugerencias?.map((sug) => ({
+                            id: sug.id,
+                            nombre: sug.nombre,
+                            stock_total: sug.stock_total,
+                            resumen_por_bodega: sug.resumen_por_bodega || [],
+                          })) || [];
+
+                        // ✅ Carga stock específico para este producto
+                        const stockData = await fetchStockForProduct(detalle);
+
+                        setDetalleActivo({
+                          ...detalle,
+                          producto_sugerencias: sugerencias,
+                          stock_local: stockData, // 🔹 Guardamos stock local
+                        });
+
+                        // ✅ Ahora ya no dependemos del stockInfo global
+                        setProductStock(stockData);
+                        setBodegasDisponibles(
+                          stockData?.resumen_por_bodega || []
+                        );
+                        setErrors({});
+                        setModalOpen(true);
+                      }}
+    className="text-blue-600 hover:text-blue-800 transition p-1"
+    title="Buscar equivalentes"
+  >
+    <Search className="w-5 h-5" />
+  </button>
+          </div>
+      
+        
+
+        
+{errors?.[`items.${index}.bodegas`] && (
+  <p className="text-red-500 text-xs mt-1">
+    {errors[`items.${index}.bodegas`][0]}
+  </p>
+)}
+
+{errors?.[`items.${index}.cantidad`] && (
+  <p className="text-red-500 text-xs mt-1">
+    {errors[`items.${index}.cantidad`][0]}
+  </p>
+)}
+
+
+        {/* Cantidades por bodega seleccionada */}
+        {(detalle.bodegas || []).map((b, i) => {
+          const info = bodegasBase.find(x => x.bodega_id === b.bodega_id);
+          const max = info?.stock_total ?? b.stock ?? 0;
+          return (
+            <div
+              key={`${b.bodega_id}-${i}`}
+              className="mt-1 flex items-center gap-2 bg-gray-50 border rounded p-2 text-xs"
+            >
+              <div className="flex-1 truncate">
+                <div className="font-medium text-gray-700">
+                  {b.bodega_nombre}
+                </div>
+                <div className="text-gray-500">
+                  Stock: {max} u
+                </div>
+              </div>
+
+              <input
+                type="number"
+                className="border rounded px-2 py-1 w-24 text-right"
+                step="any"
+                min="0"
+                max={max}
+                placeholder="0.00"
+               value={b.cantidad === 0 ? "" : b.cantidad ?? ""}
+
+                onChange={(e) => {
+                  const val = parseFloat(e.target.value) || 0;
+                  const nueva = [...(detalle.bodegas || [])];
+                  nueva[i].cantidad = val;
+
+                  // 1) actualiza bodegas
+                  handleChangeDetalle(index, "bodegas", nueva);
+
+                  // 2) sincroniza la cantidad total del detalle con la suma por bodega
+                  const total = nueva.reduce((s, x) => s + (parseFloat(x.cantidad) || 0), 0);
+                  if (total !== detalle.cantidad) {
+                    handleChangeDetalle(index, "cantidad", total);
+                  }
+                }}
+              />
+
+
+              
+            </div>
+          );
+        })}
+      </>
+    );
+  })()}
+</td>
+
+
+              {/*   <td className="px-3 py-2 text-center align-middle">
                   <div className="flex flex-col items-center gap-0.5">
                     <div className="flex items-center gap-1 text-gray-800 text-sm font-medium">
                       {(() => {
@@ -438,7 +756,7 @@ export default function TablaDetallesOrden({
                   </div>
                 </td>
 
-                {/* ...existing code... resto de columnas */}
+                ...existing code... resto de columnas */}
                 <td className="px-3 py-3">
                   <input
                     type="number"
@@ -638,6 +956,24 @@ export default function TablaDetallesOrden({
     </a>
   </div>
 )}
+<div className="flex justify-end mt-4 gap-3">
+  <button
+    onClick={handleDescontarStockMasivo}
+    className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2 transition-colors"
+    disabled={loadingStock}
+  >
+    {loadingStock ? (
+      <>
+        <Loader2 className="w-4 h-4 animate-spin" /> Procesando...
+      </>
+    ) : (
+      <>
+        <CheckCircle className="w-4 h-4" /> Descontar Masivamente
+      </>
+    )}
+  </button>
+</div>
+
 
       {/* Total simple */}
       <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
@@ -678,24 +1014,7 @@ export default function TablaDetallesOrden({
             {/* Content */}
             <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)] space-y-6">
               {/* Stock disponible */}
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <div className="flex justify-between items-center">
-                  <span className="font-medium text-gray-900">
-                    Stock disponible:
-                  </span>
-                  {loadingStock ? (
-                    <span className="text-blue-600">Cargando...</span>
-                  ) : productStock ? (
-                    <span className="text-2xl font-bold text-green-600">
-                      {productStock.stock_total || 0}
-                    </span>
-                  ) : (
-                    <span className="text-red-600 font-medium">
-                      No disponible
-                    </span>
-                  )}
-                </div>
-              </div>
+  
 
               {/* Errores globales */}
               {errors.producto_equivalentes && (
@@ -1366,15 +1685,29 @@ const nuevosDatos = await Promise.all(
             <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t border-gray-200">
               <button
                 onClick={() => {
+                  // 🔹 Guarda los equivalentes del modal en el detalle global
+if (detalleActivo) {
+  const index = detalles.findIndex(
+    (d) => d.product_id === detalleActivo.product_id
+  );
+
+  if (index !== -1) {
+    handleChangeDetalle(index, "bodegas", detalleActivo.bodegas || []);
+    handleChangeDetalle(index, "producto_equivalentes", detalleActivo.producto_equivalentes || []);
+    handleChangeDetalle(index, "cantidad", detalleActivo.cantidad_total || 0);
+  }
+}
+
                   setModalOpen(false);
                   setProductStock(null);
                   setErrors({});
                 }}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
+                className="px-4 py-2 border border-green-600 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
               >
-                Cancelar
+                Guardar
               </button>
 
+{/* ✅ BOTÓN DESCONTAR STOCK MEJORADO 
               <button
                 onClick={async () => {
                   try {
@@ -1489,7 +1822,7 @@ const nuevosDatos = await Promise.all(
                 className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors"
               >
                 Descontar Stock
-              </button>
+              </button>*/}
             </div>
           </div>
         </div>
