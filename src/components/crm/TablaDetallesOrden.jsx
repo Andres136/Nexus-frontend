@@ -244,12 +244,15 @@ const handleDescontarStockMasivo = async () => {
 
     // 🔹 Llamar tu endpoint Laravel
     const res = await productsApi.postDescontarStockMasivo({ items });
-
+    console.log("Respuesta de descuento masivo:", res?.data);
     if (res?.data?.success) {
       showToast("success", "Descuento masivo completado correctamente ✅");
 
       // Abrir todos los PDFs generados (uno por movimiento)
-    //Limpieza TOTAL DE LOS ESTADOS GLOBALES
+    window.open(res.data.pdf, '_blank');
+
+
+      // Limpieza TOTAL DE LOS ESTADOS GLOBALES
     setModalOpen(false);
 setProductStock(null);
     setDetalleActivo(null);
