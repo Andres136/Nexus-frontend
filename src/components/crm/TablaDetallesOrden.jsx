@@ -18,6 +18,7 @@ import {
   Loader2,
   CheckCircle,
 } from "lucide-react";
+import Swal from "sweetalert2";
 
 export default function TablaDetallesOrden({
   orden,
@@ -244,13 +245,40 @@ const handleDescontarStockMasivo = async () => {
 
     // 🔹 Llamar tu endpoint Laravel
     const res = await productsApi.postDescontarStockMasivo({ items });
-    console.log("Respuesta de descuento masivo:", res?.data);
+ 
     if (res?.data?.success) {
-      showToast("success", "Descuento masivo completado correctamente ✅");
+     const pdfs = res.data.pdfs || [];
+      showToast("success", "Descuento masivo completado correctamente ");
+
+      // 🔹 Si solo hay un PDF, abrirlo directamente
+      if (pdfs.length === 1) {
+        window.open(pdfs[0].pdf, "_blank");
+      }
+      // 🔹 Si hay varios, mostrar lista interactiva
+      else if (pdfs.length > 1) {
+        const links = pdfs
+          .map(
+            (p) =>
+              `<a href="${p.pdf}" target="_blank" style="display:block;margin:4px 0;color:#0d6efd;text-decoration:none;">
+                📄 OT-${p.orden_trabajo_id}
+              </a>`
+          )
+          .join("");
+
+        Swal.fire({
+          title: "PDFs generados",
+          html: `<div style="text-align:left;">${links}</div>`,
+          icon: "success",
+          confirmButtonText: "Cerrar",
+          width: 600,
+        });
+      } else {
+        showToast("info", "No se generaron documentos PDF.");
+      }
 
       // Abrir todos los PDFs generados (uno por movimiento)
-    window.open(res.data.pdf, '_blank');
 
+    
 
       // Limpieza TOTAL DE LOS ESTADOS GLOBALES
     setModalOpen(false);
@@ -527,13 +555,7 @@ setProductStock(null);
     const bodegasBase = base?.resumen_por_bodega || [];
 
     // Si no hay stock en ninguna bodega, mostramos aviso y salimos
-    if ((bodegasBase.filter(b => (b.stock_total || 0) > 0)).length === 0) {
-      return (
-        <div className="text-xs text-gray-500 italic">
-          Sin stock en bodegas
-        </div>
-      );
-    }
+ 
     return (
 
       
