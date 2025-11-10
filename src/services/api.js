@@ -237,4 +237,18 @@ export const ordenesApi = {
   getFaltantesPendientes: () => apiClient.get("/api/ordenes-compra/faltantes/pendientes"),
 };
 
+
+//Registrar plantillas de correo
+export const plantillasApi={
+  getAll:()=>apiClient.get('/api/plantillas-correo'),
+  getById:(id)=>apiClient.get(`/api/plantillas-correo/${id}`),
+  create:(data)=>apiClient.post('/api/plantillas-correo',data,{
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  update:(id,data)=>apiClient.put(`/api/plantillas-correo/${id}`,data,{
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  delete:(id)=>apiClient.delete(`/api/plantillas-correo/${id}`),
+
+}
 export default apiClient;

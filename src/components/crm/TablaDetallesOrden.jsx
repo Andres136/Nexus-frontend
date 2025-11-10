@@ -545,7 +545,11 @@ setProductStock(null);
                 </td>
 
                 {/* 🆕 COLUMNA "Bodegas" tipo DetalleTraslado */}
-<td className="px-3 py-3 align-top">
+<td   className={`px-3 py-3 align-top transition-colors ${
+    detalle.producto_equivalentes && detalle.producto_equivalentes.length > 0
+      ? "bg-blue-50 border-l-4 border-red-400 shadow-sm"
+      : ""
+  }`}>
 
 
 
@@ -696,7 +700,7 @@ onClick={async () => {
               <input
                 type="number"
                 className="border rounded px-2 py-1 w-24 text-right"
-                step="any"
+                step="0.01"
                 min="0"
                 max={max}
                 placeholder="0.00"
@@ -946,9 +950,7 @@ onClick={async () => {
                             </span>
                           </div>
                           <div className="text-gray-400">
-                            {new Date(e.fecha_entrega).toLocaleDateString(
-                              "es-CO"
-                            )}
+                          {e.fecha_entrega}
                           </div>
                         </div>
                       ));

@@ -59,6 +59,8 @@ import RegistrarInventario from "../views/crm/RegistrarInventario";
 import TrasladoInventario from "../views/crm/TrasladoInventario";
 import CreateQr from "../components/calidad/CreateQr";
 import OrdenesFaltantes from "../views/crm/OrdenesFaltantes";
+import PlantillaEditor from "../views/calidad/PlantillaEditor";
+
 
 export default function Router() {
   return (
@@ -232,6 +234,7 @@ export default function Router() {
           <Route path="empresas" element={<Empresas />} />
           <Route path="bodegas" element={<Bodegas />} />
           <Route path="crear-qr" element={<CreateQr />} />
+          <Route path="crear-plantilla-correo" element={<PlantillaEditor />} />
         </Route>
       </Route>
 
