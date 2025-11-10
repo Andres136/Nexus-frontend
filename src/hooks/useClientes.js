@@ -152,7 +152,7 @@ const obtenerClientes = async (page = 1, search = "") => {
         headers: { Authorization: `Bearer ${token}` },
       });
         setClientesTodos(response.data.data || response.data);
-    
+    console.log('Clientes todos:', response.data);
 
     } catch (error) {
       console.error("Error al obtener los clientes:", error);

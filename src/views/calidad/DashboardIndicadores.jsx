@@ -374,9 +374,10 @@ const tieneDatos = valor !== null && !isNaN(meta);
 
   </div>
 
-  {registro?.documento && (
+  {/* ✅ CORREGIR: usar documento_url en lugar de documento */}
+  {registro?.documento_url && (
     <a
-      href={`${clienteAxios.defaults.baseURL}/api/registro-indicadores/descargar/${registro.id}`}
+      href={`${clienteAxios.defaults.baseURL}${registro.documento_url}`}
       target="_blank"
       rel="noopener noreferrer"
       title="Descargar análisis"
@@ -386,7 +387,8 @@ const tieneDatos = valor !== null && !isNaN(meta);
     </a>
   )}
 
-  {!registro?.documento && registro?.observaciones && (
+  {/* ✅ Mostrar observaciones solo si NO hay documento */}
+  {!registro?.documento_url && registro?.observaciones && (
     <div className="mt-2 bg-gray-50 rounded p-2 text-xs text-gray-500 italic">
       Observaciones:{" "}
       {showFullObs || registro.observaciones.length <= 120
@@ -403,6 +405,7 @@ const tieneDatos = valor !== null && !isNaN(meta);
     </div>
   )}
 </div>
+
 
                       </div>
                     );

@@ -250,5 +250,8 @@ export const plantillasApi={
   }),
   delete:(id)=>apiClient.delete(`/api/plantillas-correo/${id}`),
 
+  enviarEmail:(id, data)=>apiClient.post(`/api/plantillas/${id}/enviar`,data),
+
+  getForEdit: (id) => apiClient.get(`/api/plantillas/${id}/edit`),
 }
 export default apiClient;

@@ -59,7 +59,8 @@ import RegistrarInventario from "../views/crm/RegistrarInventario";
 import TrasladoInventario from "../views/crm/TrasladoInventario";
 import CreateQr from "../components/calidad/CreateQr";
 import OrdenesFaltantes from "../views/crm/OrdenesFaltantes";
-import PlantillaEditor from "../views/calidad/PlantillaEditor";
+import PlantillaEditor from "../views/comunicaciones/PlantillaEditor";
+
 
 
 export default function Router() {
