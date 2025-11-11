@@ -10,14 +10,15 @@ import {
   Building2,
   BarChart2,
   QrCodeIcon,
-  User,
+ 
   Package,
   ShoppingCart,
   FileText,
   Settings,
   ChevronDown,
   Menu,
-  CornerRightDownIcon
+  CornerRightDownIcon,
+  Megaphone
 } from "lucide-react";
 
 export default function Navbar() {
@@ -56,7 +57,7 @@ export default function Navbar() {
       allowedRoles: [1, 2, 4, 5, 6, 7, 9, 10, 11],
       hasSubmenu: true,
       submenu: [
-       { name: "Crear QR", to: "/admin/crear-qr", icon: QrCodeIcon, allowedRoles: [1, 2, 10, 11] },
+       { name: "Marketing", to: "/admin/marketing", icon: Megaphone, allowedRoles: [1, 2, 10, 11] },
         { name: "Crear Plantilla", to: "/admin/crear-plantilla-correo", icon: CornerRightDownIcon, allowedRoles: [1 ] },
         { name: "Productos", to: "/auth/crm/productos", icon: Package },
         { name: "Órdenes de Compra", to: "/auth/crm/ordenes-compra", icon: ShoppingCart },

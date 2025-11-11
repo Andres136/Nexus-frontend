@@ -12,7 +12,7 @@ export function useOrdenesFaltantes() {
       try {
         const res = await ordenesApi.getFaltantesPendientes();
         setOrdenes(res.data.ordenes || []);
-        console.log("✅ Órdenes con faltantes cargadas:", res.data.ordenes);
+      
       } catch (err) {
         console.error("❌ Error al cargar faltantes:", err);
         setError(err);

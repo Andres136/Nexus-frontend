@@ -57,9 +57,10 @@ import Bodegas from "../components/Bodegas";
 import OrdenesCompraClient from "../components/auditoria/OrdenesCompraClient";
 import RegistrarInventario from "../views/crm/RegistrarInventario";
 import TrasladoInventario from "../views/crm/TrasladoInventario";
-import CreateQr from "../components/calidad/CreateQr";
+
 import OrdenesFaltantes from "../views/crm/OrdenesFaltantes";
 import PlantillaEditor from "../views/comunicaciones/PlantillaEditor";
+import Marketing from "../views/comunicaciones/Marketing";
 
 
 
@@ -234,8 +235,8 @@ export default function Router() {
           />
           <Route path="empresas" element={<Empresas />} />
           <Route path="bodegas" element={<Bodegas />} />
-          <Route path="crear-qr" element={<CreateQr />} />
-          <Route path="crear-plantilla-correo" element={<PlantillaEditor />} />
+
+          <Route path="marketing" element={<Marketing />} />
         </Route>
       </Route>
 

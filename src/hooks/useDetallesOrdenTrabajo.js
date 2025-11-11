@@ -3,9 +3,7 @@ import { useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 
-import { formatCurrency } from "../helpers";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+
 
 import clienteAxios from "../config/axios";
 import { calcularCamposBolsa } from "../helpers/utils/calculoBolsa";
@@ -14,13 +12,7 @@ import { calcularCamposBolsa } from "../helpers/utils/calculoBolsa";
 /* ---------------------------------------------------- */
 
 
-const cargarImagen = (url) =>
-  new Promise((resolve, reject) => {
-    const img = new Image();
-    img.src = url;
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-  });
+
 
 export default function useDetallesOrdenTrabajo() {
   const { id } = useParams();
@@ -124,6 +116,7 @@ useEffect(() => {
         const cantidadRequerida = parseFloat(nuevos[index].faltantes) || 0;
         nuevos[index].faltantesTemporal = Math.max(cantidadRequerida - cantidadEnviada, 0);
       }
+      
       return nuevos;
     });
   };
@@ -148,8 +141,8 @@ useEffect(() => {
           cantidad: d.cantidad,
           valor_unitario: d.valor_unitario,
           descripcion: d.descripcion || "",
-          cantidad_enviada: d.cantidadEnviada,
           observaciones: d.observaciones || "",
+          cantidad_enviada: parseFloat(d.nuevaCantidad)|| 0,
         })),
       };
 
@@ -169,6 +162,7 @@ useEffect(() => {
             ...d,
             cantidadEnviada: d.cantidad_enviada || 0,
             faltantes: d.faltantes || 0,
+            nuevaCantidad: 0,
             ...calc,
             faltantesTemporal: undefined,
           };
@@ -184,91 +178,7 @@ useEffect(() => {
     }
   };
 
-  const handleGenerarPDF = async () => {
-    const doc = new jsPDF();
-    try {
-      const logo = await cargarImagen(LOGO);
-      doc.addImage(logo, "PNG", 10, 10, 25, 25); // proporciones más equilibradas
-      doc.setFontSize(18);
-      doc.text("ORDEN DE TRABAJO", 105, 20, null, null, "center");
-
-      doc.setFontSize(12);
-      doc.text(`Orden #${orden.id}`, 14, 35);
-      doc.text(`Cliente: ${orden.cliente?.nombre || "N/A"}`, 14, 41);
-      doc.text(`Fecha de entrega: ${orden.fecha_entrega}`, 14, 47);
-      doc.text(`Generado por el Asesor: ${orden.user?.name || "N/A"}`, 14, 53);
-
-
-     const tableBody = [];
-
-detalles.forEach((d, idx) => {
-  // Fila principal del detalle
-  tableBody.push([
-    d.observaciones || "",
-    d.ancho_cm,
-    d.largo_cm,
-    d.descripcion || "",
-    d.calibre,
-    d.cliente_clb,
-    d.cantidad_requerida_kg?.toFixed(2) || 0,
-    d.cantidad,
-    d.cantidadEnviada,
-    d.faltantesTemporal ?? d.faltantes,
-    formatCurrency(d.valor_unitario),
-    formatCurrency(d.valor_total),
-    "" // Celda vacía para entregas en la fila principal
-  ]);
-
-  // Filtra entregas por detalle
-  const entregasDetalle = entregas.filter(e => e.detalle_id === d.id);
-
-  // Si hay entregas, agrega una fila debajo del item
-  if (entregasDetalle.length > 0) {
-    const entregasTexto = entregasDetalle.map(e =>
-      `Cant: ${e.cantidad} | Fecha: ${e.fecha_entrega ? new Date(e.fecha_entrega).toLocaleDateString() : ""} | Usuario: ${e.usuario?.name || "N/A"}`
-    ).join('\n');
-
-    tableBody.push([
-      { content: `Entregas:\n${entregasTexto}`, colSpan: 13, styles: { fontStyle: 'italic', textColor: [32, 128, 64], fontSize: 8, fillColor: [240, 255, 240] } }
-    ]);
-  }
-});
-
-autoTable(doc, {
-  startY: 60,
-  head: [[
-    "Item", "Ancho", "Largo", "Descripcion", "Calibre", "Cliente CLB",
-    "Cant. Req. (Kg)", "Cantidad", "Enviada", "Faltantes",
-    "Valor Unit.", "Valor Total"
-  ]],
-  body: tableBody,
-  styles: { fontSize: 8 },
-});
-      const totalKg = detalles.reduce(
-        (acc, d) => acc + (parseFloat(d.cantidad_requerida_kg) || 0),
-        0
-      );
-      
-      let y = doc.lastAutoTable.finalY + 10;
-      doc.setFontSize(12);
-      doc.text(`Valor Total: ${formatCurrency(orden.orden_compra.valor_total)}`, 14, y);
-      y += 7; // Ajusta separación
-      doc.text(`Total Kg Calculados: ${totalKg.toFixed(2)} Kg`, 14, y); // ✅ ESTA LÍNEA NUEVA
-      y += 10;
-      doc.text("Observaciones generales:", 14, y);
-      doc.setFontSize(10);
-      doc.text(doc.splitTextToSize(observaciones || "Sin observaciones", 180), 14, y + 6);
-
-// ... después de la tabla principal y antes de doc.save()
-
-
-
-      doc.save(`Orden_Trabajo_${orden.id}.pdf`);
-    } catch (error) {
-      console.error("Error al generar el PDF:", error);
-      toast.error("No se pudo cargar el logo o generar el PDF.");
-    }
-  };
+ 
 
   const handleGuardarYGenerarPDF = async () => {
 

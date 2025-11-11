@@ -87,7 +87,7 @@ useEffect(() => {
           </p>
 
       {puedeEditar && (
-  <div className="p-4">
+  <div className=" p-4">
     <label className="block text-sm font-medium text-gray-700 mb-1">
       Filtrar por Departamento
     </label>

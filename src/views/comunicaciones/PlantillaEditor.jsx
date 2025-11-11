@@ -61,30 +61,41 @@ export default function PlantillaEditor() {
   };
 
   // ✅ Función para editar
-  const handleEditar = async (plantilla) => {
-    try {
-      setLoading(true);
-      const response = await plantillasApi.getForEdit(plantilla.id);
-      const data = response.data;
-      
-      setNombre(data.plantilla.nombre || "");
-      setContenido(data.plantilla.contenido_html || "");
-      setVideoUrl(data.plantilla.video_url || "");
-      
-      setCertificaciones(Array.isArray(data.data.certificaciones) ? data.data.certificaciones : []);
-      setRedes(Array.isArray(data.data.redes_sociales) ? data.data.redes_sociales : []);
-      setDescargas(Array.isArray(data.data.descargas) ? data.data.descargas : []);
-      
-      setPlantillaEditando(plantilla);
-      setModo('editar');
-      
-    } catch (error) {
-      console.error('Error al cargar plantilla:', error);
-      Swal.fire('Error', 'No se pudo cargar la plantilla', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
+ const handleEditar = async (plantilla) => {
+  try {
+    setLoading(true);
+    const response = await plantillasApi.getForEdit(plantilla.id);
+
+    // 🔍 Estructura exacta del backend
+    const data = response.data?.data || {}; // <- Contiene todos los campos útiles
+    console.log("Respuesta al editar plantilla:", data);
+
+    // ✅ Cargar datos principales
+    setNombre(data.nombre || "");
+    setContenido(data.contenido_html || "");
+    setVideoUrl(data.video_url || "");
+
+    // ✅ Cargar colecciones (arrays)
+    setImagenes(Array.isArray(data.imagenes) ? data.imagenes : []);
+    setLogosEmpresas(Array.isArray(data.logos_empresas) ? data.logos_empresas : []);
+    setCertificaciones(Array.isArray(data.certificaciones) ? data.certificaciones : []);
+    setRedes(Array.isArray(data.redes_sociales) ? data.redes_sociales : []);
+    setDescargas(Array.isArray(data.descargas) ? data.descargas : []);
+
+    // ✅ Guardar la plantilla completa con id para el PUT
+    setPlantillaEditando(data);
+
+    // ✅ Cambiar modo a edición
+    setModo("editar");
+  } catch (error) {
+    console.error("Error al cargar plantilla:", error);
+    Swal.fire("Error", "No se pudo cargar la plantilla", "error");
+  } finally {
+    setLoading(false);
+  }
+};
+
+
 
   // ✅ Función para eliminar
   const handleEliminar = async (plantilla) => {
@@ -129,9 +140,29 @@ export default function PlantillaEditor() {
       if (videoUrl) {
         formData.append("video_url", videoUrl);
       }
+imagenes.forEach((img) => {
+  if (img instanceof File) {
+    formData.append("imagenes[]", img); // ✅ solo archivos nuevos
+  }
+});
 
-      imagenes.forEach((img) => formData.append("imagenes[]", img));
-      logosEmpresas.forEach((logo) => formData.append("logos_empresas[]", logo));
+    logosEmpresas.forEach((logo) => {
+  if (logo instanceof File) {
+    formData.append("logos_empresas[]", logo);
+  }
+});
+
+certificaciones.forEach((cert, index) => {
+  formData.append(`certificaciones[${index}][nombre]`, cert.nombre || "");
+  formData.append(`certificaciones[${index}][url_cert]`, cert.url_cert || "");
+
+  if (cert.logo instanceof File) {
+    formData.append(`certificaciones[${index}][logo]`, cert.logo);
+  } else if (typeof cert.logo === "string") {
+    formData.append(`certificaciones[${index}][logo_existente]`, cert.logo);
+  }
+});
+
 
       certificaciones.forEach((cert, index) => {
         formData.append(`certificaciones[${index}][nombre]`, cert.nombre || "");
@@ -153,6 +184,7 @@ export default function PlantillaEditor() {
 
       if (plantillaEditando) {
         // Actualizar plantilla existente
+        
         await plantillasApi.update(plantillaEditando.id, formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });

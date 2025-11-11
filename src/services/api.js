@@ -245,9 +245,15 @@ export const plantillasApi={
   create:(data)=>apiClient.post('/api/plantillas-correo',data,{
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
-  update:(id,data)=>apiClient.put(`/api/plantillas-correo/${id}`,data,{
-    headers: { 'Content-Type': 'multipart/form-data' }
-  }),
+update: (id, data) => {
+  if (data instanceof FormData) {
+    data.append("_method", "PUT"); // Laravel lo detecta
+  }
+  return apiClient.post(`/api/plantillas-correo/${id}`, data, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+},
+
   delete:(id)=>apiClient.delete(`/api/plantillas-correo/${id}`),
 
   enviarEmail:(id, data)=>apiClient.post(`/api/plantillas/${id}/enviar`,data),

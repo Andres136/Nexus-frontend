@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { crearQrApi } from '../../services/api';
 import { Download, QrCode, Link, AlertCircle, CheckCircle, Loader2, FileImage, Info } from 'lucide-react';
 import { toast } from 'react-toastify';
-import PlantillaEditor from '../../views/comunicaciones/PlantillaEditor';
-import EnviarCorreo from '../../views/comunicaciones/EnviarCorreo';
+import PlantillaEditor from './PlantillaEditor';
+import EnviarCorreo from './EnviarCorreo';
 
 
 export default function CreateQr() {
@@ -278,9 +278,7 @@ export default function CreateQr() {
           </div>
         )}
       </div>
-      <PlantillaEditor />
 
-      <EnviarCorreo />
     </div>
   );
 }

@@ -881,31 +881,54 @@ onClick={async () => {
                     </p>
                   )}
                 </td>
+{/* 🔹 Columna ENVIADA (total acumulado + nueva entrega) */}
+<td className="px-3 py-3 text-sm text-gray-900">
+  <div className="flex flex-col gap-1">
+    {/* 🔸 Mostrar acumulado total entregado */}
+    <div className="flex justify-between items-center text-xs text-gray-600">
+      <span>Enviado total:</span>
+      <span
+        className={`font-semibold ${
+          (detalle.cantidadEnviada || 0) > 0
+            ? "text-green-700"
+            : "text-gray-500"
+        }`}
+      >
+        {detalle.cantidadEnviada || 0} u
+      </span>
+    </div>
 
-                <td className="px-3 py-3">
-                  <input
-                    type="number"
-                    className={`w-20 border rounded-lg px-2 py-1 text-sm transition-colors ${
-                      errores?.[index]?.cantidadEnviada
-                        ? "border-red-500 focus:border-red-500"
-                        : "border-gray-300 focus:border-blue-500"
-                    } focus:outline-none`}
-                    value={detalle.cantidadEnviada}
-                    onChange={(e) =>
-                      handleChangeDetalle(
-                        index,
-                        "cantidadEnviada",
-                        e.target.value
-                      )
-                    }
-                    placeholder="0"
-                  />
-                  {errores?.[index]?.cantidadEnviada && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errores[index].cantidadEnviada[0]}
-                    </p>
-                  )}
-                </td>
+    {/* 🔸 Input para registrar nueva entrega */}
+    <input
+      type="number"
+ 
+      className={`w-full border rounded-lg px-2 py-1 text-sm text-right transition-colors ${
+        errores?.[index]?.nuevaCantidad
+          ? "border-red-500 focus:border-red-500"
+          : "border-gray-300 focus:border-blue-500"
+      } focus:outline-none`}
+      value={detalle.nuevaCantidad || ""}
+      onChange={(e) =>
+        handleChangeDetalle(
+          index,
+          "nuevaCantidad",
+          parseFloat(e.target.value) || 0
+        )
+      }
+      placeholder="Nueva entrega"
+      min="0"
+      step="0.01"
+    />
+
+    {/* 🔸 Mensaje de error si aplica */}
+    {errores?.[index]?.nuevaCantidad && (
+      <p className="text-red-500 text-xs mt-1">
+        {errores[index].nuevaCantidad[0]}
+      </p>
+    )}
+  </div>
+</td>
+
 
                 <td className="px-3 py-3 text-center">
                   <span
