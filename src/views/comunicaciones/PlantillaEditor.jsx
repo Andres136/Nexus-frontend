@@ -11,6 +11,7 @@ import { plantillasApi } from "../../services/api";
 
 export default function PlantillaEditor() {
   // ✅ Estados existentes
+  const [imagenPrincipal, setImagenPrincipal] = useState(null);
   const [nombre, setNombre] = useState("");
   const [contenido, setContenido] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
@@ -49,6 +50,7 @@ export default function PlantillaEditor() {
   };
 
   const limpiarFormulario = () => {
+    setImagenPrincipal(null);
     setNombre("");
     setContenido("");
     setVideoUrl("");
@@ -70,7 +72,8 @@ export default function PlantillaEditor() {
     const data = response.data?.data || {}; // <- Contiene todos los campos útiles
     console.log("Respuesta al editar plantilla:", data);
 
-    // ✅ Cargar datos principales
+    // ✅ Cargar campos simples
+    setImagenPrincipal(data.imagen_principal || null);
     setNombre(data.nombre || "");
     setContenido(data.contenido_html || "");
     setVideoUrl(data.video_url || "");
@@ -135,6 +138,11 @@ export default function PlantillaEditor() {
     try {
       setLoading(true);
       const formData = new FormData();
+
+
+      if (imagenPrincipal instanceof File) {
+        formData.append("imagen_principal", imagenPrincipal);
+      }
       formData.append("nombre", nombre);
       formData.append("contenido_html", contenido);
       if (videoUrl) {
@@ -380,6 +388,38 @@ certificaciones.forEach((cert, index) => {
                   />
                 </div>
               </div>
+           
+            
+{/* Imagen principal */}
+<div className="space-y-2">
+  <label className="block text-sm font-semibold text-gray-700">
+    Imagen principal o portada
+  </label>
+  
+  {/* Input para subir la imagen */}
+  <input
+    type="file"
+    accept="image/*"
+    onChange={(e) => setImagenPrincipal(e.target.files[0])}
+    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+  />
+
+  {/* Vista previa de la imagen */}
+  {imagenPrincipal && (
+    <div className="mt-3 flex justify-center">
+      <img
+        src={
+          imagenPrincipal instanceof File
+            ? URL.createObjectURL(imagenPrincipal)
+            : imagenPrincipal
+        }
+        alt="Vista previa"
+        className="max-h-48 rounded-lg shadow-md border border-gray-200 object-contain"
+      />
+    </div>
+  )}
+</div>
+
 
               <div className="space-y-2">
                 <label className="block text-sm font-semibold text-gray-700">
