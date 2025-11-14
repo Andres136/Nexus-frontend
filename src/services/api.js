@@ -159,6 +159,11 @@ postDescontarStock: (data) =>
  registrarEntradaMasiva: (data) => apiClient.post('/api/products/importar-excel', data,{
     headers: { 'Content-Type': 'multipart/form-data' }
  }),
+registrtarDescuentoMasivoExcel: (data) => 
+  apiClient.post('/api/descontar-stock-excel', data,{
+    headers: { 'Content-Type': 'multipart/form-data' }
+ }),
+
 getStockWithSuggestions: (id) => 
   apiClient.get(`/api/stock-products-sugerencias/${id}`),
 
@@ -173,6 +178,8 @@ sincronizarProductosSiigoGlobal: (data) =>
 
 sincronizarProductosSiigoSetas: (data) => 
   apiClient.post('/api/productos/sincronizar-siigo-setas', data),
+
+
 
 }
 //Ordenes de compra a proveedores API

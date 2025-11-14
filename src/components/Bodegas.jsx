@@ -9,7 +9,7 @@ export default function Bodegas() {
   const [showModal, setShowModal] = useState(false)
   const [selectedBodega, setSelectedBodega] = useState(null)
   const [formData, setFormData] = useState({ nombre: "", sede_id: null, direccion: "" })
-console.log("Bodegas cargadas:", bodegas);
+
   const openModal = (bodega = null) => {
     if (bodega) {
       setSelectedBodega(bodega)

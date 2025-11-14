@@ -61,6 +61,7 @@ import TrasladoInventario from "../views/crm/TrasladoInventario";
 import OrdenesFaltantes from "../views/crm/OrdenesFaltantes";
 import PlantillaEditor from "../views/comunicaciones/PlantillaEditor";
 import Marketing from "../views/comunicaciones/Marketing";
+import DividirOcProveedor from "../views/crm/DividirOcProveedor";
 
 
 
@@ -175,7 +176,7 @@ export default function Router() {
             path="/auth/crm/oc-provedor-update/:id"
             element={<UpdateOcProvedor />}
           />
-
+           <Route path="/auth/crm/ordenes-proveedor/dividir-orden/:id" element={<DividirOcProveedor />} />
           <Route path="cotizaciones" element={<CotizacionForm />} />
           <Route path="mis-ordenes" element={<MisOrdenesComerciales />} />
           <Route path="mis-cotizaciones" element={<MisCotizaciones />} />

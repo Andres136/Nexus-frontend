@@ -289,7 +289,7 @@ export default function DetallesOrdenCompraProveedores({
             <div className="text-gray-500">
               <Search className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p>No hay productos agregados</p>
-              <p className="text-sm">Haz clic en "Agregar Producto" para comenzar</p>
+              <p className="text-sm">Haz clic en Agregar Producto para comenzar</p>
             </div>
           </div>
         )}

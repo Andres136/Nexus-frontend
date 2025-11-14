@@ -112,7 +112,7 @@ export default function UpdateOcProvedor() {
 
   // ✅ Manejar cambios en detalles
   const handleDetalleChange = (index, field, value) => {
-    if(field==='descripcion')return
+
     const nuevosDetalles = [...formData.detalles];
     nuevosDetalles[index][field] = 
       field === "cantidad_solicitada" ? parseFloat(value) || 0 : value;

@@ -109,7 +109,7 @@ const eliminarSede = async (id) =>{
 const  fetchBodegas = async () => {
   try {
     const response = await bodegasApi.getAll();
-    console.log(response.data);
+
     setBodegas(response.data);
   } catch (error) {
     console.error('Error fetching bodegas:', error);

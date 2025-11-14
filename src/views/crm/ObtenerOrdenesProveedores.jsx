@@ -1,8 +1,23 @@
+import { Edit,  Eye,  SplitIcon,  Trash2, Truck } from "lucide-react";
 import { useProveedores } from "../../hooks/useProveedores";
 import {  Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
+
+
 
 
 export default function ObtenerOrdenesProveedores() {
+
+
+const { user } = useAuth({middleware: 'auth'});
+console.log(user);
+const isAdmin = user?.role_id === 1 || user?.role_id === 4;
+const isCompras = user?.role_id === 4;
+const isOperario = user?.role_id === 3;
+const isAuditor = user?.role_id === 4;
+const canSeeSede = (orden) => {
+  return user?.sede_id === orden.sede_id;
+};
 
 
   const navigate = useNavigate();
@@ -15,6 +30,7 @@ export default function ObtenerOrdenesProveedores() {
     obtenerOrdenes,
     searchTerm,
     setSearchTerm,
+    eliminarOrden,
   } = useProveedores();
 
   const handleBuscar = () => {
@@ -98,29 +114,58 @@ export default function ObtenerOrdenesProveedores() {
                 </td>
 
                 <td className="border px-4 py-2">{orden.usuario?.name}</td>
-                <td className="border px-4 py-2 flex gap-2 justify-center">
-                  <button
-                    onClick={() =>
-                      navigate(
-                        `/auth/crm/ordenes-proveedor-entregas/${orden.id}/registrar-entrega`
-                      )
-                    }
-                    className="bg-green-500 text-white px-3 py-1 rounded"
-                  >
-                    Registrar Entrega
-                  </button>
-                  <button
-                    onClick={() =>
-                      navigate(
-                        `/auth/crm/oc-provedor-update/${orden.id}`
-                      )
-                    }
-                    className="bg-blue-500 text-white px-3 py-1 rounded"
-                  >
-                    Editar Entrega
-                  </button>
-            
-                </td>
+              <td className="border px-4 py-2 flex gap-2 justify-center">
+
+    <button
+      onClick={() =>
+        navigate(`/auth/crm/ordenes-proveedor-entregas/${orden.id}/registrar-entrega`)
+      }
+      className="bg-green-500 text-white px-3 py-1 rounded"
+    >
+      <Truck size={16} />
+    </button>
+ 
+
+
+    <button
+      onClick={() => navigate(`/auth/crm/oc-provedor-update/${orden.id}`)}
+      className="bg-blue-500 text-white px-3 py-1 rounded"
+    >
+      <Edit size={16} />
+    </button>
+
+
+  {isAdmin || isCompras && (
+    <button
+      onClick={() => eliminarOrden(orden.id)}
+      className="bg-red-500 text-white px-3 py-1 rounded"
+    >
+      <Trash2 size={16} />
+    </button>
+  )}
+
+  {isAdmin &&(
+    <button
+      onClick={() =>
+        navigate(`/auth/crm/ordenes-proveedor/dividir-orden/${orden.id}`)
+      }
+      className="bg-yellow-500 text-white px-3 py-1 rounded"
+    >
+      <SplitIcon size={16} />
+    </button>
+  )}
+
+  {/* Vista previa → Todos los roles */}
+  <button
+    onClick={() =>
+      navigate(`/auth/crm/ordenes-proveedor-preview/${orden.id}`)
+    }
+    className="bg-purple-500 text-white px-3 py-1 rounded"
+  >
+    <Eye size={16} />
+  </button>
+</td>
+
               </tr>
             ))}
           </tbody>

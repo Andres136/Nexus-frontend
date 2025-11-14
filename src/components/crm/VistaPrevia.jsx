@@ -56,10 +56,10 @@ export default function VistaPrevia() {
           Vista previa Orden de Compra #{id}
         </h2>
         <Link
-          to="/auth/crm/proveedores-ordenes-compra"
+          to="/auth/crm/ordenes-compra-proveedor"
           className="text-blue-600 hover:underline"
         >
-          ← Volver
+          Lista
         </Link>
       </div>
 
@@ -104,6 +104,7 @@ export default function VistaPrevia() {
         {loading && <p>Cargando PDF...</p>}
         {!loading && pdfUrl && (
           <iframe
+          key={id}
             src={pdfUrl}
             title={`Orden de Compra ${id}`}
             width="100%"

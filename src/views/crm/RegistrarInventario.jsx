@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import  { useState } from 'react';
 import { FiUpload, FiPackage, FiDownload, FiLoader } from 'react-icons/fi';
 import { BsFileEarmarkExcel, BsCloudUpload } from 'react-icons/bs';
 import { productsApi } from "../../services/api";
@@ -33,7 +33,7 @@ export default function RegistrarInventario() {
       formDataExcel.append('bodega_id', excelData.bodega_id);
 
       const response = await productsApi.registrarEntradaMasiva(formDataExcel);
-      console.log('Respuesta de la API:', response);
+     
       if (response.data.success) {
         setResultadoImport(response.data.data);
         Swal.fire({
@@ -71,6 +71,54 @@ export default function RegistrarInventario() {
       setLoading(false);
     }
   };
+const handleDescuentoExcel = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setResultadoImport(null);
+
+  try {
+    const formDataExcel = new FormData();
+    formDataExcel.append('file', excelData.file);
+    formDataExcel.append('empresa_id', excelData.empresa_id);
+    formDataExcel.append('bodega_id', excelData.bodega_id);
+
+    const response = await productsApi.registrtarDescuentoMasivoExcel(formDataExcel);
+ console.log(response);
+    if (response.data.success) {
+      Swal.fire({
+        title: 'Descuento completado',
+        html: `
+          <div class="text-left">
+            <p><strong>Total descontado:</strong> ${response.data.resumen.total_descontado}</p>
+            <p><strong>Productos procesados:</strong> ${response.data.resumen.total_lineas}</p>
+            <p><strong>Errores:</strong> ${response.data.resumen.errores}</p>
+          </div>
+        `,
+        icon: 'success'
+      });
+
+      setResultadoImport(response.data);
+      setExcelData({
+        empresa_id: '',
+        bodega_id: '',
+        file: null
+      });
+
+      document.getElementById('excel-upload').value = '';
+    }
+
+  } catch (error) {
+    console.error('Error:', error);
+    if (error.response?.status === 422) {
+      setErrores(error.response.data.errors);
+    }
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+
 
   const descargarPlantilla = () => {
     // Crear CSV de ejemplo
@@ -87,6 +135,9 @@ SP-40-50,150,2800,15,600,2024-11-30`;
     a.click();
     window.URL.revokeObjectURL(url);
   };
+
+
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-6">
@@ -272,7 +323,7 @@ SP-40-50,150,2800,15,600,2024-11-30`;
                 )}
               </div>
 
-              <div className="flex justify-end pt-6 border-t border-gray-200">
+              <div className="flex justify-end pt-6 border-t border-gray-200 gap-4">
                 <button
                   type="submit"
                   disabled={loading}
@@ -281,6 +332,17 @@ SP-40-50,150,2800,15,600,2024-11-30`;
                   {loading ? <FiLoader className="animate-spin w-5 h-5" /> : <FiUpload className="w-5 h-5" />}
                   {loading ? 'Procesando archivo...' : 'Importar Inventario'}
                 </button>
+
+                <button
+  type="button"
+  onClick={handleDescuentoExcel}
+  disabled={loading}
+  className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl hover:from-red-700 hover:to-red-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 mr-4"
+>
+  {loading ? <FiLoader className="animate-spin w-5 h-5" /> : <FiUpload className="w-5 h-5" />}
+  Descontar Stock por Excel
+</button>
+
               </div>
             </form>
 
@@ -331,6 +393,22 @@ SP-40-50,150,2800,15,600,2024-11-30`;
     </a>
   </div>
 )}
+{resultadoImport.pdf_url && (
+  <div className="mt-6 flex justify-center">
+    <a
+      href={resultadoImport.pdf_url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700
+                 text-white font-semibold rounded-lg shadow-md transition-all duration-200
+                 transform hover:scale-105"
+    >
+      <FiDownload className="w-5 h-5" />
+      Descargar PDF de Descuento
+    </a>
+  </div>
+)}
+
 
                 {resultadoImport.errores && resultadoImport.errores.length > 0 && (
                   <div>

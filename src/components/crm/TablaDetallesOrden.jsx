@@ -315,9 +315,14 @@ setProductStock(null);
   }
 };
 
-
-  const formatNumber = (num) =>
-    new Intl.NumberFormat("es-CO").format(Math.floor(num));
+const formatNumber = (num) => {
+  if (num === undefined || num === null) return "0";
+  // ✅ CAMBIO: Sin Math.floor para mantener decimales
+  return new Intl.NumberFormat("es-CO", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2
+  }).format(num);
+};
 
   // ✅ Componente customizado para opciones de bodega
   const BodegaOption = ({
