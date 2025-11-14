@@ -111,17 +111,16 @@ export default function UpdateOcProvedor() {
   };
 
   // ✅ Manejar cambios en detalles
-  const handleDetalleChange = (index, field, value) => {
+const handleDetalleChange = (index, field, value) => {
+  const nuevosDetalles = [...formData.detalles];
+  nuevosDetalles[index][field] =
+    field === "cantidad_solicitada" ? parseFloat(value) || 0 : value;
 
-    const nuevosDetalles = [...formData.detalles];
-    nuevosDetalles[index][field] = 
-      field === "cantidad_solicitada" ? parseFloat(value) || 0 : value;
-    
-    setFormData(prev => ({
-      ...prev,
-      detalles: nuevosDetalles
-    }));
-  };
+  setFormData(prev => ({
+    ...prev,
+    detalles: nuevosDetalles
+  }));
+};
 
   // ✅ Manejar selección de campo (name o description)
   const handleCampoSeleccionado = (index, campo) => {
@@ -472,14 +471,14 @@ const fetchStockForProduct = async (productId) => {
 
                     {/* Descripción */}
                     <td className="p-3 border">
-                      <input
-                        type="text"
-                        readOnly
-                        value={detalle.descripcion || ""}
-                        className="w-full border rounded p-2 min-w-[200px] bg-gray-100 cursor-not-allowed"
-                        placeholder="Descripción automática del producto"
-                        title="La descripción se obtiene automáticamente al seleccionar el producto"
-                      />
+                 <input
+  type="text"
+  value={detalle.descripcion || ""}
+  onChange={(e) => handleDetalleChange(index, "descripcion", e.target.value)}
+  className="w-full border rounded p-2 min-w-[200px]"
+  placeholder="Descripción del producto"
+ />
+
                       {errores[`detalles.${index}.descripcion`] && (
                         <p className="text-red-500 text-xs mt-1">
                           {errores[`detalles.${index}.descripcion`][0]}
