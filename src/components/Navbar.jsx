@@ -18,7 +18,8 @@ import {
   ChevronDown,
   Menu,
   CornerRightDownIcon,
-  Megaphone
+  Megaphone,
+  TruckIcon
 } from "lucide-react";
 
 export default function Navbar() {
@@ -46,8 +47,8 @@ export default function Navbar() {
 
     { name: "Inicio", to: "/", icon: Home, allowedRoles: [1,10,11] },
     { name: "Procesos", to: "/auth/procesos", icon: FolderKanban, alwaysVisible: true },
-    { name: "Tareas", to: "tareas", icon: ListChecks, allowedRoles: [1,2, 10,11] },
-    { name: "Novedades", to: "novedades", icon: Bell,Bell: [1,2, 10,11] },
+
+    { name: "Entregas ", to: "/auth/entregas", icon: TruckIcon, allowedRoles: [1,2, 4, 5, 6, 7, 9,10,11]},
     { name: "CRM", to: "/auth/crm", icon: Building2, allowedRoles: [1,2, 4, 5, 6, 7, 9,10,11] },
     {name: "KPIS", to: "dashboard/indicadores", icon: Building2, allowedRoles: [1,2] },
     { name: "Indicadores", to: "indicadores", icon: BarChart2, allowedRoles: [1,2], onlyIfResponsable: true },
@@ -58,11 +59,11 @@ export default function Navbar() {
       hasSubmenu: true,
       submenu: [
        { name: "Marketing", to: "/admin/marketing", icon: Megaphone, allowedRoles: [1, 2, 10, 11] },
-        { name: "Crear Plantilla", to: "/admin/crear-plantilla-correo", icon: CornerRightDownIcon, allowedRoles: [1 ] },
-        { name: "Productos", to: "/auth/crm/productos", icon: Package },
-        { name: "Órdenes de Compra", to: "/auth/crm/ordenes-compra", icon: ShoppingCart },
-        { name: "Órdenes de Trabajo", to: "/auth/crm/ordenes-trabajo", icon: FileText },
-        { name: "Configuración", to: "/auth/crm/configuracion", icon: Settings },
+        //name: "Crear Plantilla", to: "/admin/crear-plantilla-correo", icon: CornerRightDownIcon, allowedRoles: [1 ] },
+        { name: "Novedades", to: "novedades", icon: Bell,Bell: [1,2, 10,11] },
+        { name: "Tareas", to: "tareas", icon: ListChecks, allowedRoles: [1,2, 10,11] },
+      //{ name: "Órdenes de Trabajo", to: "/auth/crm/ordenes-trabajo", icon: FileText },
+        //name: "Configuración", to: "/auth/crm/configuracion", icon: Settings },
       ],
     },
  

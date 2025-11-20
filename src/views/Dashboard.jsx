@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom';
 import AlertStock from '../components/crm/AlertStock';
 import { X, Volume2, VolumeX } from 'lucide-react';
 
+
 const Dashboard = () => {
   const today = new Date();
   const [month, setMonth] = useState(today.getMonth() + 1);
@@ -465,7 +466,7 @@ const Dashboard = () => {
         </div>
       )}
 
-  
+      
     </>
   );
 };

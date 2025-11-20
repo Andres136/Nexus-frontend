@@ -1,0 +1,26 @@
+.calendar-wrapper {
+  padding: 1rem;
+}
+
+.calendar-wrapper .fc {
+  font-family: inherit !important;
+  font-size: 14px;
+}
+
+.calendar-wrapper table {
+  border-collapse: collapse !important;
+}
+@media (max-width: 768px) {
+  .fc-toolbar-title {
+    font-size: 1.2rem !important;
+  }
+
+  .fc-daygrid-day-number {
+    font-size: 0.8rem !important;
+  }
+
+  .fc-event {
+    font-size: 0.7rem !important;
+    padding: 2px !important;
+  }
+}

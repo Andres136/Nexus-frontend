@@ -4,7 +4,7 @@ import { useGestionProcesos } from '../../hooks/useGestionProcesos';
 import { useAuth } from '../../hooks/useAuth';
 import clienteAxios from '../../config/axios';
 import { toast } from 'react-toastify';
-import { Download, Folder, Search } from 'lucide-react';
+import { Download, Edit, Folder, Move3DIcon, Search } from 'lucide-react';
 import Swal from 'sweetalert2';
 
 function ProcesosDepartamento() {
@@ -243,7 +243,7 @@ const docsFiltrados = documentacion.filter(doc =>
         onClick={() => abrirModalEdicion(proceso)}
         className="text-sm text-blue-600 hover:underline"
       >
-        Editar
+        <Edit size={20} className="inline mr-1" />
       </button>
     )}
     <button
@@ -339,7 +339,7 @@ const docsFiltrados = documentacion.filter(doc =>
                   }}
                   className="text-sm text-blue-600 hover:underline"
                 >
-                  Editar
+                  <Edit size={16} />
                 </button>
               )}
             </div>
@@ -359,14 +359,14 @@ const docsFiltrados = documentacion.filter(doc =>
             download target="_blank" rel="noopener noreferrer"
            className="bg-gray-800 text-white px-4 py-3 rounded hover:bg-gray-900 flex items-center gap-2 h-10"
           >
-            <Download size={16}/> Descargar
+            <Download size={16}/> 
           </a>
           {user?.role_id === 1 && (
             <button
               onClick={() => confirmarEliminacion(doc.id)}
        className="bg-red-600 text-white px-4 py-3 rounded hover:bg-red-700 h-10"
             >
-              Mover
+              <Move3DIcon size={16} />
             </button>
           )}
         </div>

@@ -62,6 +62,7 @@ import OrdenesFaltantes from "../views/crm/OrdenesFaltantes";
 import PlantillaEditor from "../views/comunicaciones/PlantillaEditor";
 import Marketing from "../views/comunicaciones/Marketing";
 import DividirOcProveedor from "../views/crm/DividirOcProveedor";
+import DeliveryPage from "../views/Rutas/DeliveryPage";
 
 
 
@@ -77,6 +78,7 @@ export default function Router() {
       >
         <Route path="/auth" element={<AuthLyout />}>
           <Route path="procesos" element={<DepartamentosPage />} />
+          <Route path="entregas" element={<DeliveryPage />} />
           <Route
             path="procesos/:departamentoId"
             element={<ProcesosDepartamento />}
