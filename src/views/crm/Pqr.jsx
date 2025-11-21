@@ -51,7 +51,7 @@ export default function Pqr() {
           Authorization: `Bearer ${token}`
         }
       });
-console.log(response.data);
+
       setPqrs(response.data.data);
       setPagination({
         current_page: response.data.current_page,

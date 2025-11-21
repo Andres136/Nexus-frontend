@@ -49,11 +49,13 @@ export default function Conductores() {
     try {
       const token = localStorage.getItem('token');
       const response = await clienteAxios.post('/api/datos-conductores', payload, {
+      
         headers: {
           'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${token}`,
         },
       });
+      
       toast.success(response.data.message || 'Conductor registrado exitosamente');
       usenavigate('/auth/crm/conductores');
       setFormData({

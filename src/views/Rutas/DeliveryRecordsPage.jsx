@@ -21,7 +21,7 @@ export default function DeliveryRecordsPage() {
 
   const cargarEventos = async () => {
     const res = await deliveryEventsApi.getEntregasPorUsuario();
-    console.log("Entregas por usuario obtenidas:", res.data.data)
+  
     setEventos(res.data.data);
     
     // ✅ Obtener el nombre del primer usuario para el saludo
@@ -193,7 +193,7 @@ export default function DeliveryRecordsPage() {
                         <div className="text-sm text-green-800 mt-1 space-y-1">
                           <p><span className="font-medium">Placa:</span> {ev.vehiculo.placa}</p>
                           <p><span className="font-medium">Marca:</span> {ev.vehiculo.marca} {ev.vehiculo.modelo}</p>
-                          <p><span className="font-medium">Conductor:</span> {ev.vehiculo.conductor}</p>
+                      
                         </div>
                       </div>
                     )}
@@ -285,12 +285,7 @@ export default function DeliveryRecordsPage() {
                             <span className="font-semibold text-blue-600">{ev.cantidad}</span>
                           </div>
 
-                          {/* ID de entrega */}
-                          <div className="flex items-center gap-2">
-                            <Hash className="w-4 h-4 text-gray-400" />
-                            <span className="font-medium">ID Entrega:</span>
-                            <span className="text-gray-500">#{ev.id}</span>
-                          </div>
+                         
                         </div>
 
                         {/* ✅ Información del vehículo en desktop */}
@@ -303,7 +298,7 @@ export default function DeliveryRecordsPage() {
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-green-800">
                               <div><span className="font-medium">Placa:</span> {ev.vehiculo.placa}</div>
                               <div><span className="font-medium">Marca:</span> {ev.vehiculo.marca} {ev.vehiculo.modelo}</div>
-                              <div><span className="font-medium">Conductor:</span> {ev.vehiculo.conductor}</div>
+                           
                             </div>
                           </div>
                         )}

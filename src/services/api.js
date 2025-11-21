@@ -41,6 +41,8 @@ apiClient.interceptors.response.use(
 //Obtener todos los usuarios
 export const usersApi = {
   getAll: () => apiClient.get("/api/conductores"),
+  // USUARIO TODOS
+  getUsers:()=>apiClient.get("/api/usuarios/all"),
 };
 
 //Api para registro de indicadores por procesos o departamentos

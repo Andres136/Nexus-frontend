@@ -31,7 +31,7 @@ const getEstadoColor = (estado) => {
  const cargarEventos = async () => {
   try {
     const res = await deliveryEventsApi.getAll();
-    console.log("Eventos de entrega obtenidos:", res.data);
+  
     const eventosBD = res.data.data;
 
 
@@ -41,7 +41,7 @@ const fullcalendarEvents = eventosBD.map(e => {
 
   return {
     id: e.id,
-    title: `OC ${e.orden_id} - ${e.orden.cliente.nombre} — ${e.usuario.name} — ${e.vehiculo.placa}`,
+    title: `OC ${e.orden_id} - ${e.orden.cliente.nombre} - ${e.vehiculo.placa} ${e.usuario.name}`,
     date: e.fecha_entrega,
     start: `${e.fecha_entrega}T${e.hora}`,
   classNames: [`estado-${e.estado}`], // 👈 ESTA ES LA CLAVE

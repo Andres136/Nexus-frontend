@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { deliveryEventsApi } from "../../services/api";
+import { deliveryEventsApi, usersApi } from "../../services/api";
 import { useListarVehiculos } from "../../hooks/useListarVehiculos";
-import { useAuth } from "../../hooks/useAuth";
+
 import { toast } from "react-toastify";
 import { 
   Truck, 
@@ -17,10 +17,10 @@ import {
 import Select from "react-select";
 
 export default function DeliveryForm({ selectedDate, onSuccess, eventToEdit }) {
- 
-  const { users, obtenerUsuarios } = useAuth({ middleware: "auth" });
+
   const { vehiculos } = useListarVehiculos();
   const [ordenesTrabajo, setOrdenesTrabajo] = useState([]);
+  const [usuarios, setUsuarios] = useState([]);
 
 
   // ✅ Inicializar estado correctamente
@@ -63,9 +63,7 @@ export default function DeliveryForm({ selectedDate, onSuccess, eventToEdit }) {
     }
   }, [eventToEdit, selectedDate]);
 
-  useEffect(() => {
-    obtenerUsuarios();
-  }, []);
+  
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -113,7 +111,21 @@ export default function DeliveryForm({ selectedDate, onSuccess, eventToEdit }) {
     } finally {
       setLoading(false);
     }
-  };
+  }
+
+  //Obterner usuarios para el select de la ruta api/
+  useEffect(() => {
+    const fetchUsuarios = async () => {
+      try {
+        const response = await usersApi.getUsers();
+        setUsuarios(response.data);
+      } catch (error) {
+        console.error("Error al cargar los usuarios:", error);
+      }
+    };
+
+    fetchUsuarios();
+  }, []);
 
   //Cargar ordenes de trabajo para el select
   useEffect(() => {
@@ -310,10 +322,10 @@ export default function DeliveryForm({ selectedDate, onSuccess, eventToEdit }) {
               }`}
               classNamePrefix="select"
               value={
-                users
-                  ?.map(user => ({
-                    value: user.id,
-                    label: `${user.name} `
+                usuarios
+                  ?.map(usuario => ({
+                    value: usuario.id,
+                    label: `${usuario.name} `
                   }))
                   .find(opt => opt.value === form.usuario_id) || null
               }
@@ -321,9 +333,9 @@ export default function DeliveryForm({ selectedDate, onSuccess, eventToEdit }) {
                 setForm(prev => ({ ...prev, usuario_id: selected ? selected.value : "" }))
               }
               options={
-                users?.map(user => ({
-                  value: user.id,
-                  label: `${user.name}`
+                usuarios?.map(usuario => ({
+                  value: usuario.id,
+                  label: `${usuario.name}`
                 })) || []
               }
               placeholder="Seleccione un usuario..."
