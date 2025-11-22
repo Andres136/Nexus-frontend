@@ -338,65 +338,52 @@ export default function DetallesOrdenesCompra() {
                       />
                     </td>
                     <td className="border border-gray-300 px-2 py-1">
-<Select
-  options={products.map((product) => ({
-    value: product.id,
-    label: `${product.code || product.code_id || 'Sin código'} - ${product.name || 'Sin nombre'} - ${product.description || 'Sin descripción'}`,
+                     <Select
+  isLoading={isLoading || isFetching}
+  options={products.map((p) => ({
+    value: p.id,
+    label: `${p.code || p.code_id || "Sin código"} - ${p.name || "Sin nombre"}`,
+    code: p.code,
+    name: p.name,
   }))}
-
-  value={(() => {
-    const product = products.find((p) => p.id === detalle.product_id);
-    if (product) {
-      // ✅ Si el producto está en la lista actual
-      return {
-        value: product.id,
-        label: `${product.code || product.code_id || 'Sin código'} - ${product.name || 'Sin nombre'}`,
-      };
-    } else if (detalle.product) {
-      // ✅ Si el detalle ya trae el producto desde el backend (relación cargada)
-      return {
-        value: detalle.product.id,
-        label: `${detalle.product.code || 'Sin código'} - ${detalle.product.name || 'Sin nombre'}`,
-      };
-    } else if (detalle.product_id) {
-      // ✅ Si solo hay ID, mantenerlo visible temporalmente
-      return {
-        value: detalle.product_id,
-        label: `ID ${detalle.product_id} (sin datos)`,
-        isInvalid: true,
-      };
-    }
-    return null;
-  })()}
-
-  onChange={(selected) => {
-    const productId = selected ? selected.value : null;
-    handleChangeDetalle(index, "product_id", productId);
-  }}
-
+  value={
+    detalle.product_id && products.length > 0
+      ? (() => {
+          const product = products.find((p) => p.id === detalle.product_id);
+          if (product) {
+            return {
+              value: product.id,
+              label: `${product.code || product.code_id || "Sin código"} - ${product.name || "Sin nombre"}`,
+            };
+          } 
+        })()
+      : null
+  }
+  onChange={(selectedOption) =>
+    handleChangeDetalle(index, "product_id", selectedOption ? selectedOption.value : null)
+  }
   onInputChange={(inputValue) => setSearchTerm(inputValue)}
-  isLoading={isLoading}
-  isClearable
-  placeholder="Buscar producto..."
-  noOptionsMessage={() => {
-    if (isLoading) return "Cargando productos...";
-    if (isError) return "Error al cargar productos";
-    if (isEmpty) return "No se encontraron productos";
-    return "Escribe para buscar";
-  }}
-  className="min-w-[220px]"
+  placeholder="Buscar producto por código o nombre..."
+  noOptionsMessage={() =>
+    isLoading
+      ? "Cargando productos..."
+      : isEmpty
+      ? "No se encontraron productos"
+      : "Escribe para buscar"
+  }
+  className="min-w-[250px]"
   menuPortalTarget={document.body}
   styles={{
     menuPortal: (base) => ({ ...base, zIndex: 9999 }),
     control: (base, { data }) => ({
       ...base,
-      minHeight: '32px',
-      fontSize: '14px',
-      borderColor: data?.isInvalid ? '#dc2626' : base.borderColor,
+      minHeight: "32px",
+      fontSize: "14px",
+      borderColor: data?.isInvalid ? "#dc2626" : base.borderColor,
     }),
     singleValue: (base, { data }) => ({
       ...base,
-      color: data?.isInvalid ? '#dc2626' : base.color,
+      color: data?.isInvalid ? "#dc2626" : base.color,
     }),
   }}
 />

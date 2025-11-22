@@ -202,18 +202,6 @@ useEffect(() => {
 }, [JSON.stringify(detalles)]);
 
 
-useEffect(() => {
-  (detalles || []).forEach((d, i) => {
-    if (Array.isArray(d.bodegas) && d.bodegas.length > 0) {
-      const total = d.bodegas.reduce((s, x) => s + (parseFloat(x.cantidad) || 0), 0);
-      if (total !== d.cantidad) {
-        handleChangeDetalle(i, "cantidad", parseFloat(total.toFixed(2)));
-      }
-    }
-  });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [JSON.stringify(detalles?.map(d => d.bodegas))]);
-
 const handleDescontarStockMasivo = async () => {
   try {
     setLoadingStock(true);
@@ -719,11 +707,6 @@ onClick={async () => {
                   // 1) actualiza bodegas
                   handleChangeDetalle(index, "bodegas", nueva);
 
-                  // 2) sincroniza la cantidad total del detalle con la suma por bodega
-                  const total = nueva.reduce((s, x) => s + (parseFloat(x.cantidad) || 0), 0);
-                  if (total !== detalle.cantidad) {
-                    handleChangeDetalle(index, "cantidad", total);
-                  }
                 }}
               />
 
@@ -875,9 +858,8 @@ onClick={async () => {
                         : "border-gray-300 focus:border-blue-500"
                     } focus:outline-none`}
                     value={detalle.cantidad}
-                    onChange={(e) =>
-                      handleChangeDetalle(index, "cantidad", e.target.value)
-                    }
+                
+                    
                     placeholder="0"
                   />
                   {errores?.[index]?.cantidad && (
@@ -1749,7 +1731,7 @@ if (detalleActivo) {
   if (index !== -1) {
     handleChangeDetalle(index, "bodegas", detalleActivo.bodegas || []);
     handleChangeDetalle(index, "producto_equivalentes", detalleActivo.producto_equivalentes || []);
-    handleChangeDetalle(index, "cantidad", detalleActivo.cantidad_total || 0);
+   
   }
 }
 
