@@ -217,6 +217,9 @@ export const inventariosApi = {
   sedesTraslados: () => apiClient.get("/api/traslados-internos-sedes"),
   ordenesCompraTraslados: () =>
     apiClient.get("/api/traslados-internos-ordenes-compra"),
+
+  movimientosStock: (params = {}) =>
+    apiClient.get("/api/movimientos-stock", { params }),
 };
 
 //Documentacio SGI

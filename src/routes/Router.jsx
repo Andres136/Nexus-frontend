@@ -63,6 +63,7 @@ import PlantillaEditor from "../views/comunicaciones/PlantillaEditor";
 import Marketing from "../views/comunicaciones/Marketing";
 import DividirOcProveedor from "../views/crm/DividirOcProveedor";
 import DeliveryPage from "../views/Rutas/DeliveryPage";
+import MovimientoInventario from "../views/crm/MovimientoInventario";
 
 
 
@@ -214,6 +215,8 @@ export default function Router() {
             path="/auth/crm/traslado-inventario"
             element={<TrasladoInventario />}
           />
+
+          <Route path="/auth/crm/movimientos-stock" element={<MovimientoInventario />} />       
           <Route
             path="/auth/crm/conductores/:conductorId/revisiones"
             element={<RevisionesPage />}

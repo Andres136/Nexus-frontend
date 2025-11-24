@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FiSearch, FiFilter, FiDownload, FiRefreshCw, FiPackage, FiTrendingUp, FiTrendingDown, FiAlertTriangle, FiPlus, FiAlertCircle } from 'react-icons/fi';
+import { FiSearch, FiFilter, FiDownload, FiRefreshCw, FiPackage, FiTrendingUp, FiTrendingDown, FiAlertTriangle, FiPlus, FiAlertCircle, FiArrowRight } from 'react-icons/fi';
 import { BsBoxSeam, BsGraphUp, BsExclamationTriangle, BsFileEarmarkExcel } from 'react-icons/bs';
 import { Link } from 'react-router-dom';
 import { inventariosApi } from '../../services/api';
@@ -91,7 +91,7 @@ export default function Inventarios() {
       const { data } = await inventariosApi.listar(params);
 
 
-    console.log('Datos de inventarios recibidos:', data);
+   // console.log('Datos de inventarios recibidos:', data);
       setPagination(data.pagination);
       setInventarios(data.data);
 
@@ -202,9 +202,6 @@ const obtenerStockTotalProducto = (productoId) => {
       <div className="max-w-7xl mx-auto">
         
      {/* ✅ Encabezado moderno y responsive */}
-<div className="bg-white rounded-xl shadow border border-gray-200 p-4 sm:p-6 mb-6">
-  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-6">
-    
     {/* 🔹 Título y subtítulo */}
     <div>
       <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 flex items-center gap-2 sm:gap-3">
@@ -215,6 +212,11 @@ const obtenerStockTotalProducto = (productoId) => {
         Monitoreo y control de stock en tiempo real
       </p>
     </div>
+
+<div className="bg-white rounded-xl shadow border border-gray-200 p-4 sm:p-6 mb-6">
+  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-6">
+    
+
 
     {/* 🔹 Acciones (botones) */}
     <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 w-full sm:w-auto justify-end">
@@ -262,6 +264,13 @@ const obtenerStockTotalProducto = (productoId) => {
       >
         <FiAlertCircle className="w-4 h-4" />
         <span className="hidden sm:inline">Ordenes Faltantes</span>
+      </Link>
+      <Link
+        to="/auth/crm/movimientos-stock"
+        className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 active:scale-[0.98] transition-all duration-150 shadow-sm text-sm font-medium flex-1 sm:flex-none justify-center"
+      >
+        <FiArrowRight className="w-4 h-4" />
+        <span className="hidden sm:inline">Movimientos</span>
       </Link>
 
       {/* Componente Siigo */}

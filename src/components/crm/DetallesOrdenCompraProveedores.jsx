@@ -23,7 +23,6 @@ export default function DetallesOrdenCompraProveedores({
   const [selectorAbierto, setSelectorAbierto] = useState(null);
 
   const { products, isLoading, isFetching, isEmpty } = useProducts({ search });
-
   // Enviar al padre
   useEffect(() => {
     onChange(detalles);
@@ -147,6 +146,7 @@ export default function DetallesOrdenCompraProveedores({
                           }))}
                           onInputChange={(value) => setSearch(value)}
                           onChange={(option) => {
+                           // console.log(option);
                             if (option) {
                               const nuevos = [...detalles];
                               nuevos[index].producto_id = option.value;

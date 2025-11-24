@@ -17,7 +17,7 @@ import {
   Clock,
   AlertTriangle,
   CheckCircle,
-  XCircle,
+
   ChevronLeft,
   ChevronRight,
   X,
@@ -34,7 +34,7 @@ export default function Pqr() {
   const [pagina, setPagina] = useState(1);
   const [pagination, setPagination] = useState({});
   const [mensajeSeleccionado, setMensajeSeleccionado] = useState(null);
-  const [asignadoA, setAsignadoA] = useState(null);
+ 
   const { obtenerUsuarios, users, user } = useAuth({ middleware: "auth" });
 
   const fetchPqrs = async () => {

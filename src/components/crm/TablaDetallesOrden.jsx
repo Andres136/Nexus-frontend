@@ -29,13 +29,8 @@ export default function TablaDetallesOrden({
   valorTotal = 0,
 }) {
   const [search, setSearch] = useState("");
-  const {
+  const { stockInfo, getStockWithSuggestions } = useContext(ProductContext);
 
-    stockInfo,
-    getStockWithSuggestions,
-
-  } = useContext(ProductContext);
- 
   const { products, isLoading, isFetching, isEmpty } = useProducts({ search });
   const [bodegasDisponibles, setBodegasDisponibles] = useState([]);
   const [productStock, setProductStock] = useState(null);
@@ -44,7 +39,6 @@ export default function TablaDetallesOrden({
   const [detalleActivo, setDetalleActivo] = useState(null);
   const [errors, setErrors] = useState({});
   const [pdfUrl, setPdfUrl] = useState(null);
-
 
   // AGREGAR: Estados para cache y tracking
   const [stockCache, setStockCache] = useState({});
@@ -77,13 +71,12 @@ export default function TablaDetallesOrden({
       );
 
       // Actualizar el valor total solo si cambió
-  if (nuevoTotal !== detalleActivo.cantidad_total) {
-  setDetalleActivo((prev) => ({
-    ...prev,
-    cantidad_total: nuevoTotal,
-  }));
-}
-
+      if (nuevoTotal !== detalleActivo.cantidad_total) {
+        setDetalleActivo((prev) => ({
+          ...prev,
+          cantidad_total: nuevoTotal,
+        }));
+      }
     }
   }, [detalleActivo?.bodegas, detalleActivo?.producto_equivalentes]);
 
@@ -151,7 +144,7 @@ export default function TablaDetallesOrden({
       // ✅ USAR: resumen_por_bodega como en DetalleTraslado
       setBodegasDisponibles(stockInfo.stock?.resumen_por_bodega || []);
 
-  /*    console.log(
+      /*    console.log(
         "Stock info actualizado en modal:",
         stockInfo.stock?.resumen_por_bodega
       );*/
@@ -159,158 +152,155 @@ export default function TablaDetallesOrden({
     }
   }, [stockInfo, modalOpen, detalleActivo]);
   useEffect(() => {
-  setPdfUrl(null);
-}, [orden.id]);
+    setPdfUrl(null);
+  }, [orden.id]);
 
+  // 🔹 Prefetch de stock por producto (para poblar la columna Bodegas)
+  useEffect(() => {
+    if (!detalles || detalles.length === 0) return;
 
-// 🔹 Prefetch de stock por producto (para poblar la columna Bodegas)
-useEffect(() => {
-  if (!detalles || detalles.length === 0) return;
+    const fetch = async () => {
+      for (const d of detalles) {
+        const productId = d.product_id || d.product?.id;
+        if (!productId) continue;
 
-  const fetch = async () => {
-    for (const d of detalles) {
-      const productId = d.product_id || d.product?.id;
-      if (!productId) continue;
+        // si ya tenemos cache con bodegas, no vuelvas a pedir
+        const ya = stockCache[productId]?.producto_base?.resumen_por_bodega;
+        if (ya && ya.length > 0) continue;
 
-      // si ya tenemos cache con bodegas, no vuelvas a pedir
-      const ya = stockCache[productId]?.producto_base?.resumen_por_bodega;
-      if (ya && ya.length > 0) continue;
-
-      try {
-        const res = await productsApi.getStock(productId);
-        const stockData = res?.data?.stock || null;
-        if (stockData) {
-          setStockCache(prev => ({
-            ...prev,
-            [productId]: {
-              ...(prev[productId] || {}),
-              producto_base: {
-                stock_total: stockData.stock_total ?? 0,
-                resumen_por_bodega: stockData.resumen_por_bodega ?? [],
-              }
-            }
-          }));
+        try {
+          const res = await productsApi.getStock(productId);
+          const stockData = res?.data?.stock || null;
+          if (stockData) {
+            setStockCache((prev) => ({
+              ...prev,
+              [productId]: {
+                ...(prev[productId] || {}),
+                producto_base: {
+                  stock_total: stockData.stock_total ?? 0,
+                  resumen_por_bodega: stockData.resumen_por_bodega ?? [],
+                },
+              },
+            }));
+          }
+        } catch (e) {
+          // silencioso
         }
-      } catch (e) {
-        // silencioso
       }
-    }
-  };
+    };
 
-  fetch();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [JSON.stringify(detalles)]);
+    fetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(detalles)]);
 
+  const handleDescontarStockMasivo = async () => {
+    try {
+      setLoadingStock(true);
+      showToast("info", "Procesando descuento masivo de stock...");
 
-const handleDescontarStockMasivo = async () => {
-  try {
-    setLoadingStock(true);
-    showToast("info", "Procesando descuento masivo de stock...");
-
-    // 🔹 Construir el payload con todos los productos visibles
-    const items = detalles.map((detalle) => ({
-      orden_trabajo_id: orden.id,
-      orden_compra_id: detalle.orden_compra_id,
-      producto_id: detalle.product_id,
-      cantidad: parseFloat(detalle.cantidad) || 0,
-      bodegas: (detalle.bodegas || []).map((b) => ({
-        bodega_id: b.bodega_id,
-        cantidad: parseFloat(b.cantidad) || 0,
-        bodega_nombre: b.bodega_nombre,
-        sede_nombre: b.sede_nombre,
-      })),
-      producto_equivalentes: (detalle.producto_equivalentes || []).map((eq) => ({
-        id: eq.id,
-        razon: eq.razon || "",
-        bodegas: (eq.bodegas || []).map((b) => ({
+      // 🔹 Construir el payload con todos los productos visibles
+      const items = detalles.map((detalle) => ({
+        orden_trabajo_id: orden.id,
+        orden_compra_id: detalle.orden_compra_id,
+        producto_id: detalle.product_id,
+        cantidad: parseFloat(detalle.cantidad_requerida_kg || detalle.cantidad) || 0,
+        bodegas: (detalle.bodegas || []).map((b) => ({
           bodega_id: b.bodega_id,
           cantidad: parseFloat(b.cantidad) || 0,
           bodega_nombre: b.bodega_nombre,
           sede_nombre: b.sede_nombre,
         })),
-      })),
-    }));
+        producto_equivalentes: (detalle.producto_equivalentes || []).map(
+          (eq) => ({
+            id: eq.id,
+            razon: eq.razon || "",
+            bodegas: (eq.bodegas || []).map((b) => ({
+              bodega_id: b.bodega_id,
+              cantidad: parseFloat(b.cantidad) || 0,
+              bodega_nombre: b.bodega_nombre,
+              sede_nombre: b.sede_nombre,
+            })),
+          })
+        ),
+      }));
 
-    // 🔹 Llamar tu endpoint Laravel
-    const res = await productsApi.postDescontarStockMasivo({ items });
- 
-    if (res?.data?.success) {
-     const pdfs = res.data.pdfs || [];
-      showToast("success", "Descuento masivo completado correctamente ");
+      // 🔹 Llamar tu endpoint Laravel
+      const res = await productsApi.postDescontarStockMasivo({ items });
 
-      // 🔹 Si solo hay un PDF, abrirlo directamente
-      if (pdfs.length === 1) {
-        window.open(pdfs[0].pdf, "_blank");
-      }
-      // 🔹 Si hay varios, mostrar lista interactiva
-      else if (pdfs.length > 1) {
-        const links = pdfs
-          .map(
-            (p) =>
-              `<a href="${p.pdf}" target="_blank" style="display:block;margin:4px 0;color:#0d6efd;text-decoration:none;">
+      if (res?.data?.success) {
+        const pdfs = res.data.pdfs || [];
+        showToast("success", "Descuento masivo completado correctamente ");
+
+        // 🔹 Si solo hay un PDF, abrirlo directamente
+        if (pdfs.length === 1) {
+          window.open(pdfs[0].pdf, "_blank");
+        }
+        // 🔹 Si hay varios, mostrar lista interactiva
+        else if (pdfs.length > 1) {
+          const links = pdfs
+            .map(
+              (p) =>
+                `<a href="${p.pdf}" target="_blank" style="display:block;margin:4px 0;color:#0d6efd;text-decoration:none;">
                 📄 OT-${p.orden_trabajo_id}
               </a>`
-          )
-          .join("");
+            )
+            .join("");
 
-        Swal.fire({
-          title: "PDFs generados",
-          html: `<div style="text-align:left;">${links}</div>`,
-          icon: "success",
-          confirmButtonText: "Cerrar",
-          width: 600,
-        });
+          Swal.fire({
+            title: "PDFs generados",
+            html: `<div style="text-align:left;">${links}</div>`,
+            icon: "success",
+            confirmButtonText: "Cerrar",
+            width: 600,
+          });
+        } else {
+          showToast("info", "No se generaron documentos PDF.");
+        }
+
+        // Abrir todos los PDFs generados (uno por movimiento)
+
+        // Limpieza TOTAL DE LOS ESTADOS GLOBALES
+        setModalOpen(false);
+        setProductStock(null);
+        setDetalleActivo(null);
+        setStockCache({});
       } else {
-        showToast("info", "No se generaron documentos PDF.");
+        showToast(
+          "warning",
+          res?.data?.error ||
+            "El proceso terminó con advertencias. Revisa los faltantes o errores parciales."
+        );
+        console.warn("⚠️ Errores parciales:", res?.data?.errores);
       }
+    } catch (error) {
+      console.error("❌ Error en descuento masivo:", error);
 
-      // Abrir todos los PDFs generados (uno por movimiento)
+      // Validaciones del backend (422)
+      if (error.response?.status === 422 && error.response?.data?.errors) {
+        const backendErrors = error.response.data.errors;
+        setErrors(backendErrors);
 
-    
-
-      // Limpieza TOTAL DE LOS ESTADOS GLOBALES
-    setModalOpen(false);
-setProductStock(null);
-    setDetalleActivo(null);
-    setStockCache({});
-
-    } else {
-      showToast(
-        "warning",
-        res?.data?.error ||
-          "El proceso terminó con advertencias. Revisa los faltantes o errores parciales."
-      );
-      console.warn("⚠️ Errores parciales:", res?.data?.errores);
+        // Notificación general, breve y no intrusiva
+        showToast(
+          "warning",
+          "Hay campos con errores. Revisa los productos resaltados."
+        );
+      } else {
+        showToast("error", "Error inesperado al procesar descuento masivo.");
+      }
+    } finally {
+      setLoadingStock(false);
     }
-  } catch (error) {
-    console.error("❌ Error en descuento masivo:", error);
+  };
 
-  // Validaciones del backend (422)
-  if (error.response?.status === 422 && error.response?.data?.errors) {
-    const backendErrors = error.response.data.errors;
-    setErrors(backendErrors);
-
-    // Notificación general, breve y no intrusiva
-    showToast(
-      "warning",
-      "Hay campos con errores. Revisa los productos resaltados."
-    );
-  } else {
-    showToast("error", "Error inesperado al procesar descuento masivo.");
-  }
-  } finally {
-    setLoadingStock(false);
-  }
-};
-
-const formatNumber = (num) => {
-  if (num === undefined || num === null) return "0";
-  // ✅ CAMBIO: Sin Math.floor para mantener decimales
-  return new Intl.NumberFormat("es-CO", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2
-  }).format(num);
-};
+  const formatNumber = (num) => {
+    if (num === undefined || num === null) return "0";
+    // ✅ CAMBIO: Sin Math.floor para mantener decimales
+    return new Intl.NumberFormat("es-CO", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(num);
+  };
 
   // ✅ Componente customizado para opciones de bodega
   const BodegaOption = ({
@@ -491,7 +481,7 @@ const formatNumber = (num) => {
                 "Item",
                 "Referencia",
                 "Bodegas",
-              
+
                 "Ancho cm",
                 "Largo cm",
                 "Calibre",
@@ -538,190 +528,199 @@ const formatNumber = (num) => {
                 </td>
 
                 {/* 🆕 COLUMNA "Bodegas" tipo DetalleTraslado */}
-<td   className={`px-3 py-3 align-top transition-colors ${
-    detalle.producto_equivalentes && detalle.producto_equivalentes.length > 0
-      ? "bg-blue-50 border-l-4 border-red-400 shadow-sm"
-      : ""
-  }`}>
+                <td
+                  className={`px-3 py-3 align-top transition-colors ${
+                    detalle.producto_equivalentes &&
+                    detalle.producto_equivalentes.length > 0
+                      ? "bg-blue-50 border-l-4 border-red-400 shadow-sm"
+                      : ""
+                  }`}
+                >
+                  {(() => {
+                    const productId = detalle.product_id || detalle.product?.id;
+                    const base = stockCache[productId]?.producto_base;
+                    const bodegasBase = base?.resumen_por_bodega || [];
 
+                    // Si no hay stock en ninguna bodega, mostramos aviso y salimos
 
+                    return (
+                      <>
+                        {/* Stock total disponible */}
+                        {(() => {
+                          const totalStock = bodegasBase.reduce(
+                            (sum, b) => sum + (b.stock_total || 0),
+                            0
+                          );
+                          return (
+                            <div className="text-[11px] text-gray-500 mb-1">
+                              Stock total:{" "}
+                              <span className="font-medium text-gray-700">
+                                {totalStock}
+                              </span>{" "}
+                              u
+                            </div>
+                          );
+                        })()}
 
-  {(() => {
-    const productId = detalle.product_id || detalle.product?.id;
-    const base = stockCache[productId]?.producto_base;
-    const bodegasBase = base?.resumen_por_bodega || [];
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1">
+                            <Select
+                              isMulti
+                              placeholder="Seleccionar bodegas..."
+                              options={bodegasBase
+                                .filter((b) => (b.stock_total || 0) > 0)
+                                .map((b) => ({
+                                  value: b.bodega_id,
+                                  label: `${b.bodega_nombre} -  (${b.stock_total} u)`,
+                                  stock: b.stock_total,
+                                  nombre: b.bodega_nombre,
+                                  sede: b.sede_nombre,
+                                }))}
+                              onChange={(selected) => {
+                                const bodegas = (selected || []).map((sel) => ({
+                                  bodega_id: sel.value,
+                                  bodega_nombre: sel.nombre,
+                                  sede_nombre: sel.sede,
+                                  stock: sel.stock,
+                                  cantidad: 0,
+                                }));
+                                // guarda la selección a nivel de detalle
+                                handleChangeDetalle(index, "bodegas", bodegas);
 
-    // Si no hay stock en ninguna bodega, mostramos aviso y salimos
- 
-    return (
+                                setErrors((prev) => ({
+                                  ...prev,
+                                  [`items.${index}.bodegas`]: [],
+                                }));
+                              }}
+                              value={(detalle.bodegas || []).map((b) => ({
+                                value: b.bodega_id,
+                                label: `${b.bodega_nombre} - ${
+                                  b.sede_nombre || ""
+                                } (${b.stock || 0} u)`,
+                                stock: b.stock,
+                                nombre: b.bodega_nombre,
+                                sede: b.sede_nombre,
+                              }))}
+                              className="text-xs"
+                              styles={{
+                                control: (base) => ({
+                                  ...base,
+                                  minHeight: "32px",
+                                  fontSize: "12px",
+                                }),
+                                multiValue: (base) => ({
+                                  ...base,
+                                  fontSize: "11px",
+                                }),
+                                menu: (base) => ({ ...base, zIndex: 9999 }),
+                              }}
+                              menuPortalTarget={document.body}
+                              noOptionsMessage={() =>
+                                "No hay bodegas con stock"
+                              }
+                            />
+                          </div>
 
-      
-      <>
+                          <button
+                            onClick={async () => {
+                              const productId =
+                                detalle.product_id || detalle.product?.id;
+                              const cacheData = stockCache[productId];
 
-      {/* Stock total disponible */}
-{(() => {
-  const totalStock = bodegasBase.reduce((sum, b) => sum + (b.stock_total || 0), 0);
-  return (
-    <div className="text-[11px] text-gray-500 mb-1">
-      Stock total: <span className="font-medium text-gray-700">{totalStock}</span> u
-    </div>
-  );
-})()}
+                              const sugerencias =
+                                cacheData?.sugerencias?.map((sug) => ({
+                                  id: sug.id,
+                                  nombre: sug.nombre,
+                                  stock_total: sug.stock_total,
+                                  resumen_por_bodega:
+                                    sug.resumen_por_bodega || [],
+                                })) || [];
 
-      <div className="flex items-center gap-2">  
-        <div className="flex-1">  
-          
-           <Select
-          isMulti
-          placeholder="Seleccionar bodegas..."
-          options={bodegasBase
-            .filter(b => (b.stock_total || 0) > 0)
-            .map(b => ({
-              value: b.bodega_id,
-              label: `${b.bodega_nombre} -  (${b.stock_total} u)`,
-              stock: b.stock_total,
-              nombre: b.bodega_nombre,
-              sede: b.sede_nombre,
-            }))
-          }
-          onChange={(selected) => {
-            const bodegas = (selected || []).map(sel => ({
-              bodega_id: sel.value,
-              bodega_nombre: sel.nombre,
-              sede_nombre: sel.sede,
-              stock: sel.stock,
-              cantidad: 0,
-            }));
-            // guarda la selección a nivel de detalle
-            handleChangeDetalle(index, "bodegas", bodegas);
+                              // ✅ Carga stock específico para este producto
+                              const stockData = await fetchStockForProduct(
+                                detalle
+                              );
 
-            setErrors((prev) => ({
-              ...prev,
-              [`items.${index}.bodegas`]: [],
-            }));
-          }}
-          value={(detalle.bodegas || []).map(b => ({
-            value: b.bodega_id,
-            label: `${b.bodega_nombre} - ${b.sede_nombre || ""} (${b.stock || 0} u)`,
-            stock: b.stock,
-            nombre: b.bodega_nombre,
-            sede: b.sede_nombre,
-          }))}
-          className="text-xs"
-          styles={{
-            control: (base) => ({ ...base, minHeight: '32px', fontSize: '12px' }),
-            multiValue: (base) => ({ ...base, fontSize: '11px' }),
-            menu: (base) => ({ ...base, zIndex: 9999 }),
-          }}
-          menuPortalTarget={document.body}
-          noOptionsMessage={() => "No hay bodegas con stock"}   />  
-    
-            </div> 
-                   
-          <button
-onClick={async () => {
-                        const productId =
-                          detalle.product_id || detalle.product?.id;
-                        const cacheData = stockCache[productId];
+                              setDetalleActivo({
+                                index,
+                                ...detalle,
+                                producto_sugerencias: sugerencias,
+                                stock_local: stockData, // 🔹 Guardamos stock local
+                              });
 
-                        const sugerencias =
-                          cacheData?.sugerencias?.map((sug) => ({
-                            id: sug.id,
-                            nombre: sug.nombre,
-                            stock_total: sug.stock_total,
-                            resumen_por_bodega: sug.resumen_por_bodega || [],
-                          })) || [];
+                              // ✅ Ahora ya no dependemos del stockInfo global
+                              setProductStock(stockData);
+                              setBodegasDisponibles(
+                                stockData?.resumen_por_bodega || []
+                              );
+                              setErrors({});
+                              setModalOpen(true);
+                            }}
+                            className="text-blue-600 hover:text-blue-800 transition p-1"
+                            title="Buscar equivalentes"
+                          >
+                            <Search className="w-5 h-5" />
+                          </button>
+                        </div>
 
-                        // ✅ Carga stock específico para este producto
-                        const stockData = await fetchStockForProduct(detalle);
+                        {errors?.[`items.${index}.bodegas`] && (
+                          <p className="text-red-500 text-xs mt-1">
+                            {errors[`items.${index}.bodegas`][0]}
+                          </p>
+                        )}
 
-                        setDetalleActivo({
-                          ...detalle,
-                          producto_sugerencias: sugerencias,
-                          stock_local: stockData, // 🔹 Guardamos stock local
-                        });
+                        {errors?.[`items.${index}.cantidad`] && (
+                          <p className="text-red-500 text-xs mt-1">
+                            {errors[`items.${index}.cantidad`][0]}
+                          </p>
+                        )}
 
-                        // ✅ Ahora ya no dependemos del stockInfo global
-                        setProductStock(stockData);
-                        setBodegasDisponibles(
-                          stockData?.resumen_por_bodega || []
-                        );
-                        setErrors({});
-                        setModalOpen(true);
-                      }}
-    className="text-blue-600 hover:text-blue-800 transition p-1"
-    title="Buscar equivalentes"
-  >
-    <Search className="w-5 h-5" />
-  </button>
-          </div>
-      
-        
+                        {/* Cantidades por bodega seleccionada */}
+                        {(detalle.bodegas || []).map((b, i) => {
+                          const info = bodegasBase.find(
+                            (x) => x.bodega_id === b.bodega_id
+                          );
+                          const max = info?.stock_total ?? b.stock ?? 0;
+                          return (
+                            <div
+                              key={`${b.bodega_id}-${i}`}
+                              className="mt-1 flex items-center gap-2 bg-gray-50 border rounded p-2 text-xs"
+                            >
+                              <div className="flex-1 truncate">
+                                <div className="font-medium text-gray-700">
+                                  {b.bodega_nombre}
+                                </div>
+                                <div className="text-gray-500">
+                                  Stock: {max} u
+                                </div>
+                              </div>
 
-        
-{errors?.[`items.${index}.bodegas`] && (
-  <p className="text-red-500 text-xs mt-1">
-    {errors[`items.${index}.bodegas`][0]}
-  </p>
-)}
+                              <input
+                                type="number"
+                                className="border rounded px-2 py-1 w-24 text-right"
+                                step="0.01"
+                                min="0"
+                                max={max}
+                                placeholder="0.00"
+                                value={b.cantidad === 0 ? "" : b.cantidad ?? ""}
+                                onChange={(e) => {
+                                  const val = parseFloat(e.target.value) || 0;
+                                  const nueva = [...(detalle.bodegas || [])];
+                                  nueva[i].cantidad = val;
 
-{errors?.[`items.${index}.cantidad`] && (
-  <p className="text-red-500 text-xs mt-1">
-    {errors[`items.${index}.cantidad`][0]}
-  </p>
-)}
+                                  // 1) actualiza bodegas
+                                  handleChangeDetalle(index, "bodegas", nueva);
+                                }}
+                              />
+                            </div>
+                          );
+                        })}
+                      </>
+                    );
+                  })()}
+                </td>
 
-
-        {/* Cantidades por bodega seleccionada */}
-        {(detalle.bodegas || []).map((b, i) => {
-          const info = bodegasBase.find(x => x.bodega_id === b.bodega_id);
-          const max = info?.stock_total ?? b.stock ?? 0;
-          return (
-            <div
-              key={`${b.bodega_id}-${i}`}
-              className="mt-1 flex items-center gap-2 bg-gray-50 border rounded p-2 text-xs"
-            >
-              <div className="flex-1 truncate">
-                <div className="font-medium text-gray-700">
-                  {b.bodega_nombre}
-                </div>
-                <div className="text-gray-500">
-                  Stock: {max} u
-                </div>
-              </div>
-
-              <input
-                type="number"
-                className="border rounded px-2 py-1 w-24 text-right"
-                step="0.01"
-                min="0"
-                max={max}
-                placeholder="0.00"
-               value={b.cantidad === 0 ? "" : b.cantidad ?? ""}
-
-                onChange={(e) => {
-                  const val = parseFloat(e.target.value) || 0;
-                  const nueva = [...(detalle.bodegas || [])];
-                  nueva[i].cantidad = val;
-
-                  // 1) actualiza bodegas
-                  handleChangeDetalle(index, "bodegas", nueva);
-
-                }}
-              />
-
-
-              
-            </div>
-          );
-        })}
-      </>
-    );
-  })()}
-</td>
-
-
-              {/*   <td className="px-3 py-2 text-center align-middle">
+                {/*   <td className="px-3 py-2 text-center align-middle">
                   <div className="flex flex-col items-center gap-0.5">
                     <div className="flex items-center gap-1 text-gray-800 text-sm font-medium">
                       {(() => {
@@ -858,8 +857,6 @@ onClick={async () => {
                         : "border-gray-300 focus:border-blue-500"
                     } focus:outline-none`}
                     value={detalle.cantidad}
-                
-                    
                     placeholder="0"
                   />
                   {errores?.[index]?.cantidad && (
@@ -868,54 +865,52 @@ onClick={async () => {
                     </p>
                   )}
                 </td>
-{/* 🔹 Columna ENVIADA (total acumulado + nueva entrega) */}
-<td className="px-3 py-3 text-sm text-gray-900">
-  <div className="flex flex-col gap-1">
-    {/* 🔸 Mostrar acumulado total entregado */}
-    <div className="flex justify-between items-center text-xs text-gray-600">
-      <span>Enviado total:</span>
-      <span
-        className={`font-semibold ${
-          (detalle.cantidadEnviada || 0) > 0
-            ? "text-green-700"
-            : "text-gray-500"
-        }`}
-      >
-        {detalle.cantidadEnviada || 0} u
-      </span>
-    </div>
+                {/* 🔹 Columna ENVIADA (total acumulado + nueva entrega) */}
+                <td className="px-3 py-3 text-sm text-gray-900">
+                  <div className="flex flex-col gap-1">
+                    {/* 🔸 Mostrar acumulado total entregado */}
+                    <div className="flex justify-between items-center text-xs text-gray-600">
+                      <span>Enviado total:</span>
+                      <span
+                        className={`font-semibold ${
+                          (detalle.cantidadEnviada || 0) > 0
+                            ? "text-green-700"
+                            : "text-gray-500"
+                        }`}
+                      >
+                        {detalle.cantidadEnviada || 0} u
+                      </span>
+                    </div>
 
-    {/* 🔸 Input para registrar nueva entrega */}
-    <input
-      type="number"
- 
-      className={`w-full border rounded-lg px-2 py-1 text-sm text-right transition-colors ${
-        errores?.[index]?.nuevaCantidad
-          ? "border-red-500 focus:border-red-500"
-          : "border-gray-300 focus:border-blue-500"
-      } focus:outline-none`}
-      value={detalle.nuevaCantidad || ""}
-      onChange={(e) =>
-        handleChangeDetalle(
-          index,
-          "nuevaCantidad",
-          parseFloat(e.target.value) || 0
-        )
-      }
-      placeholder="Nueva entrega"
-      min="0"
-      step="0.01"
-    />
+                    {/* 🔸 Input para registrar nueva entrega */}
+                    <input
+                      type="number"
+                      className={`w-full border rounded-lg px-2 py-1 text-sm text-right transition-colors ${
+                        errores?.[index]?.nuevaCantidad
+                          ? "border-red-500 focus:border-red-500"
+                          : "border-gray-300 focus:border-blue-500"
+                      } focus:outline-none`}
+                      value={detalle.nuevaCantidad || ""}
+                      onChange={(e) =>
+                        handleChangeDetalle(
+                          index,
+                          "nuevaCantidad",
+                          parseFloat(e.target.value) || 0
+                        )
+                      }
+                      placeholder="Nueva entrega"
+                      min="0"
+                      step="0.01"
+                    />
 
-    {/* 🔸 Mensaje de error si aplica */}
-    {errores?.[index]?.nuevaCantidad && (
-      <p className="text-red-500 text-xs mt-1">
-        {errores[index].nuevaCantidad[0]}
-      </p>
-    )}
-  </div>
-</td>
-
+                    {/* 🔸 Mensaje de error si aplica */}
+                    {errores?.[index]?.nuevaCantidad && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errores[index].nuevaCantidad[0]}
+                      </p>
+                    )}
+                  </div>
+                </td>
 
                 <td className="px-3 py-3 text-center">
                   <span
@@ -959,9 +954,7 @@ onClick={async () => {
                               {e.usuario?.name}
                             </span>
                           </div>
-                          <div className="text-gray-400">
-                          {e.fecha_entrega}
-                          </div>
+                          <div className="text-gray-400">{e.fecha_entrega}</div>
                         </div>
                       ));
                     })()}
@@ -980,37 +973,36 @@ onClick={async () => {
           </tbody>
         </table>
       </div>
-{pdfUrl && (
-  <div className="mt-4 text-center">
-    <a
-      href={pdfUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition shadow-md"
-    >
-      <Eye className="w-4 h-4" />
-      Ver Movimiento de Stock (PDF)
-    </a>
-  </div>
-)}
-<div className="flex justify-end mt-4 gap-3">
-  <button
-    onClick={handleDescontarStockMasivo}
-    className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2 transition-colors"
-    disabled={loadingStock}
-  >
-    {loadingStock ? (
-      <>
-        <Loader2 className="w-4 h-4 animate-spin" /> Procesando...
-      </>
-    ) : (
-      <>
-        <CheckCircle className="w-4 h-4" /> Descontar Masivamente
-      </>
-    )}
-  </button>
-</div>
-
+      {pdfUrl && (
+        <div className="mt-4 text-center">
+          <a
+            href={pdfUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition shadow-md"
+          >
+            <Eye className="w-4 h-4" />
+            Ver Movimiento de Stock (PDF)
+          </a>
+        </div>
+      )}
+      <div className="flex justify-end mt-4 gap-3">
+        <button
+          onClick={handleDescontarStockMasivo}
+          className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2 transition-colors"
+          disabled={loadingStock}
+        >
+          {loadingStock ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" /> Procesando...
+            </>
+          ) : (
+            <>
+              <CheckCircle className="w-4 h-4" /> Descontar Masivamente
+            </>
+          )}
+        </button>
+      </div>
 
       {/* Total simple */}
       <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
@@ -1051,7 +1043,6 @@ onClick={async () => {
             {/* Content */}
             <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)] space-y-6">
               {/* Stock disponible */}
-  
 
               {/* Errores globales */}
               {errors.producto_equivalentes && (
@@ -1090,8 +1081,7 @@ onClick={async () => {
                   className={`w-full border rounded-lg px-4 py-3 text-lg ${
                     errors.cantidad ? "border-red-500" : "border-gray-300"
                   } focus:outline-none focus:ring-2 focus:ring-blue-500`}
-            value={detalleActivo.cantidad_total ?? 0}
-
+                  value={detalleActivo.cantidad_total ?? 0}
                   onChange={(e) =>
                     setDetalleActivo({
                       ...detalleActivo,
@@ -1153,7 +1143,9 @@ onClick={async () => {
                         return bodegaInfo
                           ? {
                               value: b.bodega_id,
-                              label: `${bodegaInfo.bodega_nombre} -  (${formatNumber(
+                              label: `${
+                                bodegaInfo.bodega_nombre
+                              } -  (${formatNumber(
                                 bodegaInfo.stock_total
                               )} unidades)`,
                               bodega_nombre: bodegaInfo.bodega_nombre,
@@ -1374,36 +1366,42 @@ onClick={async () => {
                         )
                     );
 
-// ✅ NUEVA VERSIÓN: Llama directamente al endpoint para obtener stock en tiempo real
-const nuevosDatos = await Promise.all(
-  nuevosSeleccionados.map(async (sel) => {
-    try {
-      const res = await productsApi.getStock(sel.value); // 🔹 llamada directa
-      const stockData = res?.data?.stock;
+                    // ✅ NUEVA VERSIÓN: Llama directamente al endpoint para obtener stock en tiempo real
+                    const nuevosDatos = await Promise.all(
+                      nuevosSeleccionados.map(async (sel) => {
+                        try {
+                          const res = await productsApi.getStock(sel.value); // 🔹 llamada directa
+                          const stockData = res?.data?.stock;
 
-      return {
-        id: sel.value,
-        cantidad: 0,
-        razon: "",
-        stock: stockData?.stock_total ?? 0,
-        resumen_por_bodega: stockData?.resumen_por_bodega || [],
-        bodegas: [],
-      };
-    } catch (error) {
-      console.error("❌ Error al obtener stock del producto equivalente:", error);
-      showToast("error", "Error al obtener stock del producto equivalente");
-      return {
-        id: sel.value,
-        cantidad: 0,
-        razon: "",
-        stock: 0,
-        resumen_por_bodega: [],
-        bodegas: [],
-      };
-    }
-  })
-);
-
+                          return {
+                            id: sel.value,
+                            cantidad: 0,
+                            razon: "",
+                            stock: stockData?.stock_total ?? 0,
+                            resumen_por_bodega:
+                              stockData?.resumen_por_bodega || [],
+                            bodegas: [],
+                          };
+                        } catch (error) {
+                          console.error(
+                            "❌ Error al obtener stock del producto equivalente:",
+                            error
+                          );
+                          showToast(
+                            "error",
+                            "Error al obtener stock del producto equivalente"
+                          );
+                          return {
+                            id: sel.value,
+                            cantidad: 0,
+                            razon: "",
+                            stock: 0,
+                            resumen_por_bodega: [],
+                            bodegas: [],
+                          };
+                        }
+                      })
+                    );
 
                     setDetalleActivo({
                       ...detalleActivo,
@@ -1440,13 +1438,12 @@ const nuevosDatos = await Promise.all(
                 {/* Lista de equivalentes mejorada */}
                 {detalleActivo.producto_equivalentes?.length > 0 && (
                   <div className="mt-4 space-y-4">
-
-
-                  {loadingStock && (
-  <div className="text-blue-600 text-sm flex items-center gap-2">
-    <Loader2 className="w-4 h-4 animate-spin" /> Cargando stock disponible...
-  </div>
-)}
+                    {loadingStock && (
+                      <div className="text-blue-600 text-sm flex items-center gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin" /> Cargando
+                        stock disponible...
+                      </div>
+                    )}
 
                     {detalleActivo.producto_equivalentes.map((eq, idx) => {
                       const product = products.find((p) => p.id === eq.id);
@@ -1721,30 +1718,27 @@ const nuevosDatos = await Promise.all(
             {/* Footer */}
             <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t border-gray-200">
               <button
-                onClick={() => {
-                  // 🔹 Guarda los equivalentes del modal en el detalle global
-if (detalleActivo) {
-  const index = detalles.findIndex(
-    (d) => d.product_id === detalleActivo.product_id
+        onClick={() => {
+  const index = detalleActivo.index;
+
+  handleChangeDetalle(index, "bodegas", detalleActivo.bodegas || []);
+  handleChangeDetalle(
+    index,
+    "producto_equivalentes",
+    detalleActivo.producto_equivalentes || []
   );
 
-  if (index !== -1) {
-    handleChangeDetalle(index, "bodegas", detalleActivo.bodegas || []);
-    handleChangeDetalle(index, "producto_equivalentes", detalleActivo.producto_equivalentes || []);
-   
-  }
-}
+  setModalOpen(false);
+  setProductStock(null);
+  setErrors({});
+}}
 
-                  setModalOpen(false);
-                  setProductStock(null);
-                  setErrors({});
-                }}
                 className="px-4 py-2 border border-green-600 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
               >
                 Guardar
               </button>
 
-{/* ✅ BOTÓN DESCONTAR STOCK MEJORADO 
+              {/* ✅ BOTÓN DESCONTAR STOCK MEJORADO 
               <button
                 onClick={async () => {
                   try {
