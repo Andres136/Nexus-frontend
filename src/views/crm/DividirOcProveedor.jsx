@@ -139,6 +139,39 @@ console.log(res);
   }
 };
 
+const eliminarItem = (detalleId) => {
+  Swal.fire({
+    title: "¿Eliminar ítem?",
+    text: "Esta acción no se puede deshacer.",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Sí, eliminar",
+    cancelButtonText: "Cancelar"
+  }).then((result) => {
+    if (result.isConfirmed) {
+      // Eliminar del estado local
+      setOrden(prev => {
+        const nuevosDetalles = (prev.productos || prev.detalles).filter(det => det.id !== detalleId);
+        return {
+          ...prev,
+          productos: nuevosDetalles,
+          detalles: nuevosDetalles
+        };
+      });
+
+      // Eliminar también la selección del proveedor
+      setSelecciones(prev => {
+        const copy = { ...prev };
+        delete copy[detalleId];
+        return copy;
+      });
+
+      toast.success("Ítem eliminado");
+    }
+  });
+};
+
+
   if (loading) return <p className="p-6">Cargando…</p>;
 
   const detalles = orden.productos || orden.detalles;
@@ -169,6 +202,7 @@ console.log(res);
             <th className="p-3 border">Código</th>
             <th className="p-3 border">Descripción</th>
             <th className="p-3 border">Cantidad</th>
+            <th className="p-3 border">Acciones</th>
             <th className="p-3 border">Proveedor destino</th>
           </tr>
         </thead>
@@ -179,6 +213,14 @@ console.log(res);
               <td className="p-3 border text-center">{det.code}</td>
               <td className="p-3 border">{det.descripcion}</td>
               <td className="p-3 border text-center">{det.cantidad_solicitada}</td>
+              <td className="p-3 border text-center">
+                <button
+                  onClick={() => eliminarItem(det.id)}
+                  className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md"
+                >
+                  Eliminar
+                </button>
+              </td>
               <td className="p-3 border">
                 <Select
                   options={proveedores.map(p => ({
