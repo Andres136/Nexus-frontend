@@ -1,9 +1,9 @@
 import { Trash2 } from "lucide-react";
-import { useEffect, useState, useContext} from "react";
+import { useEffect, useState, useContext } from "react";
 import { inventariosApi } from "../../services/api";
 import { ProductContext } from "../../context/ProductContext";
 import { useProducts } from "../../hooks/useProducts";
-import Select from 'react-select';
+import Select from "react-select";
 
 export default function DetalleTraslado({
   detalle,
@@ -12,12 +12,12 @@ export default function DetalleTraslado({
   handleBodegaChange,
   addBodega,
   errores,
-  onRemove, 
+  onRemove,
   canRemove = true,
 }) {
   const [ocproveedores, setOcproveedores] = useState([]);
-  const {getStockProduct, stockInfo} = useContext(ProductContext);
-  const [search, setSearch] = useState('');
+  const { getStockProduct, stockInfo } = useContext(ProductContext);
+  const [search, setSearch] = useState("");
   const { products, isLoading, isFetching, isEmpty } = useProducts({ search });
 
   const [bodegasDisponibles, setBodegasDisponibles] = useState([]);
@@ -25,10 +25,10 @@ export default function DetalleTraslado({
   const cargarOC = async () => {
     try {
       const response = await inventariosApi.ordenesCompraTraslados();
-     // console.log('Órdenes de compra disponibles:', response.data);
+      // console.log('Órdenes de compra disponibles:', response.data);
       setOcproveedores(response.data);
     } catch (error) {
-      console.error('Error al cargar órdenes de compra:', error);
+      console.error("Error al cargar órdenes de compra:", error);
     }
   };
 
@@ -36,48 +36,47 @@ export default function DetalleTraslado({
     cargarOC();
   }, []);
 
-  const fetchStockForProduct = async (productId) => {
+const fetchStockForProduct = async (productId) => {
   try {
-    // dispara la query
-    await getStockProduct(productId);
+    const result = await getStockProduct(productId);
 
-    // espera a que react-query actualice stockInfo (tiny delay opcional)
-    setTimeout(() => {
-     
-      //console.log('desde inventarios',inventarios)
-      const total = stockInfo?.stock?.stock_total || 0;
+    // Si no llegó la data completa, tomar stockInfo del contexto
+    const data = result?.data ?? stockInfo;
 
-setBodegasDisponibles(stockInfo?.stock?.resumen_por_bodega || []);
+    if (!data) return;
 
+    const total = data.stock?.stock_total ?? 0;
+    const bodegas = data.stock?.resumen_por_bodega ?? [];
 
+    console.log("🔥 STOCK FINAL USADO:", data);
 
-      handleChange({
-        target: {
-          name: "stock_total",
-          value: total,
-        },
-      }, index);
-    }, 50);
+    setBodegasDisponibles(bodegas);
+
+    handleChange({
+      target: { name: "stock_total", value: total }
+    }, index);
 
   } catch (error) {
-    console.error("Error al obtener stock:", error);
+    console.error("Error obteniendo stock:", error);
   }
 };
 
-
 useEffect(() => {
-  if (detalle.product_id && !detalle.stock_total) {
+  if (detalle.product_id && !isLoading && !isFetching) {
     fetchStockForProduct(detalle.product_id);
   }
-}, [detalle.product_id, stockInfo]);
+}, [detalle.product_id, isLoading, isFetching]);
+
+
+
 
   // ✅ Función para manejar el cambio del select de OC
   const handleOcChange = (selectedOption) => {
     const syntheticEvent = {
       target: {
-        name: 'orden_compra_id',
-        value: selectedOption ? selectedOption.id : ''
-      }
+        name: "orden_compra_id",
+        value: selectedOption ? selectedOption.id : "",
+      },
     };
     handleChange(syntheticEvent, index);
   };
@@ -86,74 +85,93 @@ useEffect(() => {
   const handleProductChange = (selectedOption) => {
     if (selectedOption) {
       // Actualizar product_id
-      handleChange({
-        target: {
-          name: 'product_id',
-          value: selectedOption.value
-        }
-      }, index);
+      handleChange(
+        {
+          target: {
+            name: "product_id",
+            value: selectedOption.value,
+          },
+        },
+        index
+      );
 
       // ✅ NUEVO: Guardar el code_id (código del producto)
-      handleChange({
-        target: {
-          name: 'code_id',
-          value: selectedOption.code
-        }
-      }, index);
+      handleChange(
+        {
+          target: {
+            name: "code_id",
+            value: selectedOption.code,
+          },
+        },
+        index
+      );
 
       // ✅ Llenar descripción automáticamente: name si existe, sino description
-      const descripcionAuto = selectedOption.name || selectedOption.description || '';
-      handleChange({
-        target: {
-          name: 'descripcion',
-          value: descripcionAuto
-        }
-      }, index);
+      const descripcionAuto =
+        selectedOption.name || selectedOption.description || "";
+      handleChange(
+        {
+          target: {
+            name: "descripcion",
+            value: descripcionAuto,
+          },
+        },
+        index
+      );
     } else {
       // Limpiar campos si se deselecciona
-      handleChange({
-        target: {
-          name: 'product_id',
-          value: ''
-        }
-      }, index);
-      
+      handleChange(
+        {
+          target: {
+            name: "product_id",
+            value: "",
+          },
+        },
+        index
+      );
+
       // ✅ NUEVO: Limpiar code_id también
-      handleChange({
-        target: {
-          name: 'code_id',
-          value: ''
-        }
-      }, index);
-      
-      handleChange({
-        target: {
-          name: 'descripcion',
-          value: ''
-        }
-      }, index);
+      handleChange(
+        {
+          target: {
+            name: "code_id",
+            value: "",
+          },
+        },
+        index
+      );
+
+      handleChange(
+        {
+          target: {
+            name: "descripcion",
+            value: "",
+          },
+        },
+        index
+      );
     }
   };
 
   // ✅ Encontrar la OC seleccionada
-  const selectedOc = ocproveedores.find(oc => oc.id == detalle.orden_compra_id) || null;
+  const selectedOc =
+    ocproveedores.find((oc) => oc.id == detalle.orden_compra_id) || null;
 
   // ✅ Encontrar el producto seleccionado para mostrar solo el code
-  const selectedProduct = products.find(p => p.id === detalle.product_id);
-  const productValue = selectedProduct ? {
-    value: selectedProduct.id,
-    code: selectedProduct.code,
-    name: selectedProduct.name,
-    description: selectedProduct.description,
-    label: selectedProduct.code // ✅ Solo el código en el select
-  } : null;
+  const selectedProduct = products.find((p) => p.id === detalle.product_id);
+  const productValue = selectedProduct
+    ? {
+        value: selectedProduct.id,
+        code: selectedProduct.code,
+        name: selectedProduct.name,
+        description: selectedProduct.description,
+        label: selectedProduct.code, // ✅ Solo el código en el select
+      }
+    : null;
 
   return (
     <div key={index} className="border p-3 rounded bg-gray-50 mb-4 shadow-sm">
-      <h3 className="font-semibold mb-2 text-gray-700">
-        Detalle {index + 1}
-      </h3>
-      
+      <h3 className="font-semibold mb-2 text-gray-700">Detalle {index + 1}</h3>
 
       <table className="w-full border-collapse">
         <thead className="bg-gray-100">
@@ -212,36 +230,38 @@ useEffect(() => {
                 styles={{
                   control: (provided, state) => ({
                     ...provided,
-                    minHeight: '32px',
-                    fontSize: '14px',
-                    border: errores?.[`detalles.${index}.orden_compra_id`] ? '1px solid #ef4444' : '1px solid #d1d5db',
-                    '&:hover': {
-                      borderColor: '#3b82f6'
+                    minHeight: "32px",
+                    fontSize: "14px",
+                    border: errores?.[`detalles.${index}.orden_compra_id`]
+                      ? "1px solid #ef4444"
+                      : "1px solid #d1d5db",
+                    "&:hover": {
+                      borderColor: "#3b82f6",
                     },
-                    boxShadow: state.isFocused ? '0 0 0 1px #3b82f6' : 'none'
+                    boxShadow: state.isFocused ? "0 0 0 1px #3b82f6" : "none",
                   }),
                   valueContainer: (provided) => ({
                     ...provided,
-                    padding: '2px 6px'
+                    padding: "2px 6px",
                   }),
                   input: (provided) => ({
                     ...provided,
-                    margin: '0px'
+                    margin: "0px",
                   }),
                   singleValue: (provided) => ({
                     ...provided,
-                    overflow: 'visible',
-                    textOverflow: 'clip',
-                    whiteSpace: 'nowrap'
+                    overflow: "visible",
+                    textOverflow: "clip",
+                    whiteSpace: "nowrap",
                   }),
                   menu: (provided) => ({
                     ...provided,
-                    minWidth: '200px'
+                    minWidth: "200px",
                   }),
                   option: (provided) => ({
                     ...provided,
-                    fontSize: '14px'
-                  })
+                    fontSize: "14px",
+                  }),
                 }}
               />
               {errores?.[`detalles.${index}.orden_compra_id`] && (
@@ -271,7 +291,7 @@ useEffect(() => {
                 isClearable
                 // ✅ Formatear cómo se ve la opción seleccionada
                 formatOptionLabel={(option, { context }) => {
-                  if (context === 'value') {
+                  if (context === "value") {
                     // ✅ Solo código cuando está seleccionado
                     return option.code;
                   }
@@ -281,36 +301,38 @@ useEffect(() => {
                 styles={{
                   control: (provided, state) => ({
                     ...provided,
-                    minHeight: '32px',
-                    fontSize: '14px',
-                    border: errores?.[`detalles.${index}.product_id`] ? '1px solid #ef4444' : '1px solid #d1d5db',     
-                    '&:hover': {
-                      borderColor: '#3b82f6'
+                    minHeight: "32px",
+                    fontSize: "14px",
+                    border: errores?.[`detalles.${index}.product_id`]
+                      ? "1px solid #ef4444"
+                      : "1px solid #d1d5db",
+                    "&:hover": {
+                      borderColor: "#3b82f6",
                     },
-                    boxShadow: state.isFocused ? '0 0 0 1px #3b82f6' : 'none'
+                    boxShadow: state.isFocused ? "0 0 0 1px #3b82f6" : "none",
                   }),
                   valueContainer: (provided) => ({
                     ...provided,
-                    padding: '2px 6px'
+                    padding: "2px 6px",
                   }),
                   input: (provided) => ({
                     ...provided,
-                    margin: '0px'
+                    margin: "0px",
                   }),
                   singleValue: (provided) => ({
                     ...provided,
-                    overflow: 'visible',
-                    textOverflow: 'clip',
-                    whiteSpace: 'nowrap'
+                    overflow: "visible",
+                    textOverflow: "clip",
+                    whiteSpace: "nowrap",
                   }),
                   menu: (provided) => ({
                     ...provided,
-                    minWidth: '300px'
+                    minWidth: "300px",
                   }),
                   option: (provided) => ({
                     ...provided,
-                    fontSize: '14px'
-                  })
+                    fontSize: "14px",
+                  }),
                 }}
               />
               {errores?.[`detalles.${index}.product_id`] && (
@@ -326,10 +348,14 @@ useEffect(() => {
               <input
                 type="text"
                 name="descripcion"
-                value={detalle.descripcion || ''}
+                value={detalle.descripcion || ""}
                 onChange={(e) => handleChange(e, index)}
                 placeholder="Descripción del producto"
-                className={`w-full border rounded-md p-1 ${errores?.[`detalles.${index}.descripcion`] ? 'border-red-500' : ''}`}
+                className={`w-full border rounded-md p-1 ${
+                  errores?.[`detalles.${index}.descripcion`]
+                    ? "border-red-500"
+                    : ""
+                }`}
               />
               {errores?.[`detalles.${index}.descripcion`] && (
                 <p className="text-red-500 text-xs mt-1 flex items-center space-x-1">
@@ -344,9 +370,13 @@ useEffect(() => {
               <input
                 type="number"
                 name="cantidad"
-                value={detalle.cantidad || ''}
+                value={detalle.cantidad || ""}
                 onChange={(e) => handleChange(e, index)}
-                className={`w-full border rounded-md p-1 text-right ${errores?.[`detalles.${index}.cantidad`] ? 'border-red-500' : ''}`}
+                className={`w-full border rounded-md p-1 text-right ${
+                  errores?.[`detalles.${index}.cantidad`]
+                    ? "border-red-500"
+                    : ""
+                }`}
                 min="0"
                 step="0.01"
                 placeholder="0.00"
@@ -360,125 +390,164 @@ useEffect(() => {
             </td>
 
             {/* Bodegas */}
-     <td className="px-3 py-2 border align-top">
+            <td className="px-3 py-2 border align-top">
               {detalle.stock_total !== undefined && (
                 <div className="text-xs text-gray-600 mb-1">
-                  Stock disponible: <strong>{detalle.stock_total}</strong> unidades
+                  Stock disponible: <strong>{detalle.stock_total}</strong>{" "}
+                  unidades
                 </div>
               )}
 
               <Select
                 isMulti
                 placeholder="Seleccionar bodegas..."
-                options={bodegasDisponibles.map(b => ({
+                options={bodegasDisponibles.map((b) => ({
                   value: b.bodega_id,
                   label: `${b.bodega_nombre} - ${b.stock_total} unidades disponibles`,
                   stock: b.stock_total,
-                  nombre: b.bodega_nombre
+                  nombre: b.bodega_nombre,
                 }))}
-          onChange={(selected) => {
-//  console.log("👉 BODEGA seleccionada:", selected);
+                onChange={(selected) => {
+                  //  console.log("👉 BODEGA seleccionada:", selected);
 
-  const bodegas = selected ? selected.map(sel => ({
-    bodega_id: sel.value,
-    bodega_nombre: sel.nombre,
-    stock: sel.stock,   // ✅ ESTE es el bueno
-    cantidad: 0,
-  })) : [];
+                  const bodegas = selected
+                    ? selected.map((sel) => ({
+                        bodega_id: sel.value,
+                        bodega_nombre: sel.nombre,
+                        stock: sel.stock, // ✅ ESTE es el bueno
+                        cantidad: 0,
+                      }))
+                    : [];
 
- // console.log("✅ bodegas guardadas:", bodegas);
+                  // console.log("✅ bodegas guardadas:", bodegas);
 
-  handleChange({ target: { name: 'bodegas', value: bodegas }}, index);
-}}
-
+                  handleChange(
+                    { target: { name: "bodegas", value: bodegas } },
+                    index
+                  );
+                }}
                 // ✅ CORRECCIÓN: Filtrar bodegas vacías o sin bodega_id
-                value={(detalle.bodegas || [])
-                  .filter(b => b.bodega_id) // Solo bodegas con ID válido
-                  .map(b => {
-                    const bd = bodegasDisponibles.find(x => x.bodega_id === b.bodega_id);
-                    return bd ? {
-                      value: b.bodega_id,
-                      label: `${bd.bodega_nombre} - ${bd.stock_total} unidades disponibles`,
-                      stock: bd.stock_total,
-                      nombre: bd.bodega_nombre
-                    } : null;
-                  })
-                  .filter(Boolean) // Eliminar valores null
+                value={
+                  (detalle.bodegas || [])
+                    .filter((b) => b.bodega_id) // Solo bodegas con ID válido
+                    .map((b) => {
+                      const bd = bodegasDisponibles.find(
+                        (x) => x.bodega_id === b.bodega_id
+                      );
+                      return bd
+                        ? {
+                            value: b.bodega_id,
+                            label: `${bd.bodega_nombre} - ${bd.stock_total} unidades disponibles`,
+                            stock: bd.stock_total,
+                            nombre: bd.bodega_nombre,
+                          }
+                        : null;
+                    })
+                    .filter(Boolean) // Eliminar valores null
                 }
                 className="text-xs"
                 isClearable={true} // ✅ Permitir limpiar selección
                 styles={{
                   control: (provided) => ({
                     ...provided,
-                    minHeight: '28px',
-                    fontSize: '12px'
+                    minHeight: "28px",
+                    fontSize: "12px",
                   }),
                   multiValue: (provided) => ({
                     ...provided,
-                    fontSize: '11px'
+                    fontSize: "11px",
                   }),
                   option: (provided) => ({
                     ...provided,
-                    fontSize: '12px'
-                  })
+                    fontSize: "12px",
+                  }),
                 }}
               />
 
               {/* ✅ Mostrar cantidades solo si hay bodegas seleccionadas */}
               {(detalle.bodegas || [])
-                .filter(b => b.bodega_id) // Solo mostrar bodegas válidas
+                .filter((b) => b.bodega_id) // Solo mostrar bodegas válidas
                 .map((b, i) => {
-                  const bodegaInfo = bodegasDisponibles.find(x => x.bodega_id === b.bodega_id);
-                  const nombreBodega = bodegaInfo?.bodega_nombre || b.bodega_nombre || `Bodega ${b.bodega_id}`;
-                  
+                  const bodegaInfo = bodegasDisponibles.find(
+                    (x) => x.bodega_id === b.bodega_id
+                  );
+                  const nombreBodega =
+                    bodegaInfo?.bodega_nombre ||
+                    b.bodega_nombre ||
+                    `Bodega ${b.bodega_id}`;
+
                   return (
-                    <div key={`${b.bodega_id}-${i}`} className="flex items-center mt-2 gap-2 text-xs bg-white rounded border p-2">
+                    <div
+                      key={`${b.bodega_id}-${i}`}
+                      className="flex items-center mt-2 gap-2 text-xs bg-white rounded border p-2"
+                    >
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium text-gray-700 truncate" title={nombreBodega}>
+                        <div
+                          className="font-medium text-gray-700 truncate"
+                          title={nombreBodega}
+                        >
                           {nombreBodega}
                         </div>
                         <div className="text-gray-500 text-xs">
-                        Stock: {bodegaInfo?.stock_total || 0} unidades
-
+                          Stock: {bodegaInfo?.stock_total || 0} unidades
                         </div>
                       </div>
-                      
+
                       <div className="flex-shrink-0">
                         <input
                           type="number"
                           className={`border rounded p-1 w-20 text-right ${
-                            errores?.[`detalles.${index}.bodegas.${i}.cantidad`] ? 'border-red-500' : ''
+                            errores?.[`detalles.${index}.bodegas.${i}.cantidad`]
+                              ? "border-red-500"
+                              : ""
                           }`}
-                          value={b.cantidad || ''}
+                          value={b.cantidad || ""}
                           placeholder="0.00"
                           min="0"
                           step="0.01"
                           max={bodegaInfo?.stock_total || 0}
                           onChange={(e) => {
                             const nueva = [...(detalle.bodegas || [])];
-                            const realIndex = nueva.findIndex(x => x.bodega_id === b.bodega_id);
-                            
+                            const realIndex = nueva.findIndex(
+                              (x) => x.bodega_id === b.bodega_id
+                            );
+
                             if (realIndex !== -1) {
-                              nueva[realIndex].cantidad = parseFloat(e.target.value) || 0;
+                              nueva[realIndex].cantidad =
+                                parseFloat(e.target.value) || 0;
 
                               // Actualizar cantidad total automáticamente
-                              const total = nueva.reduce((sum, x) => sum + (parseFloat(x.cantidad) || 0), 0);
-                              
-                              handleChange({ target: { name: 'bodegas', value: nueva }}, index);
-                              handleChange({ target: { name: 'cantidad', value: total }}, index);
+                              const total = nueva.reduce(
+                                (sum, x) => sum + (parseFloat(x.cantidad) || 0),
+                                0
+                              );
+
+                              handleChange(
+                                { target: { name: "bodegas", value: nueva } },
+                                index
+                              );
+                              handleChange(
+                                { target: { name: "cantidad", value: total } },
+                                index
+                              );
                             }
                           }}
                         />
-                        {errores?.[`detalles.${index}.bodegas.${i}.cantidad`] && (
+                        {errores?.[
+                          `detalles.${index}.bodegas.${i}.cantidad`
+                        ] && (
                           <p className="text-red-500 text-xs mt-1">
-                            {errores[`detalles.${index}.bodegas.${i}.cantidad`][0]}
+                            {
+                              errores[
+                                `detalles.${index}.bodegas.${i}.cantidad`
+                              ][0]
+                            }
                           </p>
                         )}
                       </div>
                     </div>
                   );
-                })
-              }
+                })}
             </td>
 
             {/* Botón eliminar */}
