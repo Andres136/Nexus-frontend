@@ -36,19 +36,18 @@ export default function DetalleTraslado({
     cargarOC();
   }, []);
 
-const fetchStockForProduct = async (productId) => {
+  const fetchStockForProduct = async (productId) => {
   try {
-    const result = await getStockProduct(productId);
+    // Primer trigger → establece stockParams
+    await getStockProduct(productId);
 
-    // Si no llegó la data completa, tomar stockInfo del contexto
-    const data = result?.data ?? stockInfo;
+    // Segundo trigger → ahora sí ejecuta con el estado actualizado
+    const { data } = await getStockProduct(productId);
 
     if (!data) return;
 
     const total = data.stock?.stock_total ?? 0;
     const bodegas = data.stock?.resumen_por_bodega ?? [];
-
-    console.log("🔥 STOCK FINAL USADO:", data);
 
     setBodegasDisponibles(bodegas);
 
@@ -56,16 +55,17 @@ const fetchStockForProduct = async (productId) => {
       target: { name: "stock_total", value: total }
     }, index);
 
-  } catch (error) {
-    console.error("Error obteniendo stock:", error);
+  } catch (e) {
+    console.error("Error obteniendo stock:", e);
   }
 };
 
 useEffect(() => {
-  if (detalle.product_id && !isLoading && !isFetching) {
+  if (detalle.product_id) {
     fetchStockForProduct(detalle.product_id);
   }
-}, [detalle.product_id, isLoading, isFetching]);
+}, [detalle.product_id]);
+
 
 
 
