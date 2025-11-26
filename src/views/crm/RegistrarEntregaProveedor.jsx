@@ -48,7 +48,7 @@ export default function RegistrarEntregaProveedor({ modo = "crear" }) {
 const [historialEntregas, setHistorialEntregas] = useState([]);
 
   const obtenerEstadoVisual = useCallback((detalle) => {
-    const entregada = Number(detalle.cantidad_entregada) || 0;
+    const entregada = Number(detalle.cantidad_entregada_sede) || 0;
     const solicitada = Number(detalle.cantidad_solicitada) || 0;
     if (entregada === 0) return { texto: "Pendiente", color: "bg-red-500" };
     if (entregada < solicitada) return { texto: "Parcial", color: "bg-yellow-400" };
@@ -111,6 +111,9 @@ console.log("Datos de la orden recibidos:", data);
             proveedor: det.proveedor_nombre ?? null,
             proceso_bolsas_id: det.proceso_bolsas_id ?? null,
             producto_id: det.producto_id ?? null,
+            cantidad_entregada: det.cantidad_entregada ?? 0,
+            cantidad_entregada_sede: det.cantidad_entregada_sede ?? 0,
+            cantidad_solicitada: det.cantidad_solicitada ?? 0,
 
       
           };
@@ -586,7 +589,7 @@ if (loading) return (
               <td className="px-2 py-2 whitespace-nowrap text-center w-20">
                 <div className="bg-green-100 rounded-md px-1 py-0.5"> {/* ✅ COMPACTO: rounded-lg→md, px-2 py-1→px-1 py-0.5 */}
                   <span className="text-xs font-semibold text-green-800">
-                    {detalle.cantidad_entregada}
+                    { detalle.cantidad_entregada_sede }
                   </span>
                   <div className="text-xs text-green-600">kg</div>
                 </div>
@@ -596,7 +599,7 @@ if (loading) return (
               <td className="px-2 py-2 whitespace-nowrap text-center w-20">
                 <div className="bg-orange-100 rounded-md px-1 py-0.5">
                   <span className="text-xs font-semibold text-orange-800">
-                    {Number(detalle.cantidad_solicitada) - Number(detalle.cantidad_entregada)}
+                    {Number(detalle.cantidad_solicitada) - Number(detalle.cantidad_entregada_sede)}
                   </span>
                   <div className="text-xs text-orange-600">kg</div>
                 </div>
