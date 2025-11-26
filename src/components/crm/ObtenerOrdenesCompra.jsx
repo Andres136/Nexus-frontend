@@ -68,7 +68,10 @@ export default function ObtenerOrdenesCompra() {
       });
     }
   };
-  
+  const ordenesOrdenadas = ordenesCompra?.data?.sort(
+  (a, b) => (a.orden_trabajo ? 1 : -1)
+);
+
   
 
   return (
@@ -104,6 +107,7 @@ export default function ObtenerOrdenesCompra() {
             <th className="border border-gray-300 px-4 py-2">Cliente</th>
             <th className="border border-gray-300 px-4 py-2">Fecha de Creacion</th>
             <th className="border border-gray-300 px-4 py-2">Fecha Entrega</th>
+            <th className="border border-gray-300 px-4 py-2">OT</th>
             <th className="border border-gray-300 px-4 py-2">Estado</th>
            
             <th className="border border-gray-300 px-4 py-2">Dirección de Entrega</th>
@@ -113,17 +117,20 @@ export default function ObtenerOrdenesCompra() {
           </tr>
         </thead>
         <tbody>
-          {ordenesCompra?.data?.map((orden) => (
+          {ordenesOrdenadas?.map((orden) => (
             <tr key={orden.id} className="hover:bg-gray-100">
               <td className="border border-gray-300 px-4 py-2">{orden.id}</td>
               <td className="border border-gray-300 px-4 py-2">{orden.cliente.nombre}</td>
               <td className="border border-gray-300 px-4 py-2">
+
               {new Date(orden.created_at).toLocaleDateString('es-CO', {
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric',
                   })}
               </td>
+
+
               <td className="border border-gray-300 px-4 py-2">
               {new Date(orden.fecha_entrega).toLocaleDateString('es-CO', {
                     year: 'numeric',
@@ -131,6 +138,17 @@ export default function ObtenerOrdenesCompra() {
                     day: 'numeric',
                   })}
               </td>
+                            <td className="px-4 py-2 text-center border border-gray-300">
+  {orden.orden_trabajo ? (
+    <span className="text-green-700 bg-green-100 px-3 py-1 rounded-full text-sm font-semibold">
+      Con OT
+    </span>
+  ) : (
+    <span className="text-red-700 bg-red-100 px-3 py-1 rounded-full text-sm font-semibold">
+      Sin OT
+    </span>
+  )}
+</td>
               <td className="px-4 py-3 text-center border border-gray-300">
     {orden.estado.nombre === "Pendiente" ? (
       <span className="text-red-700 bg-red-100 px-3 py-1 rounded-full text-sm font-semibold">
