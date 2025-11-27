@@ -26,14 +26,14 @@ export default function DividirOcProveedor() {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      const proveedoresRes = await clienteAxios.get(`/api/proveedores`, {
+      const proveedoresRes = await clienteAxios.get(`/api/proveedores-all`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
       const datos = ordenRes.data.orden || ordenRes.data;
       setOrden(datos);
-
-      const lista = proveedoresRes.data.proveedores?.data || [];
+console.log(proveedoresRes);
+      const lista = proveedoresRes.data.proveedores || [];
       setProveedores(lista);
 
       // Inicializar selecciones
