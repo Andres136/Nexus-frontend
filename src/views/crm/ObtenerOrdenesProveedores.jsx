@@ -135,14 +135,8 @@ const canSeeSede = (orden) => {
     </button>
 
 
-  {isAdmin || isCompras && (
-    <button
-      onClick={() => eliminarOrden(orden.id)}
-      className="bg-red-500 text-white px-3 py-1 rounded"
-    >
-      <Trash2 size={16} />
-    </button>
-  )}
+
+ 
 
   {isAdmin &&(
     <button
@@ -164,6 +158,14 @@ const canSeeSede = (orden) => {
   >
     <Eye size={16} />
   </button>
+  {isAdmin &&(
+    <button
+      onClick={() => eliminarOrden(orden.id)}
+      className="bg-red-600 text-white px-3 py-1 rounded"
+    >
+      <Trash2 size={16} />
+    </button>
+  )}
 </td>
 
               </tr>

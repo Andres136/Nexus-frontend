@@ -177,6 +177,11 @@ export const productsApi = {
 
   sincronizarProductosSiigoSetas: (data) =>
     apiClient.post("/api/productos/sincronizar-siigo-setas", data),
+
+  exportarPlantilla: () =>
+    apiClient.get("/api/products/exportar/plantilla",{
+      responseType: "blob",
+    }),
 };
 //Ordenes de compra a proveedores API
 export const ordenesCompraProveedoresApi = {

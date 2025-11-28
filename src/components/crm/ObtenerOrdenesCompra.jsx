@@ -6,8 +6,12 @@ import { Link } from "react-router-dom";
 import clienteAxios from "../../config/axios";
 import Swal from "sweetalert2";
 import { FaEye, FaTrash, FaEdit } from 'react-icons/fa';
+import { useAuth } from "../../hooks/useAuth";
 export default function ObtenerOrdenesCompra() {
- 
+ const { user } = useAuth({ middleware: 'auth' });
+
+  const userRoleId = user?.role_id;
+  const isAdmin = userRoleId === 1; 
   const {
     ordenesCompra,
     isLoading,
@@ -182,12 +186,14 @@ export default function ObtenerOrdenesCompra() {
       >
         <FaEdit />
       </Link>
-      <button
-        onClick={() => eliminarOrdenCompra(orden.id)}
-        className="flex items-center justify-center bg-red-600 text-white px-3 py-1 rounded"
-      >
-        <FaTrash />
-      </button>
+      {isAdmin && (
+        <button
+          onClick={() => eliminarOrdenCompra(orden.id)}
+          className="flex items-center justify-center bg-red-600 text-white px-3 py-1 rounded"
+        >
+          <FaTrash />
+        </button>
+      )}
     </div>
   </td>
 

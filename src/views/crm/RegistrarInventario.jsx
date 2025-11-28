@@ -120,22 +120,22 @@ const handleDescuentoExcel = async (e) => {
 
 
 
-  const descargarPlantilla = () => {
-    // Crear CSV de ejemplo
-    const csvContent = `code,stock,precio,min_stock,max_stock,fecha_vencimiento
-BP-30-40,100,2500,10,500,2024-12-31
-BB-25-35,200,3000,20,800,2025-01-15
-SP-40-50,150,2800,15,600,2024-11-30`;
-    
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'plantilla_inventario.csv';
-    a.click();
-    window.URL.revokeObjectURL(url);
-  };
+const descargarPlantilla = async () => {
+    try {
+      const response = await productsApi.exportarPlantilla();
 
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "plantilla_productos.xlsx");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+    } catch (error) {
+      console.error("Error al descargar la plantilla", error);
+    }
+  };
 
 
 

@@ -19,7 +19,8 @@ import {
   Menu,
   CornerRightDownIcon,
   Megaphone,
-  TruckIcon
+  TruckIcon,
+  LogOutIcon
 } from "lucide-react";
 
 export default function Navbar() {
@@ -113,8 +114,30 @@ export default function Navbar() {
           </Link>
         </h1>
 
+{/* Tablet (≥640px y <1024px) */}
+<div className="hidden md:flex lg:hidden items-center space-x-4">
+  <button
+    className="text-gray-300 focus:outline-none"
+    onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+  >
+    <Menu className="w-6 h-6" />
+  </button>
+
+
+
+  <div className="ml-auto flex items-center gap-3">
+    <span className="text-green-400 font-medium">{user?.name}</span>
+    <button
+      onClick={logout}
+      className="bg-green-600 px-3 py-1 text-white rounded hover:bg-green-700"
+    >
+      <LogOutIcon className="w-4 h-4 inline-block mr-1" />
+    </button>
+  </div>
+</div>
+
         {/* Menú escritorio */}
-        <div ref={menuRef} className="hidden md:flex items-center space-x-6">
+        <div ref={menuRef} className="hidden lg:flex items-center space-x-6">
           {filteredNavLinks.map((link) =>
             link.hasSubmenu ? (
               <div key={link.name} className="relative">
@@ -162,10 +185,13 @@ export default function Navbar() {
             onClick={logout}
             className="bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700 transition"
           >
-            Cerrar Sesión
+            <LogOutIcon className="w-4 h-4 inline-block mr-1" />
           </button>
         </div>
       </div>
+
+
+
 
       {/* Sidebar móvil */}
       <div className={`md:hidden ${isSidebarOpen ? "block" : "hidden"}`}>

@@ -1,6 +1,6 @@
 import { Trash2 } from "lucide-react";
 import { useEffect, useState, useContext } from "react";
-import { inventariosApi } from "../../services/api";
+import { inventariosApi, productsApi } from "../../services/api";
 import { ProductContext } from "../../context/ProductContext";
 import { useProducts } from "../../hooks/useProducts";
 import Select from "react-select";
@@ -36,35 +36,39 @@ export default function DetalleTraslado({
     cargarOC();
   }, []);
 
-  const fetchStockForProduct = async (productId) => {
+  const fetchDirectStock = async (productId) => {
   try {
-    // Primer trigger → establece stockParams
-    await getStockProduct(productId);
-
-    // Segundo trigger → ahora sí ejecuta con el estado actualizado
-    const { data } = await getStockProduct(productId);
-
-    if (!data) return;
-
-    const total = data.stock?.stock_total ?? 0;
-    const bodegas = data.stock?.resumen_por_bodega ?? [];
-
-    setBodegasDisponibles(bodegas);
-
-    handleChange({
-      target: { name: "stock_total", value: total }
-    }, index);
-
-  } catch (e) {
-    console.error("Error obteniendo stock:", e);
+    const res = await productsApi.getStock(productId);
+    return res?.data?.stock || null;
+  } catch (err) {
+    console.error("❌ Error obteniendo stock:", err);
+    return null;
   }
 };
 
+
 useEffect(() => {
-  if (detalle.product_id) {
-    fetchStockForProduct(detalle.product_id);
-  }
+  if (!detalle.product_id) return;
+
+  const load = async () => {
+    const stock = await fetchDirectStock(detalle.product_id);
+
+    if (!stock) return;
+
+    const total = stock.stock_total ?? 0;
+    const bodegas = stock.resumen_por_bodega ?? [];
+
+    setBodegasDisponibles(bodegas);
+
+    handleChange(
+      { target: { name: "stock_total", value: total }},
+      index
+    );
+  };
+
+  load();
 }, [detalle.product_id]);
+
 
 
 

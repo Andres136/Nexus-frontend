@@ -1,14 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { FiSearch, FiFilter, FiDownload, FiRefreshCw, FiPackage, FiTrendingUp, FiTrendingDown, FiAlertTriangle, FiPlus, FiAlertCircle, FiArrowRight } from 'react-icons/fi';
 import { BsBoxSeam, BsGraphUp, BsExclamationTriangle, BsFileEarmarkExcel } from 'react-icons/bs';
 import { Link } from 'react-router-dom';
-import { inventariosApi } from '../../services/api';
+import { inventariosApi, productsApi } from '../../services/api';
 import { useEmpresas } from '../../hooks/useEmpresas';
 import SincronizacionSiigoProductos from '../../components/crm/SincronizacionSiigoProductos';
 import Swal from 'sweetalert2';
 
 
 export default function Inventarios() {
+  const inputRef = useRef(null);
+const lastScrollTop = useRef(0);
+
   const [inventarios, setInventarios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -41,6 +44,11 @@ export default function Inventarios() {
   const { empresas } = useEmpresas();
   useEffect(() => {
     const timeout = setTimeout(() => {
+
+        if (inputRef.current) {
+      lastScrollTop.current = window.scrollY;
+    }
+
       cargarInventarios(1); // Siempre volver a página 1 cuando cambien filtros
       setCurrentPage(1);
     }, 600); // Debounce de 600ms
@@ -48,6 +56,12 @@ export default function Inventarios() {
     return () => clearTimeout(timeout);
   }, [searchTerm, selectedBodega, selectedSede, selectedEmpresa]);
 
+ useEffect(() => {
+  if (inputRef.current) {
+    window.scrollTo({ top: lastScrollTop.current });
+    inputRef.current.focus(); // 🔥 Mantiene el puntero en el input
+  }
+}, [inventarios]);
 
   useEffect(() => {
   if (selectedSede && Array.isArray(bodegas)) {
@@ -137,7 +151,7 @@ setStats({
     }
   };
 
- 
+
 
   const getStockStatus = (stock, stockMinimo, stockMaximo) => {
     if (stock <= stockMinimo) return 'bajo';
@@ -184,6 +198,22 @@ const obtenerStockTotalProducto = (productoId) => {
   return total;
 };
 
+const descargarPlantilla = async () => {
+    try {
+      const response = await productsApi.exportarPlantilla();
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "plantilla_productos.xlsx");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+    } catch (error) {
+      console.error("Error al descargar la plantilla", error);
+    }
+  };
 
   if (loading) {
     return (
@@ -203,79 +233,118 @@ const obtenerStockTotalProducto = (productoId) => {
         
      {/* ✅ Encabezado moderno y responsive */}
     {/* 🔹 Título y subtítulo */}
-    <div>
-      <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 flex items-center gap-2 sm:gap-3">
-        <BsBoxSeam className="text-blue-600 w-5 h-5 sm:w-6 sm:h-6" />
-        <span className="tracking-tight">Gestión de Inventarios</span>
-      </h1>
-      <p className="text-sm text-gray-500 mt-1">
-        Monitoreo y control de stock en tiempo real
-      </p>
-    </div>
-
+    {/* ✅ SECCIÓN DE BOTONES REORGANIZADA */}
 <div className="bg-white rounded-xl shadow border border-gray-200 p-4 sm:p-6 mb-6">
-  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-6">
+  <div className="flex flex-col gap-4">
     
-
-
-    {/* 🔹 Acciones (botones) */}
-    <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 w-full sm:w-auto justify-end">
+    {/* 🔹 Header con título y botón principal */}
+    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+      <div>
+        <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          <FiPackage className="w-5 h-5 text-blue-600" />
+          Acciones Rápidas
+        </h2>
+        <p className="text-sm text-gray-600 mt-1">
+          Gestiona tu inventario de forma eficiente
+        </p>
+      </div>
       
-      {/* Botón Actualizar */}
-      <button
-        onClick={() => cargarInventarios(pagination.current_page)}
-        className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:scale-[0.98] transition-all duration-150 shadow-sm text-sm font-medium flex-1 sm:flex-none justify-center"
-      >
-        <FiRefreshCw className="w-4 h-4" />
-        <span className="hidden sm:inline">Actualizar</span>
-      </button>
-
-      {/* Botón Exportar */}
-      <button
-        onClick={exportarInventarios}
-        className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 active:scale-[0.98] transition-all duration-150 shadow-sm text-sm font-medium flex-1 sm:flex-none justify-center"
-      >
-        <FiDownload className="w-4 h-4" />
-        <span className="hidden sm:inline">Exportar</span>
-      </button>
-
-      {/* Botón Cargar Excel */}
+      {/* Botón principal más prominente */}
       <Link
         to="/auth/crm/registrar-inventario"
-        className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 active:scale-[0.98] transition-all duration-150 shadow-sm text-sm font-medium flex-1 sm:flex-none justify-center"
+        className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 active:scale-[0.98] transition-all duration-150 shadow-lg font-semibold text-sm"
       >
         <BsFileEarmarkExcel className="w-4 h-4" />
-        <span className="hidden sm:inline">Cargar Excel</span>
+        Cargar Inventario Excel
       </Link>
+    </div>
 
-      {/* Botón Nuevo Traslado */}
-      <Link
-        to="/auth/crm/traslado-inventario"
-        className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 active:scale-[0.98] transition-all duration-150 shadow-sm text-sm font-medium flex-1 sm:flex-none justify-center"
-      >
-        <FiPlus className="w-4 h-4" />
-        <span className="hidden sm:inline">Traslado</span>
-      </Link>
+    {/* 🔹 Grupos de botones organizados */}
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      
+      {/* Grupo 1: Gestión de Stock */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-medium text-gray-700 flex items-center gap-2">
+          <BsBoxSeam className="w-4 h-4 text-emerald-600" />
+          Gestión de Stock
+        </h3>
+        <div className="grid grid-cols-2 sm:grid-cols-1 gap-2">
+          <Link
+            to="/auth/crm/traslado-inventario"
+            className="flex items-center gap-2 px-3 py-2.5 bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 border border-emerald-200 transition-all duration-150 text-sm font-medium"
+          >
+            <FiArrowRight className="w-4 h-4" />
+            <span>Traslados</span>
+          </Link>
+          <Link
+            to="/auth/crm/movimientos-stock"
+            className="flex items-center gap-2 px-3 py-2.5 bg-amber-50 text-amber-700 rounded-lg hover:bg-amber-100 border border-amber-200 transition-all duration-150 text-sm font-medium"
+          >
+            <FiRefreshCw className="w-4 h-4" />
+            <span>Movimientos</span>
+          </Link>
+        </div>
+      </div>
 
-      {/* Botón Ordenes Faltantes */}
-      <Link
-        to="/auth/crm/ordenes-faltantes"
-        className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 active:scale-[0.98] transition-all duration-150 shadow-sm text-sm font-medium flex-1 sm:flex-none justify-center"
-      >
-        <FiAlertCircle className="w-4 h-4" />
-        <span className="hidden sm:inline">Ordenes Faltantes</span>
-      </Link>
-      <Link
-        to="/auth/crm/movimientos-stock"
-        className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 active:scale-[0.98] transition-all duration-150 shadow-sm text-sm font-medium flex-1 sm:flex-none justify-center"
-      >
-        <FiArrowRight className="w-4 h-4" />
-        <span className="hidden sm:inline">Movimientos</span>
-      </Link>
+      {/* Grupo 2: Reportes y Alertas */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-medium text-gray-700 flex items-center gap-2">
+          <FiAlertTriangle className="w-4 h-4 text-red-600" />
+          Reportes y Alertas
+        </h3>
+        <div className="grid grid-cols-2 sm:grid-cols-1 gap-2">
+          <Link
+            to="/auth/crm/ordenes-faltantes"
+            className="flex items-center gap-2 px-3 py-2.5 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 border border-red-200 transition-all duration-150 text-sm font-medium"
+          >
+            <FiAlertCircle className="w-4 h-4" />
+            <span>Órdenes Faltantes</span>
+          </Link>
+          <button
+            onClick={exportarInventarios}
+            className="flex items-center gap-2 px-3 py-2.5 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 border border-green-200 transition-all duration-150 text-sm font-medium"
+          >
+            <FiDownload className="w-4 h-4" />
+            <span>Exportar Excel</span>
+          </button>
+        </div>
+      </div>
 
-      {/* Componente Siigo */}
-      <div className="flex gap-2">
-        <SincronizacionSiigoProductos />
+      {/* Grupo 3: Herramientas */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-medium text-gray-700 flex items-center gap-2">
+          <FiDownload className="w-4 h-4 text-indigo-600" />
+          Herramientas
+        </h3>
+        <div className="grid grid-cols-2 sm:grid-cols-1 gap-2">
+          <button
+            onClick={() => cargarInventarios(pagination.current_page)}
+            className="flex items-center gap-2 px-3 py-2.5 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 border border-blue-200 transition-all duration-150 text-sm font-medium"
+          >
+            <FiRefreshCw className="w-4 h-4" />
+            <span>Actualizar</span>
+          </button>
+          <button
+            onClick={descargarPlantilla}
+            className="flex items-center gap-2 px-3 py-2.5 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 border border-indigo-200 transition-all duration-150 text-sm font-medium"
+          >
+            <FiDownload className="w-4 h-4" />
+            <span>Plantilla</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    {/* 🔹 Sincronización Siigo (separado) */}
+    <div className="border-t border-gray-200 pt-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <div>
+          <h3 className="text-sm font-medium text-gray-700">Sincronización Externa</h3>
+          <p className="text-xs text-gray-500">Conecta con sistemas externos</p>
+        </div>
+        <div className="flex gap-2">
+          <SincronizacionSiigoProductos />
+        </div>
       </div>
     </div>
   </div>
@@ -366,7 +435,7 @@ const obtenerStockTotalProducto = (productoId) => {
             <div className="relative sm:col-span-2 lg:col-span-1">
               <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
-                autoFocus
+                ref={inputRef}
                 type="text"
                 placeholder="Buscar producto..."
                 value={searchTerm}
