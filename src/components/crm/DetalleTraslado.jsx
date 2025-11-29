@@ -1,7 +1,7 @@
 import { Trash2 } from "lucide-react";
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState } from "react";
 import { inventariosApi, productsApi } from "../../services/api";
-import { ProductContext } from "../../context/ProductContext";
+
 import { useProducts } from "../../hooks/useProducts";
 import Select from "react-select";
 
@@ -16,7 +16,7 @@ export default function DetalleTraslado({
   canRemove = true,
 }) {
   const [ocproveedores, setOcproveedores] = useState([]);
-  const { getStockProduct, stockInfo } = useContext(ProductContext);
+ 
   const [search, setSearch] = useState("");
   const { products, isLoading, isFetching, isEmpty } = useProducts({ search });
 
@@ -177,7 +177,7 @@ useEffect(() => {
     <div key={index} className="border p-3 rounded bg-gray-50 mb-4 shadow-sm">
       <h3 className="font-semibold mb-2 text-gray-700">Detalle {index + 1}</h3>
 
-      <table className="w-full border-collapse">
+      <table className="min-w-full table-fixed">
         <thead className="bg-gray-100">
           <tr>
             <th className="px-3 py-2 text-left text-sm font-semibold border">
@@ -198,7 +198,7 @@ useEffect(() => {
             <th className="px-3 py-2 text-left text-sm font-semibold border">
               Bodegas
             </th>
-            <th className="px-3 py-2 text-center text-sm font-semibold border w-16">
+      <th className="px-3 py-2 text-center text-sm font-semibold border min-w-[60px] w-[60px]">
               Acciones
             </th>
           </tr>
@@ -554,18 +554,17 @@ useEffect(() => {
                 })}
             </td>
 
-            {/* Botón eliminar */}
-            <td className="px-3 py-2 border text-center">
-              {canRemove && (
-                <button
-                  type="button"
-                  onClick={() => onRemove(index)}
-                  className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded transition-colors"
-                  title="Eliminar producto"
-                >
-                  <Trash2 className="w-4 h-4" />
+            {/* Acciones */}
+       <td className="px-3 py-2 border text-center min-w-[60px] w-[60px]">
+            <button
+                type="button"
+                onClick={() => onRemove(index)}
+                className="text-red-500 hover:text-red-700"
+                title="Eliminar detalle"
+            >
+                  <Trash2 className="w-5 h-5 mx-auto" />
                 </button>
-              )}
+      
             </td>
           </tr>
         </tbody>

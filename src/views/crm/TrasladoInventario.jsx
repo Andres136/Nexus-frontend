@@ -52,20 +52,24 @@ export default function TrasladoInventario() {
   const selectedSede = sedesOptions.find(option => option.value == formData.sede_destino_id) || null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-2 sm:p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-2 sm:p-4 md:p-3 lg:p-6">
+      <div className="grid grid-cols-1">
+    
       <div className="max-w-7xl mx-auto">
         {/* ✨ Header responsive */}
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg sm:rounded-xl p-3 sm:p-4 mb-4 sm:mb-6 text-white shadow-lg">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
-            <div className="p-1.5 bg-white bg-opacity-20 rounded-lg">
-              <Package className="w-5 h-5 sm:w-6 sm:h-6" />
-            </div>
-            <div>
-              <h1 className="text-lg sm:text-2xl font-bold">Traslado de Inventario</h1>
-              <p className="text-blue-100 text-xs sm:text-sm">Gestiona el movimiento de productos entre sedes</p>
-            </div>
-          </div>
-        </div>
+   <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-5 lg:p-6 mb-4 sm:mb-6 text-white shadow-lg">
+  <div className="flex flex-col sm:flex-row md:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
+    <div className="p-1.5 bg-white bg-opacity-20 rounded-lg">
+      <Package className="w-5 h-5 sm:w-6 sm:h-6 md:w-5 md:h-5 lg:w-6 lg:h-6" />
+    </div>
+    <div>
+      <h1 className="text-lg sm:text-2xl md:text-xl lg:text-2xl font-bold">Traslado de Inventario</h1>
+      <p className="text-blue-100 text-xs sm:text-sm md:text-sm lg:text-base">
+        Gestiona el movimiento de productos entre sedes
+      </p>
+    </div>
+  </div>
+</div>
 
         <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
           {/* ✨ Información General responsive */}
@@ -286,6 +290,7 @@ export default function TrasladoInventario() {
             </button>
           </div>
         </form>
+      </div>
       </div>
     </div>
   );
