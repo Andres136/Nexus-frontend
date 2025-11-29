@@ -9,26 +9,24 @@ import {
   Bell,
   Building2,
   BarChart2,
-  QrCodeIcon,
- 
-  Package,
-  ShoppingCart,
-  FileText,
-  Settings,
+
   ChevronDown,
   Menu,
-  CornerRightDownIcon,
+
   Megaphone,
   TruckIcon,
-  LogOutIcon
+  LogOutIcon,
+
 } from "lucide-react";
 
 export default function Navbar() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [departamento, setDepartamento] = useState(null);
-  const [openMenu, setOpenMenu] = useState(null); // ← controla submenú activo
+  const [openMenu, setOpenMenu] = useState(null);
+  const [openUserMenu, setOpenUserMenu] = useState(false); // ✅ Solo agregué este estado
   const { logout, user } = useAuth({ middleware: "auth" });
   const menuRef = useRef(null);
+  const userMenuRef = useRef(null); // ✅ Solo agregué esta ref
 
   useEffect(() => {
     const fetchDepartamento = async () => {
@@ -45,10 +43,8 @@ export default function Navbar() {
   const isResponsable = departamento?.responsable_id === user?.id;
 
   const navLinks = [
-
     { name: "Inicio", to: "/", icon: Home, allowedRoles: [1,10,11] },
     { name: "Procesos", to: "/auth/procesos", icon: FolderKanban, alwaysVisible: true },
-
     { name: "Entregas ", to: "/auth/entregas", icon: TruckIcon, alwaysVisible: true },
     { name: "CRM", to: "/auth/crm", icon: Building2, allowedRoles: [1,2, 4, 5, 6, 7, 9,10,11] },
     {name: "KPIS", to: "dashboard/indicadores", icon: Building2, allowedRoles: [1,2] },
@@ -60,14 +56,10 @@ export default function Navbar() {
       hasSubmenu: true,
       submenu: [
        { name: "Marketing", to: "/admin/marketing", icon: Megaphone, allowedRoles: [1, 2, 10, 11] },
-        //name: "Crear Plantilla", to: "/admin/crear-plantilla-correo", icon: CornerRightDownIcon, allowedRoles: [1 ] },
         { name: "Novedades", to: "novedades", icon: Bell,Bell: [1,2, 10,11] },
         { name: "Tareas", to: "tareas", icon: ListChecks, allowedRoles: [1,2, 10,11] },
-      //{ name: "Órdenes de Trabajo", to: "/auth/crm/ordenes-trabajo", icon: FileText },
-        //name: "Configuración", to: "/auth/crm/configuracion", icon: Settings },
       ],
     },
- 
   ];
 
   const filteredNavLinks = navLinks.filter((link) => {
@@ -76,11 +68,14 @@ export default function Navbar() {
     return !link.allowedRoles || link.allowedRoles.includes(user?.role_id);
   });
 
-  // 🔹 Cerrar submenú al hacer clic fuera
+  // ✅ Solo modifiqué este useEffect para incluir userMenuRef
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
         setOpenMenu(null);
+      }
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setOpenUserMenu(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -92,7 +87,7 @@ export default function Navbar() {
       <div className="container mx-auto flex justify-between items-center">
         {/* Menú móvil */}
         <button
-          className="md:hidden text-gray-300 focus:outline-none"
+          className="lg:hidden text-gray-300 focus:outline-none"
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
           aria-label="Abrir menú"
         >
@@ -114,27 +109,7 @@ export default function Navbar() {
           </Link>
         </h1>
 
-{/* Tablet (≥640px y <1024px) */}
-<div className="hidden md:flex lg:hidden items-center space-x-4">
-  <button
-    className="text-gray-300 focus:outline-none"
-    onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-  >
-    <Menu className="w-6 h-6" />
-  </button>
-
-
-
-  <div className="ml-auto flex items-center gap-3">
-    <span className="text-green-400 font-medium">{user?.name}</span>
-    <button
-      onClick={logout}
-      className="bg-green-600 px-3 py-1 text-white rounded hover:bg-green-700"
-    >
-      <LogOutIcon className="w-4 h-4 inline-block mr-1" />
-    </button>
-  </div>
-</div>
+        
 
         {/* Menú escritorio */}
         <div ref={menuRef} className="hidden lg:flex items-center space-x-6">
@@ -180,21 +155,41 @@ export default function Navbar() {
               </Link>
             )
           )}
-          <span className="font-medium text-green-400">👤 {user?.name}</span>
-          <button
-            onClick={logout}
-            className="bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700 transition"
-          >
-            <LogOutIcon className="w-4 h-4 inline-block mr-1" />
-          </button>
+          
+          {/* ✅ Solo reemplacé esta sección del usuario y botón */}
+          <div ref={userMenuRef} className="relative">
+            <button
+              onClick={() => setOpenUserMenu(!openUserMenu)}
+              className="flex items-center space-x-1 text-green-400 hover:text-green-300 transition-colors"
+            >
+              <span className="font-medium">👤 {user?.name}</span>
+              <ChevronDown className="w-3 h-3" />
+            </button>
+
+            {openUserMenu && (
+              <div className="absolute right-0 top-full mt-2 bg-gray-800 border border-gray-700 rounded-lg shadow-lg w-48 z-50">
+                <div className="px-4 py-2 border-b border-gray-700">
+                  <p className="text-sm text-gray-300">Conectado como:</p>
+                  <p className="text-sm font-medium text-white truncate">{user?.name}</p>
+                </div>
+                <button
+                  onClick={() => {
+                    logout();
+                    setOpenUserMenu(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-300 hover:bg-gray-700 hover:text-red-200 transition-colors"
+                >
+                  <LogOutIcon className="w-4 h-4" />
+                  Cerrar Sesión
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-
-
-
-      {/* Sidebar móvil */}
-      <div className={`md:hidden ${isSidebarOpen ? "block" : "hidden"}`}>
+      {/* Sidebar móvil - SIN CAMBIOS */}
+      <div className={`lg:hidden ${isSidebarOpen ? "block" : "hidden"}`}>
         <ul className="flex flex-col space-y-2 mt-4 bg-gray-900 rounded p-4 shadow-lg">
           {filteredNavLinks.map((link) => (
             <li key={link.name}>

@@ -191,6 +191,7 @@ export default function Proveedores() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="grid grid-cols-1">
       <div className="container mx-auto px-4 py-8">
         {/* ✅ Header mejorado */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
@@ -205,7 +206,7 @@ export default function Proveedores() {
           </div>
 
           {/* ✅ Enlaces de navegación mejorados */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <Link
               to="/auth/crm/proveedores-ordenes-compra"
               className="group bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white p-4 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
@@ -246,7 +247,7 @@ export default function Proveedores() {
 
           {/* ✅ Filtros mejorados */}
           <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-            <div className="flex items-center gap-2 mb-3">
+        <div className="flex flex-col sm:flex-row md:flex-col lg:flex-row gap-4">
               <Filter className="w-5 h-5 text-gray-600" />
               <h3 className="font-semibold text-gray-700">Filtros y Reportes</h3>
             </div>
@@ -297,7 +298,7 @@ export default function Proveedores() {
           </div>
 
           <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* Nombre */}
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
@@ -397,7 +398,7 @@ export default function Proveedores() {
               </div>
 
               {/* Observaciones */}
-              <div className="space-y-2 md:col-span-2 lg:col-span-3">
+         <div className="space-y-2 sm:col-span-2 lg:col-span-3">
                 <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                   <FileText className="w-4 h-4 text-gray-500" />
                   Observaciones
@@ -426,7 +427,7 @@ export default function Proveedores() {
 
         {/* ✅ Búsqueda mejorada */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-          <div className="flex flex-col sm:flex-row gap-4 items-center">
+       <div className="flex flex-col sm:flex-row md:flex-col lg:flex-row gap-4 items-center">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
@@ -564,6 +565,7 @@ export default function Proveedores() {
             </div>
           </div>
         </div>
+      </div>
       </div>
     </div>
   )

@@ -227,15 +227,16 @@ const descargarPlantilla = async () => {
   }
 
   return (
-    
-  <div className="min-h-screen bg-gray-50 p-2 sm:p-4 lg:p-6">
+ <div className="min-h-screen bg-gray-50 p-2 sm:p-2 md:p-2 lg:p-3">
+
+    <div className='grid grid-cols-1'>
       <div className="max-w-7xl mx-auto">
         
      {/* ✅ Encabezado moderno y responsive */}
     {/* 🔹 Título y subtítulo */}
     {/* ✅ SECCIÓN DE BOTONES REORGANIZADA */}
-<div className="bg-white rounded-xl shadow border border-gray-200 p-4 sm:p-6 mb-6">
-  <div className="flex flex-col gap-4">
+<div className="bg-white rounded-xl shadow border border-gray-200 p-3 sm:p-4 md:p-5 lg:p-6 mb-4 sm:mb-6">
+  <div className="flex flex-col gap-3 md:gap-4">
     
     {/* 🔹 Header con título y botón principal */}
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
@@ -740,6 +741,7 @@ const descargarPlantilla = async () => {
             </div>
           </div>
         )}
+      </div>
       </div>
     </div>
   );
