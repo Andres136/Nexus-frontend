@@ -24,7 +24,7 @@ export function useProveedores (){
   }
 
 
-  const obtenerOrdenes = async (page = 1, search = "") => {
+  const obtenerOrdenes = async (page = 1, search = "",week="") => {
     const token = localStorage.getItem("token");
     setLoading(true);
     try {
@@ -33,6 +33,7 @@ export function useProveedores (){
         params: {
           page,
           search, // 👈 Envía el término
+          week
         },
       });
       console.log(response.data.ordenes);

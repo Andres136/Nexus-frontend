@@ -2,6 +2,7 @@ import { Edit,  Eye,  SplitIcon,  Trash2, Truck } from "lucide-react";
 import { useProveedores } from "../../hooks/useProveedores";
 import {  Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
+import { useState } from "react";
 
 
 
@@ -10,6 +11,8 @@ export default function ObtenerOrdenesProveedores() {
 
 
 const { user } = useAuth({middleware: 'auth'});
+const [weekFilter, setWeekFilter] = useState("");
+
 console.log(user);
 const isAdmin = user?.role_id === 1 || user?.role_id === 4;
 const isCompras = user?.role_id === 4;
@@ -35,7 +38,7 @@ const canSeeSede = (orden) => {
 
   const handleBuscar = () => {
     setPagina(1);
-    obtenerOrdenes(1, searchTerm);
+    obtenerOrdenes(1, searchTerm, weekFilter);
   };
 
   //Formatear fecha
@@ -54,22 +57,35 @@ const canSeeSede = (orden) => {
       >
         ← Volver
       </Link>
-      <div className="mb-4 flex gap-2">
-        <input
-          type="text"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleBuscar()}
-          placeholder="Buscar por número de orden o proveedor..."
-          className="border p-2 rounded w-full"
-        />
-        <button
-          onClick={handleBuscar}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
-        >
-          Buscar
-        </button>
-      </div>
+   <div className="mb-4 flex gap-2">
+
+  {/* Búsqueda texto */}
+  <input
+    type="text"
+    value={searchTerm}
+    onChange={(e) => setSearchTerm(e.target.value)}
+    onKeyDown={(e) => e.key === "Enter" && handleBuscar()}
+    placeholder="Buscar por número de orden o proveedor..."
+    className="border p-2 rounded w-full"
+  />
+
+  {/* 🔍 Filtro por semana */}
+  <input
+    type="week"
+    value={weekFilter}
+    onChange={(e) => setWeekFilter(e.target.value)}
+    className="border p-2 rounded"
+  />
+
+  <button
+    onClick={handleBuscar}
+    className="bg-blue-500 text-white px-4 py-2 rounded"
+  >
+    Buscar
+  </button>
+
+</div>
+
 
       {loading ? (
         <p>Cargando órdenes...</p>

@@ -134,6 +134,8 @@ const guardarNombreDocumento = async (docId) => {
   }
 };
 
+
+
 //Eliminar documento
 const eliminarDocumento = async (documentoId) => {
   const token = localStorage.getItem("token");
@@ -164,7 +166,21 @@ const confirmarEliminacion = (documentoId) => {
     }
   });
 }
-const procesosOrdenados = [...procesos].sort((a, b) => {
+
+
+// Ocultar proceso "Obsoletos" para roles no autorizados
+const procesosFiltrados = procesos.filter(proceso => {
+  // roles que sí pueden ver "Obsoletos"
+  const rolesPermitidos = [1, 2];
+
+  if (!rolesPermitidos.includes(user?.role_id)) {
+    return proceso.nombre.toLowerCase() !== "obsoletos";
+  }
+
+  return true; // admin/director ven todo
+});
+
+const procesosOrdenados = [...procesosFiltrados].sort((a, b) => {
   const indexA = ordenManual.indexOf(a.nombre);
   const indexB = ordenManual.indexOf(b.nombre);
 

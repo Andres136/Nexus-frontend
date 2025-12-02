@@ -144,15 +144,17 @@ export default function ObtenerOrdenesCompra() {
               </td>
 <td className="px-4 py-2 text-center border border-gray-300">
   {orden.orden_trabajo ? (
-    <span className="text-green-700 bg-green-100 px-2 py-0.5 rounded-full text-xs font-medium">
-      Con OT
+    <span className="text-green-700 bg-green-100 px-2 py-0.5 rounded text-xs font-semibold">
+      OT #{orden.orden_trabajo.id}
     </span>
   ) : (
-    <span className="text-red-700 bg-red-100 px-2 py-0.5 rounded-full text-xs font-medium">
+    <span className="text-red-700 bg-red-100 px-2 py-0.5 rounded text-xs font-semibold">
       Sin OT
     </span>
   )}
 </td>
+
+
 
               <td className="px-4 py-3 text-center border border-gray-300">
     {orden.estado.nombre === "Pendiente" ? (
