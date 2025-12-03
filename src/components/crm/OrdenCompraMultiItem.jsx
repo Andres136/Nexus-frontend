@@ -395,7 +395,7 @@ export default function OrdenCompraMultiItem({ onDetallesChange, errores = {}, v
 
                 {/* Descripción */}
                 <td className="px-4 py-3">
-                  <input
+                  <textarea
                     type="text"
                     className="w-32 border border-gray-300 px-2 py-1 rounded text-sm uppercase"
                     value={row.descripcion}

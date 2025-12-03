@@ -442,24 +442,32 @@ export default function DetallesOrdenesCompra() {
                       />
                     </td>
                     {/* Cant Req. (Kg) */}
-                    <td className="border border-gray-300 px-2 py-1 text-center">
-                    <input type="number"
-                    value={detalle.cantidad_requerida_kg.toFixed(2)}    
-                    onChange={(e)=>
-                      handleChangeDetalle(index, "cantidad_requerida_kg", e.target.value)
-                    } />
-                    </td>
+            {/* Cant Req. (Kg) - MÁS PEQUEÑO */}
+<td className="border border-gray-300 px-2 py-1 text-center">
+  <input 
+    type="number"
+    value={detalle.cantidad_requerida_kg.toFixed(2)}    
+    onChange={(e) =>
+      handleChangeDetalle(index, "cantidad_requerida_kg", e.target.value)
+    }
+    className="w-16 border border-gray-300 rounded px-1 py-1 text-xs text-center"
+    step="0.01"
+    min="0"
+  />
+</td>
                     {/* Descripción */}
-                    <td className="border border-gray-300 px-2 py-1">
-                      <input
-                        type="text"
-                        value={detalle.descripcion}
-                        onChange={(e) =>
-                          handleChangeDetalle(index, "descripcion", e.target.value)
-                        }
-                        className="w-full border border-gray-300 rounded px-1"
-                      />
-                    </td>
+              {/* Descripción - Cambiar por textarea */}
+<td className="border border-gray-300 px-2 py-1">
+  <textarea
+    value={detalle.descripcion}
+    onChange={(e) =>
+      handleChangeDetalle(index, "descripcion", e.target.value)
+    }
+    className="w-full min-w-[200px] border border-gray-300 rounded px-2 py-1 resize-none text-sm"
+    rows="2"
+    placeholder="Descripción del producto..."
+  />
+</td>
                     {/* Cantidad */}
                     <td className="border border-gray-300 px-2 py-1">
                       <input
