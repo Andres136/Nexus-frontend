@@ -208,11 +208,12 @@ export const auditApi = {
 //iNVEANTARIOS
 export const inventariosApi = {
   listar: (params = {}) => apiClient.get("/api/inventarios", { params }),
-  exportar: (params = {}) =>
-    apiClient.get("/api/inventarios/exportar", {
-      params,
-      responseType: "blob",
-    }),
+exportar: (params = {}) =>
+  apiClient.get("/api/inventarios-exportar-exel", {
+    params,
+    responseType: "blob",
+  }),
+
   getById: (id) => apiClient.get(`/api/inventarios/${id}`),
   create: (data) =>
     apiClient.post("/api/inventarios", data, {

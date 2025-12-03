@@ -167,27 +167,49 @@ setStats({
     }).format(value);
   };
 
-  const exportarInventarios = async () => {
-    try {
-      const params = {
-        sede_id: selectedSede || undefined,
-        bodega_id: selectedBodega || undefined,
-        producto: searchTerm || undefined,
-        empresa_id: selectedEmpresa || undefined
-      };
+const exportarInventarios = async () => {
+  try {
+    const params = {
+      sede_id: selectedSede || undefined,
+      bodega_id: selectedBodega || undefined,
+      producto: searchTerm || undefined,
+      empresa_id: selectedEmpresa || undefined
+    };
 
-      const response = await inventariosApi.exportar(params);
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `inventario_${new Date().toISOString().slice(0,10)}.xlsx`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    } catch (error) {
-      console.error('Error al exportar inventario:', error);
-    }
-  };
+    const response = await inventariosApi.exportar(params);
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute(
+      'download',
+      `inventario_${new Date().toISOString().slice(0,10)}.xlsx`
+    );
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+  } catch (error) {
+
+
+
+   // console.error('Error al exportar inventario:', error);
+   if (error.response && error.response.data) {
+    const reader = new FileReader();
+    reader.onload = () => {
+        console.log("ERROR SERVIDOR:", reader.result);
+    };
+    reader.readAsText(error.response.data);
+}
+
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: "No se pudo exportar el inventario",
+    });
+  }
+};
+
 
   // 🔹 Calcular stock total de un producto específico
 const obtenerStockTotalProducto = (productoId) => {
