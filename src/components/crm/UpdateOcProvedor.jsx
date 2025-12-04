@@ -239,8 +239,7 @@ const fetchStockForProduct = async (productId) => {
           headers: { Authorization: `Bearer ${token}` }
         }
       );
-
-      toast.success("Orden actualizada correctamente");
+      response.status === 200 && toast.success("Orden actualizada correctamente");
       navigate(`/auth/crm/ordenes-proveedor-preview/${id}`);
 
     } catch (error) {
@@ -464,7 +463,7 @@ const fetchStockForProduct = async (productId) => {
                           products.find((p) => p.id === detalle.producto_id)?.name ||
                           ""
                         }
-                        readOnly
+                        
                         className="w-full border rounded p-1 bg-gray-100 cursor-not-allowed"
                       />
                     </td>
@@ -473,6 +472,8 @@ const fetchStockForProduct = async (productId) => {
                     <td className="p-3 border">
                  <input
   type="text"
+  readOnly
+  disabled={detalle.producto_id === null}
   value={detalle.descripcion || ""}
   onChange={(e) => handleDetalleChange(index, "descripcion", e.target.value)}
   className="w-full border rounded p-2 min-w-[200px]"
@@ -503,6 +504,7 @@ const fetchStockForProduct = async (productId) => {
                         </label>
                         <label className="flex items-center">
                           <input
+                           readOnly
                             type="radio"
                             name={`campo_${index}`}
                             value="description"
