@@ -53,4 +53,30 @@
         }
 
 
-        
+             .line-clamp-3 {
+          display: -webkit-box;
+          -webkit-line-clamp: 3;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+.arrow-right::after {
+  content: "";
+  position: absolute;
+  right: -25px;
+  width: 0;
+  height: 0;
+  border-top: 40px solid transparent;
+  border-bottom: 40px solid transparent;
+  border-left: 25px solid #188b0d;
+}
+
+.arrow-left::before {
+  content: "";
+  position: absolute;
+  left: -25px;
+  width: 0;
+  height: 0;
+  border-top: 40px solid transparent;
+  border-bottom: 40px solid transparent;
+  border-right: 25px solid #188b0d;
+}

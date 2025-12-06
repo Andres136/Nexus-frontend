@@ -58,6 +58,7 @@ export default function Navbar() {
        { name: "Marketing", to: "/admin/marketing", icon: Megaphone, allowedRoles: [1, 2, 10, 11] },
         { name: "Novedades", to: "novedades", icon: Bell,Bell: [1,2, 10,11] },
         { name: "Tareas", to: "tareas", icon: ListChecks, allowedRoles: [1,2, 10,11] },
+        {name: "Settings", to: "/admin/settings-permisos", icon: BarChart2, allowedRoles: [1] },
       ],
     },
   ];
@@ -127,7 +128,7 @@ export default function Navbar() {
 
                 {openMenu === link.name && (
                   <div
-                    className="absolute left-0 top-full mt-2 flex flex-col bg-gray-800 border border-gray-700
+                    className="absolute right-0 top-full mt-2 flex flex-col bg-gray-800 border border-gray-700
                                rounded-lg shadow-lg w-56 transition-all duration-200 ease-in-out z-50"
                   >
                     {link.submenu.map((sub) => (

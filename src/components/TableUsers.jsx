@@ -4,7 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useEffect, useState, } from 'react';
 import Modal from './calidad/Modal';
 import UpdateUser from './calidad/UpdateUser';
-import RegistrarRutas from '../views/Roles/RegistrarRutas';
+
 
 
 /**
@@ -179,7 +179,6 @@ export default function TableUsers({onClose}) {
         </>
       )}
 
-      <RegistrarRutas />
     </div>
   );
 }

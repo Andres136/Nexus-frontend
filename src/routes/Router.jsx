@@ -59,11 +59,13 @@ import RegistrarInventario from "../views/crm/RegistrarInventario";
 import TrasladoInventario from "../views/crm/TrasladoInventario";
 
 import OrdenesFaltantes from "../views/crm/OrdenesFaltantes";
-import PlantillaEditor from "../views/comunicaciones/PlantillaEditor";
+
 import Marketing from "../views/comunicaciones/Marketing";
 import DividirOcProveedor from "../views/crm/DividirOcProveedor";
 import DeliveryPage from "../views/Rutas/DeliveryPage";
 import MovimientoInventario from "../views/crm/MovimientoInventario";
+import DynamicProtectedRoute from "./DynamicProtectedRoute";
+import SettingPermissions from "../views/Roles/SettingPermissions";
 
 
 
@@ -78,12 +80,31 @@ export default function Router() {
         element={<ProtectedRoute allowedRoles={[1, 2, 3, 4, 5, 6, 7, 8, 9]} />}
       >
         <Route path="/auth" element={<AuthLyout />}>
-          <Route path="procesos" element={<DepartamentosPage />} />
-          <Route path="entregas" element={<DeliveryPage />} />
+         <Route
+  path="procesos"
+  element={
+    <DynamicProtectedRoute permission="/auth/procesos">
+      <DepartamentosPage />
+    </DynamicProtectedRoute>
+  }
+/>
+
+         <Route
+           path="entregas"
+           element={
+             <DynamicProtectedRoute permission="/auth/entregas">
+               <DeliveryPage />
+             </DynamicProtectedRoute>
+           }
+         />
           <Route
-            path="procesos/:departamentoId"
-            element={<ProcesosDepartamento />}
-          />
+  path="procesos/:departamentoId"
+  element={
+    <DynamicProtectedRoute permission="/procesos/:departamentoId">
+      <ProcesosDepartamento />
+    </DynamicProtectedRoute>
+  }
+/>
           <Route path="rendimiento" element={<KpiTareas />} />
           <Route path="tareas" element={<Tareas />} />
           <Route
@@ -228,7 +249,7 @@ export default function Router() {
       <Route element={<ProtectedRoute allowedRoles={[1]} />}>
         <Route path="/admin" element={<AdminLayout />}>
           <Route path="users" element={<GestionUsers />} />
-
+          <Route path="settings-permisos" element={<SettingPermissions />} />
           <Route path="sedes" element={<Sedes />} />
           <Route path="rendimiento" element={<KpiTareas />} />
           <Route path="tareas" element={<Tareas />} />

@@ -5,8 +5,8 @@ import { useEffect, useState } from 'react';
 import clienteAxios from '../config/axios';
 import TopClientes from '../components/calidad/TopClientes';
 import { Link } from 'react-router-dom';
-import AlertStock from '../components/crm/AlertStock';
-import { X, Volume2, VolumeX } from 'lucide-react';
+
+
 
 
 const Dashboard = () => {
@@ -16,77 +16,9 @@ const Dashboard = () => {
   const { data, error, isLoading } = useDashboard();
   const { data: monthly, isLoading: loading2, error: error2 } = useDashboardMonthly(month, year);
 
-  // ✅ Estados para AlertStock
-  const [showAlertStock, setShowAlertStock] = useState(false);
-  const [alertAnimating, setAlertAnimating] = useState(false);
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  const [hasPlayedSound, setHasPlayedSound] = useState(false);
-  // ✅ NUEVO: Estado para controlar si ya se mostró en esta sesión
-  const [alertDismissed, setAlertDismissed] = useState(false);
+ 
 
-  // ✅ Función para reproducir sonido
-  const playAlertSound = () => {
-    if (!soundEnabled || hasPlayedSound) return;
-    
-    try {
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-      
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      
-      oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-      oscillator.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.3);
-      
-      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-      
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.3);
-      
-      setHasPlayedSound(true);
-    } catch (error) {
-      console.warn('No se pudo reproducir el sonido:', error);
-    }
-  };
 
-  // ✅ MODIFICADO: Mostrar AlertStock solo si no se ha cerrado antes
-  useEffect(() => {
-    if (data && !isLoading && !showAlertStock && !alertDismissed) {
-      // Verificar si hay faltantes que requieren alerta
-      if (data.faltantes > 0) {
-        setTimeout(() => {
-          setShowAlertStock(true);
-          setAlertAnimating(true);
-          playAlertSound();
-        }, 1000);
-      }
-    }
-  }, [data, isLoading, showAlertStock, alertDismissed]);
-
-  // ✅ MODIFICADO: Cerrar AlertStock y marcar como cerrado
-  const closeAlertStock = () => {
-    setAlertAnimating(false);
-    setAlertDismissed(true); // ✅ Marcar como cerrado en esta sesión
-    setTimeout(() => {
-      setShowAlertStock(false);
-    }, 300);
-  };
-
-  // ✅ NUEVO: Función para mostrar alertas manualmente (resetea el estado)
-  const showAlertManually = () => {
-    setAlertDismissed(false); // ✅ Permite mostrar de nuevo
-    setHasPlayedSound(false); // ✅ Permite reproducir sonido de nuevo
-    setShowAlertStock(true);
-    setAlertAnimating(true);
-    playAlertSound();
-  };
-
-  // ✅ Toggle sonido
-  const toggleSound = () => {
-    setSoundEnabled(!soundEnabled);
-  };
 
   // Tooltip externo
   const [tipOpen, setTipOpen] = useState(false);
@@ -192,65 +124,10 @@ const Dashboard = () => {
             >
               Descargar PDF
             </button>
-            
-            {/* ✅ Control de sonido */}
-            <div className="flex items-center gap-2">
-              <button
-                onClick={toggleSound}
-                className={`p-2 rounded-lg transition ${
-                  soundEnabled 
-                    ? 'bg-green-100 text-green-600 hover:bg-green-200' 
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-                title={soundEnabled ? 'Desactivar sonido' : 'Activar sonido'}
-              >
-                {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-              </button>
-              
-              {/* ✅ MODIFICADO: Botón para mostrar AlertStock manualmente */}
-              {!showAlertStock && data?.faltantes > 0 && (
-                <button
-                  onClick={showAlertManually}
-                  className={`px-3 py-2 rounded-lg hover:bg-red-600 transition text-sm flex items-center gap-2 ${
-                    alertDismissed 
-                      ? 'bg-orange-500 text-white' 
-                      : 'bg-red-500 text-white'
-                  }`}
-                >
-                  {alertDismissed && (
-                    <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
-                  )}
-                  Ver Alertas de Stock
-                </button>
-              )}
-            </div>
+        
           </div>
 
-          {/* ✅ NUEVO: Indicador visual de alertas cerradas */}
-          {alertDismissed && data?.faltantes > 0 && !showAlertStock && (
-            <div className="bg-orange-50 border-l-4 border-orange-400 p-4 mb-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-orange-400" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-sm text-orange-700">
-                      <strong>Alertas de stock ocultas.</strong> Hay {data.faltantes} órdenes con faltantes.
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={showAlertManually}
-                  className="bg-orange-600 text-white px-3 py-1 rounded text-sm hover:bg-orange-700 transition"
-                >
-                  Mostrar
-                </button>
-              </div>
-            </div>
-          )}
+  
 
           {/* Tarjetas resumen */}
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
@@ -402,69 +279,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* ✅ Modal AlertStock con animación y sonido */}
-      {showAlertStock && (
-        <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 transition-opacity duration-300 ${
-          alertAnimating ? 'opacity-100' : 'opacity-0'
-        }`}>
-          <div className={`bg-white rounded-xl shadow-2xl max-w-6xl w-full mx-4 max-h-[90vh] overflow-hidden transition-all duration-300 ${
-            alertAnimating 
-              ? 'transform translate-y-0 scale-100 opacity-100' 
-              : 'transform translate-y-8 scale-95 opacity-0'
-          }`}>
-            {/* Header del modal */}
-            <div className="bg-gradient-to-r from-red-600 to-red-700 text-white p-4 flex justify-between items-center">
-              <div className="flex items-center gap-3">
-                <div className="bg-white/20 p-2 rounded-lg animate-pulse">
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold">⚠️ Alerta de Stock Crítico</h2>
-                  <p className="text-red-100 text-sm">Se han detectado faltantes de inventario</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                {soundEnabled && (
-                  <div className="bg-white/20 p-1 rounded animate-bounce">
-                    <Volume2 className="w-4 h-4" />
-                  </div>
-                )}
-                <button
-                  onClick={closeAlertStock}
-                  className="bg-white/20 hover:bg-white/30 p-2 rounded-lg transition"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Contenido del modal */}
-            <div className="p-6 overflow-y-auto max-h-[calc(90vh-100px)]">
-              <AlertStock />
-              
-              {/* Botones de acción */}
-              <div className="mt-6 flex flex-wrap gap-3 justify-end border-t pt-4">
-                <Link
-                  to="/auth/crm/ordenes-faltantes"
-                  className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
-                  onClick={closeAlertStock}
-                >
-                  Ver Órdenes Completas
-                </Link>
-                <button
-                  onClick={closeAlertStock}
-                  className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition"
-                >
-                  Cerrar
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+   
 
       
     </>

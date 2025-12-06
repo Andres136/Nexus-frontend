@@ -10,6 +10,9 @@ export const useAuth = ({ middleware, url }) => {
   const [pagination, setPagination] = useState({});
   const [loading, setLoading] = useState(false);
   const token = localStorage.getItem("token");
+  const [permissions, setPermissions] = useState([]);
+  const [loadingPermissions, setLoadingPermissions] = useState(true);
+
   const navigate = useNavigate();
   const {
     data: user,
@@ -26,6 +29,27 @@ export const useAuth = ({ middleware, url }) => {
         throw Error(error?.response?.data?.errors);
       })
   );
+const loadPermissions = async () => {
+  try {
+    setLoadingPermissions(true);
+    const token = localStorage.getItem("token");  // ← CORREGIDO
+
+    const { data } = await clienteAxios.get("/api/user-permissions", {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+        const normalized = data.permissions.map(p =>
+      "/" + p.replace(/^\//, "")
+    );
+
+    console.log("Permisos del usuario:", normalized);
+
+    setPermissions(normalized);
+  } catch (error) {
+    console.error("Error cargando permisos", error);
+  } finally {
+    setLoadingPermissions(false);
+  }
+};
 
   const login = async (data, setErrores) => {
     try {
@@ -213,6 +237,14 @@ export const useAuth = ({ middleware, url }) => {
     }
   }, [middleware, user, error, location.pathname, navigate]);
 
+
+  useEffect(() => {
+  if (user) {
+    loadPermissions();
+  }
+}, [user]);
+
+
   // Función para actualizar un usuario
   const updateUsuario = async (userId, data, setErrores) => {
     const token = localStorage.getItem("token");
@@ -265,5 +297,8 @@ export const useAuth = ({ middleware, url }) => {
     users,
     pagination,
     updateUsuario,
+    permissions,
+    loadPermissions,
+    loadingPermissions,
   };
 };
