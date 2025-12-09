@@ -472,8 +472,8 @@ const fetchStockForProduct = async (productId) => {
                     <td className="p-3 border">
                  <input
   type="text"
-  readOnly
-  disabled={detalle.producto_id === null}
+//  readOnly
+//  disabled={detalle.producto_id === null}
   value={detalle.descripcion || ""}
   onChange={(e) => handleDetalleChange(index, "descripcion", e.target.value)}
   className="w-full border rounded p-2 min-w-[200px]"
