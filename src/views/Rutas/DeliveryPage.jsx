@@ -31,6 +31,7 @@ const getEstadoColor = (estado) => {
  const cargarEventos = async () => {
   try {
     const res = await deliveryEventsApi.getAll();
+  //  console.log("🚀  res:", res);
   
     const eventosBD = res.data.data;
 
@@ -38,10 +39,13 @@ const getEstadoColor = (estado) => {
 
 const fullcalendarEvents = eventosBD.map(e => {
   const { bg, border } = getEstadoColor(e.estado);
-
+const cliente = 
+    e?.orden?.cliente?.nombre 
+    ?? e?.orden?.orden_compra?.cliente?.nombre 
+    ?? "SIN CLIENTE";
   return {
-    id: e.id,
-    title: `OC ${e.orden_id} - ${e.orden.cliente.nombre} - ${e.vehiculo.placa} ${e.usuario.name}`,
+    id: e.orden,
+    title: `OC ${e.orden_id} - ${cliente} - ${e.vehiculo.placa} ${e.usuario.name}`,
     date: e.fecha_entrega,
     start: `${e.fecha_entrega}T${e.hora}`,
   classNames: [`estado-${e.estado}`], // 👈 ESTA ES LA CLAVE

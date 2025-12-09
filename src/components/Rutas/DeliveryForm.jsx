@@ -132,6 +132,7 @@ export default function DeliveryForm({ selectedDate, onSuccess, eventToEdit }) {
     const fetchOrdenesTrabajo = async () => {
       try {
         const response = await deliveryEventsApi.getOrdenesTrabajoParaEntregas();
+       //console.log("🚀 ~ file: DeliveryForm.jsx:202 ~ fetchOrdenesTrabajo ~ response:", response);
       
         setOrdenesTrabajo(response.data);
       } catch (error) {

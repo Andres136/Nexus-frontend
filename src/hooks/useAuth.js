@@ -41,7 +41,7 @@ const loadPermissions = async () => {
       "/" + p.replace(/^\//, "")
     );
 
-    console.log("Permisos del usuario:", normalized);
+   // console.log("Permisos del usuario:", normalized);
 
     setPermissions(normalized);
   } catch (error) {

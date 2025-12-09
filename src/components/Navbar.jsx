@@ -47,7 +47,7 @@ export default function Navbar() {
     { name: "Procesos", to: "/auth/procesos", icon: FolderKanban, alwaysVisible: true },
     { name: "Entregas ", to: "/auth/entregas", icon: TruckIcon, alwaysVisible: true },
     { name: "CRM", to: "/auth/crm", icon: Building2, allowedRoles: [1,2, 4, 5, 6, 7, 9,10,11] },
-    {name: "KPIS", to: "dashboard/indicadores", icon: Building2, allowedRoles: [1,2] },
+    {name: "KPIS", to: "dashboard/indicadores", icon: Building2, alwaysVisible: true },
     { name: "Indicadores", to: "indicadores", icon: BarChart2, allowedRoles: [1,2], onlyIfResponsable: true },
     {
       name: "",

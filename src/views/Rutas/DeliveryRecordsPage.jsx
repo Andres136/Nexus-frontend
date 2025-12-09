@@ -21,7 +21,8 @@ export default function DeliveryRecordsPage() {
 
   const cargarEventos = async () => {
     const res = await deliveryEventsApi.getEntregasPorUsuario();
-  
+   // console.log("🚀 ~ file: DeliveryRecordsPage.jsx:10 ~ cargarEventos ~ res:", res);
+
     setEventos(res.data.data);
     
     // ✅ Obtener el nombre del primer usuario para el saludo
@@ -39,6 +40,7 @@ export default function DeliveryRecordsPage() {
     setLoading(true);
     try {
       await deliveryEventsApi.updateEstado(id, { estado: nuevoEstado });
+      
       // Actualizar visualmente
       setEventos(prev =>
         prev.map(ev => (ev.id === id ? { ...ev, estado: nuevoEstado } : ev))

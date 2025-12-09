@@ -67,8 +67,6 @@ import MovimientoInventario from "../views/crm/MovimientoInventario";
 import DynamicProtectedRoute from "./DynamicProtectedRoute";
 import SettingPermissions from "../views/Roles/SettingPermissions";
 
-
-
 export default function Router() {
   return (
     <Routes>
@@ -80,36 +78,36 @@ export default function Router() {
         element={<ProtectedRoute allowedRoles={[1, 2, 3, 4, 5, 6, 7, 8, 9]} />}
       >
         <Route path="/auth" element={<AuthLyout />}>
-         <Route
-  path="procesos"
-  element={
-    <DynamicProtectedRoute permission="/auth/procesos">
-      <DepartamentosPage />
-    </DynamicProtectedRoute>
-  }
-/>
-
-         <Route
-           path="entregas"
-           element={
-             <DynamicProtectedRoute permission="/auth/entregas">
-               <DeliveryPage />
-             </DynamicProtectedRoute>
-           }
-         />
           <Route
-  path="procesos/:departamentoId"
-  element={
-    <DynamicProtectedRoute permission="/procesos/:departamentoId">
-      <ProcesosDepartamento />
-    </DynamicProtectedRoute>
-  }
-/>
-          <Route path="rendimiento" element={<KpiTareas />} />
-          <Route path="tareas" element={<Tareas />} />
+            path="procesos"
+            element={
+              <DynamicProtectedRoute permission="/auth/procesos">
+                <DepartamentosPage />
+              </DynamicProtectedRoute>
+            }
+          />
+
+          <Route
+            path="entregas"
+            element={
+              <DynamicProtectedRoute permission="/auth/entregas">
+                <DeliveryPage />
+              </DynamicProtectedRoute>
+            }
+          />
+          <Route
+            path="procesos/:departamentoId"
+            element={
+              <DynamicProtectedRoute permission="/procesos/:departamentoId">
+                <ProcesosDepartamento />
+              </DynamicProtectedRoute>
+            }
+          />
+          <Route path="rendimiento" element={<DynamicProtectedRoute permission="/auth/rendimiento"><Tareas /></DynamicProtectedRoute>} />
+          <Route path="tareas" element={<DynamicProtectedRoute permission="/auth/tareas"><Tareas /></DynamicProtectedRoute>} />
           <Route
             path="dashboard/indicadores"
-            element={<DashboardIndicadores />}
+            element={<DynamicProtectedRoute permission="/auth/dashboard/indicadores"><DashboardIndicadores /></DynamicProtectedRoute>}
           />
           <Route path="novedades" element={<Errores />} />
           <Route path="departamentos" element={<DepartatamentosUpdate />} />
@@ -121,9 +119,11 @@ export default function Router() {
           <Route path="crear-ordenes-compras" element={<OrdenCompraForm />} />
           <Route
             path="obtener-ordenes-compras"
-            element={<DynamicProtectedRoute permission="/auth/crm/obtener-ordenes-compras">
-              <ObtenerOrdenesCompra />
-            </DynamicProtectedRoute>}
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/obtener-ordenes-compras">
+                <ObtenerOrdenesCompra />
+              </DynamicProtectedRoute>
+            }
           />
           <Route path="vehiculos" element={<Vehiculos />} />
           <Route
@@ -155,9 +155,11 @@ export default function Router() {
 
           <Route
             path="/auth/crm/editar-compra/:id"
-            element={<DynamicProtectedRoute permission="/auth/crm/editar-compra/:id">
-              <OrdenCompraForm modo="edicion" />
-            </DynamicProtectedRoute>}
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/editar-compra/:id">
+                <OrdenCompraForm modo="edicion" />
+              </DynamicProtectedRoute>
+            }
           />
 
           <Route path="gestion-clientes" element={<GestionClientes />} />
@@ -178,7 +180,7 @@ export default function Router() {
             path="registrar-documentacion"
             element={<RegistroDocumentacion />}
           />
-          <Route path="ordenes-faltantes" element={<OrdenesFaltantes/>} />
+          <Route path="ordenes-faltantes" element={<OrdenesFaltantes />} />
           <Route path="proveedores" element={<Proveedores />} />
           <Route
             path="proveedores-ordenes-compra"
@@ -204,7 +206,10 @@ export default function Router() {
             path="/auth/crm/oc-provedor-update/:id"
             element={<UpdateOcProvedor />}
           />
-           <Route path="/auth/crm/ordenes-proveedor/dividir-orden/:id" element={<DividirOcProveedor />} />
+          <Route
+            path="/auth/crm/ordenes-proveedor/dividir-orden/:id"
+            element={<DividirOcProveedor />}
+          />
           <Route path="cotizaciones" element={<CotizacionForm />} />
           <Route path="mis-ordenes" element={<MisOrdenesComerciales />} />
           <Route path="mis-cotizaciones" element={<MisCotizaciones />} />
@@ -241,7 +246,10 @@ export default function Router() {
             element={<TrasladoInventario />}
           />
 
-          <Route path="/auth/crm/movimientos-stock" element={<MovimientoInventario />} />       
+          <Route
+            path="/auth/crm/movimientos-stock"
+            element={<MovimientoInventario />}
+          />
           <Route
             path="/auth/crm/conductores/:conductorId/revisiones"
             element={<RevisionesPage />}
@@ -253,9 +261,14 @@ export default function Router() {
       <Route element={<ProtectedRoute allowedRoles={[1]} />}>
         <Route path="/admin" element={<AdminLayout />}>
           <Route path="users" element={<GestionUsers />} />
-          <Route path="settings-permisos" element={<DynamicProtectedRoute permission="/admin/settings-permisos">
-              <SettingPermissions />
-            </DynamicProtectedRoute>} />
+          <Route
+            path="settings-permisos"
+            element={
+              <DynamicProtectedRoute permission="/admin/settings-permisos">
+                <SettingPermissions />
+              </DynamicProtectedRoute>
+            }
+          />
           <Route path="sedes" element={<Sedes />} />
           <Route path="rendimiento" element={<KpiTareas />} />
           <Route path="tareas" element={<Tareas />} />

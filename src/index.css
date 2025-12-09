@@ -80,3 +80,312 @@
   border-bottom: 40px solid transparent;
   border-right: 25px solid #188b0d;
 }
+/* Reset y base */
+          .fc {
+            font-family: 'Inter', system-ui, sans-serif;
+          }
+          
+          /* Toolbar responsive */
+          .fc-toolbar {
+            margin-bottom: 1rem !important;
+            flex-wrap: wrap !important;
+            gap: 0.5rem !important;
+          }
+          
+          .fc-toolbar-chunk {
+            display: flex !important;
+            align-items: center !important;
+            gap: 0.5rem !important;
+          }
+          
+          .fc-toolbar-title {
+            font-size: 1.125rem !important;
+            font-weight: 700 !important;
+            color: #1f2937 !important;
+          }
+          
+          @media (min-width: 768px) {
+            .fc-toolbar-title {
+              font-size: 1.5rem !important;
+            }
+          }
+          
+          /* Botones responsive */
+          .fc-button {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+            border: none !important;
+            border-radius: 6px !important;
+            padding: 4px 8px !important;
+            font-weight: 500 !important;
+            font-size: 0.75rem !important;
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2) !important;
+            transition: all 0.2s ease !important;
+          }
+          
+          @media (min-width: 768px) {
+            .fc-button {
+              padding: 8px 16px !important;
+              font-size: 0.875rem !important;
+              border-radius: 8px !important;
+            }
+          }
+          
+          .fc-button:hover {
+            background: linear-gradient(135deg, #2563eb, #1e40af) !important;
+            transform: translateY(-1px) !important;
+            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3) !important;
+          }
+          
+          .fc-button:disabled {
+            background: #e5e7eb !important;
+            color: #9ca3af !important;
+            transform: none !important;
+            box-shadow: none !important;
+          }
+          
+          /* ✅ Días responsive - Altura dinámica */
+          .fc-daygrid-day {
+            transition: background-color 0.2s ease !important;
+            min-height: 80px !important;
+            position: relative !important;
+          }
+          
+          @media (min-width: 640px) {
+            .fc-daygrid-day {
+              min-height: 100px !important;
+            }
+          }
+          
+          @media (min-width: 1024px) {
+            .fc-daygrid-day {
+              min-height: 120px !important;
+            }
+          }
+          
+          .fc-daygrid-day:hover {
+            background-color: #f8fafc !important;
+            cursor: pointer;
+          }
+          
+          .fc-daygrid-day:hover::after {
+            content: '+';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #3b82f6;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: bold;
+            z-index: 10;
+            opacity: 0.9;
+          }
+          
+          /* Números de días */
+          .fc-daygrid-day-number {
+            color: #374151 !important;
+            font-weight: 500 !important;
+            padding: 2px 4px !important;
+            border-radius: 4px !important;
+            transition: all 0.2s ease !important;
+            font-size: 0.75rem !important;
+          }
+          
+          @media (min-width: 768px) {
+            .fc-daygrid-day-number {
+              padding: 4px 8px !important;
+              border-radius: 6px !important;
+              font-size: 0.875rem !important;
+            }
+          }
+          
+          .fc-day-today .fc-daygrid-day-number {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+            color: white !important;
+            font-weight: 700 !important;
+          }
+          
+          .fc-daygrid-day-number:hover {
+            background-color: #e0f2fe !important;
+            color: #0369a1 !important;
+          }
+          
+          /* ✅ Eventos responsive - Tamaños más pequeños */
+          .fc-event {
+            border: none !important;
+            border-radius: 3px !important;
+            padding: 1px 2px !important;
+            margin: 0.5px !important;
+            font-size: 0.5rem !important;
+            font-weight: 500 !important;
+            cursor: pointer !important;
+            transition: all 0.2s ease !important;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+            display: block !important;
+            line-height: 1 !important;
+            overflow: hidden !important;
+            height: auto !important;
+            min-height: 12px !important;
+          }
+          
+          @media (min-width: 640px) {
+            .fc-event {
+              padding: 1px 3px !important;
+              margin: 0.5px !important;
+              font-size: 0.6rem !important;
+              border-radius: 4px !important;
+              min-height: 14px !important;
+            }
+          }
+          
+          @media (min-width: 1024px) {
+            .fc-event {
+              padding: 2px 4px !important;
+              margin: 1px !important;
+              font-size: 0.65rem !important;
+              border-radius: 5px !important;
+              min-height: 16px !important;
+            }
+          }
+          
+          .fc-event:hover {
+            transform: translateY(-1px) !important;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15) !important;
+            z-index: 999 !important;
+          }
+          
+          /* Colores de eventos */
+          .fc-event {
+            background: linear-gradient(135deg, #fb923c, #f97316) !important;
+            color: white !important;
+          }
+          
+          .fc-event[title*="proceso"] {
+            background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+          }
+          
+          .fc-event[title*="completad"] {
+            background: linear-gradient(135deg, #10b981, #059669) !important;
+          }
+          
+          .fc-event[title*="cancelad"] {
+            background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+          }
+          
+          /* Headers responsive */
+          .fc-col-header-cell {
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9) !important;
+            font-weight: 600 !important;
+            color: #475569 !important;
+            border-color: #e2e8f0 !important;
+            padding: 6px 2px !important;
+            font-size: 0.65rem !important;
+          }
+          
+          @media (min-width: 640px) {
+            .fc-col-header-cell {
+              padding: 8px 4px !important;
+              font-size: 0.75rem !important;
+            }
+          }
+          
+          @media (min-width: 1024px) {
+            .fc-col-header-cell {
+              padding: 12px 8px !important;
+              font-size: 0.875rem !important;
+            }
+          }
+          
+          /* Grid responsive */
+          .fc-scrollgrid {
+            border-color: #e2e8f0 !important;
+            border-radius: 8px !important;
+            overflow: hidden !important;
+          }
+          
+          @media (min-width: 1024px) {
+            .fc-scrollgrid {
+              border-radius: 12px !important;
+            }
+          }
+          
+          /* ✅ Frames responsive - Altura dinámica */
+          .fc-daygrid-day-frame {
+            min-height: 80px !important;
+          }
+          
+          @media (min-width: 640px) {
+            .fc-daygrid-day-frame {
+              min-height: 100px !important;
+            }
+          }
+          
+          @media (min-width: 1024px) {
+            .fc-daygrid-day-frame {
+              min-height: 120px !important;
+            }
+          }
+          
+          /* ✅ Ocultar botón "más" completamente */
+          .fc-daygrid-more-link {
+            display: none !important;
+          }
+          
+          /* ✅ Contenedor de eventos - Permitir desbordamiento */
+          .fc-daygrid-day-events {
+            margin: 0 !important;
+            padding: 0 !important;
+            min-height: 0 !important;
+          }
+          
+          .fc-daygrid-event-harness {
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+          
+          /* Títulos de eventos */
+          .fc-event-title {
+            display: block !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
+          }
+          
+          .fc-event-main {
+            display: block !important;
+            width: 100% !important;
+          }
+          
+          /* ✅ Asegurar que todos los eventos se muestren */
+          .fc-daygrid-day-bottom {
+            display: none !important;
+          }
+            /* Pendiente */
+.fc-event.estado-pendiente {
+  background: linear-gradient(135deg, #fb923c, #f97316) !important;
+  color: white !important;
+}
+
+/* En ruta */
+.fc-event.estado-en_ruta {
+  background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+  color: white !important;
+}
+
+/* Completado */
+.fc-event.estado-completado {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  color: white !important;
+}
+
+/* Cancelado */
+.fc-event.estado-cancelado {
+  background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+  color: white !important;
+}

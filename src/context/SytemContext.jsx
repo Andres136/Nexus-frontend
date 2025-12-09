@@ -65,7 +65,7 @@ const fetOrdenesCompra = async ({ queryKey }) => {
         headers: { Authorization: `Bearer ${token}` },
       }
     );
-    console.log("Órdenes de compra obtenidas:", response.data);
+  //  console.log("Órdenes de compra obtenidas:", response.data);
     return response.data;
   } catch (error) {
     console.error("Error al obtener órdenes de compra:", error);
