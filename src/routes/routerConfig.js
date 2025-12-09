@@ -1,8 +1,9 @@
 export const ROUTES_META = [
   { path: "/auth/procesos", permission: "/auth/procesos" },
   { path: "/auth/entregas", permission: "/auth/entregas" },
-  { path: "/procesos/:departamentoId", permission: "/procesos/:departamentoId" },
+  { path: "/auth/crm/obtener-ordenes-compras", permission: "/auth/crm/obtener-ordenes-compras" },
+
+  { path: "/auth/crm/editar-compra/:id", permission: "/auth/crm/editar-compra/:id" },
   { path: "/admin/settings-permisos", permission: "/admin/settings-permisos" },
-  { path: "/auth/indicadores", permission: "/auth/indicadores" },
   // Puedes ir agregando poco a poco
 ];

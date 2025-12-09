@@ -121,7 +121,9 @@ export default function Router() {
           <Route path="crear-ordenes-compras" element={<OrdenCompraForm />} />
           <Route
             path="obtener-ordenes-compras"
-            element={<ObtenerOrdenesCompra />}
+            element={<DynamicProtectedRoute permission="/auth/crm/obtener-ordenes-compras">
+              <ObtenerOrdenesCompra />
+            </DynamicProtectedRoute>}
           />
           <Route path="vehiculos" element={<Vehiculos />} />
           <Route
@@ -153,7 +155,9 @@ export default function Router() {
 
           <Route
             path="/auth/crm/editar-compra/:id"
-            element={<OrdenCompraForm modo="edicion" />}
+            element={<DynamicProtectedRoute permission="/auth/crm/editar-compra/:id">
+              <OrdenCompraForm modo="edicion" />
+            </DynamicProtectedRoute>}
           />
 
           <Route path="gestion-clientes" element={<GestionClientes />} />
@@ -249,7 +253,9 @@ export default function Router() {
       <Route element={<ProtectedRoute allowedRoles={[1]} />}>
         <Route path="/admin" element={<AdminLayout />}>
           <Route path="users" element={<GestionUsers />} />
-          <Route path="settings-permisos" element={<SettingPermissions />} />
+          <Route path="settings-permisos" element={<DynamicProtectedRoute permission="/admin/settings-permisos">
+              <SettingPermissions />
+            </DynamicProtectedRoute>} />
           <Route path="sedes" element={<Sedes />} />
           <Route path="rendimiento" element={<KpiTareas />} />
           <Route path="tareas" element={<Tareas />} />
