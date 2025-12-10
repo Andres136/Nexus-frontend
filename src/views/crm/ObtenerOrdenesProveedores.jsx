@@ -14,13 +14,7 @@ const { user } = useAuth({middleware: 'auth'});
 const [weekFilter, setWeekFilter] = useState("");
 
 console.log(user);
-const isAdmin = user?.role_id === 1 || user?.role_id === 4;
-const isCompras = user?.role_id === 4;
-const isOperario = user?.role_id === 3;
-const isAuditor = user?.role_id === 4;
-const canSeeSede = (orden) => {
-  return user?.sede_id === orden.sede_id;
-};
+const isAdmin = user?.role_id === 1;
 
 
   const navigate = useNavigate();

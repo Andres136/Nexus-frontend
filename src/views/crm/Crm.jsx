@@ -5,14 +5,14 @@ import {
   Users,
   BarChart,
   ShoppingCart,
-  Bell,
+ 
   MessageCircle,
   Clipboard,
   Menu,
   ClipboardList,
   FolderPlus,
   Car,
-  Package2Icon,
+ 
 } from "lucide-react";
 import Navbar from "../../components/Navbar";
 import { useAuth } from "../../hooks/useAuth";
@@ -62,13 +62,7 @@ export default function Crm() {
       icon: Clipboard,
       roles: [1, 6, 4, 7, 9, 5,10,11],
     },
-    {
-      name: "Notificaciones",
-      to: "/auth/crm/notificaciones",
-      icon: Bell,
-      roles: [1, 5, 10,11],
-      badge: totalNotificaciones,
-    },
+  
     {
       name: "Vehiculos",
       to: "/auth/crm/vehiculos",
@@ -100,12 +94,7 @@ export default function Crm() {
       icon: UserGroupIcon,
       roles: [1, 4, 5, 6, 10,11],
     },
-    {
-      name: "Mis Ordenes de Compra",
-      to: "/auth/crm/mis-ordenes",
-      icon: Package2Icon,
-      roles: [1,  7, 9],
-    },
+
     // {
     //   name: "ordenes-compra-proveedor",
     //   to: "/auth/crm/ordenes-compra-proveedor",
@@ -141,11 +130,7 @@ export default function Crm() {
   }, []);
 
   // Filtrar rutas por rol
-const filteredMenuLinks = menuLinks.filter((link) => {
-  const rolValido = link.roles.includes(user?.role_id);
-  const deptoValido = !link.departamentos || link.departamentos.includes(user?.departamento_id);
-  return rolValido && deptoValido;
-});
+const filteredMenuLinks = menuLinks;
 
 
   return (

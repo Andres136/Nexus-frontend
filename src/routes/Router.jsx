@@ -87,7 +87,14 @@ export default function Router() {
             }
           />
 
-               <Route path="marketing" element={<DynamicProtectedRoute permission="/auth/marketing"><Marketing /></DynamicProtectedRoute>} />
+          <Route
+            path="marketing"
+            element={
+              <DynamicProtectedRoute permission="/auth/marketing">
+                <Marketing />
+              </DynamicProtectedRoute>
+            }
+          />
 
           <Route
             path="entregas"
@@ -105,11 +112,29 @@ export default function Router() {
               </DynamicProtectedRoute>
             }
           />
-          <Route path="rendimiento" element={<DynamicProtectedRoute permission="/auth/rendimiento"><Tareas /></DynamicProtectedRoute>} />
-          <Route path="tareas" element={<DynamicProtectedRoute permission="/auth/tareas"><Tareas /></DynamicProtectedRoute>} />
+          <Route
+            path="rendimiento"
+            element={
+              <DynamicProtectedRoute permission="/auth/rendimiento">
+                <Tareas />
+              </DynamicProtectedRoute>
+            }
+          />
+          <Route
+            path="tareas"
+            element={
+              <DynamicProtectedRoute permission="/auth/tareas">
+                <Tareas />
+              </DynamicProtectedRoute>
+            }
+          />
           <Route
             path="dashboard/indicadores"
-            element={<DynamicProtectedRoute permission="/auth/dashboard/indicadores"><DashboardIndicadores /></DynamicProtectedRoute>}
+            element={
+              <DynamicProtectedRoute permission="/auth/dashboard/indicadores">
+                <DashboardIndicadores />
+              </DynamicProtectedRoute>
+            }
           />
           <Route path="novedades" element={<Errores />} />
           <Route path="departamentos" element={<DepartatamentosUpdate />} />
@@ -117,8 +142,18 @@ export default function Router() {
         </Route>
 
         <Route path="/auth/crm" element={<Crm />}>
-          <Route path="ordenes-trabajo" element={<ObtenerOrdenesTrabajo />} />
-          <Route path="crear-ordenes-compras" element={<OrdenCompraForm />} />
+          <Route
+            path="ordenes-trabajo"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/ordenes-trabajo">
+                <ObtenerOrdenesTrabajo />
+              </DynamicProtectedRoute>
+            }
+          />
+          <Route path="crear-ordenes-compras"
+           element={<DynamicProtectedRoute permission="/auth/crm/crear-ordenes-compras">
+              <OrdenCompraForm />
+            </DynamicProtectedRoute>} />
           <Route
             path="obtener-ordenes-compras"
             element={
@@ -127,10 +162,13 @@ export default function Router() {
               </DynamicProtectedRoute>
             }
           />
-          <Route path="vehiculos" element={<Vehiculos />} />
+          <Route path="vehiculos" element={<DynamicProtectedRoute
+           permission="/auth/crm/vehiculos"><Vehiculos /></DynamicProtectedRoute>} />
           <Route
             path="/auth/crm/vehiculos-register"
-            element={<FormVehiculos />}
+            element={<DynamicProtectedRoute permission="/auth/crm/vehiculos-register">
+              <FormVehiculos />
+            </DynamicProtectedRoute>}
           />
           <Route
             path="/auth/crm/vehiculos-documentos"
@@ -164,26 +202,42 @@ export default function Router() {
             }
           />
 
-          <Route path="gestion-clientes" element={<GestionClientes />} />
+          <Route path="gestion-clientes" element={<DynamicProtectedRoute permission="/auth/crm/gestion-clientes">
+              <GestionClientes />
+            </DynamicProtectedRoute>} />
           <Route path="reporte-inventarios" element={<Inventarios />} />
-          <Route path="notificaciones" element={<Notifycaciones />} />
+     
           <Route
             path="detalles-compras/:id"
-            element={<DetallesOrdenesCompra />}
+            element={<DynamicProtectedRoute permission="/auth/crm/detalles-compras/:id">
+              <DetallesOrdenesCompra />
+            </DynamicProtectedRoute>}
           />
           <Route
             path="ordenes-trabajo/:id"
-            element={<DetallesOrdenTrabajo />}
+            element={<DynamicProtectedRoute permission="/auth/crm/ordenes-trabajo/:id">
+              <DetallesOrdenTrabajo />
+            </DynamicProtectedRoute>}
           />
-          <Route path="kpis" element={<Kpi />} />
-          <Route path="pqrs" element={<Pqr />} />
-          <Route path="ordenes-facturar" element={<OrdenesFacturar />} />
+          <Route path="kpis" element={<DynamicProtectedRoute permission="/auth/crm/kpis">
+              <Kpi />
+            </DynamicProtectedRoute>} />
+          <Route path="pqrs" element={<DynamicProtectedRoute permission="/auth/crm/pqrs">
+              <Pqr />
+            </DynamicProtectedRoute>} />
+          <Route path="ordenes-facturar" element={<DynamicProtectedRoute permission="/auth/crm/ordenes-facturar">
+              <OrdenesFacturar />
+            </DynamicProtectedRoute>} />
           <Route
             path="registrar-documentacion"
-            element={<RegistroDocumentacion />}
+            element={<DynamicProtectedRoute permission="/auth/crm/registrar-documentacion">
+              <RegistroDocumentacion />
+            </DynamicProtectedRoute>}
           />
           <Route path="ordenes-faltantes" element={<OrdenesFaltantes />} />
-          <Route path="proveedores" element={<Proveedores />} />
+          <Route path="proveedores" element={<DynamicProtectedRoute permission="/auth/crm/proveedores">
+              <Proveedores />
+            </DynamicProtectedRoute>} />
           <Route
             path="proveedores-ordenes-compra"
             element={<FormOrdenesProveedores />}
@@ -283,8 +337,6 @@ export default function Router() {
           />
           <Route path="empresas" element={<Empresas />} />
           <Route path="bodegas" element={<Bodegas />} />
-
-     
         </Route>
       </Route>
 
