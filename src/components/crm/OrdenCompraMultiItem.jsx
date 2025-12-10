@@ -15,17 +15,9 @@ export default function OrdenCompraMultiItem({ onDetallesChange, errores = {}, v
 
   const { products, isLoading, isEmpty, isFetching } = useProducts({ search: searchTerm });
 
-  const productOptions = products.map((p) => ({
-    value: p.id,
-    code: p.code,
-    name: p.name,
-    description: p.description || "Sin descripción",
-    label: `${p.code}- ${p.name}- ${p.description || "Sin descripción"}`,
-  }));
 
-  const getSelectedProduct = (productId) => {
-    return productOptions.find(p => p.value === productId) || null;
-  };
+
+
 
   return (
     <div className="space-y-4">

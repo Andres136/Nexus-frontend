@@ -221,9 +221,10 @@ exportar: (params = {}) =>
     }),
   createTraslado: (data) => apiClient.post("/api/traslados-internos", data),
   sedesTraslados: () => apiClient.get("/api/traslados-internos-sedes"),
-  ordenesCompraTraslados: () =>
-    apiClient.get("/api/traslados-internos-ordenes-compra"),
+  ordenesCompraTraslados: (params = {}) =>
+    apiClient.get("/api/traslados-internos-ordenes-compra", { params }),
 
+  getOcShow: (id) => apiClient.get(`/api/oc-traslados/${id}`),
   movimientosStock: (params = {}) =>
     apiClient.get("/api/movimientos-stock", { params }),
 };

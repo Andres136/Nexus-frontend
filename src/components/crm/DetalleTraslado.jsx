@@ -22,19 +22,44 @@ export default function DetalleTraslado({
 
   const [bodegasDisponibles, setBodegasDisponibles] = useState([]);
 
-  const cargarOC = async () => {
-    try {
-      const response = await inventariosApi.ordenesCompraTraslados();
-      // console.log('Órdenes de compra disponibles:', response.data);
-      setOcproveedores(response.data);
-    } catch (error) {
-      console.error("Error al cargar órdenes de compra:", error);
-    }
-  };
+const cargarOC = async (value = "") => {
+  try {
+    const params = value ? { q: value } : {};
+    const response = await inventariosApi.ordenesCompraTraslados(params);
+    setOcproveedores(response.data);
+  } catch (error) {
+    console.error("Error al cargar órdenes de compra:", error);
+  }
+};
+
+
+const cargarOcIndividual = async (id) => {
+  try {
+    const response = await inventariosApi.getOcShow(id);
+    setOcproveedores([response.data]);
+  } catch (error) {
+    console.error("Error al cargar orden de compra individual:", error);
+  }
+};
 
   useEffect(() => {
     cargarOC();
   }, []);
+
+useEffect(() => {
+  if (detalle.orden_compra_id && ocproveedores.length > 0) {
+    const existe = ocproveedores.some(
+      (oc) => oc.id === detalle.orden_compra_id
+    );
+
+    if (!existe) {
+      cargarOcIndividual(detalle.orden_compra_id);
+    }
+  }
+}, [detalle.orden_compra_id, ocproveedores]);
+
+
+
 
   const fetchDirectStock = async (productId) => {
   try {
@@ -161,17 +186,9 @@ useEffect(() => {
   const selectedOc =
     ocproveedores.find((oc) => oc.id == detalle.orden_compra_id) || null;
 
-  // ✅ Encontrar el producto seleccionado para mostrar solo el code
-  const selectedProduct = products.find((p) => p.id === detalle.product_id);
-  const productValue = selectedProduct
-    ? {
-        value: selectedProduct.id,
-        code: selectedProduct.code,
-        name: selectedProduct.name,
-        description: selectedProduct.description,
-        label: selectedProduct.code, // ✅ Solo el código en el select
-      }
-    : null;
+
+
+
 
   return (
     <div key={index} className="border p-3 rounded bg-gray-50 mb-4 shadow-sm">
@@ -229,6 +246,14 @@ useEffect(() => {
                 placeholder="Seleccione OC..."
                 isClearable
                 isSearchable
+            onInputChange={(inputValue) => {
+  if (typeof inputValue === "string" && inputValue.length >= 2) {
+    cargarOC(inputValue); // búsqueda dinámica
+  } else if (inputValue === "") {
+    cargarOC(); // recargar las 50 iniciales
+  }
+}}
+
                 noOptionsMessage={() => "No hay órdenes disponibles"}
                 className="text-sm"
                 styles={{
@@ -278,67 +303,54 @@ useEffect(() => {
 
             {/* Producto */}
             <td className="px-3 py-2 border">
-              <Select
-                autoFocus
-                isLoading={isLoading || isFetching}
-                options={products.map((p) => ({
-                  value: p.id,
-                  code: p.code,
-                  name: p.name,
-                  description: p.description || "Sin descripción",
-                  label: `${p.code} - ${p.name}`, // Para mostrar en el dropdown
-                }))}
-                onInputChange={(value) => setSearch(value)}
-                onChange={handleProductChange}
-                value={productValue}
-                placeholder="Seleccione producto..."
-                isClearable
-                // ✅ Formatear cómo se ve la opción seleccionada
-                formatOptionLabel={(option, { context }) => {
-                  if (context === "value") {
-                    // ✅ Solo código cuando está seleccionado
-                    return option.code;
-                  }
-                  // ✅ Código + nombre en el dropdown
-                  return `${option.code} - ${option.name}`;
-                }}
-                styles={{
-                  control: (provided, state) => ({
-                    ...provided,
-                    minHeight: "32px",
-                    fontSize: "14px",
-                    border: errores?.[`detalles.${index}.product_id`]
-                      ? "1px solid #ef4444"
-                      : "1px solid #d1d5db",
-                    "&:hover": {
-                      borderColor: "#3b82f6",
-                    },
-                    boxShadow: state.isFocused ? "0 0 0 1px #3b82f6" : "none",
-                  }),
-                  valueContainer: (provided) => ({
-                    ...provided,
-                    padding: "2px 6px",
-                  }),
-                  input: (provided) => ({
-                    ...provided,
-                    margin: "0px",
-                  }),
-                  singleValue: (provided) => ({
-                    ...provided,
-                    overflow: "visible",
-                    textOverflow: "clip",
-                    whiteSpace: "nowrap",
-                  }),
-                  menu: (provided) => ({
-                    ...provided,
-                    minWidth: "300px",
-                  }),
-                  option: (provided) => ({
-                    ...provided,
-                    fontSize: "14px",
-                  }),
-                }}
-              />
+                              <Select
+  isLoading={isLoading || isFetching}
+  options={products.map((p) => ({
+    value: p.id,
+    label: `${p.code || p.code_id || "Sin código"} - ${p.name || "Sin nombre"}`,
+    code: p.code,
+    name: p.name,
+  }))}
+  value={
+    detalle.product_id && products.length > 0
+      ? (() => {
+          const product = products.find((p) => p.id === detalle.product_id);
+          if (product) {
+            return {
+              value: product.id,
+              label: `${product.code || product.code_id || "Sin código"} - ${product.name || "Sin nombre"}`,
+            };
+          } 
+        })()
+      : null
+  }
+  onChange={handleProductChange}
+  onInputChange={(inputValue) => setSearch(inputValue)}
+  placeholder="Buscar producto por código o nombre..."
+  noOptionsMessage={() =>
+    isLoading
+      ? "Cargando productos..."
+      : isEmpty
+      ? "No se encontraron productos"
+      : "Escribe para buscar"
+  }
+  className="min-w-[250px]"
+  menuPortalTarget={document.body}
+  styles={{
+    menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+    control: (base, { data }) => ({
+      ...base,
+      minHeight: "32px",
+      fontSize: "14px",
+      borderColor: data?.isInvalid ? "#dc2626" : base.borderColor,
+    }),
+    singleValue: (base, { data }) => ({
+      ...base,
+      color: data?.isInvalid ? "#dc2626" : base.color,
+    }),
+  }}
+/>
+        
               {errores?.[`detalles.${index}.product_id`] && (
                 <p className="text-red-500 text-xs mt-1 flex items-center space-x-1">
                   <span>•</span>

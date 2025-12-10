@@ -46,7 +46,7 @@ export default function Navbar() {
     { name: "Inicio", to: "/", icon: Home, allowedRoles: [1,10,11] },
     { name: "Procesos", to: "/auth/procesos", icon: FolderKanban, alwaysVisible: true },
     { name: "Entregas ", to: "/auth/entregas", icon: TruckIcon, alwaysVisible: true },
-    { name: "CRM", to: "/auth/crm", icon: Building2, allowedRoles: [1,2, 4, 5, 6, 7, 9,10,11] },
+    { name: "CRM", to: "/auth/crm", icon: Building2, alwaysVisible: true },
     {name: "KPIS", to: "dashboard/indicadores", icon: Building2, alwaysVisible: true },
     { name: "Indicadores", to: "indicadores", icon: BarChart2, allowedRoles: [1,2], onlyIfResponsable: true },
     {
@@ -55,7 +55,7 @@ export default function Navbar() {
       allowedRoles: [1, 2, 4, 5, 6, 7, 9, 10, 11],
       hasSubmenu: true,
       submenu: [
-       { name: "Marketing", to: "/admin/marketing", icon: Megaphone, allowedRoles: [1, 2, 10, 11] },
+       { name: "Marketing", to: "/auth/marketing", icon: Megaphone, allowedRoles: [1, 2, 10, 11] },
         { name: "Novedades", to: "novedades", icon: Bell,Bell: [1,2, 10,11] },
         { name: "Tareas", to: "tareas", icon: ListChecks, allowedRoles: [1,2, 10,11] },
         {name: "Settings", to: "/admin/settings-permisos", icon: BarChart2, allowedRoles: [1] },

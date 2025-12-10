@@ -1,6 +1,7 @@
-import { createRef, useState } from 'react';
+import { createRef, useEffect, useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { Eye, EyeOff, User, Lock, ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function Login() {
   const emailRef = createRef();
@@ -8,10 +9,21 @@ export default function Login() {
   const [errores, setErrores] = useState({});
   const [mostrarPassword, setMostrarPassword] = useState(false);
   
-  const { login } = useAuth({
-    middleware: "guest",
-    url: "/admin/users",
-  });
+  const { login, user } = useAuth({middleware: 'guest'});
+
+const navigate = useNavigate();
+
+
+useEffect(() => {
+  if (user) {
+    if (user.role_id === 1) {
+      navigate("/admin/users", { replace: true });
+    } else {
+      navigate("/auth/procesos", { replace: true });
+    }
+  }
+}, [user]);
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();

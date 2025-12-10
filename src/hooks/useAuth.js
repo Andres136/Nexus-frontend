@@ -201,41 +201,7 @@ const loadPermissions = async () => {
     }
   };
 
-  useEffect(() => {
-    if (middleware === "guest" && user) {
-      // Definir las rutas según los roles de usuario
-      const roleRedirects = {
-        1: "/admin/users", // Administrador
-        2: "/auth/procesos", // HSEQ
-        3: "/auth/procesos", // Invitado
-        4: "/auth/crm", // Administrativo
-        5: "/auth/crm", // Compras
-        6: "/auth/crm", // Inventario
-        7: "/auth/crm", // Comercial
-        8: "/auth/crm", // Transporte
-        9: "/auth/crm", // Ejecutivo Comercial
-      };
 
-      const redirectUrl = roleRedirects[user.role_id] || "/auth/procesos";
-      navigate(redirectUrl);
-      return;
-    }
-
-    if (middleware === "auth" && user) {
-      // 🔹 Si el usuario es ADMINISTRADOR, no hacer redirección
-      if (user.role_id === 1) return;
-
-      // 🔹 Si el usuario NO es admin y está fuera de /auth, redirigir
-      if (!location.pathname.startsWith("/auth")) {
-        navigate("/auth/procesos");
-        return;
-      }
-    }
-
-    if (middleware === "auth" && error) {
-      navigate("/");
-    }
-  }, [middleware, user, error, location.pathname, navigate]);
 
 
   useEffect(() => {

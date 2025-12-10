@@ -87,6 +87,8 @@ export default function Router() {
             }
           />
 
+               <Route path="marketing" element={<DynamicProtectedRoute permission="/auth/marketing"><Marketing /></DynamicProtectedRoute>} />
+
           <Route
             path="entregas"
             element={
@@ -282,7 +284,7 @@ export default function Router() {
           <Route path="empresas" element={<Empresas />} />
           <Route path="bodegas" element={<Bodegas />} />
 
-          <Route path="marketing" element={<Marketing />} />
+     
         </Route>
       </Route>
 
