@@ -93,6 +93,13 @@ export default function ObtenerOrdenesTrabajo() {
             </div>
           </div>
           
+          <div className="mt-4">
+            <Link
+              to="/auth/crm/alistamientos"
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white px-4 py-2 sm:px-5 sm:py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 shadow-lg text-sm sm:text-base"
+            >Gestionar Alistamientos
+            </Link>
+          </div>
       
         </div>
 

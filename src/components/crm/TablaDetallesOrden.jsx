@@ -32,6 +32,9 @@ export default function TablaDetallesOrden({
   const { stockInfo, getStockWithSuggestions } = useContext(ProductContext);
 
   const { products, isLoading, isFetching, isEmpty } = useProducts({ search });
+  // Cache interno para conservar todos los productos vistos
+const [productCache, setProductCache] = useState({});
+
   const [bodegasDisponibles, setBodegasDisponibles] = useState([]);
   const [productStock, setProductStock] = useState(null);
   const [loadingStock, setLoadingStock] = useState(false);
@@ -79,6 +82,36 @@ export default function TablaDetallesOrden({
       }
     }
   }, [detalleActivo?.bodegas, detalleActivo?.producto_equivalentes]);
+// Poblamos el cache con productos traídos por búsqueda
+useEffect(() => {
+  if (!products) return;
+
+  setProductCache(prev => {
+    const nuevo = { ...prev };
+    products.forEach(p => {
+      nuevo[p.id] = p;
+    });
+    return nuevo;
+  });
+}, [products]);
+
+// Si un producto equivalente no está en la búsqueda actual, lo cargamos por ID
+const ensureProductLoaded = async (id) => {
+  if (productCache[id]) return productCache[id];
+
+  try {
+    const res = await productsApi.getById(id);
+    const prod = res.data.product;
+
+    setProductCache(prev => ({ ...prev, [id]: prod }));
+
+    return prod;
+  } catch (e) {
+    console.error("Error cargando producto por ID:", id, e);
+    return null;
+  }
+};
+
 
   const fetchStockForProduct = async (detalle) => {
     const id = detalle.product_id || detalle.product?.id;
@@ -1330,110 +1363,92 @@ export default function TablaDetallesOrden({
                   </div>
                 )}
 
-                <Select
-                  isMulti
-                  isLoading={isLoading || isFetching}
-                  options={products.map((p) => ({
-                    value: p.id,
-                    code: p.code,
-                    name: p.name,
-                    description: p.description || "Sin descripción",
-                    label: `${p.code} - ${p.name}`,
-                  }))}
-                  components={{
-                    Option: ProductOption,
-                  }}
-                  onInputChange={(value) => setSearch(value)}
-                  // ✅ CAMBIAR: onChange de productos equivalentes para usar resumen_por_bodega
-                  onChange={async (selectedOptions) => {
-                    setLoadingStock(true);
-                    const equivalentesExistentes =
-                      detalleActivo.producto_equivalentes || [];
-                    const idsSeleccionados = selectedOptions.map(
-                      (sel) => sel.value
-                    );
+            <Select
+  isMulti
+  isLoading={isLoading || isFetching}
+  options={products.map((p) => ({
+    value: p.id,
+    label: `${p.code} - ${p.name}`,
+    code: p.code,
+    name: p.name,
+    description: p.description || "",
+  }))}
+  components={{ Option: ProductOption }}
+  onInputChange={(value) => setSearch(value)}
+  
+  onChange={async (selectedOptions) => {
+    setLoadingStock(true);
 
-                    // Mantener existentes
-                    const nuevosEquivalentes = equivalentesExistentes.filter(
-                      (eq) => idsSeleccionados.includes(eq.id)
-                    );
+    const idsSeleccionados = selectedOptions.map(s => s.value);
 
-                    // Nuevos productos
-                    const nuevosSeleccionados = selectedOptions.filter(
-                      (sel) =>
-                        !equivalentesExistentes.some(
-                          (eq) => eq.id === sel.value
-                        )
-                    );
+    // Aseguramos que todos los productos estén cargados en cache
+    await Promise.all(idsSeleccionados.map(id => ensureProductLoaded(id)));
 
-                    // ✅ NUEVA VERSIÓN: Llama directamente al endpoint para obtener stock en tiempo real
-                    const nuevosDatos = await Promise.all(
-                      nuevosSeleccionados.map(async (sel) => {
-                        try {
-                          const res = await productsApi.getStock(sel.value); // 🔹 llamada directa
-                          const stockData = res?.data?.stock;
+    // Mantener los equivalentes ya existentes
+    const existentes =
+      detalleActivo.producto_equivalentes?.filter(eq =>
+        idsSeleccionados.includes(eq.id)
+      ) || [];
 
-                          return {
-                            id: sel.value,
-                            cantidad: 0,
-                            razon: "",
-                            stock: stockData?.stock_total ?? 0,
-                            resumen_por_bodega:
-                              stockData?.resumen_por_bodega || [],
-                            bodegas: [],
-                          };
-                        } catch (error) {
-                          console.error(
-                            "❌ Error al obtener stock del producto equivalente:",
-                            error
-                          );
-                          showToast(
-                            "error",
-                            "Error al obtener stock del producto equivalente"
-                          );
-                          return {
-                            id: sel.value,
-                            cantidad: 0,
-                            razon: "",
-                            stock: 0,
-                            resumen_por_bodega: [],
-                            bodegas: [],
-                          };
-                        }
-                      })
-                    );
+    // Nuevos equivalentes seleccionados
+    const nuevosIds = idsSeleccionados.filter(
+      id => !existentes.some(eq => eq.id === id)
+    );
 
-                    setDetalleActivo({
-                      ...detalleActivo,
-                      producto_equivalentes: [
-                        ...nuevosEquivalentes,
-                        ...nuevosDatos,
-                      ],
-                    });
-                    setLoadingStock(false);
-                  }}
-                  value={detalleActivo.producto_equivalentes?.map((eq) => {
-                    const product = products.find((p) => p.id === eq.id);
-                    return {
-                      value: eq.id,
-                      code: product?.code || "",
-                      name: product?.name || `Producto #${eq.id}`,
-                      description: product?.description || "",
-                      label: `${product?.code || ""} - ${
-                        product?.name || `Producto #${eq.id}`
-                      }`,
-                    };
-                  })}
-                  placeholder="🔍 Buscar productos equivalentes..."
-                  noOptionsMessage={() =>
-                    isEmpty
-                      ? "No se encontraron productos"
-                      : "Escribe para buscar"
-                  }
-                  loadingMessage={() => "Buscando productos..."}
-                  styles={customSelectStyles}
-                  menuPortalTarget={document.body}
-                />
+    const nuevos = await Promise.all(
+      nuevosIds.map(async (id) => {
+        try {
+          const res = await productsApi.getStock(id);
+          const stock = res?.data?.stock;
+
+          return {
+            id,
+            razon: "",
+            cantidad: 0,
+            resumen_por_bodega: stock?.resumen_por_bodega || [],
+            bodegas: [],
+          };
+        } catch (e) {
+          console.error("Error cargando stock:", e);
+          return {
+            id,
+            razon: "",
+            cantidad: 0,
+            resumen_por_bodega: [],
+            bodegas: [],
+          };
+        }
+      })
+    );
+
+    setDetalleActivo({
+      ...detalleActivo,
+      producto_equivalentes: [...existentes, ...nuevos],
+    });
+
+    setLoadingStock(false);
+  }}
+
+  value={detalleActivo.producto_equivalentes?.map((eq) => {
+    const product = productCache[eq.id];
+
+    return {
+      value: eq.id,
+      label: product
+        ? `${product.code} - ${product.name}`
+        : `Producto #${eq.id}`, // fallback elegante
+      code: product?.code,
+      name: product?.name,
+      description: product?.description,
+    };
+  }) || []}
+
+  placeholder="🔍 Buscar productos equivalentes..."
+  noOptionsMessage={() => (isEmpty ? "No se encontraron productos" : "Escribe para buscar")}
+  styles={customSelectStyles}
+  menuPortalTarget={document.body}
+/>
+
 
                 {/* Lista de equivalentes mejorada */}
                 {detalleActivo.producto_equivalentes?.length > 0 && (
@@ -1446,7 +1461,7 @@ export default function TablaDetallesOrden({
                     )}
 
                     {detalleActivo.producto_equivalentes.map((eq, idx) => {
-                      const product = products.find((p) => p.id === eq.id);
+                      const product = productCache[eq.id];
                       return (
                         <div
                           key={eq.id}
@@ -1558,11 +1573,9 @@ export default function TablaDetallesOrden({
                                     return bodega
                                       ? {
                                           value: b.bodega_id,
-                                          label: `${bodega.bodega_nombre} - ${
-                                            bodega.sede_nombre
-                                          } (${formatNumber(
+                                          label: `${bodega.bodega_nombre}  (${formatNumber(
                                             bodega.stock_total
-                                          )} unidades)`,
+                                          )} Kg)`,
                                           bodega_nombre: bodega.bodega_nombre,
                                           sede_nombre: bodega.sede_nombre,
                                           stock: bodega.stock_total,
@@ -1619,13 +1632,8 @@ export default function TablaDetallesOrden({
                                             bodegaInfo?.bodega_nombre ||
                                             "Bodega"}
                                         </span>
-                                        <div className="text-xs text-gray-500 flex items-center gap-1">
-                                          <MapPin className="w-3 h-3" />
-                                          {b.sede_nombre ||
-                                            bodegaInfo?.sede_nombre ||
-                                            "Sin sede"}
-                                        </div>
-                                        <span className="text-xs text-gray-500">
+                                  
+                                        <span className="text-xs text-gray-500 gap-2 flex items-center">
                                           Stock:{" "}
                                           {formatNumber(
                                             bodegaInfo?.stock_total || 0

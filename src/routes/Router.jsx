@@ -66,6 +66,9 @@ import DeliveryPage from "../views/Rutas/DeliveryPage";
 import MovimientoInventario from "../views/crm/MovimientoInventario";
 import DynamicProtectedRoute from "./DynamicProtectedRoute";
 import SettingPermissions from "../views/Roles/SettingPermissions";
+import AlistamientoPanel from "../views/vsm/AlistamientoPanel";
+import VsmFlowDashboard from "../components/vsm/VsmFlowDashboard";
+import VsmDashboard from "../components/vsm/VsmDashboard";
 
 export default function Router() {
   return (
@@ -150,10 +153,14 @@ export default function Router() {
               </DynamicProtectedRoute>
             }
           />
-          <Route path="crear-ordenes-compras"
-           element={<DynamicProtectedRoute permission="/auth/crm/crear-ordenes-compras">
-              <OrdenCompraForm />
-            </DynamicProtectedRoute>} />
+          <Route
+            path="crear-ordenes-compras"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/crear-ordenes-compras">
+                <OrdenCompraForm />
+              </DynamicProtectedRoute>
+            }
+          />
           <Route
             path="obtener-ordenes-compras"
             element={
@@ -162,13 +169,21 @@ export default function Router() {
               </DynamicProtectedRoute>
             }
           />
-          <Route path="vehiculos" element={<DynamicProtectedRoute
-           permission="/auth/crm/vehiculos"><Vehiculos /></DynamicProtectedRoute>} />
+          <Route
+            path="vehiculos"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/vehiculos">
+                <Vehiculos />
+              </DynamicProtectedRoute>
+            }
+          />
           <Route
             path="/auth/crm/vehiculos-register"
-            element={<DynamicProtectedRoute permission="/auth/crm/vehiculos-register">
-              <FormVehiculos />
-            </DynamicProtectedRoute>}
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/vehiculos-register">
+                <FormVehiculos />
+              </DynamicProtectedRoute>
+            }
           />
           <Route
             path="/auth/crm/vehiculos-documentos"
@@ -202,42 +217,73 @@ export default function Router() {
             }
           />
 
-          <Route path="gestion-clientes" element={<DynamicProtectedRoute permission="/auth/crm/gestion-clientes">
-              <GestionClientes />
-            </DynamicProtectedRoute>} />
+          <Route
+            path="gestion-clientes"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/gestion-clientes">
+                <GestionClientes />
+              </DynamicProtectedRoute>
+            }
+          />
           <Route path="reporte-inventarios" element={<Inventarios />} />
-     
+
           <Route
             path="detalles-compras/:id"
-            element={<DynamicProtectedRoute permission="/auth/crm/detalles-compras/:id">
-              <DetallesOrdenesCompra />
-            </DynamicProtectedRoute>}
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/detalles-compras/:id">
+                <DetallesOrdenesCompra />
+              </DynamicProtectedRoute>
+            }
           />
           <Route
             path="ordenes-trabajo/:id"
-            element={<DynamicProtectedRoute permission="/auth/crm/ordenes-trabajo/:id">
-              <DetallesOrdenTrabajo />
-            </DynamicProtectedRoute>}
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/ordenes-trabajo/:id">
+                <DetallesOrdenTrabajo />
+              </DynamicProtectedRoute>
+            }
           />
-          <Route path="kpis" element={<DynamicProtectedRoute permission="/auth/crm/kpis">
-              <Kpi />
-            </DynamicProtectedRoute>} />
-          <Route path="pqrs" element={<DynamicProtectedRoute permission="/auth/crm/pqrs">
-              <Pqr />
-            </DynamicProtectedRoute>} />
-          <Route path="ordenes-facturar" element={<DynamicProtectedRoute permission="/auth/crm/ordenes-facturar">
-              <OrdenesFacturar />
-            </DynamicProtectedRoute>} />
+          <Route
+            path="kpis"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/kpis">
+                <Kpi />
+              </DynamicProtectedRoute>
+            }
+          />
+          <Route
+            path="pqrs"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/pqrs">
+                <Pqr />
+              </DynamicProtectedRoute>
+            }
+          />
+          <Route
+            path="ordenes-facturar"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/ordenes-facturar">
+                <OrdenesFacturar />
+              </DynamicProtectedRoute>
+            }
+          />
           <Route
             path="registrar-documentacion"
-            element={<DynamicProtectedRoute permission="/auth/crm/registrar-documentacion">
-              <RegistroDocumentacion />
-            </DynamicProtectedRoute>}
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/registrar-documentacion">
+                <RegistroDocumentacion />
+              </DynamicProtectedRoute>
+            }
           />
           <Route path="ordenes-faltantes" element={<OrdenesFaltantes />} />
-          <Route path="proveedores" element={<DynamicProtectedRoute permission="/auth/crm/proveedores">
-              <Proveedores />
-            </DynamicProtectedRoute>} />
+          <Route
+            path="proveedores"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/proveedores">
+                <Proveedores />
+              </DynamicProtectedRoute>
+            }
+          />
           <Route
             path="proveedores-ordenes-compra"
             element={<FormOrdenesProveedores />}
@@ -309,6 +355,31 @@ export default function Router() {
           <Route
             path="/auth/crm/conductores/:conductorId/revisiones"
             element={<RevisionesPage />}
+          />
+          <Route
+            path="/auth/crm/alistamientos"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/alistamientos">
+                <AlistamientoPanel />
+              </DynamicProtectedRoute>
+            }
+          />
+          <Route
+            path="/auth/crm/flujo-vsm"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/flujo-vsm">
+                <VsmFlowDashboard />
+              </DynamicProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/auth/crm/vsm/dashboard"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/vsm/dashboard">
+                <VsmDashboard />
+              </DynamicProtectedRoute>
+            }
           />
         </Route>
       </Route>

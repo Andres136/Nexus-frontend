@@ -23,6 +23,20 @@ export default function DetallesOrdenCompraProveedores({
   const [selectorAbierto, setSelectorAbierto] = useState(null);
 
   const { products, isLoading, isFetching, isEmpty } = useProducts({ search });
+  const [productCache, setProductCache] = useState({});
+useEffect(() => {
+  if (!products || products.length === 0) return;
+
+  setProductCache(prev => {
+    const nuevo = { ...prev };
+    products.forEach(p => {
+      nuevo[p.id] = p;
+    });
+    return nuevo;
+  });
+}, [products]);
+
+  
   // Enviar al padre
   useEffect(() => {
     onChange(detalles);
@@ -147,18 +161,30 @@ export default function DetallesOrdenCompraProveedores({
                           onInputChange={(value) => setSearch(value)}
                           onChange={(option) => {
                            // console.log(option);
-                            if (option) {
-                              const nuevos = [...detalles];
-                              nuevos[index].producto_id = option.value;
-                              nuevos[index].code = option.code;
-                              
-                              const campoActual = nuevos[index].campo_seleccionado;
-                              nuevos[index].descripcion = campoActual === "name" 
-                                ? option.name 
-                                : option.description;
-                              
-                              setDetalles(nuevos);
-                            }
+                   if (option) {
+  const nuevos = [...detalles];
+  nuevos[index].producto_id = option.value;
+  nuevos[index].code = option.code;
+
+  const campoActual = nuevos[index].campo_seleccionado;
+  nuevos[index].descripcion = campoActual === "name" 
+    ? option.name 
+    : option.description;
+
+  setDetalles(nuevos);
+
+  // 🔥 Guardar en cache
+  setProductCache(prev => ({
+    ...prev,
+    [option.value]: {
+      id: option.value,
+      code: option.code,
+      name: option.name,
+      description: option.description
+    }
+  }));
+}
+
                             setSelectorAbierto(null);
                           }}
                           onBlur={() => setSelectorAbierto(null)}
@@ -183,7 +209,8 @@ export default function DetallesOrdenCompraProveedores({
                         {detalle.producto_id ? (
                           <div className="flex-1">
                             <div className="font-medium text-gray-900">
-                              {products.find((p) => p.id === detalle.producto_id)?.name || "Producto no encontrado"}
+                             {productCache[detalle.producto_id]?.name || "Producto no encontrado"}
+
                             </div>
                             <div className="text-sm text-gray-500">
                               {detalle.code}
