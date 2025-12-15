@@ -21,6 +21,7 @@ export default function DeliveryForm({ selectedDate, onSuccess, eventToEdit }) {
   const { vehiculos } = useListarVehiculos();
   const [ordenesTrabajo, setOrdenesTrabajo] = useState([]);
   const [usuarios, setUsuarios] = useState([]);
+  const [searhOt, setSearchOt] = useState("");
 
 
   // ✅ Inicializar estado correctamente
@@ -131,8 +132,11 @@ export default function DeliveryForm({ selectedDate, onSuccess, eventToEdit }) {
   useEffect(() => {
     const fetchOrdenesTrabajo = async () => {
       try {
-        const response = await deliveryEventsApi.getOrdenesTrabajoParaEntregas();
-       console.log("🚀 ~ file: DeliveryForm.jsx:202 ~ fetchOrdenesTrabajo ~ response:", response);
+        const response = await deliveryEventsApi.getOrdenesTrabajoParaEntregas({
+          search: searhOt,
+       
+        });
+     // console.log("🚀 ~ file: DeliveryForm.jsx:202 ~ fetchOrdenesTrabajo ~ response:", response);
       
         setOrdenesTrabajo(response.data);
       } catch (error) {
@@ -141,7 +145,7 @@ export default function DeliveryForm({ selectedDate, onSuccess, eventToEdit }) {
     };
 
     fetchOrdenesTrabajo();
-  }, []);
+  }, [searhOt]);
 
   return (
     <div className="max-h-[80vh] overflow-y-auto">
@@ -188,6 +192,7 @@ export default function DeliveryForm({ selectedDate, onSuccess, eventToEdit }) {
   onChange={(selected) =>
     setForm(prev => ({ ...prev, orden_id: selected ? selected.value : "" }))
   }
+  onInputChange={(value) => setSearchOt(value)}
   options={
     ordenesTrabajo?.map(ot => ({
       value: ot.id,
