@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 
+
 export const useAuth = ({ middleware, url }) => {
   const [users, setUsers] = useState([]);
   const [pagination, setPagination] = useState({});
@@ -12,6 +13,7 @@ export const useAuth = ({ middleware, url }) => {
   const token = localStorage.getItem("token");
   const [permissions, setPermissions] = useState([]);
   const [loadingPermissions, setLoadingPermissions] = useState(true);
+
 
   const navigate = useNavigate();
   const {
@@ -211,6 +213,7 @@ const loadPermissions = async () => {
 }, [user]);
 
 
+
   // Función para actualizar un usuario
   const updateUsuario = async (userId, data, setErrores) => {
     const token = localStorage.getItem("token");
@@ -266,5 +269,6 @@ const loadPermissions = async () => {
     permissions,
     loadPermissions,
     loadingPermissions,
+
   };
 };

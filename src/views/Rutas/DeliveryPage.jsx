@@ -31,7 +31,7 @@ const getEstadoColor = (estado) => {
  const cargarEventos = async () => {
   try {
     const res = await deliveryEventsApi.getAll();
-  //  console.log("🚀  res:", res);
+   //console.log("🚀  res:", res);
   
     const eventosBD = res.data.data;
 
@@ -44,7 +44,7 @@ const cliente =
     ?? e?.orden?.orden_compra?.cliente?.nombre 
     ?? "SIN CLIENTE";
   return {
-    id: e.orden,
+    id: e.id,
     title: `OC ${e.orden_id} - ${cliente} - ${e.vehiculo.placa} ${e.usuario.name}`,
     date: e.fecha_entrega,
     start: `${e.fecha_entrega}T${e.hora}`,

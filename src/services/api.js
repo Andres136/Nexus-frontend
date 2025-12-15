@@ -139,9 +139,7 @@ export const productsApi = {
   getById: (id) => apiClient.get(`/api/products/${id}`),
 
   create: (data) =>
-    apiClient.post("/api/products", data, {
-      headers: { "Content-Type": "multipart/form-data" },
-    }),
+    apiClient.post("/api/productos", data),
   update: (id, data) =>
     apiClient.put(`/api/products/${id}`, data, {
       headers: { "Content-Type": "multipart/form-data" },
@@ -182,7 +180,23 @@ export const productsApi = {
     apiClient.get("/api/products/exportar/plantilla",{
       responseType: "blob",
     }),
+createCategoria: (data) =>
+  apiClient.post("/api/categorias", data, {
+    headers: { "Content-Type": "multipart/form-data" },
+  }),
+  getCategorias: () => apiClient.get("/api/categorias"),
+
+editCategoria: (id, data) =>
+  apiClient.put(`/api/categorias/${id}`, data),
+
+generarBarcodes: (data) =>
+  apiClient.post("/api/products/generar-barcodes", data,{
+    responseType: "blob",
+  }),
+
 };
+
+
 //Ordenes de compra a proveedores API
 export const ordenesCompraProveedoresApi = {
   //Peticion al pdf al crear la orden de compra

@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { FiSearch, FiFilter, FiDownload, FiRefreshCw, FiPackage, FiTrendingUp, FiTrendingDown, FiAlertTriangle, FiPlus, FiAlertCircle, FiArrowRight } from 'react-icons/fi';
 import { BsBoxSeam, BsGraphUp, BsExclamationTriangle, BsFileEarmarkExcel } from 'react-icons/bs';
-import { Link } from 'react-router-dom';
+import { Link,useLocation } from 'react-router-dom';
 import { inventariosApi, productsApi } from '../../services/api';
 import { useEmpresas } from '../../hooks/useEmpresas';
 import SincronizacionSiigoProductos from '../../components/crm/SincronizacionSiigoProductos';
 import Swal from 'sweetalert2';
+
 
 
 export default function Inventarios() {
@@ -22,6 +23,8 @@ const lastScrollTop = useRef(0);
   const [selectedEmpresa, setSelectedEmpresa] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [bodegasFiltradas, setBodegasFiltradas] = useState([]);
+  const [productosSeleccionados, setProductosSeleccionados] = useState([]);
+
 
 
 
@@ -237,6 +240,32 @@ const descargarPlantilla = async () => {
     }
   };
 
+  const generarEtiquetas = async () => {
+  try {
+    const res = await productsApi.generarBarcodes({
+      product_ids: productosSeleccionados,
+    });
+
+    const url = window.URL.createObjectURL(
+      new Blob([res.data], { type: "application/pdf" })
+    );
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "etiquetas_productos.pdf";
+    link.click();
+
+  } catch (error) {
+    console.error("Error al generar las etiquetas", error);
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: "No se pudieron generar las etiquetas",
+    });
+  }
+};
+
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -271,6 +300,17 @@ const descargarPlantilla = async () => {
           Gestiona tu inventario de forma eficiente
         </p>
       </div>
+
+         <Link
+          to="/auth/crm/crear-productos"
+          className={`text-sm font-medium transition-all ${
+            location.pathname === "/auth/crm/crear-productos"
+              ? "text-blue-600 border-b-2 border-blue-600 pb-1"
+              : "text-gray-600 hover:text-gray-900"
+          }`}
+        >
+          Crear Productos
+        </Link>
       
       {/* Botón principal más prominente */}
       <Link
@@ -280,6 +320,10 @@ const descargarPlantilla = async () => {
         <BsFileEarmarkExcel className="w-4 h-4" />
         Cargar Inventario Excel
       </Link>
+
+
+
+
     </div>
 
     {/* 🔹 Grupos de botones organizados */}
@@ -330,6 +374,23 @@ const descargarPlantilla = async () => {
             <FiDownload className="w-4 h-4" />
             <span>Exportar Excel</span>
           </button>
+            <button
+    disabled={productosSeleccionados.length === 0}
+    onClick={generarEtiquetas}
+    className="
+      flex items-center gap-1.5
+      px-3 py-2
+      text-xs font-medium
+      rounded-md
+      border border-gray-200
+      bg-gray-50 text-gray-700
+      hover:bg-gray-100
+      disabled:opacity-40 disabled:cursor-not-allowed
+    "
+  >
+    <FiDownload className="w-3.5 h-3.5" />
+    Etiquetas
+  </button>
         </div>
       </div>
 
@@ -367,6 +428,7 @@ const descargarPlantilla = async () => {
         </div>
         <div className="flex gap-2">
           <SincronizacionSiigoProductos />
+     
         </div>
       </div>
     </div>
@@ -577,20 +639,11 @@ const descargarPlantilla = async () => {
                       </p>
                     </div>
                     
-                    <div>
-                      <p className="text-gray-500">Valor</p>
-                      <p className="font-medium">{formatCurrency(item.valor_total)}</p>
-                      <p className="text-gray-400">
-                        Unit: {formatCurrency(item.valor_unitario)}
-                      </p>
-                    </div>
+                  
                     
                     <div>
-                      <p className="text-gray-500">Último mov.</p>
-                      <p className="font-medium">
-                        {new Date(item.ultimo_movimiento).toLocaleDateString('es-CO')}
-                      </p>
-                    </div>
+                      <p className="text-gray-500">Acciones</p>
+                 </div>
                   </div>
                 </div>
               );
@@ -614,11 +667,9 @@ const descargarPlantilla = async () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Estado
                   </th>
+                
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Valor
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Último Movimiento
+                 Acciones
                   </th>
                 </tr>
               </thead>
@@ -694,23 +745,35 @@ const descargarPlantilla = async () => {
                         </span>
                       </td>
                       
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {formatCurrency(item.valor_total)}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          Unit: {formatCurrency(item.valor_unitario)}
-                        </div>
-                      </td>
+              
                       
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(item.ultimo_movimiento).toLocaleDateString('es-CO')}
-                      </td>
+                     <td className="px-6 py-4 text-center">
+ <input
+  type="checkbox"
+  checked={productosSeleccionados.includes(item.producto.id)}
+  onChange={(e) => {
+    setProductosSeleccionados(prev => {
+      if (e.target.checked) {
+        return [...new Set([...prev, item.producto.id])];
+      } else {
+        return prev.filter(id => id !== item.producto.id);
+      }
+    });
+  }}
+/>
+
+</td>
+
                     </tr>
                   );
                 })}
               </tbody>
+
+
+ 
             </table>
+
+
           </div>
 
           {/* ✅ Estado vacío responsivo */}

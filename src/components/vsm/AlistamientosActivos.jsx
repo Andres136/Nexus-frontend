@@ -16,7 +16,8 @@ import {
 
 } from "lucide-react";
 import Swal from "sweetalert2";
-import VsmDashboard from "./VsmDashboard";
+import { usersApi } from "../../services/api";
+
 
 export default function AlistamientosActivos() {
   const { alistamientos, loading, refresh } = useAlistamientosActivos();
@@ -128,6 +129,47 @@ function AlistamientoCard({ alist, onUpdate, onPausa, onReanudar, onFinalizar })
     return `${h}h ${m}m ${s}s`;
   };
 
+  const onAgregarUsuario = async (alistId) => {
+  try {
+    const response = await vsmService.usuariosDisponibles(alistId);
+    //console.log("Usuarios disponibles:", response.data);
+    // 🔒 Blindaje total
+    const options = {};
+    response.data.forEach((user) => {
+      options[user.id] = user.name;
+    });
+
+    if (Object.keys(options).length === 0) {
+      toast.info("No hay usuarios disponibles para agregar");
+      return;
+    }
+
+    const { value: userId } = await Swal.fire({
+      title: "Agregar usuario al alistamiento",
+      input: "select",
+      inputOptions: options,
+      inputPlaceholder: "Selecciona un usuario",
+      showCancelButton: true,
+      confirmButtonText: "Agregar",
+      cancelButtonText: "Cancelar",
+      inputValidator: (value) => {
+        if (!value) return "Debes seleccionar un usuario";
+      }
+    });
+
+    if (!userId) return;
+
+    await vsmService.agregarUsuario(alistId, { usuario_id: userId });
+    toast.success("Usuario agregado correctamente");
+    onUpdate();
+
+  } catch (e) {
+    console.error(e);
+    toast.error("Error al cargar usuarios");
+  }
+};
+
+
   // ✅ Función para determinar color del estado
   const getEstadoColor = (estado) => {
     switch (estado) {
@@ -139,7 +181,21 @@ function AlistamientoCard({ alist, onUpdate, onPausa, onReanudar, onFinalizar })
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
+  };const getFechaEntregaUI = (fecha) => {
+  if (!fecha) {
+    return { text: "Sin fecha", className: "text-gray-400" };
+  }
+
+  const vencida = new Date(fecha + "T00:00:00") < new Date();
+
+  return {
+    text: new Date(fecha).toLocaleDateString("es-CO"),
+    className: vencida ? "text-red-600" : "text-gray-600",
+    vencida
   };
+};
+
+
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-200">
@@ -153,6 +209,7 @@ function AlistamientoCard({ alist, onUpdate, onPausa, onReanudar, onFinalizar })
             </div>
             <span className="font-bold text-gray-900 text-sm">OT #{alist.orden_trabajo_id}</span>
             <span className="text-xs text-gray-500">{alist.cliente?.nombre}</span>
+         
           </div>
           <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getEstadoColor(alist.estado)}`}>
             {alist.estado}
@@ -164,8 +221,19 @@ function AlistamientoCard({ alist, onUpdate, onPausa, onReanudar, onFinalizar })
           <div className="flex items-center gap-1 text-xs text-gray-600">
             <Building2 className="w-3 h-3" />
             <span>{alist.sede?.nombre ?? "Sin sede"}</span>
+  
+
           </div>
-          
+             {(() => {
+  const info = getFechaEntregaUI(alist.orden_trabajo?.orden_compra?.fecha_entrega);
+
+  return (
+    <span className={`text-xs font-medium ${info.className}`}>
+  Fecha entrega {info.text}
+      {info.vencida && " (Vencida)"}
+    </span>
+  );
+})()}
           <div className="flex items-center gap-1">
             <Timer className="w-3 h-3 text-blue-600" />
             <span className="font-semibold text-sm text-gray-900">
@@ -185,6 +253,14 @@ function AlistamientoCard({ alist, onUpdate, onPausa, onReanudar, onFinalizar })
             <h4 className="font-medium text-sm text-gray-900">
               Usuarios ({alist.usuarios.length})
             </h4>
+            <button
+  onClick={() => onAgregarUsuario(alist.id)}
+  className="ml-auto flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800"
+>
+  <User className="w-3 h-3" />
+  Agregar
+</button>
+
           </div>
           
           <div className="space-y-2">

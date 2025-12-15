@@ -159,6 +159,19 @@ const location = useLocation();
           Pronóstico
         </Link>
 
+
+        {/* AUDITORÍA DE ALISTAMIENTOS */}       
+         <Link
+          to="/auth/crm/vsm/auditoria"
+          className={`text-sm font-medium transition-all ${
+            location.pathname === "/auth/crm/vsm/alistamientos-auditoria"
+              ? "text-blue-600 border-b-2 border-blue-600 pb-1"
+              : "text-gray-600 hover:text-gray-900"
+          }`}
+        >
+          Auditoría de Alistamientos
+        </Link>
+
       </div>
 
     </div>

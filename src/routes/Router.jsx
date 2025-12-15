@@ -69,6 +69,8 @@ import SettingPermissions from "../views/Roles/SettingPermissions";
 import AlistamientoPanel from "../views/vsm/AlistamientoPanel";
 import VsmFlowDashboard from "../components/vsm/VsmFlowDashboard";
 import VsmDashboard from "../components/vsm/VsmDashboard";
+import AlistamientosAuditoria from "../components/vsm/AlistamientosAuditoria";
+import CrearProductos from "../components/crm/CrearProductos";
 
 export default function Router() {
   return (
@@ -347,7 +349,12 @@ export default function Router() {
             path="/auth/crm/traslado-inventario"
             element={<TrasladoInventario />}
           />
-
+          <Route
+            path="/auth/crm/crear-productos"
+            element={<DynamicProtectedRoute permission="/auth/crm/crear-productos">
+              <CrearProductos />
+            </DynamicProtectedRoute>}
+          />
           <Route
             path="/auth/crm/movimientos-stock"
             element={<MovimientoInventario />}
@@ -378,6 +385,16 @@ export default function Router() {
             element={
               <DynamicProtectedRoute permission="/auth/crm/vsm/dashboard">
                 <VsmDashboard />
+              </DynamicProtectedRoute>
+            }
+          />
+
+
+          <Route
+            path="/auth/crm/vsm/auditoria"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/vsm/auditoria">
+                <AlistamientosAuditoria/>
               </DynamicProtectedRoute>
             }
           />

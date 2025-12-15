@@ -104,7 +104,7 @@ export function useAlistamientos() {
       setLoading(true);
 
       const res = await vsmService.finalizarAlistamiento(id);
-      toast.success("Alistamiento finalizado");
+ 
 
       // 🔥 Actualizar estado local
       setAlistamiento((prev) =>

@@ -20,6 +20,7 @@ export default function useVSMFlow() {
   const fetchFlow = async () => {
     try {
       const res = await vsmForecastService.vsmFlow();
+   //   console.log("Flujo VSM cargado:", res.data);
       const newData = res.data;
 
       // Evita el salto visual → No actualizamos si no cambió la data

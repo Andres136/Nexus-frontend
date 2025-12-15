@@ -6,11 +6,13 @@ import Swal from 'sweetalert2';
 import { useEmpresas } from '../../hooks/useEmpresas';
 import { useSedes } from '../../hooks/useSedes';
 
+
 export default function RegistrarInventario() {
   const [loading, setLoading] = useState(false);
   const { empresas } = useEmpresas();
   const { bodegas } = useSedes();
   const [errores, setErrores] = useState({});
+
 
   // Estados para carga de Excel
   const [excelData, setExcelData] = useState({

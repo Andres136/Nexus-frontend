@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { productsApi } from "../services/api";
 
 export const useProducts = ({
@@ -9,6 +9,7 @@ export const useProducts = ({
   options = {}
 } = {}) => {
   const queryClient = useQueryClient();
+
 
   const {
     enabled = true,
@@ -63,6 +64,9 @@ export const useProducts = ({
     loadProduct();
   }, [selectedProductId, products, search, queryClient]);
 
+
+  
+
   return {
     products,
     isLoading: query.isLoading,
@@ -70,6 +74,7 @@ export const useProducts = ({
     error: query.error,
     refetch: query.refetch,
     isFetching: query.isFetching,
-    isEmpty: !query.isLoading && products.length === 0
+    isEmpty: !query.isLoading && products.length === 0,
+
   };
 };

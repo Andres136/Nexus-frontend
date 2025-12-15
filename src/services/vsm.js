@@ -75,6 +75,15 @@ export const vsmService = {
     apiClient.post(
       `/api/alistamientos/${alistamientoId}/usuarios/${usuarioId}/reanudar`
     ),
+
+    usuariosDisponibles: (alistamientoId) =>
+    apiClient.get(
+      `/api/alistamientos/${alistamientoId}/usuarios-disponibles`
+    ),
+    agregarUsuario: (alistamientoId, data) =>
+    apiClient.post(
+      `/api/alistamientos/${alistamientoId}/agregar-usuario`, data
+    ),
 };
 
 //Traer ordenes de trabajo para alistamiento
@@ -93,5 +102,14 @@ export const vsmForecastService = {
 
   vsmFlow : () =>
     apiClient.get('/api/vsm/flujo'),
+  pronostico:()=>
+    apiClient.get('/api/vsm/pronostico'),
 }
+
+//Alistamientos finalizados
+export const alistamientosFinalizadosService = {
+  obtenerAlistamientosFinalizados: (params) =>
+    apiClient.get('/api/vsm/ots-finalizadas', { params }),
+}
+
 
