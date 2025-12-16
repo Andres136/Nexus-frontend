@@ -39,19 +39,19 @@ const getEstadoColor = (estado) => {
 
 const fullcalendarEvents = eventosBD.map(e => {
   const { bg, border } = getEstadoColor(e.estado);
-const cliente = 
-    e?.orden?.cliente?.nombre 
-    ?? e?.orden?.orden_compra?.cliente?.nombre 
-    ?? "SIN CLIENTE";
+
+  const otId = e?.orden?.orden_trabajo?.id ?? "N/A";
+  const cliente =
+    e?.orden?.orden_trabajo?.cliente?.nombre ?? "SIN CLIENTE";
+
   return {
     id: e.id,
-    title: `OC ${e.orden_id} - ${cliente} - ${e.vehiculo.placa} ${e.usuario.name}`,
+    title: `OT ${otId} - ${cliente} - ${e.vehiculo.placa} ${e.usuario.name}`,
     date: e.fecha_entrega,
     start: `${e.fecha_entrega}T${e.hora}`,
-  classNames: [`estado-${e.estado}`], // 👈 ESTA ES LA CLAVE
+    classNames: [`estado-${e.estado}`],
     backgroundColor: bg,
     borderColor: border,
-
     extendedProps: {
       fullData: e
     }

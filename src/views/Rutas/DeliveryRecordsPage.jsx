@@ -139,6 +139,8 @@ export default function DeliveryRecordsPage() {
         ) : (
           <div className="space-y-4">
             {eventos.map((ev) => (
+
+
               <div
                 key={ev.id}
                 className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow overflow-hidden"
@@ -152,8 +154,14 @@ export default function DeliveryRecordsPage() {
                         <Package className="w-4 h-4 text-blue-600" />
                       </div>
                       <div>
-                        <p className="font-bold text-gray-900">OC #{ev.orden_id}</p>
-                        <p className="text-sm text-gray-600">{ev.orden?.cliente?.nombre}</p>
+<p className="font-bold text-gray-900">
+  OT #{ev.orden_trabajo_id}
+</p>
+
+<p className="text-sm text-gray-600">
+  Cliente: {ev.cliente_final?.nombre ?? "SIN CLIENTE"}
+</p>
+
                       </div>
                     </div>
                     
@@ -254,7 +262,7 @@ export default function DeliveryRecordsPage() {
                       
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-3 mb-3">
-                          <p className="font-bold text-gray-900 text-lg">OC #{ev.orden_id}</p>
+                          <p className="font-bold text-gray-900 text-lg">OC #{ev.orden_trabajo_id}</p>
                           <span className={`text-xs px-3 py-1 rounded-full border font-medium ${colorEstado(ev.estado)}`}>
                             <div className="flex items-center gap-1">
                               {getEstadoIcon(ev.estado)}
@@ -269,7 +277,7 @@ export default function DeliveryRecordsPage() {
                           <div className="flex items-center gap-2">
                             <User className="w-4 h-4" />
                             <span className="font-medium">Cliente:</span>
-                            <span>{ev.orden?.cliente?.nombre}</span>
+                            <span>{ev.cliente_final?.nombre ?? "SIN CLIENTE"}</span>
                           </div>
 
                           {/* Fecha y hora */}
