@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import Select from "react-select";
 
+
 export default function DeliveryForm({ selectedDate, onSuccess, eventToEdit }) {
 
   const { vehiculos } = useListarVehiculos();
@@ -26,7 +27,7 @@ export default function DeliveryForm({ selectedDate, onSuccess, eventToEdit }) {
 
   // ✅ Inicializar estado correctamente
   const [form, setForm] = useState({
-    orden_id: "",
+    orden_id:null,
     fecha_entrega: selectedDate || "",
     hora: "08:00",
     cantidad: "",
@@ -39,6 +40,7 @@ export default function DeliveryForm({ selectedDate, onSuccess, eventToEdit }) {
   const [errores, setErrores] = useState({});
   const [loading, setLoading] = useState(false);
 
+
   
 
   // ✅ useEffect arreglado - debe ir DESPUÉS del useState
@@ -46,7 +48,8 @@ export default function DeliveryForm({ selectedDate, onSuccess, eventToEdit }) {
     if (eventToEdit) {
  
       setForm({
-        orden_id: eventToEdit.orden_id || "",
+     orden_id: eventToEdit?.orden_id ? Number(eventToEdit.orden_id) : null,
+
         fecha_entrega: eventToEdit.fecha_entrega || selectedDate || "",
         hora: eventToEdit.hora || "08:00",
         cantidad: eventToEdit.cantidad || "",
@@ -168,7 +171,7 @@ export default function DeliveryForm({ selectedDate, onSuccess, eventToEdit }) {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Grid responsivo */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           
           {/* ORDEN */}
           <div className="md:col-span-2">
@@ -178,21 +181,29 @@ export default function DeliveryForm({ selectedDate, onSuccess, eventToEdit }) {
             </label>
  <Select
   name="orden_id"
-  className={`w-full p-3 border rounded-xl transition-all duration-200 ${
+  className={`w-full p-3 transition-all duration-200 ${
     errores.orden_id ? "border-red-300 bg-red-50" : "border-gray-300"
   }`}
-  value={
-    ordenesTrabajo
-      ?.map(ot => ({
-        value: ot.id,
-        label: `OT#${ot.id} `
-      }))
-      .find(opt => opt.value === form.orden_id) || null
+value={
+  ordenesTrabajo
+    ?.map(ot => ({
+      value: Number(ot.id),
+      label: `OT#${ot.id}`
+    }))
+    .find(opt => opt.value === Number(form.orden_id)) || null
+}
+
+onChange={(selected) =>
+  setForm(prev => ({
+    ...prev,
+    orden_id: selected ? Number(selected.value) : null
+  }))
+}onInputChange={(value, actionMeta) => {
+  if (actionMeta.action === "input-change") {
+    setSearchOt(value);
   }
-  onChange={(selected) =>
-    setForm(prev => ({ ...prev, orden_id: selected ? selected.value : "" }))
-  }
-  onInputChange={(value) => setSearchOt(value)}
+}}
+
   options={
     ordenesTrabajo?.map(ot => ({
       value: ot.id,
@@ -429,23 +440,36 @@ export default function DeliveryForm({ selectedDate, onSuccess, eventToEdit }) {
 
         {/* Botón de envío */}
         <div className="pt-6 border-t border-gray-200">
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02]"
-          >
-            {loading ? (
-              <>
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                Guardando...
-              </>
-            ) : (
-              <>
-                <Save className="w-5 h-5" />
-                {eventToEdit ? "Actualizar Entrega" : "Guardar Entrega"}
-              </>
-            )}
-          </button>
+    <button
+  type="submit"
+  disabled={loading}
+  className="
+    w-full
+    flex items-center justify-center gap-2
+    px-4 py-2
+    text-sm font-semibold
+    text-white
+    bg-blue-600
+    rounded-lg
+    hover:bg-blue-700
+    transition-colors
+    disabled:opacity-50
+    disabled:cursor-not-allowed
+  "
+>
+  {loading ? (
+    <>
+      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+      Guardando…
+    </>
+  ) : (
+    <>
+      <Save className="w-4 h-4" />
+      {eventToEdit ? "Actualizar" : "Guardar"}
+    </>
+  )}
+</button>
+
         </div>
       </form>
     </div>
