@@ -139,7 +139,7 @@ export default function DeliveryForm({ selectedDate, onSuccess, eventToEdit }) {
           search: searhOt,
        
         });
-     // console.log("🚀 ~ file: DeliveryForm.jsx:202 ~ fetchOrdenesTrabajo ~ response:", response);
+     console.log("🚀 ~ file: DeliveryForm.jsx:202 ~ fetchOrdenesTrabajo ~ response:", response);
       
         setOrdenesTrabajo(response.data);
       } catch (error) {
@@ -187,7 +187,7 @@ export default function DeliveryForm({ selectedDate, onSuccess, eventToEdit }) {
 value={
   ordenesTrabajo
     ?.map(ot => ({
-      value: Number(ot.id),
+      value: Number(ot.orden_compra_id),
       label: `OT#${ot.id}`
     }))
     .find(opt => opt.value === Number(form.orden_id)) || null
@@ -206,7 +206,7 @@ onChange={(selected) =>
 
   options={
     ordenesTrabajo?.map(ot => ({
-      value: ot.id,
+      value: ot.orden_compra_id,
       label: `OT#${ot.id} `
     })) || []
   }
