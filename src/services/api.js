@@ -194,6 +194,13 @@ generarBarcodes: (data) =>
     responseType: "blob",
   }),
 
+  //Api para crear productos
+  createProductsExcel: (formData) =>
+    apiClient.post("api/products/crear-productos-excel", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+      responseType: "blob",
+    }),
+
 };
 
 
@@ -217,6 +224,9 @@ export const ordenesCompraProveedoresApi = {
 export const auditApi = {
   getAuditData: (params) =>
     apiClient.get("/api/audit-ordenes-compra", { params }),
+
+  postRevisadaOc: (id) =>
+    apiClient.post(`/api/orden-trabajo/${id}/marcar-revisada`),
 };
 
 //iNVEANTARIOS

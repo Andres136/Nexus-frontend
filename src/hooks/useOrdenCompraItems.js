@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
 import { calcularCamposBolsa } from "../helpers/utils/calculoBolsa";
 
-const FACTOR_PULGADA = 0.393701;
-const FACTOR_CONSTANTE = 302;
 
 function generateUUID() {
   return crypto.randomUUID();
@@ -13,8 +11,8 @@ function createNewItem(n) {
     _uuid: generateUUID(),
     itemNumber: n,
     product_id: null,
-    largo_cm: null ,
-    ancho_cm: null,
+    largo_cm: 0,
+    ancho_cm: 0,
     calibre: 0,
     cantidad: "",
     valor_unitario: 0,
@@ -26,7 +24,9 @@ function createNewItem(n) {
     precio_total: "",
     cliente_clb: 0,
     descripcion: "",
-    observaciones: `${n}`
+    observaciones: `${n}`,
+    tipo_embalaje: 'unidad',
+    
   };
 }
 

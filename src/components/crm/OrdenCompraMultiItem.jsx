@@ -57,7 +57,7 @@ export default function OrdenCompraMultiItem({ onDetallesChange, errores = {}, v
             <div className="space-y-3">
               {/* Producto */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Producto</label>
+            
                         <Select
   isLoading={isLoading || isFetching}
   options={products.map((p) => ({
@@ -197,6 +197,27 @@ export default function OrdenCompraMultiItem({ onDetallesChange, errores = {}, v
                   )}
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Embalaje</label>
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    className="rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500"
+                    checked={row.tipo_embalaje === "paquete"}
+                    onChange={(e) =>
+                      handleInputChange(
+                        row._uuid,
+                        "tipo_embalaje",
+                        e.target.checked ? "paquete" : "unidad"
+                      )
+                    }
+                  />
+                  <span className="ml-2 text-sm text-gray-700">
+                    {row.tipo_embalaje === "paquete" ? "Paquete" : "Unidad"}
+                  </span>
+                </div>
+              </div>
+
               {/* Cantidad y Precios */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -247,6 +268,7 @@ export default function OrdenCompraMultiItem({ onDetallesChange, errores = {}, v
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Info Bolsas</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descripción</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo de Embalaje</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
@@ -400,6 +422,28 @@ export default function OrdenCompraMultiItem({ onDetallesChange, errores = {}, v
                     </span>
                   )}
                 </td>
+
+                {/* Tipo de Embalaje checkbox */}
+    <td className="px-4 py-3">
+  <label className="flex items-center gap-2">
+    <input
+      type="checkbox"
+      className="rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500"
+      checked={row.tipo_embalaje === "paquete"}
+      onChange={(e) =>
+        handleInputChange(
+          row._uuid,
+          "tipo_embalaje",
+          e.target.checked ? "paquete" : "unidad"
+        )
+      }
+    />
+    <span className="text-sm text-gray-700">
+      {row.tipo_embalaje === "paquete" ? "Paquete" : "Unidad"}
+    </span>
+  </label>
+</td>
+
 
                 {/* Cantidad */}
                 <td className="px-4 py-3">

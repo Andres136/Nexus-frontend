@@ -9,6 +9,7 @@ import Select from "react-select";
 import { calcularCamposBolsa } from "../../helpers/utils/calculoBolsa";
 
 
+
 // Función para crear un nuevo detalle "vacío"
 function createNewItem() {
   return {
@@ -41,6 +42,8 @@ export default function DetallesOrdenesCompra() {
   const [errores, setErrores] = useState({});
   const [forzarEntregaParcial, setForzarEntregaParcial] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
+const [documentoVisto, setDocumentoVisto] = useState(false);
+
 
       const { products, isLoading,isError, isEmpty, isFetching } = useProducts({search: searchTerm});
 
@@ -50,6 +53,8 @@ export default function DetallesOrdenesCompra() {
   const ordenSeleccionada = ordenesCompra?.data
     ? ordenesCompra.data.find((orden) => orden.id === parseInt(id))
     : null;
+const tieneDocumentoCliente = Boolean(ordenSeleccionada?.cliente_documento);
+const puedeGenerarOT = !tieneDocumentoCliente || documentoVisto;
 
     useEffect(() => {
       if (ordenSeleccionada) {
@@ -127,6 +132,7 @@ export default function DetallesOrdenesCompra() {
           sede_id: parseInt(sedeId), 
           observaciones,
           forzar_entrega_parcial: forzarEntregaParcial, // << ESTE CAMPO NUEVO
+          documento_revisado_at: documentoVisto ? new Date() : null,
           detalles: detalles.map((det) => ({
             // Si det.id existe, actualiza; si es null, crea nuevo
             id: det.id,
@@ -178,7 +184,10 @@ export default function DetallesOrdenesCompra() {
     }
   };
  
-  
+
+//Mostrar documento del cliente
+
+
   // Cargar sedes al montar
   useEffect(() => {
     const obtenerSedes = async () => {
@@ -203,17 +212,40 @@ export default function DetallesOrdenesCompra() {
     <div className="min-h-screen  text-gray-900 p-6">
 <div className="bg-white rounded-md shadow-sm border border-gray-200 p-3 mb-4">
 
-{/* Cliente */}
-<h2 className="text-2xl font-semibold mb-4">
-  {ordenSeleccionada ? (
-    <>
-      Detalles de la Orden de Compra #{ordenSeleccionada.id} -{" "}
-      {ordenSeleccionada.cliente?.nombre || "Cliente desconocido"}
-    </>
-  ) : (
-    "Detalles de la Orden de Compra"
+<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-4">
+  {/* Cliente */}
+  <h2 className="text-2xl font-semibold text-gray-900">
+    {ordenSeleccionada ? (
+      <>
+        Detalles de la Orden de Compra #{ordenSeleccionada.id} –{" "}
+        {ordenSeleccionada.cliente?.nombre || "Cliente desconocido"}
+      </>
+    ) : (
+      "Detalles de la Orden de Compra"
+    )}
+  </h2>
+
+  {/* Botón documento */}
+  {ordenSeleccionada && tieneDocumentoCliente && (
+<button
+  onClick={() => {
+    window.open(
+      `${import.meta.env.VITE_API_URL}/api/orden-compras/${ordenSeleccionada.id}/preview-documento`,
+      "_blank",
+      "noopener,noreferrer"
+    );
+    setDocumentoVisto(true);
+  }}
+  className="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium 
+             rounded hover:bg-blue-700 transition whitespace-nowrap"
+>
+  Ver Orden de Compra del Cliente
+</button>
+
   )}
-</h2>
+</div>
+
+
 
 
 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -262,6 +294,9 @@ export default function DetallesOrdenesCompra() {
         {ordenSeleccionada?.ubicacion_entrega || "No disponible"}
       </p>
     </div>
+
+
+
   </div>
 
   {/* Observaciones */}
@@ -281,6 +316,7 @@ export default function DetallesOrdenesCompra() {
 </div>
 
 </div>
+
 
   <div className="grid grid-cols-2 gap-4">
 
@@ -570,12 +606,17 @@ export default function DetallesOrdenesCompra() {
 </div>
 
 
+{!tieneDocumentoCliente && !documentoVisto && (
+  <p className="text-sm text-orange-600 mb-2">
+    ⚠️ Debes revisar la orden de compra del cliente antes de generar la orden de trabajo.
+  </p>
+)}
 
 
           {/* Botón Generar Orden de Trabajo */}
           <button
             onClick={handleGenerarOrdenTrabajo}
-            disabled={loading}
+            disabled={loading || !puedeGenerarOT}
             className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
           >
             {loading ? "Generando..." : "Generar Orden de Trabajo"}

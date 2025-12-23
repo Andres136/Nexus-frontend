@@ -13,8 +13,9 @@ export default function ObtenerOrdenesProveedores() {
 const { user } = useAuth({middleware: 'auth'});
 const [weekFilter, setWeekFilter] = useState("");
 
-console.log(user);
+//console.log(user);
 const isAdmin = user?.role_id === 1;
+const isAdministrativo = user?.role_id === 4 || user?.role_id === 5;
 
 
   const navigate = useNavigate();
@@ -148,7 +149,7 @@ const isAdmin = user?.role_id === 1;
 
  
 
-  {isAdmin &&(
+  {isAdministrativo || user?.role_id === 1 &&(
     <button
       onClick={() =>
         navigate(`/auth/crm/ordenes-proveedor/dividir-orden/${orden.id}`)

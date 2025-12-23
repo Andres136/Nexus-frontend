@@ -136,11 +136,7 @@ export default function ObtenerOrdenesCompra() {
 
 
               <td className="border border-gray-300 px-4 py-2">
-              {new Date(orden.fecha_entrega).toLocaleDateString('es-CO', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })}
+              {orden.fecha_entrega}
               </td>
 <td className="px-4 py-2 text-center border border-gray-300">
   {orden.orden_trabajo ? (

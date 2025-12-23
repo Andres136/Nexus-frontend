@@ -2,6 +2,11 @@ import useDetallesOrdenTrabajo from "../../hooks/useDetallesOrdenTrabajo";
 import TablaDetallesOrden from "../../components/crm/TablaDetallesOrden";
 import { FiRefreshCw } from "react-icons/fi";
 
+import { mutate } from "swr";
+import { toast } from "react-toastify";
+import { auditApi } from "../../services/api";
+
+
 
 export default function DetallesOrdenTrabajo() {
   const {
@@ -16,8 +21,11 @@ export default function DetallesOrdenTrabajo() {
     handleChangeDetalle,
     revisados,
     handleCheckboxChange,
-  
+    refetchOrden,
   } = useDetallesOrdenTrabajo();
+
+
+
 
 
   if (!orden) return  <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -27,13 +35,96 @@ export default function DetallesOrdenTrabajo() {
           </div>
         </div>;
 
+        const documentoRevisado = Boolean(orden.documento_revisado_at);
+        const tieneDocumentoCliente = Boolean(orden.orden_compra?.cliente_documento);
+        const puedeGenerarPDF = !tieneDocumentoCliente || documentoRevisado;
+
+
+
+
   return (
     <div className="p-6 bg-white rounded-xl">
 
       <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6 shadow-sm">
-        <h2 className="text-2xl font-bold text-gray-900 mb-3">
-          Orden de Trabajo #{orden.id}
-        </h2>
+     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
+  {/* Título + metadata */}
+<div className="flex flex-col gap-1">
+  <h2 className="text-2xl font-bold text-gray-900">
+    Orden de Trabajo #{orden.id}
+  </h2>
+
+  <div className="flex flex-wrap items-center gap-x-2 text-sm text-gray-500">
+    <span>
+      Generada por{" "}
+      <span className="font-medium text-gray-700">
+        {orden.user?.name || "Desconocido"}
+      </span>
+    </span>
+
+    <span className="text-gray-300">•</span>
+
+    {orden.orden_compra?.documento_revisado_at ? (
+      <span className="flex items-center gap-1 text-green-600 font-medium">
+        Reviso OC{" "}
+        {new Date(
+          orden.orden_compra.documento_revisado_at
+        ).toLocaleDateString()}
+      </span>
+    ) : (
+      <span className="italic text-gray-400">
+        Sin revisión
+      </span>
+    )}
+  </div>
+</div>
+
+
+  {/* Acción */}
+
+<div className="flex flex-col gap-2">
+
+  {/* Acción principal */}
+  {tieneDocumentoCliente && (
+    <button
+      onClick={async () => {
+        window.open(
+          `${import.meta.env.VITE_API_URL}/api/orden-compras/${orden.orden_compra_id}/preview-documento`,
+          "_blank",
+          "noopener,noreferrer"
+        );
+
+        await auditApi.postRevisadaOc(orden.id);
+        toast.success("Documento revisado");
+        await refetchOrden();
+      }}
+      className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-md text-sm font-medium w-fit"
+    >
+      Revisar orden de compra del cliente
+    </button>
+  )}
+
+  {/* Estado de revisión */}
+  {orden?.usuario_revisor ? (
+    <div className="flex flex-col">
+   
+
+      <span className="text-xs text-gray-500 leading-tight">
+        Revisado por <span className="font-medium">{orden.usuario_revisor.name}</span>
+        {" · "}
+        {new Date(orden.documento_revisado_at).toLocaleDateString()}
+      </span>
+    </div>
+  ) : (
+    <span className="text-xs text-gray-400 italic">
+      Documento sin revisión
+    </span>
+  )}
+
+</div>
+
+
+</div>
+
 
   {/* Grid de datos principales */}
   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -169,10 +260,17 @@ export default function DetallesOrdenTrabajo() {
         )}
       </div>
 
+{!tieneDocumentoCliente && !documentoRevisado && (
+  <p className="text-sm text-orange-600 mb-2">
+    ⚠️ Debes revisar la orden de compra antes de continuar.
+  </p>
+)}
+
    <button
   className="bg-green-600 text-white px-4 py-2 rounded mt-4 hover:bg-green-700"
+  
   onClick={handleGuardarYGenerarPDF}
-  disabled={loading}
+  disabled={loading || !puedeGenerarPDF}
 >
   {loading ? "Guardando..." : " Guardar y Generar PDF"}
 </button>

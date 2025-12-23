@@ -4,7 +4,7 @@ import { calcularValores } from "../../hooks/useCotizacionItems";
 import { toast } from "react-toastify";
 import clienteAxios from "../../config/axios";
 import { useClientes } from "../../hooks/useClientes";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import Select  from "react-select";
 
 export default function CotizacionForm({modo}) {
@@ -39,6 +39,7 @@ export default function CotizacionForm({modo}) {
 
   const [errores, setErrores] = useState({});
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const { rows, updateItem, addItem, removeItem, resetItems} = useCotizacionItems({
     errores,
@@ -126,7 +127,7 @@ export default function CotizacionForm({modo}) {
   
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Enviando formData:", formData);  // <— verifica aquí
+   // console.log("Enviando formData:", formData);  // <— verifica aquí
     if (!formData.detalles.length) {
       toast.error("Debe ingresar al menos un ítem");
       return;
@@ -165,7 +166,15 @@ export default function CotizacionForm({modo}) {
           });
       const data = response.data;
 
-      toast.success("Cotización registrada correctamente");
+      toast.success(
+  modo === "edicion"
+    ? "Cotización actualizada correctamente"
+    : "Cotización creada correctamente"
+);
+
+// 👉 Redirigir
+navigate("/auth/crm/mis-cotizaciones");
+
       //Limpiar formulario
       resetFormulario();
 

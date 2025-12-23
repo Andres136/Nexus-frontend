@@ -29,7 +29,7 @@ const fetchOrdenesTrabajo = async () => {
         headers: { Authorization: `Bearer ${token}` },
       }
     );
-    console.log("Respuesta de órdenes de trabajo:", response);
+   // console.log("Respuesta de órdenes de trabajo:", response);
     return response.data;
 
   } catch (error) {

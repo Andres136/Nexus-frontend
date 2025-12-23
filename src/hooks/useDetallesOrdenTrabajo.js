@@ -9,6 +9,7 @@ import clienteAxios from "../config/axios";
 import { calcularCamposBolsa } from "../helpers/utils/calculoBolsa";
 
 
+
 /* ---------------------------------------------------- */
 
 
@@ -26,8 +27,9 @@ export default function useDetallesOrdenTrabajo() {
   const [detalles, setDetalles] = useState([]);
   const [entregas, setEntregas] = useState([]);
 
-  useEffect(() => {
-    const fetchOrden = async () => {
+
+
+  const fetchOrden = async () => {
       try {
         const token = localStorage.getItem("token");
         const response = await clienteAxios.get(`/api/orden-trabajo/${id}`, {
@@ -41,7 +43,7 @@ export default function useDetallesOrdenTrabajo() {
         setLoading(false);
       }
     };
-  
+  useEffect(() => {
     fetchOrden();
   }, [id]);
 
@@ -178,11 +180,13 @@ useEffect(() => {
     }
   };
 
- 
+
+
 
   const handleGuardarYGenerarPDF = async () => {
 
     await handleGuardarOrden();
+  
   
   };
   const handleSeleccionarTodo = (checked) => {
@@ -211,6 +215,9 @@ useEffect(() => {
     handleChangeDetalle,
  
     handleSeleccionarTodo, // 👈 aquí la expones
+    refetchOrden: fetchOrden, 
+
+  
 
   };
 }

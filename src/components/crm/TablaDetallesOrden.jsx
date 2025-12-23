@@ -878,7 +878,12 @@ const ensureProductLoaded = async (id) => {
                 </td>
 
                 <td className="px-3 py-3 text-sm text-gray-900 max-w-32 truncate">
-                  {detalle.descripcion}
+                  <textarea 
+                  readOnly
+                  value={detalle.descripcion}
+                  name="descripcion" id="" className="w-full border rounded-lg px-2 py-1 text-sm transition-colors">
+                    {detalle.descripcion}
+                  </textarea>
                 </td>
 
                 <td className="px-3 py-3">
@@ -890,6 +895,8 @@ const ensureProductLoaded = async (id) => {
                         : "border-gray-300 focus:border-blue-500"
                     } focus:outline-none`}
                     value={detalle.cantidad}
+                    readOnly={true}
+               
                     placeholder="0"
                   />
                   {errores?.[index]?.cantidad && (

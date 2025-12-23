@@ -17,6 +17,7 @@ import {
   Edit3,
   Trash2
 } from "lucide-react";
+import { productsApi } from "../../services/api";
 
 export default function CrearProductos() {
   const {
@@ -33,6 +34,10 @@ export default function CrearProductos() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [searchCategoria, setSearchCategoria] = useState("");
+  const [excelFile, setExcelFile] = useState(null);
+const [importing, setImporting] = useState(false);
+
+
   
   // Form producto
   const [productForm, setProductForm] = useState({
@@ -93,7 +98,7 @@ const filteredCategorias =
   const submitProduct = async (e) => {
     e.preventDefault();
     const success = await createProduct(productForm);
-     console.log("Éxito al crear producto:", success);
+   //  console.log("Éxito al crear producto:", success);
     if (success) {
       setProductForm({ name: "", code: "", categoria_id: "", description: "" });
       setSuccessMessage("Producto creado exitosamente");
@@ -135,6 +140,50 @@ const filteredCategorias =
     setEditandoCategoria(null);
     setSearchCategoria("");
   };
+//Funcio para crear productos via excel
+
+const crearProductosDesdeExcel = async () => {
+  if (!excelFile || !productForm.categoria_id) {
+    alert("Debes seleccionar categoría y archivo");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("file", excelFile);
+  formData.append("categoria_id", productForm.categoria_id);
+
+  try {
+    const response = await productsApi.createProductsExcel(formData);
+
+    // Descargar Excel de respuesta
+    const blob = new Blob([response.data], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "resultado_importacion.xlsx";
+    a.click();
+
+    setSuccessMessage("Productos importados correctamente");
+    // Limpiar formulario y estado
+    setExcelFile(null);
+  
+    setShowSuccess(true);
+  } catch (error) {
+    // 👇 CLAVE: leer el error cuando viene como Blob
+    if (error.response?.data instanceof Blob) {
+      const text = await error.response.data.text();
+      const json = JSON.parse(text);
+      console.error("Errores backend:", json);
+      alert(json.message);
+    } else {
+      console.error(error);
+    }
+  }
+};
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50">
@@ -362,6 +411,48 @@ const filteredCategorias =
                         Limpiar
                       </button>
                     </div>
+              {/* Input para subir archivo Excel */}
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Subir archivo Excel *
+                </label>
+     <input
+  type="file"
+  accept=".xlsx,.xls"
+  onChange={(e) => setExcelFile(e.target.files[0])}
+  className="border border-gray-300 rounded-lg p-2 w-full"
+/>
+
+                {/* ✅ Error del backend */}
+                {errors?.createProduct?.file && (
+                  <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    {errors.createProduct.file[0]}
+                  </p>
+                )}
+
+                <button
+  type="button"
+  disabled={!excelFile || !productForm.categoria_id || importing}
+  onClick={async () => {
+    try {
+      setImporting(true);
+      await crearProductosDesdeExcel(excelFile, productForm.categoria_id);
+      setSuccessMessage("Productos importados correctamente");
+      setShowSuccess(true);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setImporting(false);
+    }
+  }}
+  className="mt-3 w-full bg-indigo-600 text-white px-4 py-2 rounded-lg disabled:opacity-50"
+>
+  {importing ? "Importando..." : "Importar productos desde Excel"}
+</button>
+
+              </div>
+
                   </form>
                 )}
 
