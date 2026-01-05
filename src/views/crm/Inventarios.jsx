@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { FiSearch, FiFilter, FiDownload, FiRefreshCw, FiPackage, FiTrendingUp, FiTrendingDown, FiAlertTriangle, FiPlus, FiAlertCircle, FiArrowRight } from 'react-icons/fi';
+import { FiSearch, FiFilter, FiDownload, FiRefreshCw, FiPackage, FiTrendingUp, FiTrendingDown, FiAlertTriangle, FiPlus, FiAlertCircle, FiArrowRight, FiEdit2, FiEdit3 } from 'react-icons/fi';
 import { BsBoxSeam, BsGraphUp, BsExclamationTriangle, BsFileEarmarkExcel } from 'react-icons/bs';
-import { Link,useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { inventariosApi, productsApi } from '../../services/api';
 import { useEmpresas } from '../../hooks/useEmpresas';
 import SincronizacionSiigoProductos from '../../components/crm/SincronizacionSiigoProductos';
@@ -9,9 +9,13 @@ import Swal from 'sweetalert2';
 
 
 
+
 export default function Inventarios() {
   const inputRef = useRef(null);
 const lastScrollTop = useRef(0);
+
+
+
 
   const [inventarios, setInventarios] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -643,6 +647,30 @@ const descargarPlantilla = async () => {
                     
                     <div>
                       <p className="text-gray-500">Acciones</p>
+                       <div className="flex gap-2 mt-1">
+      <input
+        type="checkbox"
+        checked={productosSeleccionados.includes(item.producto.id)}
+        onChange={(e) => {
+          setProductosSeleccionados(prev => {
+            if (e.target.checked) {
+              return [...new Set([...prev, item.producto.id])];
+            } else {
+              return prev.filter(id => id !== item.producto.id);
+            }
+          });
+        }}
+        className="w-4 h-4 text-blue-600 rounded"
+      />
+      
+      <Link
+        to={`/auth/crm/actualizar-producto/${item.producto.id}`}
+        className="inline-flex items-center justify-center w-6 h-6 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors"
+        title="Editar inventario"
+      >
+        <FiEdit2 className="w-4 h-4" />
+      </Link>
+    </div>
                  </div>
                   </div>
                 </div>
@@ -747,22 +775,33 @@ const descargarPlantilla = async () => {
                       
               
                       
-                     <td className="px-6 py-4 text-center">
- <input
-  type="checkbox"
-  checked={productosSeleccionados.includes(item.producto.id)}
-  onChange={(e) => {
-    setProductosSeleccionados(prev => {
-      if (e.target.checked) {
-        return [...new Set([...prev, item.producto.id])];
-      } else {
-        return prev.filter(id => id !== item.producto.id);
-      }
-    });
-  }}
-/>
-
+<td className="px-6 py-4 whitespace-nowrap">
+  <div className="flex items-center justify-center gap-3">
+    <input
+      type="checkbox"
+      checked={productosSeleccionados.includes(item.producto.id)}
+      onChange={(e) => {
+        setProductosSeleccionados(prev => {
+          if (e.target.checked) {
+            return [...new Set([...prev, item.producto.id])];
+          } else {
+            return prev.filter(id => id !== item.producto.id);
+          }
+        });
+      }}
+      className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+    />
+    
+    <Link
+      to={`/auth/crm/actualizar-producto/${item.producto.id}`}
+      className="inline-flex items-center justify-center w-8 h-8 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors"
+      title="Editar inventario"
+    >
+      <FiEdit2 className="w-4 h-4" />
+    </Link>
+  </div>
 </td>
+
 
                     </tr>
                   );

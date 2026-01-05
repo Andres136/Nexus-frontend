@@ -144,6 +144,8 @@ export const productsApi = {
     apiClient.put(`/api/products/${id}`, data, {
       headers: { "Content-Type": "multipart/form-data" },
     }),
+    updateProducto: (id, data) =>
+    apiClient.put(`/api/productos/${id}`, data),
   delete: (id) => apiClient.delete(`/api/products/${id}`),
   getStock: (id, params = {}) =>
     apiClient.get(`/api/stock-products/${id}`, { params }),

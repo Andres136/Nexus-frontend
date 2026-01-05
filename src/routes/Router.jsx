@@ -71,6 +71,7 @@ import VsmFlowDashboard from "../components/vsm/VsmFlowDashboard";
 import VsmDashboard from "../components/vsm/VsmDashboard";
 import AlistamientosAuditoria from "../components/vsm/AlistamientosAuditoria";
 import CrearProductos from "../components/crm/CrearProductos";
+import ActualizarProducto from "../components/crm/ActualizarProducto";
 
 export default function Router() {
   return (
@@ -353,6 +354,12 @@ export default function Router() {
             path="/auth/crm/crear-productos"
             element={<DynamicProtectedRoute permission="/auth/crm/crear-productos">
               <CrearProductos />
+            </DynamicProtectedRoute>}
+          />
+          <Route
+            path="/auth/crm/actualizar-producto/:id"
+            element={<DynamicProtectedRoute permission="/auth/crm/actualizar-producto/:id">
+              <ActualizarProducto />
             </DynamicProtectedRoute>}
           />
           <Route

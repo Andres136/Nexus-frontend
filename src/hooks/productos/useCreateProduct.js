@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { productsApi } from "../../services/api";
-import { showToast } from "../../helpers/utils/showToast";
-import { toast } from "react-toastify";
+
 
 
 
@@ -17,6 +16,7 @@ export const useCreateProduct = () => {
         try {
             setLoading(true);
             const res = await productsApi.getCategorias();
+
             setCategorias(res.data);
             setObtenerCategorias(true);
         } catch (error) {
@@ -84,10 +84,9 @@ export const useCreateProduct = () => {
         try {
             setLoading(true);
             const res = await productsApi.create(data);
-            //Actualizar productos
-     
-            setProducts((prev) => [...prev, res.data]);
-            return res.data;
+            const producto = res.data.data;
+            setProducts((prev) => [...prev, producto]);
+            return producto;
         } catch (error) {
             if (error.response && error.response.data.errors) {
                 const fieldErrors = error.response.data.errors;

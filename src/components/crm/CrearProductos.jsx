@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
+import  { useEffect, useState } from "react";
 import { useCreateProduct } from "../../hooks/productos/useCreateProduct";
 import {
-  Plus,
+
   Package,
   Tag,
   Save,
@@ -15,7 +15,7 @@ import {
   ChevronDown,
   Search,
   Edit3,
-  Trash2
+
 } from "lucide-react";
 import { productsApi } from "../../services/api";
 
@@ -32,6 +32,7 @@ export default function CrearProductos() {
 
   const [activeTab, setActiveTab] = useState("producto");
   const [showSuccess, setShowSuccess] = useState(false);
+  const [createdProducto, setCreatedProducto] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [searchCategoria, setSearchCategoria] = useState("");
   const [excelFile, setExcelFile] = useState(null);
@@ -100,8 +101,11 @@ const filteredCategorias =
     const success = await createProduct(productForm);
    //  console.log("Éxito al crear producto:", success);
     if (success) {
+      setCreatedProducto(success);
       setProductForm({ name: "", code: "", categoria_id: "", description: "" });
-      setSuccessMessage("Producto creado exitosamente");
+     setSuccessMessage(
+      `Producto creado exitosamente · Código: ${success.code}`
+    );
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
     }
@@ -267,6 +271,31 @@ const crearProductosDesdeExcel = async () => {
                 
                 {/* ===== FORMULARIO PRODUCTO ===== */}
                 {activeTab === "producto" && (
+
+
+                 <div className="space-y-6" >
+                  
+    {/* ✅ MENSAJE INFORMATIVO PARA PRODUCTOS POR SEDE */}
+    <div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-lg">
+      <div className="flex">
+        <div className="flex-shrink-0">
+          <AlertCircle className="h-5 w-5 text-amber-400" />
+        </div>
+        <div className="ml-3">
+          <h3 className="text-sm font-medium text-amber-800">
+            Importante - Productos por Sede
+          </h3>
+          <div className="mt-2 text-sm text-amber-700">
+            <p>
+              Para crear productos específicos de cada sede (inventarios por ubicación), 
+              debe utilizar la <strong>importación por Excel</strong> seleccionando primero 
+              la categoría correspondiente.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+                
                   <form onSubmit={submitProduct} className="space-y-6">
                     <div className="flex items-center gap-2 mb-4">
                       <Package className="w-5 h-5 text-blue-600" />
@@ -323,29 +352,15 @@ const crearProductosDesdeExcel = async () => {
                    </div>
 
                     {/* Código del producto */}
-                    <div>
-                      <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-                        <Hash className="w-4 h-4 text-blue-600" />
-                        Código del Producto *
-                      </label>
-                      <input
-                        type="text"
-                        name="code"
-                        value={productForm.code}
-                        onChange={handleProductChange}
-                        placeholder="Ej: BP-001"
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                          errors?.createProduct?.code ? 'border-red-400 bg-red-50' : 'border-gray-300'
-                        }`}
-                      />
-                      {/* ✅ Error del backend */}
-                      {errors?.createProduct?.code && (
-                        <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                          <AlertCircle className="w-4 h-4" />
-                          {errors.createProduct.code[0]}
-                        </p>
-                      )}
-                    </div>
+           {createdProducto?.code && (
+  <div className="mt-2 p-3 bg-green-50 border border-green-300 rounded-lg">
+    <p className="text-sm font-semibold text-green-800 flex items-center gap-2">
+      <Hash className="w-4 h-4" />
+      Código generado: {createdProducto.code}
+    </p>
+  </div>
+)}
+
 
                     {/* Selector de categoría */}
                     <div>
@@ -454,6 +469,7 @@ const crearProductosDesdeExcel = async () => {
               </div>
 
                   </form>
+                   </div>
                 )}
 
                 {/* ===== FORMULARIO CATEGORÍA ===== */}
