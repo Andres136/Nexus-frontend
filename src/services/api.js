@@ -229,6 +229,9 @@ export const auditApi = {
 
   postRevisadaOc: (id) =>
     apiClient.post(`/api/orden-trabajo/${id}/marcar-revisada`),
+
+  postOrdenCompraRevisada: (id) =>
+    apiClient.post(`/api/ordenes-compra/${id}/marcar-documento-revisado`),
 };
 
 //iNVEANTARIOS

@@ -28,6 +28,9 @@ const lastScrollTop = useRef(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [bodegasFiltradas, setBodegasFiltradas] = useState([]);
   const [productosSeleccionados, setProductosSeleccionados] = useState([]);
+  const [categorias, setCategorias] = useState([]);
+const [selectedCategoria, setSelectedCategoria] = useState('');
+
 
 
 
@@ -61,7 +64,7 @@ const lastScrollTop = useRef(0);
     }, 600); // Debounce de 600ms
 
     return () => clearTimeout(timeout);
-  }, [searchTerm, selectedBodega, selectedSede, selectedEmpresa]);
+  }, [searchTerm, selectedBodega, selectedSede, selectedEmpresa, selectedCategoria]);
 
  useEffect(() => {
   if (inputRef.current) {
@@ -105,14 +108,15 @@ const lastScrollTop = useRef(0);
         producto: searchTerm || undefined,
         per_page: 20,
         page, 
-        empresa_id: selectedEmpresa || undefined
+        empresa_id: selectedEmpresa || undefined,
+        categoria_id: selectedCategoria || undefined
       }
 
     
       const { data } = await inventariosApi.listar(params);
 
 
-   // console.log('Datos de inventarios recibidos:', data);
+    //console.log('Datos de inventarios recibidos:', data);
       setPagination(data.pagination);
       setInventarios(data.data);
 
@@ -145,11 +149,9 @@ setStats({
       // ✅ USAR NOMBRES CORRECTOS DEL BACKEND:
       setSedes(data.sedes_disponibles || []);
       setBodegas(data.bodegas_disponibles || []);
+      setCategorias(data.categorias_disponibles || []);
 
-     
-
-
-     
+   
 
     } catch (error) {
       console.error('Error al cargar inventarios:', error);
@@ -180,7 +182,10 @@ const exportarInventarios = async () => {
       sede_id: selectedSede || undefined,
       bodega_id: selectedBodega || undefined,
       producto: searchTerm || undefined,
-      empresa_id: selectedEmpresa || undefined
+      empresa_id: selectedEmpresa || undefined,
+      categoria_id: selectedCategoria || undefined
+
+
     };
 
     const response = await inventariosApi.exportar(params);
@@ -574,11 +579,20 @@ const descargarPlantilla = async () => {
               ))}
             </select>
 
-            <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm justify-center">
-              <FiFilter className="w-4 h-4" />
-              <span className="hidden sm:inline">Más filtros</span>
-              <span className="sm:hidden">Filtros</span>
-            </button>
+         <select
+  value={selectedCategoria}
+  onChange={(e) => setSelectedCategoria(e.target.value)}
+  className="w-full px-3 py-2 border border-gray-300 rounded-lg 
+             focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+>
+  <option value="">Todas las categorías</option>
+  {categorias.map((cat) => (
+    <option key={cat.id} value={cat.id}>
+      {cat.nombre}
+    </option>
+  ))}
+</select>
+
           </div>
         </div>
 
@@ -610,7 +624,7 @@ const descargarPlantilla = async () => {
 </div>
 
                       <p className="text-xs text-gray-500 truncate">
-                        {item.producto.code} • {item.producto.categoria}
+                        {item.producto.code} • {item.producto.categoria?.nombre}
                       </p>
                     </div>
                     <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ml-2 ${

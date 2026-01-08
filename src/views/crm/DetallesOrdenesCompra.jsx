@@ -7,6 +7,8 @@ import useSystem from "../../hooks/useSystem";
 import { useProducts } from "../../hooks/useProducts";
 import Select from "react-select";
 import { calcularCamposBolsa } from "../../helpers/utils/calculoBolsa";
+import { auditApi } from "../../services/api";
+
 
 
 
@@ -45,7 +47,7 @@ export default function DetallesOrdenesCompra() {
 const [documentoVisto, setDocumentoVisto] = useState(false);
 
 
-      const { products, isLoading,isError, isEmpty, isFetching } = useProducts({search: searchTerm});
+      const { products, isLoading,isEmpty, isFetching } = useProducts({search: searchTerm});
 
 
 
@@ -132,7 +134,7 @@ const puedeGenerarOT = !tieneDocumentoCliente || documentoVisto;
           sede_id: parseInt(sedeId), 
           observaciones,
           forzar_entrega_parcial: forzarEntregaParcial, // << ESTE CAMPO NUEVO
-          documento_revisado_at: documentoVisto ? new Date() : null,
+ 
           detalles: detalles.map((det) => ({
             // Si det.id existe, actualiza; si es null, crea nuevo
             id: det.id,
@@ -228,12 +230,17 @@ const puedeGenerarOT = !tieneDocumentoCliente || documentoVisto;
   {/* Botón documento */}
   {ordenSeleccionada && tieneDocumentoCliente && (
 <button
-  onClick={() => {
+  onClick={async () => {
     window.open(
       `${import.meta.env.VITE_API_URL}/api/orden-compras/${ordenSeleccionada.id}/preview-documento`,
       "_blank",
       "noopener,noreferrer"
     );
+
+    const response = await auditApi.postOrdenCompraRevisada(ordenSeleccionada.id);
+
+    toast(response.data.message || "Documento marcado como revisado");
+
     setDocumentoVisto(true);
   }}
   className="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium 
@@ -606,17 +613,12 @@ const puedeGenerarOT = !tieneDocumentoCliente || documentoVisto;
 </div>
 
 
-{!tieneDocumentoCliente && !documentoVisto && (
-  <p className="text-sm text-orange-600 mb-2">
-    ⚠️ Debes revisar la orden de compra del cliente antes de generar la orden de trabajo.
-  </p>
-)}
 
 
           {/* Botón Generar Orden de Trabajo */}
           <button
             onClick={handleGenerarOrdenTrabajo}
-            disabled={loading || !puedeGenerarOT}
+            disabled={loading}
             className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
           >
             {loading ? "Generando..." : "Generar Orden de Trabajo"}
