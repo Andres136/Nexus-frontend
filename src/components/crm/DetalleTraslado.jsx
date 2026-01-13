@@ -8,6 +8,7 @@ import Select from "react-select";
 export default function DetalleTraslado({
   detalle,
   index,
+  sedeOrigenId,
   handleChange,
   handleBodegaChange,
   addBodega,
@@ -61,15 +62,22 @@ useEffect(() => {
 
 
 
-  const fetchDirectStock = async (productId) => {
+const fetchDirectStock = async (productId) => {
   try {
-    const res = await productsApi.getStock(productId);
+    const params = {};
+
+    if (sedeOrigenId) {
+      params.sede_id = sedeOrigenId;
+    }
+
+    const res = await productsApi.getStock(productId, params);
     return res?.data?.stock || null;
   } catch (err) {
     console.error("❌ Error obteniendo stock:", err);
     return null;
   }
 };
+
 
 
 useEffect(() => {

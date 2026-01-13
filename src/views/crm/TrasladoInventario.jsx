@@ -132,9 +132,19 @@ export default function TrasladoInventario() {
                     <span>{errors.sede_destino_id}</span>
                   </p>
                 )}
+                    <Select
+  value={sedesOptions.find(o => o.value == formData.sede_origen_id) || null}
+  onChange={(opt) =>
+    updateFormField('sede_origen_id', opt ? opt.value : '')
+  }
+  options={sedesOptions}
+  placeholder="Sede origen"
+  isClearable
+/>
               </div>
 
-    
+
+
 
               {/* Empresa - Full width en móvil y tablet */}
               <div className="space-y-1 sm:col-span-2 lg:col-span-1">
@@ -219,6 +229,7 @@ export default function TrasladoInventario() {
                     <DetalleTraslado
                       detalle={detalle}
                       index={i}
+                      sedeOrigenId={formData.sede_origen_id}
                       handleChange={handleChange}
                       handleBodegaChange={handleBodegaChange}
                       addBodega={addBodega}

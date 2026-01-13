@@ -7,6 +7,7 @@ export const useTrasladoInventario = () => {
 
   const [formData, setFormData] = useState({
     empresa_id: "",
+    sede_origen_id: "",
     sede_destino_id: "",
     ordenes_compra: [],
     notas: "",
@@ -92,6 +93,7 @@ export const useTrasladoInventario = () => {
   const resetForm = () => {
     setFormData({
       empresa_id: "",
+      sede_origen_id: "",
       sede_destino_id: "",
       ordenes_compra: [],
       notas: "",
