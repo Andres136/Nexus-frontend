@@ -56,7 +56,7 @@ const [documentoVisto, setDocumentoVisto] = useState(false);
     ? ordenesCompra.data.find((orden) => orden.id === parseInt(id))
     : null;
 const tieneDocumentoCliente = Boolean(ordenSeleccionada?.cliente_documento);
-const puedeGenerarOT = !tieneDocumentoCliente || documentoVisto;
+
 
     useEffect(() => {
       if (ordenSeleccionada) {
@@ -430,7 +430,11 @@ const puedeGenerarOT = !tieneDocumentoCliente || documentoVisto;
     }),
   }}
 />
-
+{errores[`detalles.${index}.product_id`] && (
+  <div className="text-red-500 text-sm">
+    {errores[`detalles.${index}.product_id`]}
+  </div>
+)}
                     </td>
               
                     {/* Ancho */}

@@ -6,101 +6,37 @@ import { useEntregasProveedores } from "../../hooks/useEntregasProveedores";
 import { useEmpresas } from "../../hooks/useEmpresas";
 import Select from "react-select";
 import { Trash2, Search, Plus } from "lucide-react";
-import clienteAxios from "../../config/axios";
+
 import { useContext } from "react";
 import { ProductContext } from "../../context/ProductContext";
+import { useUpdateOrdenCompraProveedor } from "../../hooks/useUpdateOrdenCompraProveedor";
 
 export default function UpdateOcProvedor() {
-  const navigate = useNavigate();
+
   const { id } = useParams();
   const [search, setSearch] = useState("");
   const { products, isLoading, isFetching, isEmpty } = useProducts({ search });
   const { proveedoresAll } = useEntregasProveedores();
   const { empresas } = useEmpresas();
   const { stockUserOrder, getStockForUserAndOrder } = useContext(ProductContext);
+ const [modalOpen, setModalOpen] = useState(false);
 
-  const [cargando, setCargando] = useState(true);
-  const [guardando, setGuardando] = useState(false);
-  const [errores, setErrores] = useState({});
-  const [modalOpen, setModalOpen] = useState(false);
-
+  const {
+    cargando,
+    guardando,
+    errores,
+    ordenBloqueada,
+    mensajeBloqueo,
+    formData,
+    setFormData,
+    actualizarOrden
+  } = useUpdateOrdenCompraProveedor(id);
 
   const [selectorAbierto, setSelectorAbierto] = useState(null);
 
-  const [formData, setFormData] = useState({
-    proveedor_id: null,
-    empresa_id: null,
-    observaciones: "",
-    detalles: [
-      {
-        item: 1,
-        descripcion: "",
-        cantidad_solicitada: 0,
-        code: "",
-        producto_id: null,
-        campo_seleccionado: "description", // Nuevo campo
-      }
-    ],
-  });
 
-  //  Cargar datos de la orden existente
-  useEffect(() => {
-    const cargarOrden = async () => {
-      setCargando(true);
-      try {
-        const token = localStorage.getItem("token");
-        const res = await clienteAxios.get(`/api/ordenes-compra-proveedor/${id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
 
-       // console.log("Datos cargados:", res.data);
-        
-        const orden = res.data.orden || res.data;
-        const detalles = orden.detalles || orden.productos || [];
 
-        //console.log("Detalles encontrados:", detalles);
-
-        setFormData({
-          proveedor_id: orden.proveedor_id,
-          empresa_id: orden.empresa?.id || orden.empresa_id || null,
-          observaciones: orden.observaciones || "",
-          numero_orden: orden.numero_orden || "",
-          sede_id: orden.sede_id || null,
-        
-     
-          detalles: detalles.length > 0 ? detalles.map((detalle, index) => ({
-            id: detalle.id || null,
-            item: index + 1,
-            descripcion: detalle.descripcion || "",
-            cantidad_solicitada: parseFloat(detalle.cantidad_solicitada) || 0,
-            code: detalle.code || "",
-            producto_id: detalle.producto_id || null,
-            campo_seleccionado: "description", // Por defecto description
-          })) : [
-            {
-              item: 1,
-              descripcion: "",
-              cantidad_solicitada: 0,
-              code: "",
-              producto_id: null,
-              campo_seleccionado: "description",
-            }
-          ]
-        });
-
-      } catch (error) {
-        console.error("Error al cargar orden:", error);
-        toast.error("Error al cargar los datos de la orden");
-        navigate("/auth/crm/proveedores-ordenes-compra");
-      } finally {
-        setCargando(false);
-      }
-    };
-
-    if (id) {
-      cargarOrden();
-    }
-  }, [id, navigate]);
 
   // ✅ Manejar cambios en inputs básicos
   const handleInputChange = (field, value) => {
@@ -209,52 +145,7 @@ const fetchStockForProduct = async (productId) => {
     setSearch("");
   };
 
-  // ✅ Actualizar orden
-  const actualizarOrden = async () => {
-    setErrores({});
-    setGuardando(true);
 
-    try {
-      const token = localStorage.getItem("token");
-      
-      const dataToSend = {
-        proveedor_id: formData.proveedor_id,
-        empresa_id: formData.empresa_id,
-        observaciones: formData.observaciones || "",
-        detalles: formData.detalles.map((detalle, index) => ({
-          item: index + 1,
-          descripcion: detalle.descripcion,
-          cantidad_solicitada: detalle.cantidad_solicitada,
-          code: detalle.code,
-          producto_id: detalle.producto_id,
-        }))
-      };
-
-      console.log("Datos a enviar:", dataToSend);
-
-      const response = await clienteAxios.put(
-        `/api/ordenes-compra-proveedor/${id}`,
-        dataToSend,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-      response.status === 200 && toast.success("Orden actualizada correctamente");
-      navigate(`/auth/crm/ordenes-proveedor-preview/${id}`);
-
-    } catch (error) {
-      console.error("Error al actualizar:", error.response?.data || error);
-      
-      if (error.response?.status === 422) {
-        setErrores(error.response.data.errors);
-        toast.error("Por favor corrija los errores en el formulario");
-      } else {
-        toast.error("Error al actualizar la orden");
-      }
-    } finally {
-      setGuardando(false);
-    }
-  };
 
   if (cargando) {
     return (
@@ -284,6 +175,16 @@ const fetchStockForProduct = async (productId) => {
           ← Volver
         </Link>
       </div>
+{ordenBloqueada && (
+  <div className="mb-6 border border-red-300 bg-red-50 p-4 rounded-lg">
+    <h3 className="font-semibold text-red-700">Orden bloqueada</h3>
+    <p className="text-sm text-red-600 mt-1">
+      {mensajeBloqueo}
+    </p>
+
+ 
+  </div>
+)}
 
       {/* Formulario */}
       <div className="space-y-6">
