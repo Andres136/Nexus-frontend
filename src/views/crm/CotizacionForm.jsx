@@ -185,6 +185,7 @@ navigate("/auth/crm/mis-cotizaciones");
       link.click();
       link.remove();
     } catch (error) {
+      console.error("Error al guardar la cotización:", error);
       if (error.response?.data?.errors) {
         console.log("Errores de validación:", error.response.data.errors);
         setErrores(error.response.data.errors);
@@ -372,6 +373,9 @@ navigate("/auth/crm/mis-cotizaciones");
   <input
     className={`border w-full text-right ${row.fueCalculadoUnitario ? "bg-gray-100" : ""}`}
     value={row.valor_unitario}
+    type="number"
+    step="0.01"
+    min={0}
     onChange={(e) =>
       updateItem(row._uuid, "valor_unitario", e.target.value)
     }

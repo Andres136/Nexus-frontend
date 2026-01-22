@@ -99,7 +99,7 @@ const filteredCategorias =
   const submitProduct = async (e) => {
     e.preventDefault();
     const success = await createProduct(productForm);
-   //  console.log("Éxito al crear producto:", success);
+  // console.log("Éxito al crear producto:", success.message);
     if (success) {
       setCreatedProducto(success);
       setProductForm({ name: "", code: "", categoria_id: "", description: "" });

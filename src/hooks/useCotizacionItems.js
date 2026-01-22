@@ -81,16 +81,16 @@ function calcularValores(item) {
     console.log("💰 Unitario por precio/kilo:", rawUnitario, "→ redondeado:", valor_unitario);
   }
 
-  if (!fueCalculadoUnitario && manual_unitario > 0) {
-    valor_unitario = Math.ceil(manual_unitario);
-    console.log("✍️ Unitario manual:", manual_unitario, "→ redondeado:", valor_unitario);
+if (!fueCalculadoUnitario && manual_unitario > 0) {
+  valor_unitario = parseFloat(manual_unitario.toFixed(2)); // ✅ conserva decimales
+  console.log("✍️ Unitario manual (sin redondeo):", valor_unitario);
 
-    if (numero_bolsas === 0) {
-      numero_bolsas = 1;
-      precioKilo = manual_unitario;
-      console.log("⚠️ Ajuste: número de bolsas fijado en 1 por entrada manual.");
-    }
+  if (numero_bolsas === 0) {
+    numero_bolsas = 1;
+    precioKilo = valor_unitario;
   }
+}
+
 
   if (valor_unitario > 0 && cantidad > 0) {
     valor_paquete = parseFloat((valor_unitario * cantidad).toFixed(2));

@@ -254,7 +254,7 @@ const descargarPlantilla = async () => {
     const res = await productsApi.generarBarcodes({
       product_ids: productosSeleccionados,
     });
-
+ console.log("Respuesta de generación de etiquetas:", res);
     const url = window.URL.createObjectURL(
       new Blob([res.data], { type: "application/pdf" })
     );
