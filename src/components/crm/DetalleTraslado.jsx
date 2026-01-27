@@ -71,10 +71,6 @@ const fetchDirectStock = async (productId) => {
       params.sede_id = sedeOrigenId;
     }
 
-    if (empresaId) {
-      params.empresa_id = empresaId;
-    }
-
     const res = await productsApi.getStock(productId, params);
     return res?.data?.stock || null;
   } catch (err) {
@@ -86,28 +82,26 @@ const fetchDirectStock = async (productId) => {
 
 
 useEffect(() => {
-  if (!detalle.product_id || !empresaId) return;
+  if (!detalle.product_id) return;
 
   const load = async () => {
     const stock = await fetchDirectStock(detalle.product_id);
+    console.log("Stock directo:", stock);
     if (!stock) return;
 
-    setBodegasDisponibles(stock.resumen_por_bodega ?? []);
-    handleChange(
-      { target: { name: "stock_total", value: stock.stock_total ?? 0 } },
-      index
-    );
+    const total = stock.stock_total ?? 0;
+    const bodegas = stock.resumen_por_bodega ?? [];
 
-    // 🔒 limpiar bodegas seleccionadas al cambiar empresa
+    setBodegasDisponibles(bodegas);
+
     handleChange(
-      { target: { name: "bodegas", value: [] } },
+      { target: { name: "stock_total", value: total }},
       index
     );
   };
 
   load();
-}, [detalle.product_id, empresaId, sedeOrigenId]);
-
+}, [detalle.product_id]);
 
 
 
@@ -431,7 +425,6 @@ useEffect(() => {
 
               <Select
                 isMulti
-                isDisabled={!empresaId}
                 placeholder="Seleccionar bodegas..."
                 options={bodegasDisponibles.map((b) => ({
                   value: b.bodega_id,

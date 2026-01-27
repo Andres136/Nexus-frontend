@@ -230,7 +230,7 @@ export default function TrasladoInventario() {
                       detalle={detalle}
                       index={i}
                       sedeOrigenId={formData.sede_origen_id}
-                      empresaId={formData.empresa_id}
+               
                       handleChange={handleChange}
                       handleBodegaChange={handleBodegaChange}
                       addBodega={addBodega}
