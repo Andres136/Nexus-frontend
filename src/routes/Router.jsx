@@ -14,7 +14,7 @@ import DepartatamentosUpdate from "../views/calidad/DepartatamentosUpdate";
 import Crm from "../views/crm/Crm";
 import GestionClientes from "../views/crm/GestionClientes";
 import Inventarios from "../views/crm/Inventarios";
-import Notifycaciones from "../views/crm/Notifycaciones";
+
 import Kpi from "../views/crm/Kpi";
 import Pqr from "../views/crm/Pqr";
 
@@ -72,6 +72,7 @@ import VsmDashboard from "../components/vsm/VsmDashboard";
 import AlistamientosAuditoria from "../components/vsm/AlistamientosAuditoria";
 import CrearProductos from "../components/crm/CrearProductos";
 import ActualizarProducto from "../components/crm/ActualizarProducto";
+import Responsabilidades from "../views/Responsabilidades";
 
 export default function Router() {
   return (
@@ -84,6 +85,10 @@ export default function Router() {
         element={<ProtectedRoute allowedRoles={[1, 2, 3, 4, 5, 6, 7, 8, 9]} />}
       >
         <Route path="/auth" element={<AuthLyout />}>
+           <Route
+            path="responsabilidades"
+            element={<Responsabilidades />}
+          />
           <Route
             path="procesos"
             element={
@@ -287,6 +292,10 @@ export default function Router() {
               </DynamicProtectedRoute>
             }
           />
+
+
+          {/* Rutas para responsabilidades */}
+       
           <Route
             path="proveedores-ordenes-compra"
             element={<FormOrdenesProveedores />}

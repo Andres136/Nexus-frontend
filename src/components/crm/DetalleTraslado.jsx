@@ -14,6 +14,7 @@ export default function DetalleTraslado({
   addBodega,
   errores,
   onRemove,
+  empresaId,
   canRemove = true,
 }) {
   const [ocproveedores, setOcproveedores] = useState([]);
@@ -70,6 +71,10 @@ const fetchDirectStock = async (productId) => {
       params.sede_id = sedeOrigenId;
     }
 
+    if (empresaId) {
+      params.empresa_id = empresaId;
+    }
+
     const res = await productsApi.getStock(productId, params);
     return res?.data?.stock || null;
   } catch (err) {
@@ -81,26 +86,28 @@ const fetchDirectStock = async (productId) => {
 
 
 useEffect(() => {
-  if (!detalle.product_id) return;
+  if (!detalle.product_id || !empresaId) return;
 
   const load = async () => {
     const stock = await fetchDirectStock(detalle.product_id);
-
     if (!stock) return;
 
-    const total = stock.stock_total ?? 0;
-    const bodegas = stock.resumen_por_bodega ?? [];
-
-    setBodegasDisponibles(bodegas);
-
+    setBodegasDisponibles(stock.resumen_por_bodega ?? []);
     handleChange(
-      { target: { name: "stock_total", value: total }},
+      { target: { name: "stock_total", value: stock.stock_total ?? 0 } },
+      index
+    );
+
+    // 🔒 limpiar bodegas seleccionadas al cambiar empresa
+    handleChange(
+      { target: { name: "bodegas", value: [] } },
       index
     );
   };
 
   load();
-}, [detalle.product_id]);
+}, [detalle.product_id, empresaId, sedeOrigenId]);
+
 
 
 
@@ -424,6 +431,7 @@ useEffect(() => {
 
               <Select
                 isMulti
+                isDisabled={!empresaId}
                 placeholder="Seleccionar bodegas..."
                 options={bodegasDisponibles.map((b) => ({
                   value: b.bodega_id,
@@ -438,7 +446,7 @@ useEffect(() => {
                     ? selected.map((sel) => ({
                         bodega_id: sel.value,
                         bodega_nombre: sel.nombre,
-                        stock: sel.stock, // ✅ ESTE es el bueno
+                        stock: sel.stock, 
                         cantidad: 0,
                       }))
                     : [];

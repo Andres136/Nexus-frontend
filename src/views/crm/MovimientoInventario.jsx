@@ -74,10 +74,11 @@ export default function MovimientoInventario() {
   const tiposMovimiento = [
     { value: "", label: "Todos los tipos" },
     { value: "descuento_masivo", label: "Descuento masivo" },
-    { value: "traslado", label: "Traslado" },
-    { value: "ingreso", label: "Ingreso" },
-    { value: "ajuste_positivo", label: "Ajuste positivo" },
-    { value: "anulacion", label: "Anulación" }
+    { value: "entrada_masiva", label: "Entrada masiva" },
+    { value: "ENTRADA", label: "Entrada" },
+    { value: "SALIDA", label: "Salida" },
+    { value: "SALIDA_BODEGA", label: "Salida Bodega" },
+    { value: "ENTRADA_BODEGA", label: "Entrada Bodega" }
   ];
 
   const getTipoColor = (tipo) => {
