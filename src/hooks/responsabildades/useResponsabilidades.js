@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { responsabilidadesApi } from "../../services/Responsabilidades";
+import { showToast } from "../../helpers/utils/showToast";
 
 
 export function useResponsabilidades() {
@@ -33,6 +34,51 @@ export function useResponsabilidades() {
     }
   };
 
+
+
+  //Crear Responsabilidades
+  const createResponsabilidad = async (data) => {
+    try {
+      const response = await responsabilidadesApi.create(data);
+      showToast(
+        "success",
+        response.data?.message ?? "Responsabilidad creada correctamente"
+      );
+      fetchResponsabilidades();
+    } catch (error) {
+      console.error("Error al crear responsabilidad:", error);
+    }
+  };
+
+  //Editar Responsabilidades
+  const updateResponsabilidad = async (id, data) => {
+   //onsole.log("Actualizando responsabilidad:", id, data);
+    try {
+      const response = await responsabilidadesApi.update(id, data);
+      showToast(
+        "success",
+        response.data?.message ?? "Responsabilidad actualizada correctamente"
+      );
+      fetchResponsabilidades();
+    } catch (error) {
+      console.error("Error al editar responsabilidad:", error);
+    }
+  };
+
+  //Eliminar Responsabilidades
+  const deleteResponsabilidad = async (id) => {
+    try {
+      const response = await responsabilidadesApi.delete(id);
+      showToast(
+        "success",
+        response.data?.message ?? "Responsabilidad eliminada correctamente"
+      );
+      fetchResponsabilidades();
+    } catch (error) {
+      console.error("Error al eliminar responsabilidad:", error);
+    }
+  };
+
   useEffect(() => {
     fetchResponsabilidades();
   }, [filters]);
@@ -42,6 +88,9 @@ export function useResponsabilidades() {
     pagination,
     loading,
     filters,
-    setFilters
+    setFilters,
+    createResponsabilidad,
+    updateResponsabilidad,
+    deleteResponsabilidad
   };
 }

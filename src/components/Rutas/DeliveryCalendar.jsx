@@ -1,12 +1,49 @@
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
-import { CalendarDays, Truck, Clock, Plus } from "lucide-react";
+import { CalendarDays, Truck,  Plus,Warehouse, } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function DeliveryCalendar({ events, onDateClick, onEventClick }) {
   
   return (
     <div className="bg-white rounded-xl lg:rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+
+
+<nav className="flex mb-6" aria-label="Breadcrumb">
+        <ol className="inline-flex items-center space-x-1 md:space-x-3">
+          <li className="inline-flex items-center">
+            <Link
+              to="/auth/traslado-bodegas"
+              className="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors duration-200"
+            >
+              <Warehouse className="w-4 h-4 mr-2" />
+              Traslado de bodegas
+            </Link>
+          </li>
+              {/* ✅ Header responsive 
+          <li>
+            <div className="flex items-center">
+              <ChevronRightIcon className="w-4 h-4 text-gray-400 mx-1" />
+              <Link 
+                to="/responsabilidades" 
+                className="text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors duration-200"
+              >
+                Responsabilidades
+              </Link>
+            </div>
+          </li>
+          <li aria-current="page">
+            <div className="flex items-center">
+              <ChevronRightIcon className="w-4 h-4 text-gray-400 mx-1" />
+              <span className="text-sm font-medium text-indigo-600">
+                Asignar Responsabilidades
+              </span>
+            </div>
+          </li>*/}
+        </ol>
+      </nav>
+
       {/* ✅ Header responsive */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-700 px-4 lg:px-6 py-3 lg:py-4 text-white">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">

@@ -73,6 +73,9 @@ import AlistamientosAuditoria from "../components/vsm/AlistamientosAuditoria";
 import CrearProductos from "../components/crm/CrearProductos";
 import ActualizarProducto from "../components/crm/ActualizarProducto";
 import Responsabilidades from "../views/Responsabilidades";
+import AsignarResponsabilidades from "../components/AsignarResponsabilidades";
+import TrasladoBodegas from "../components/crm/Traslado-Bodegas/TrasladoBodegas";
+import ObtenerTrasladosBodegas from "../components/crm/Traslado-Bodegas/ObtenerTrasladosBodegas";
 
 export default function Router() {
   return (
@@ -87,8 +90,24 @@ export default function Router() {
         <Route path="/auth" element={<AuthLyout />}>
            <Route
             path="responsabilidades"
-            element={<Responsabilidades />}
+            element={<DynamicProtectedRoute permission="/auth/responsabilidades">
+              <Responsabilidades />
+            </DynamicProtectedRoute>}
           />
+
+          <Route
+            path="asignar-responsabilidades"
+            element={<DynamicProtectedRoute permission="/auth/asignar-responsabilidades">
+              <AsignarResponsabilidades />
+            </DynamicProtectedRoute>}
+          />
+          <Route path="traslado-bodegas" element={<DynamicProtectedRoute permission="/auth/traslado-bodegas">
+              <TrasladoBodegas />
+            </DynamicProtectedRoute>} />
+
+          <Route path="obtener-traslados" element={<DynamicProtectedRoute permission="/auth/obtener-traslados">
+              <ObtenerTrasladosBodegas />
+            </DynamicProtectedRoute>} />
           <Route
             path="procesos"
             element={

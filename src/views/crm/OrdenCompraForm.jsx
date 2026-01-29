@@ -410,7 +410,7 @@ detallesNormalizados.forEach((detalle, i) => {
 
         {/* Detalles */}
         <div className="bg-gray-50 rounded-lg p-4">
-          <h3 className="text-lg font-medium text-gray-900 mb-3">Detalles de la Orden</h3>
+        
           <OrdenCompraMultiItem
             onDetallesChange={handleDetallesChange}
             errores={erroresDetalles}

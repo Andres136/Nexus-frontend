@@ -54,3 +54,17 @@ export const responsabilidadesApi = {
   delete: (id) =>
     apiClient.delete(`/api/responsabilidades/${id}`)
 };
+
+export const responsabilidadesAsignadasApi = {
+  getAll: (params = {}) =>
+    apiClient.get("/api/responsabilidades-asignadas", { params }),
+
+  create: (id, data) =>
+    apiClient.post(`/api/responsabilidades/${id}/asignar`, data),
+
+  update: (pivotId, data) =>
+    apiClient.put(`/api/responsabilidades/${pivotId}/update`, data),
+
+  delete: (pivotId) =>
+    apiClient.delete(`/api/responsabilidades/${pivotId}/remover`)
+};

@@ -13,6 +13,9 @@ export const useAuth = ({ middleware, url }) => {
   const token = localStorage.getItem("token");
   const [permissions, setPermissions] = useState([]);
   const [loadingPermissions, setLoadingPermissions] = useState(true);
+  const [usuarios, setUsuarios] = useState([]);
+  const [cargando,  setCargando]  = useState(false);
+  const [errors,  setErrors] = useState(null);
 
 
   const navigate = useNavigate();
@@ -165,6 +168,24 @@ const loadPermissions = async () => {
       setLoading(false);
     }
   };
+  //Obtener  usuarios
+  const obtenerUsuariosAll = async () => {
+    try {
+      setCargando(true);
+      const token = localStorage.getItem('token');
+
+      const { data } = await clienteAxios.get('/api/usuarios/all', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+   setUsuarios(data);
+    } catch (err) {
+      console.error(err);
+      setErrors(err);
+    } finally {
+      setCargando(false);
+    }
+  };
+  
   
 
   const toggleEstadoUsuario = async (id, estadoActual) => {
@@ -269,6 +290,9 @@ const loadPermissions = async () => {
     permissions,
     loadPermissions,
     loadingPermissions,
+    obtenerUsuariosAll,
+    usuarios
+
 
   };
 };

@@ -39,3 +39,18 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+ 
+export const trasladosBodegaApi = {
+  getAll: (params) => apiClient.get('/api/traslados-bodegas', { params }),
+  create: (data) => apiClient.post('/api/traslados-bodegas', data),
+  update: (id, data) => apiClient.put(`/api/traslados-bodegas/${id}`, data),
+  remove: (id) => apiClient.delete(`/api/traslados-bodegas/${id}`),
+  aprobarBodega: (id, aprueba, motivo = null) =>
+    apiClient.post(`/api/traslados-bodegas/${id}/aprobar`, {
+      aprueba,
+      motivo,
+    }),
+
+  aprobarInventario: (id) =>
+    apiClient.post(`/api/traslados-bodegas/${id}/aprobar-inventario`),
+};

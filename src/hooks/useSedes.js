@@ -10,6 +10,7 @@ export function useSedes() {
   const [error, setError] = useState(null);
 
   const [bodegas, setBodegas] = useState([]);
+  const [bodegasAll, setBodegasAll] = useState([]);
   const [errorBodegas, setErrorBodegas] = useState(null);
   // Función para obtener las sedes desde la API
 
@@ -115,8 +116,19 @@ const  fetchBodegas = async () => {
     console.error('Error fetching bodegas:', error);
   }
 }
+
+const fetchBodegasAll = async () => {
+  try {
+    const response = await bodegasApi.getAllBodegas();
+
+    setBodegasAll(response.data);
+  } catch (error) {
+    console.error('Error fetching bodegas:', error);
+  }
+};
+
 useEffect(() => {
-  fetchBodegas();
+  fetchBodegasAll();
 }, []);
 
 
@@ -194,5 +206,5 @@ const eliminarBodega = async (id) =>{
   });
 }
 
-return { sedes, registrarSede, error, updateSede, eliminarSede, bodegas, errorBodegas, registrarBodega, eliminarBodega, updateBodega};
+return { sedes, registrarSede, error, updateSede, eliminarSede, bodegas, bodegasAll, errorBodegas, registrarBodega, eliminarBodega, updateBodega};
 }

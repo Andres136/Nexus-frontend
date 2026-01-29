@@ -110,6 +110,7 @@ export const bodegasApi = {
   create: (data) => apiClient.post("/api/bodegas", data),
   update: (id, data) => apiClient.put(`/api/bodegas/${id}`, data),
   delete: (id) => apiClient.delete(`/api/bodegas/${id}`),
+  getAllBodegas: () => apiClient.get("/api/bodegas-all"),
 };
 
 //Api Empresa

@@ -1,21 +1,19 @@
-import { useState,  useEffect } from "react";
-
+import { useState, useEffect } from "react";
 import DetalleTraslado from "../../components/crm/DetalleTraslado";
-import { Package, Send, Plus, Building2, FileText, MapPin, Download } from "lucide-react";
-import {useEmpresas} from"../../hooks/useEmpresas";
+import { Package, Send, Plus, Building2, FileText, MapPin, Download, ChevronRight, Home } from "lucide-react";
+import { useEmpresas } from "../../hooks/useEmpresas";
 import { useTrasladoInventario } from "../../hooks/useTrasladoInventario";
 import { inventariosApi } from "../../services/api";
-import Select  from "react-select";
+import Select from "react-select";
 
 export default function TrasladoInventario() {
   const [sedes, setSedes] = useState([]);
 
-  
-
+  // ========= TODA LA LÓGICA ORIGINAL SIN CAMBIOS =========
   const cargarSedes = async () => {
     try {
       const response = await inventariosApi.sedesTraslados();
- console.log('Sedes cargadas:', response.data);
+      console.log('Sedes cargadas:', response.data);
       setSedes(response.data);
     } catch (error) {
       console.error('Error al cargar sedes:', error);
@@ -24,10 +22,9 @@ export default function TrasladoInventario() {
 
   useEffect(() => {
     cargarSedes();
-   ;
   }, []);
 
-  const {empresas} = useEmpresas();
+  const { empresas } = useEmpresas();
   const {
     formData,
     errors,
@@ -42,122 +39,156 @@ export default function TrasladoInventario() {
     handleSubmit,
   } = useTrasladoInventario();
 
-  // ✅ Formatear opciones para react-select
   const sedesOptions = sedes?.map((sede) => ({
     value: sede.id,
     label: sede.nombre
   })) || [];
 
-  // ✅ Encontrar la opción seleccionada
   const selectedSede = sedesOptions.find(option => option.value == formData.sede_destino_id) || null;
+  const selectedSedeOrigen = sedesOptions.find(option => option.value == formData.sede_origen_id) || null;
+  // ========= FIN DE LA LÓGICA ORIGINAL =========
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-2 sm:p-4 md:p-3 lg:p-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       <div className="grid grid-cols-1">
-    
-      <div className="max-w-7xl mx-auto">
-        {/* ✨ Header responsive */}
-   <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-5 lg:p-6 mb-4 sm:mb-6 text-white shadow-lg">
-  <div className="flex flex-col sm:flex-row md:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
-    <div className="p-1.5 bg-white bg-opacity-20 rounded-lg">
-      <Package className="w-5 h-5 sm:w-6 sm:h-6 md:w-5 md:h-5 lg:w-6 lg:h-6" />
-    </div>
-    <div>
-      <h1 className="text-lg sm:text-2xl md:text-xl lg:text-2xl font-bold">Traslado de Inventario</h1>
-      <p className="text-blue-100 text-xs sm:text-sm md:text-sm lg:text-base">
-        Gestiona el movimiento de productos entre sedes
-      </p>
-    </div>
-  </div>
-</div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-          {/* ✨ Información General responsive */}
-          <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-md border border-gray-100">
-            <div className="flex items-center space-x-2 mb-3 sm:mb-4">
-              <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
-              <h2 className="text-base sm:text-lg font-semibold text-gray-800">Información General</h2>
+      {/* 🧭 Breadcrumbs
+      <nav className="flex mb-6" aria-label="Breadcrumb">
+        <ol className="inline-flex items-center space-x-1 md:space-x-3">
+          <li className="inline-flex items-center">
+            <a href="/dashboard" className="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+              <Home className="w-4 h-4 mr-2" />
+              Inicio
+            </a>
+          </li>
+          <li>
+            <div className="flex items-center">
+              <ChevronRight className="w-4 h-4 text-gray-400 mx-1" />
+              <a href="/inventario" className="text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                Inventario
+              </a>
             </div>
-            
-            {/* ✨ Grid responsive - 1 col en móvil, 2 en tablet, 3 en desktop */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-              {/* ✅ Sede Destino CORREGIDA */}
-              <div className="space-y-1">
-                <label className="flex items-center space-x-1 text-xs sm:text-sm font-medium text-gray-700">
-                  <MapPin className="w-3 h-3 text-green-500" />
-                  <span>Sede Destino</span>
+          </li>
+          <li aria-current="page">
+            <div className="flex items-center">
+              <ChevronRight className="w-4 h-4 text-gray-400 mx-1" />
+              <span className="text-sm font-medium text-indigo-600">Traslado de Inventario</span>
+            </div>
+          </li>
+        </ol>
+      </nav>*/}
+
+      {/* 🎯 Header */}
+      <div className="mb-8 col-span-1">
+        <div className="flex items-center space-x-3 mb-2">
+          <div className="bg-indigo-100 p-2 rounded-lg">
+            <Package className="w-6 h-6 text-indigo-600" />
+          </div>
+          <div>
+            <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Traslado de Inventario</h1>
+            <p className="text-gray-600">Gestiona el movimiento de productos entre sedes y bodegas</p>
+          </div>
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-8">
+        
+        {/* 📋 Información General */}
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h2 className="flex items-center text-lg font-semibold text-gray-900">
+              <Building2 className="w-5 h-5 mr-2 text-indigo-500" />
+              Información General
+            </h2>
+          </div>
+          
+          <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              
+              {/* Sede Origen */}
+              <div className="space-y-2">
+                <label className="flex items-center text-sm font-medium text-gray-700">
+                  <MapPin className="w-4 h-4 mr-1 text-blue-500" />
+                  Sede Origen
+                </label>
+                <Select
+                  value={selectedSedeOrigen}
+                  onChange={(opt) => updateFormField('sede_origen_id', opt ? opt.value : '')}
+                  options={sedesOptions}
+                  placeholder="Seleccionar sede origen..."
+                  isClearable
+                  isSearchable
+                  noOptionsMessage={() => "No hay sedes disponibles"}
+                  styles={{
+                    control: (provided, state) => ({
+                      ...provided,
+                      minHeight: '42px',
+                      border: errors?.sede_origen_id ? '2px solid #ef4444' : '1px solid #d1d5db',
+                      borderRadius: '8px',
+                      '&:hover': { borderColor: '#6366f1' },
+                      boxShadow: state.isFocused ? '0 0 0 3px rgba(99, 102, 241, 0.1)' : 'none'
+                    }),
+                    option: (provided) => ({
+                      ...provided,
+                      padding: '8px 12px'
+                    })
+                  }}
+                />
+                {errors?.sede_origen_id && (
+                  <p className="text-red-500 text-sm">{errors.sede_origen_id}</p>
+                )}
+              </div>
+
+              {/* Sede Destino */}
+              <div className="space-y-2">
+                <label className="flex items-center text-sm font-medium text-gray-700">
+                  <MapPin className="w-4 h-4 mr-1 text-green-500" />
+                  Sede Destino
                 </label>
                 <Select
                   value={selectedSede}
                   onChange={(selectedOption) => {
                     updateFormField('sede_destino_id', selectedOption ? selectedOption.value : '');
                   }}
-                  options={sedesOptions}
-                  placeholder="Selecciona una sede..."
+                  options={sedesOptions.filter(sede => sede.value !== formData.sede_origen_id)}
+                  placeholder="Seleccionar sede destino..."
                   isClearable
                   isSearchable
                   noOptionsMessage={() => "No hay sedes disponibles"}
-                  className={`text-xs sm:text-sm ${errors?.sede_destino_id ? 'border-red-500' : ''}`}
                   styles={{
                     control: (provided, state) => ({
                       ...provided,
-                      minHeight: '32px',
-                      height: '32px',
-                      fontSize: '12px',
-                      border: errors?.sede_destino_id ? '1px solid #ef4444' : '1px solid #d1d5db',
-                      borderRadius: '6px',
-                      '&:hover': {
-                        borderColor: '#3b82f6'
-                      },
-                      boxShadow: state.isFocused ? '0 0 0 1px #3b82f6' : 'none'
+                      minHeight: '42px',
+                      border: errors?.sede_destino_id ? '2px solid #ef4444' : '1px solid #d1d5db',
+                      borderRadius: '8px',
+                      '&:hover': { borderColor: '#6366f1' },
+                      boxShadow: state.isFocused ? '0 0 0 3px rgba(99, 102, 241, 0.1)' : 'none'
                     }),
-                    valueContainer: (provided) => ({
+                    option: (provided) => ({
                       ...provided,
-                      height: '30px',
-                      padding: '0 6px'
-                    }),
-                    input: (provided) => ({
-                      ...provided,
-                      margin: '0px'
-                    }),
-                    indicatorsContainer: (provided) => ({
-                      ...provided,
-                      height: '30px'
+                      padding: '8px 12px'
                     })
                   }}
                 />
                 {errors?.sede_destino_id && (
-                  <p className="text-red-500 text-xs sm:text-sm flex items-center space-x-1">
-                    <span>•</span>
-                    <span>{errors.sede_destino_id}</span>
-                  </p>
+                  <p className="text-red-500 text-sm">{errors.sede_destino_id}</p>
                 )}
-                    <Select
-  value={sedesOptions.find(o => o.value == formData.sede_origen_id) || null}
-  onChange={(opt) =>
-    updateFormField('sede_origen_id', opt ? opt.value : '')
-  }
-  options={sedesOptions}
-  placeholder="Sede origen"
-  isClearable
-/>
               </div>
 
-
-
-
-              {/* Empresa - Full width en móvil y tablet */}
-              <div className="space-y-1 sm:col-span-2 lg:col-span-1">
-                <label className="flex items-center space-x-1 text-xs sm:text-sm font-medium text-gray-700">
-                  <Building2 className="w-3 h-3 text-purple-500" />
-                  <span>Empresa</span>
+              {/* Empresa */}
+              <div className="space-y-2">
+                <label className="flex items-center text-sm font-medium text-gray-700">
+                  <Building2 className="w-4 h-4 mr-1 text-purple-500" />
+                  Empresa
                 </label>
                 <select
                   value={formData.empresa_id}
                   onChange={(e) => updateFormField('empresa_id', e.target.value)}
-                  className={`w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md sm:rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-xs sm:text-sm ${errors?.empresa_id ? 'border-red-500' : ''}`}
+                  className={`w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all ${
+                    errors?.empresa_id ? 'border-red-500' : 'border-gray-300'
+                  }`}
                 >
-                  <option value="">Selecciona una empresa</option>
+                  <option value="">Seleccionar empresa...</option>
                   {empresas?.map((empresa) => (
                     <option key={empresa.id} value={empresa.id}>
                       {empresa.nombre}
@@ -165,144 +196,135 @@ export default function TrasladoInventario() {
                   ))}
                 </select>
                 {errors?.empresa_id && (
-                  <p className="text-red-500 text-xs sm:text-sm flex items-center space-x-1">
-                    <span>•</span>
-                    <span>{errors.empresa_id}</span>
-                  </p>
+                  <p className="text-red-500 text-sm">{errors.empresa_id}</p>
                 )}
               </div>
             </div>
 
-            {/* ✨ Notas responsive */}
-            <div className="mt-3 sm:mt-4 space-y-1">
-              <label className="flex items-center space-x-1 text-xs sm:text-sm font-medium text-gray-700">
-                <FileText className="w-3 h-3 text-orange-500" />
-                <span>Notas</span>
+            {/* Notas */}
+            <div className="mt-6 space-y-2">
+              <label className="flex items-center text-sm font-medium text-gray-700">
+                <FileText className="w-4 h-4 mr-1 text-orange-500" />
+                Observaciones
               </label>
               <textarea
                 value={formData.notas}
                 onChange={(e) => updateFormField('notas', e.target.value)}
-                placeholder="Observaciones del traslado..."
-                className={`w-full px-2 sm:px-3 py-2 border border-gray-200 rounded-md sm:rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-none text-xs sm:text-sm ${errors?.notas ? 'border-red-500' : ''}`}
-                rows="2"
+                placeholder="Notas y observaciones del traslado..."
+                className={`w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all resize-none ${
+                  errors?.notas ? 'border-red-500' : 'border-gray-300'
+                }`}
+                rows="3"
               />
               {errors?.notas && (
-                <p className="text-red-500 text-xs sm:text-sm flex items-center space-x-1">
-                  <span>•</span>
-                  <span>{errors.notas}</span>
-                </p>
+                <p className="text-red-500 text-sm">{errors.notas}</p>
               )}
             </div>
           </div>
+        </div>
 
-          {/* ...resto del código sin cambios... */}
-          <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-md border border-gray-100">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0 mb-3 sm:mb-4">
-              <div className="flex items-center space-x-2">
-                <Package className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
-                <h2 className="text-base sm:text-lg font-semibold text-gray-800">Productos</h2>
-                <span className="bg-indigo-100 text-indigo-600 text-xs font-medium px-2 py-1 rounded-full">
-                  {formData.detalles.length} {formData.detalles.length === 1 ? 'producto' : 'productos'}
-                </span>
+        {/* 📦 Detalles de Productos */}
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
+      
+
+          <div className="p-6">
+            {formData.detalles.length === 0 ? (
+              <div className="text-center py-12">
+                <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500 text-lg font-medium mb-2">No hay productos agregados</p>
+                <p className="text-gray-400">Haz clic en "Agregar Producto" para comenzar</p>
               </div>
-              
-              <button
-                type="button"
-                onClick={addDetalle}
-                className="w-full sm:w-auto flex items-center justify-center space-x-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white px-3 py-2 rounded-md sm:rounded-lg font-medium transition-all duration-200 text-xs sm:text-sm"
-              >
-                <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span>Agregar</span>
-              </button>
-            </div>
-
-            <div className="space-y-2 sm:space-y-3">
-              {formData.detalles.map((detalle, i) => (
-                <div key={i} className="relative border border-gray-200 rounded-md sm:rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors duration-200">
-                  <div className="absolute -left-1 -top-1 z-10">
-                    <div className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-xs font-bold shadow-md">
-                      {i + 1}
-                    </div>
-                  </div>
-                  
-                  <div className="pl-4 sm:pl-6 pr-2 py-2">
-                    <DetalleTraslado
-                      detalle={detalle}
-                      index={i}
-                      sedeOrigenId={formData.sede_origen_id}
-               
-                      handleChange={handleChange}
-                      handleBodegaChange={handleBodegaChange}
-                      addBodega={addBodega}
-                      errores={errors}
-                      onRemove={removeDetalle}
-                      canRemove={formData.detalles.length > 1}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-gray-50 border-b border-gray-200">
+                      <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        #
+                      </th>
+                      <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        Orden Compra
+                      </th>
+                      <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        Producto
+                      </th>
+                      <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        Descripción
+                      </th>
+                      <th className="px-3 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        Cantidad
+                      </th>
+                      <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        Bodegas
+                      </th>
+                      <th className="px-3 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider w-16">
+                        Acciones
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {formData.detalles.map((detalle, i) => (
+                      <DetalleTraslado
+                        key={i}
+                        detalle={detalle}
+                        index={i}
+                        sedeOrigenId={formData.sede_origen_id}
+                        handleChange={handleChange}
+                        handleBodegaChange={handleBodegaChange}
+                        addBodega={addBodega}
+                        errores={errors}
+                        onRemove={removeDetalle}
+                        canRemove={formData.detalles.length > 1}
+                      />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
 
-          <div className="bg-gradient-to-r from-indigo-50 to-blue-50 rounded-lg sm:rounded-xl p-3 sm:p-4 border border-indigo-200">
-            <h3 className="text-sm sm:text-base font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center space-x-2">
-              <FileText className="w-4 h-4 text-indigo-600" />
-              <span>Resumen</span>
-            </h3>
-            
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
-              <div className="text-center">
-                <div className="text-lg sm:text-xl font-bold text-indigo-600">{formData.detalles.length}</div>
-                <div className="text-xs text-gray-600">Productos</div>
-              </div>
-              <div className="text-center">
-                <div className="text-lg sm:text-xl font-bold text-green-600">
-                  {formData.detalles.reduce((sum, d) => 
-                    sum + d.bodegas.reduce((bSum, b) => bSum + (parseFloat(b.cantidad) || 0), 0), 0
-                  ).toFixed(0)}
-                </div>
-                <div className="text-xs text-gray-600">Unidades</div>
-              </div>
-              <div className="text-center">
-                <div className="text-lg sm:text-xl font-bold text-purple-600">
-                  {new Set(formData.detalles.flatMap(d => d.bodegas.map(b => b.bodega_id).filter(Boolean))).size}
-                </div>
-                <div className="text-xs text-gray-600">Bodegas</div>
-              </div>
-              <div className="text-center">
-                <div className="text-lg sm:text-xl font-bold text-orange-600">
-                  {formData.empresa_id && formData.sede_destino_id ? '✓' : '○'}
-                </div>
-                <div className="text-xs text-gray-600">Estado</div>
-              </div>
-            </div>
-          </div>
-{/* ✨ Botón de envío para descargar PDF */}
-          <div className="mt-4">
-       {urlPDF && (
-          <a
-            href={urlPDF}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center space-x-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white px-4 py-2 rounded-md sm:rounded-lg font-medium transition-all duration-200 text-xs sm:text-sm mb-4"
-          >
-            <Download className="w-4 h-4 sm:w-5 sm:h-5" />
-            <span>Descargar PDF del Traslado</span>
-          </a>
-        )}
-          </div>
-
-          <div className="flex justify-center pb-2 sm:pb-4">
+              <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+          
             <button
-              type="submit"
-              className="w-full sm:w-auto flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 sm:px-8 py-3 rounded-lg sm:rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg text-sm sm:text-base"
+              type="button"
+              onClick={addDetalle}
+              className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors"
             >
-              <Send className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span>Enviar Traslado</span>
+              <Plus className="w-4 h-4 mr-1" />
+              Agregar Producto
             </button>
           </div>
-        </form>
-      </div>
+        </div>
+
+     
+
+        {/* 📄 PDF Link */}
+        {urlPDF && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <a
+              href={urlPDF}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center space-x-2 text-green-700 font-medium hover:text-green-800 transition-colors"
+            >
+              <Download className="w-5 h-5" />
+              <span>Descargar PDF del Traslado</span>
+            </a>
+          </div>
+        )}
+
+        {/* 🚀 Botón de Envío */}
+        <div className="flex justify-center">
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="inline-flex items-center px-8 py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg"
+          >
+            <Send className="w-5 h-5 mr-2" />
+            {isLoading ? 'Procesando...' : 'Crear Traslado'}
+          </button>
+        </div>
+      </form>
       </div>
     </div>
   );

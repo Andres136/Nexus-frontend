@@ -5,9 +5,9 @@ import {
   PencilIcon, 
   TrashIcon,
   MagnifyingGlassIcon,
-  EyeSlashIcon,
-  EyeIcon
+
 } from '@heroicons/react/24/outline';
+import { Link } from 'react-router-dom';
 
 export default function Responsabilidades() {
   const [showModal, setShowModal] = useState(false);
@@ -93,21 +93,37 @@ export default function Responsabilidades() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       
       {/* Header */}
-      <div className="sm:flex sm:items-center sm:justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Responsabilidades</h1>
-          <p className="mt-2 text-gray-600">Gestiona las responsabilidades del sistema</p>
-        </div>
-        <div className="mt-4 sm:mt-0">
-          <button
-            onClick={handleCreate}
-            className="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors duration-200 shadow-sm"
-          >
-            <PlusIcon className="h-5 w-5 mr-2" />
-            Nueva Responsabilidad
-          </button>
-        </div>
-      </div>
+<div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+  {/* Título */}
+  <div>
+    <h1 className="text-3xl font-semibold text-gray-900">
+      Responsabilidades
+    </h1>
+    <p className="mt-1 text-sm text-gray-600">
+      Administra y asigna responsabilidades del sistema
+    </p>
+  </div>
+
+  {/* Acciones */}
+  <div className="flex gap-3">
+    <Link
+      to="/auth/asignar-responsabilidades"
+      className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+    >
+      <PlusIcon className="h-5 w-5" />
+      Asignar responsabilidades
+    </Link>
+
+    <button
+      onClick={handleCreate}
+      className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition shadow-sm"
+    >
+      <PlusIcon className="h-5 w-5" />
+      Nueva responsabilidad
+    </button>
+  </div>
+</div>
+
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
@@ -286,7 +302,7 @@ function ResponsabilidadModal({ show, onClose, onSubmit, mode, initialData }) {
   const [formData, setFormData] = useState({
     nombre: initialData?.nombre || '',
     descripcion: initialData?.descripcion || '',
-    activo: initialData?.activo ?? true
+    
   });
 
   const [errors, setErrors] = useState({});
