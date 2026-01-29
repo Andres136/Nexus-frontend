@@ -35,7 +35,7 @@ export default function TrasladoBodegas() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [bodegaOrigen, setBodegaOrigen] = useState(null);
   const [bodegaDestino, setBodegaDestino] = useState(null);
-  const { bodegasAll } = useSedes();
+  const { bodegasAll,bodegas} = useSedes();
   
   // Estados adicionales
   const [errors, setErrors] = useState({});
@@ -164,7 +164,7 @@ const fetchDirectStock = async (productId) => {
         }))
       };
 
-      console.log('Datos del traslado:', trasladoData);
+    //  console.log('Datos del traslado:', trasladoData);
       
       const response = await trasladosBodegaApi.create(trasladoData);
       console.log('Respuesta del API:', response);
@@ -189,6 +189,8 @@ const fetchDirectStock = async (productId) => {
       setLoading(false);
     }
   };
+
+  
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -266,7 +268,7 @@ const fetchDirectStock = async (productId) => {
                         }));
                         setStockInfo(null); // Reset stock info
                       }}
-                      options={bodegasAll.map(bodega => ({
+                      options={bodegas.map(bodega => ({
                         value: bodega.id,
                         label: bodega.nombre
                       }))}

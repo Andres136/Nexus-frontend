@@ -129,6 +129,7 @@ const fetchBodegasAll = async () => {
 
 useEffect(() => {
   fetchBodegasAll();
+  fetchBodegas();
 }, []);
 
 

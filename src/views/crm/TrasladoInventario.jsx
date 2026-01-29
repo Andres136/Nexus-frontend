@@ -13,7 +13,7 @@ export default function TrasladoInventario() {
   const cargarSedes = async () => {
     try {
       const response = await inventariosApi.sedesTraslados();
-      console.log('Sedes cargadas:', response.data);
+     // console.log('Sedes cargadas:', response.data);
       setSedes(response.data);
     } catch (error) {
       console.error('Error al cargar sedes:', error);
