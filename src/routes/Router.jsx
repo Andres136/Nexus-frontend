@@ -76,6 +76,7 @@ import Responsabilidades from "../views/Responsabilidades";
 import AsignarResponsabilidades from "../components/AsignarResponsabilidades";
 import TrasladoBodegas from "../components/crm/Traslado-Bodegas/TrasladoBodegas";
 import ObtenerTrasladosBodegas from "../components/crm/Traslado-Bodegas/ObtenerTrasladosBodegas";
+import DetallesTraslados from "../components/crm/Traslado-Bodegas/DetallesTraslados";
 
 export default function Router() {
   return (
@@ -106,8 +107,16 @@ export default function Router() {
             </DynamicProtectedRoute>} />
 
           <Route path="obtener-traslados" element={<DynamicProtectedRoute permission="/auth/obtener-traslados">
-              <ObtenerTrasladosBodegas />
+              <ObtenerTrasladosBodegas   />
             </DynamicProtectedRoute>} />
+
+          <Route
+            path="detalles-traslado/:id"
+            element={<DynamicProtectedRoute permission="/auth/detalles-traslado/:id">
+              <DetallesTraslados />
+            </DynamicProtectedRoute>}
+          />
+
           <Route
             path="procesos"
             element={

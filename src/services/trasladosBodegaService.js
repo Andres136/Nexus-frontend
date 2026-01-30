@@ -45,6 +45,7 @@ export const trasladosBodegaApi = {
   create: (data) => apiClient.post('/api/traslados-bodegas', data),
   update: (id, data) => apiClient.put(`/api/traslados-bodegas/${id}`, data),
   remove: (id) => apiClient.delete(`/api/traslados-bodegas/${id}`),
+  getById: (id) => apiClient.get(`/api/traslados-bodegas/${id}`),
   aprobarBodega: (id, aprueba, motivo = null) =>
     apiClient.post(`/api/traslados-bodegas/${id}/aprobar`, {
       aprueba,

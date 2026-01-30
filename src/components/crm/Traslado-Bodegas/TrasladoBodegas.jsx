@@ -309,7 +309,7 @@ const fetchDirectStock = async (productId) => {
                           bodega_destino_id: selected?.value || '' 
                         }));
                       }}
-                      options={bodegasAll
+                      options={bodegas
                         .filter(bodega => bodega.id !== bodegaOrigen?.value)
                         .map(bodega => ({
                           value: bodega.id,

@@ -4,6 +4,7 @@ import { showToast } from '../../helpers/utils/showToast';
 
 export function useTrasladosBodega() {
   const [data, setData] = useState([]);
+  const [traslado, setTraslado] = useState(null);
   const [pagination, setPagination] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -44,6 +45,29 @@ export function useTrasladosBodega() {
   };
 
   /* =========================
+     OBTENER POR ID
+  ========================== */
+const getTrasladoById = async (id) => {
+  setLoading(true);
+  setError(null);
+
+  try {
+    const res = await trasladosBodegaApi.getById(id);
+    console.log("Detalle del traslado:", res.data.data);
+    setTraslado(res.data.data ?? res.data);
+    return res.data;
+  } catch (err) {
+    console.error(err);
+    setError('Error al cargar traslado');
+    showToast('error', 'No se pudo cargar el traslado');
+    throw err;
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+  /* =========================
      CREAR
   ========================== */
   const crearTraslado = async (payload) => {
@@ -64,6 +88,8 @@ export function useTrasladosBodega() {
       setLoading(false);
     }
   };
+
+
 
   /* =========================
      APROBAR BODEGA
@@ -131,6 +157,8 @@ export function useTrasladosBodega() {
     pagination,
     loading,
     error,
+    traslado,
+    getTrasladoById,
 
     filters,
     setFilters,

@@ -314,9 +314,9 @@ export default function ObtenerTrasladosBodegas() {
                   </th>
 
                   
-                  {/*<th className="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
                   Acciones
-                </th>*/}
+                </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 bg-white">
@@ -385,24 +385,24 @@ export default function ObtenerTrasladosBodegas() {
                       </div>
                     </td>
 
-                    {/* Acciones 
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       <div className="flex items-center justify-center space-x-2">
-                        <button
+                        <Link
+                          to={`/auth/detalles-traslado/${item.id}`}
                           className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
                           title="Ver detalles"
                         >
                           <Eye className="w-4 h-4" />
-                        </button>
-                        
+                        </Link>
+                        {/* 
                         <button
                           className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                           title="Descargar PDF"
                         >
                           <Download className="w-4 h-4" />
-                        </button>
+                        </button>*/}
                       </div>
-                    </td>*/}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -417,7 +417,7 @@ export default function ObtenerTrasladosBodegas() {
               {searchInput ? 'No se encontraron traslados con los filtros aplicados' : 'Aún no se han creado traslados entre bodegas'}
             </p>
             <Link
-              to="/traslados/bodegas/crear"
+              to="/auth/traslado-bodegas"
               className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors"
             >
               <Plus className="w-4 h-4 mr-2" />
