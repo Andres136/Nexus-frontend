@@ -35,7 +35,7 @@ export default function TrasladoBodegas() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [bodegaOrigen, setBodegaOrigen] = useState(null);
   const [bodegaDestino, setBodegaDestino] = useState(null);
-  const { bodegasAll,bodegas} = useSedes();
+  const { bodegas} = useSedes();
   
   // Estados adicionales
   const [errors, setErrors] = useState({});

@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useEffect, useState, } from 'react';
 import Modal from './calidad/Modal';
 import UpdateUser from './calidad/UpdateUser';
+import NexusLoader from './NexusLoader';
 
 
 
@@ -74,7 +75,7 @@ export default function TableUsers({onClose}) {
   return (
     <div className="overflow-x-auto">
       {loading ? (
-        <div className="text-center py-4">Cargando usuarios...</div>
+        <NexusLoader text='Cargando usuarios...' />
       ) : (
         <>
         <div className="flex items-center mb-4">

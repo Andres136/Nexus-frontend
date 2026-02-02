@@ -5,7 +5,7 @@ import {
   ArrowLeft,
   Package,
   Building2,
-  User,
+ 
   Calendar,
   FileText,
   Download,
@@ -14,11 +14,11 @@ import {
   XCircle,
   AlertCircle,
   Eye,
-  Truck,
+
   MapPin,
   Hash,
   MessageSquare,
-  Users,
+  
   Box,
   Home,
   ChevronRight,
@@ -68,8 +68,7 @@ export default function DetallesTraslados() {
     getTrasladoById(id);
   }, [id]);
 
-  console.log("Detalle del traslado:", traslado);
-  console.log("ID del traslado:", id);
+
 
   const EstadoBadge = ({ estado }) => {
     const config = ESTADOS_TRASLADO[estado] || { 

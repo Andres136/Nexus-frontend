@@ -77,6 +77,7 @@ import AsignarResponsabilidades from "../components/AsignarResponsabilidades";
 import TrasladoBodegas from "../components/crm/Traslado-Bodegas/TrasladoBodegas";
 import ObtenerTrasladosBodegas from "../components/crm/Traslado-Bodegas/ObtenerTrasladosBodegas";
 import DetallesTraslados from "../components/crm/Traslado-Bodegas/DetallesTraslados";
+import EditTrasladoBodega from "../components/crm/Traslado-Bodegas/EditTrasladoBodega";
 
 export default function Router() {
   return (
@@ -114,6 +115,13 @@ export default function Router() {
             path="detalles-traslado/:id"
             element={<DynamicProtectedRoute permission="/auth/detalles-traslado/:id">
               <DetallesTraslados />
+            </DynamicProtectedRoute>}
+          />
+       
+          <Route
+            path="editar-traslado/:id"
+            element={<DynamicProtectedRoute permission="/auth/editar-traslado/:id">
+              <EditTrasladoBodega />
             </DynamicProtectedRoute>}
           />
 

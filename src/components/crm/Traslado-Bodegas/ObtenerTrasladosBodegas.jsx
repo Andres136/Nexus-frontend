@@ -19,7 +19,8 @@ import {
   AlertCircle,
   Home,
   ChevronRight as ChevronRightBreadcrumb,
-  Plus
+  Plus,
+  Edit
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -394,13 +395,14 @@ export default function ObtenerTrasladosBodegas() {
                         >
                           <Eye className="w-4 h-4" />
                         </Link>
-                        {/* 
-                        <button
+                   
+                        <Link
+                          to={`/auth/editar-traslado/${item.id}`}
                           className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                           title="Descargar PDF"
                         >
-                          <Download className="w-4 h-4" />
-                        </button>*/}
+                          <Edit className="w-4 h-4" />
+                        </Link>
                       </div>
                     </td>
                   </tr>

@@ -139,11 +139,37 @@ const getTrasladoById = async (id) => {
     }
   };
 
+
+  /*====================
+     ACTUALIZAR
+  ========================== */
+  const actualizarTraslado = async (id, payload) => {
+    setLoading(true);
+
+    try {
+      const res = await trasladosBodegaApi.update(id, payload);
+      showToast('success', 'Traslado actualizado correctamente');
+      fetchTraslados();
+      return res.data;
+    } catch (err) {
+      showToast(
+        'error',
+        err.response?.data?.message ?? 'Error al actualizar traslado'
+      );
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   /* =========================
      HELPERS
   ========================== */
   const getByEstado = (estado) =>
     data.filter(t => t.estado === estado);
+
+
+
 
   /* =========================
      EFFECT
@@ -159,6 +185,7 @@ const getTrasladoById = async (id) => {
     error,
     traslado,
     getTrasladoById,
+    actualizarTraslado,
 
     filters,
     setFilters,
