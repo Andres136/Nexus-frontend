@@ -252,9 +252,15 @@ const descargarPlantilla = async () => {
   const generarEtiquetas = async () => {
   try {
     const res = await productsApi.generarBarcodes({
-      product_ids: productosSeleccionados,
+    empresa_id: Number(selectedEmpresa),
+      sede_id: selectedSede || undefined,
+      productos:productosSeleccionados.map(id =>(
+        {
+          producto_id: id   
+        }
+      ))
     });
- console.log("Respuesta de generación de etiquetas:", res);
+ //console.log("Respuesta de generación de etiquetas:", res);
     const url = window.URL.createObjectURL(
       new Blob([res.data], { type: "application/pdf" })
     );
@@ -265,12 +271,46 @@ const descargarPlantilla = async () => {
     link.click();
 
   } catch (error) {
-    console.error("Error al generar las etiquetas", error);
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text: "No se pudieron generar las etiquetas",
-    });
+ let mensaje = "No se pudieron generar las etiquetas";
+
+  // 🔹 Caso 1: Laravel devolvió JSON pero Axios lo recibió como Blob
+  if (error.response?.data instanceof Blob) {
+    try {
+      const text = await error.response.data.text();
+      const json = JSON.parse(text);
+
+      if (json.errors) {
+        // Convertir errores de Laravel en HTML legible
+        mensaje = Object.values(json.errors)
+          .flat()
+          .map(err => `• ${err}`)
+          .join("<br>");
+      } else if (json.message) {
+        mensaje = json.message;
+      }
+
+      console.error("ERROR BACKEND:", json);
+    } catch (e) {
+      console.error("No se pudo leer el error del backend", e);
+    }
+  }
+
+  // 🔹 Caso 2: Error normal Axios
+  else if (error.response?.data?.errors) {
+    mensaje = Object.values(error.response.data.errors)
+      .flat()
+      .map(err => `• ${err}`)
+      .join("<br>");
+  }
+
+  // 🔹 Mostrar en Swal
+  Swal.fire({
+    icon: "error",
+    title: "Error al generar etiquetas",
+    html: mensaje, // 👈 USAMOS HTML
+    confirmButtonText: "Cerrar",
+    confirmButtonColor: "#2563eb",
+  });
   }
 };
 

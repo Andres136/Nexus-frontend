@@ -15,7 +15,7 @@ const [weekFilter, setWeekFilter] = useState("");
 
 //console.log(user);
 const isAdmin = user?.role_id === 1;
-const isAdministrativo = user?.role_id === 4 || user?.role_id === 5;
+const isAdministrativo = [4, 5, 6,].includes(user?.role_id);
 
 
   const navigate = useNavigate();
@@ -160,16 +160,16 @@ const formatearFecha = (fecha) => {
 
  
 
-  {isAdministrativo || user?.role_id === 1 &&(
-    <button
-      onClick={() =>
-        navigate(`/auth/crm/ordenes-proveedor/dividir-orden/${orden.id}`)
-      }
-      className="bg-yellow-500 text-white px-3 py-1 rounded"
-    >
-      <SplitIcon size={16} />
-    </button>
-  )}
+    {(isAdministrativo || isAdmin) && (
+          <button
+            onClick={() =>
+              navigate(`/auth/crm/ordenes-proveedor/dividir-orden/${orden.id}`)
+            }
+            className="bg-yellow-500 text-white px-3 py-1 rounded"
+          >
+            <SplitIcon size={16} />
+          </button>
+        )}
 
   {/* Vista previa → Todos los roles */}
   <button

@@ -193,7 +193,7 @@ editCategoria: (id, data) =>
   apiClient.put(`/api/categorias/${id}`, data),
 
 generarBarcodes: (data) =>
-  apiClient.post("/api/products/generar-barcodes", data,{
+  apiClient.post("/api/qrs/productos/pdf", data,{
     responseType: "blob",
   }),
 
