@@ -53,7 +53,7 @@ const getTrasladoById = async (id) => {
 
   try {
     const res = await trasladosBodegaApi.getById(id);
-    console.log("Detalle del traslado:", res.data.data);
+   // console.log("Detalle del traslado:", res.data.data);
     setTraslado(res.data.data ?? res.data);
     return res.data;
   } catch (err) {

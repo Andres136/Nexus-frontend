@@ -67,6 +67,8 @@ export default function EditTrasladoBodega() {
     resetForm,
     updateFormField
   } = useEditTrasladoBodega(id);
+const stockDisponible = Number(stockInfo?.stock_total ?? 0);
+
 
   // Handlers del componente
   const onSubmit = async (e) => {
@@ -358,30 +360,50 @@ export default function EditTrasladoBodega() {
 
                   {/* Cantidad y Botones */}
                   <div className="flex flex-col sm:flex-row gap-3">
-                    <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Cantidad</label>
-                      <input
-                        type="number"
-                        value={cantidad}
-                        onChange={(e) => setCantidad(e.target.value)}
-                        placeholder="0.00"
-                        min="0.01"
-                        step="0.01"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm sm:text-base"
-                      />
-                    </div>
+          
+<div className="flex-1">
+  <label className="block text-sm font-medium text-gray-700 mb-1">Cantidad</label>
+  <div className="relative">
+    <input
+      type="number"
+      value={cantidad}
+      onChange={(e) => setCantidad(e.target.value)}
+      placeholder="0.00"
+      min="0.01"
+      step="0.01"
+      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm sm:text-base ${
+        selectedProduct && cantidad && Number(cantidad) > stockDisponible 
+          ? 'border-red-300 bg-red-50' 
+          : 'border-gray-300'
+      }`}
+    />
+    {/* ✅ Mensaje de error para cantidad mayor al stock */}
+    {selectedProduct && cantidad && Number(cantidad) > stockDisponible && (
+      <div className="absolute -bottom-5 left-0 right-0">
+        <p className="text-xs text-red-600 font-medium">
+           Stock insuficiente (máximo: {stockDisponible})
+        </p>
+      </div>
+    )}
+  </div>
+</div>
 
                     {/* Botones */}
                     <div className="flex gap-2 sm:flex-col sm:justify-end sm:min-w-[120px]">
-                      <button
-                        type="button"
-                        onClick={agregarProducto}
-                        disabled={!selectedProduct || !cantidad || Number(cantidad) <= 0}
-                        className="flex-1 sm:flex-none inline-flex items-center justify-center px-3 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        <Check className="w-4 h-4 mr-1" />
-                        Agregar
-                      </button>
+                  <button
+  type="button"
+  onClick={agregarProducto}
+  disabled={
+    !selectedProduct || 
+    !cantidad || 
+    Number(cantidad) <= 0 ||
+    Number(cantidad) > stockDisponible  // ✅ Nueva validación
+  }
+  className="flex-1 sm:flex-none inline-flex items-center justify-center px-3 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+>
+  <Check className="w-4 h-4 mr-1" />
+  Agregar
+</button>
                       <button
                         type="button"
                         onClick={resetForm}
@@ -425,7 +447,7 @@ export default function EditTrasladoBodega() {
                 <div className="px-4 py-8 text-center text-gray-500">
                   <Package className="w-12 h-12 text-gray-300 mx-auto mb-2" />
                   <p className="text-sm">No hay productos agregados</p>
-                  <p className="text-xs">Usa "Agregar Producto" para comenzar</p>
+                  <p className="text-xs">Usa Agregar Producto para comenzar</p>
                 </div>
               ) : (
                 <div className="p-4 space-y-3">

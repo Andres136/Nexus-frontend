@@ -42,6 +42,8 @@ const [productCache, setProductCache] = useState({});
   const [detalleActivo, setDetalleActivo] = useState(null);
   const [errors, setErrors] = useState({});
   const [pdfUrl, setPdfUrl] = useState(null);
+  const [stockErrors, setStockErrors] = useState({});
+//console.log("DEttalles orden:", orden);
 
   // AGREGAR: Estados para cache y tracking
   const [stockCache, setStockCache] = useState({});
@@ -236,7 +238,7 @@ const ensureProductLoaded = async (id) => {
         orden_trabajo_id: orden.id,
         orden_compra_id: detalle.orden_compra_id,
         producto_id: detalle.product_id,
-        cantidad: parseFloat(detalle.cantidad_requerida_kg || detalle.cantidad) || 0,
+        cantidad: parseFloat(detalle.cantidad) || 0,
         bodegas: (detalle.bodegas || []).map((b) => ({
           bodega_id: b.bodega_id,
           cantidad: parseFloat(b.cantidad) || 0,
@@ -308,19 +310,43 @@ const ensureProductLoaded = async (id) => {
     } catch (error) {
       console.error("❌ Error en descuento masivo:", error);
 
-      // Validaciones del backend (422)
-      if (error.response?.status === 422 && error.response?.data?.errors) {
-        const backendErrors = error.response.data.errors;
-        setErrors(backendErrors);
+  const response = error.response?.data;
+  console.error("Respuesta de error:", response);
 
-        // Notificación general, breve y no intrusiva
-        showToast(
-          "warning",
-          "Hay campos con errores. Revisa los productos resaltados."
-        );
-      } else {
-        showToast("error", "Error inesperado al procesar descuento masivo.");
+  //  ERRORES DE NEGOCIO POR ÍTEM (stock insuficiente)
+  if (error.response?.status === 400 && Array.isArray(response?.errores)) {
+    const fieldErrors = {};
+
+    response.errores.forEach((err) => {
+      const index = detalles.findIndex(
+        (d) => d.product_id === err.producto_id
+      );
+
+      if (index !== -1) {
+        // Error global del item
+        fieldErrors[`items.${index}.cantidad`] = [err.mensaje];
+
+        // Error específico por bodega
+        fieldErrors[`items.${index}.bodegas.${err.bodega_id}`] = [err.mensaje];
       }
+    });
+
+    setErrors(fieldErrors);
+    console.warn("⚠️ Errores parciales:", fieldErrors);
+
+    showToast(
+      "error",
+      "Hay productos con stock insuficiente. Revisa los campos marcados."
+    );
+    return;
+  }
+
+  if (error.response?.status === 422 && response?.errors) {
+  setErrors(response.errors);
+  showToast("warning", "Hay errores de validación.");
+  return;
+}
+
     } finally {
       setLoadingStock(false);
     }
@@ -753,59 +779,6 @@ const ensureProductLoaded = async (id) => {
                   })()}
                 </td>
 
-                {/*   <td className="px-3 py-2 text-center align-middle">
-                  <div className="flex flex-col items-center gap-0.5">
-                    <div className="flex items-center gap-1 text-gray-800 text-sm font-medium">
-                      {(() => {
-                        const productId =
-                          detalle.product_id || detalle.product?.id;
-                        const cached = stockCache[productId];
-                        const stockTotal =
-                          cached?.producto_base?.stock_total ?? 0;
-                        return <span>{stockTotal} u</span>;
-                      })()}
-                    </div>
-                    <button
-                      onClick={async () => {
-                        const productId =
-                          detalle.product_id || detalle.product?.id;
-                        const cacheData = stockCache[productId];
-
-                        const sugerencias =
-                          cacheData?.sugerencias?.map((sug) => ({
-                            id: sug.id,
-                            nombre: sug.nombre,
-                            stock_total: sug.stock_total,
-                            resumen_por_bodega: sug.resumen_por_bodega || [],
-                          })) || [];
-
-                        // ✅ Carga stock específico para este producto
-                        const stockData = await fetchStockForProduct(detalle);
-
-                        setDetalleActivo({
-                          ...detalle,
-                          producto_sugerencias: sugerencias,
-                          stock_local: stockData, // 🔹 Guardamos stock local
-                        });
-
-                        // ✅ Ahora ya no dependemos del stockInfo global
-                        setProductStock(stockData);
-                        setBodegasDisponibles(
-                          stockData?.resumen_por_bodega || []
-                        );
-                        setErrors({});
-                        setModalOpen(true);
-                      }}
-                      className="flex items-center gap-1 bg-blue-600 text-white px-2 py-0.5 rounded-md hover:bg-blue-700 transition text-[11px] shadow-sm"
-                      disabled={loadingStock}
-                    >
-                      <Eye className="w-3 h-3" />
-                      {loadingStock ? "..." : "Ver"}
-                    </button>
-                  </div>
-                </td>
-
-                ...existing code... resto de columnas */}
                 <td className="px-3 py-3">
                   <input
                     type="number"
@@ -1038,7 +1011,7 @@ const ensureProductLoaded = async (id) => {
             </>
           ) : (
             <>
-              <CheckCircle className="w-4 h-4" /> Descontar Masivamente
+              Descontar Masivamente
             </>
           )}
         </button>
@@ -1591,7 +1564,7 @@ const ensureProductLoaded = async (id) => {
                                   })
                                   .filter(Boolean) || []
                               }
-                              placeholder="🏢 Seleccione bodegas con stock..."
+                              placeholder=" Seleccione bodegas con stock..."
                               noOptionsMessage={() =>
                                 "No hay bodegas con stock disponible"
                               }
@@ -1599,7 +1572,7 @@ const ensureProductLoaded = async (id) => {
                               menuPortalTarget={document.body}
                             />
 
-                            {/* ✅ CAMBIAR: Mensaje si no hay stock usando resumen_por_bodega */}
+                            {/*  CAMBIAR: Mensaje si no hay stock usando resumen_por_bodega */}
                             {eq.resumen_por_bodega?.filter(
                               (bd) => (bd.stock_total || 0) > 0
                             ).length === 0 && (
@@ -1615,14 +1588,14 @@ const ensureProductLoaded = async (id) => {
                             )}
                           </div>
 
-                          {/* ✅ CAMBIAR: Cantidades por bodega usando resumen_por_bodega */}
+                          {/* CAMBIAR: Cantidades por bodega usando resumen_por_bodega */}
                           {eq.bodegas?.length > 0 && (
                             <div className="mb-3 space-y-2">
                               <label className="block text-sm font-medium text-gray-700">
                                 Cantidades por bodega
                               </label>
                               {eq.bodegas.map((b, bidx) => {
-                                // ✅ CAMBIAR: Buscar en resumen_por_bodega
+                                //  CAMBIAR: Buscar en resumen_por_bodega
                                 const bodegaInfo = eq.resumen_por_bodega?.find(
                                   (bd) => bd.bodega_id === b.bodega_id
                                 );
@@ -1649,32 +1622,56 @@ const ensureProductLoaded = async (id) => {
                                       </div>
                                     </div>
                                     <div className="w-20">
-                                      <input
-                                        type="number"
-                                        step="0.01"
-                                        min="0"
-                                        className={`w-full border rounded-lg px-2 py-1 text-center text-sm ${
-                                          errors[
-                                            `producto_equivalentes.${idx}.bodegas.${bidx}.cantidad`
-                                          ]
-                                            ? "border-red-500"
-                                            : "border-gray-300"
-                                        } focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                                        value={b.cantidad || ""}
-                                        onChange={(e) => {
-                                          const nuevosEq = [
-                                            ...detalleActivo.producto_equivalentes,
-                                          ];
-                                          nuevosEq[idx].bodegas[bidx].cantidad =
-                                            parseFloat(e.target.value) || 0;
-                                          setDetalleActivo({
-                                            ...detalleActivo,
-                                            producto_equivalentes: nuevosEq,
-                                          });
-                                        }}
-                                        placeholder="0.00"
-                                        max={bodegaInfo?.stock_total || 999999}
-                                      />
+                                   <input
+  type="number"
+  step="0.01"
+  min="0"
+  className={`w-full border rounded-lg px-2 py-1 text-center text-sm ${
+    stockErrors[
+      `eq.${idx}.bodega.${bidx}`
+    ]
+      ? "border-red-500"
+      : "border-gray-300"
+  }`}
+  value={b.cantidad || ""}
+  onChange={(e) => {
+    const value = parseFloat(e.target.value) || 0;
+    const stockDisponible = bodegaInfo?.stock_total || 0;
+    const errorKey = `eq.${idx}.bodega.${bidx}`;
+
+    // ❌ STOCK INSUFICIENTE
+    if (value > stockDisponible) {
+      setStockErrors((prev) => ({
+        ...prev,
+        [errorKey]: `Stock insuficiente. Disponible ${stockDisponible}`,
+      }));
+      return; // ⛔ NO actualiza el estado
+    }
+
+    // ✅ LIMPIAR ERROR SI YA ES VÁLIDO
+    setStockErrors((prev) => {
+      const copy = { ...prev };
+      delete copy[errorKey];
+      return copy;
+    });
+
+    // ✅ ACTUALIZAR CANTIDAD
+    const nuevosEq = [...detalleActivo.producto_equivalentes];
+    nuevosEq[idx].bodegas[bidx].cantidad = value;
+
+    setDetalleActivo({
+      ...detalleActivo,
+      producto_equivalentes: nuevosEq,
+    });
+  }}
+  placeholder="0.00"
+/>
+{stockErrors[`eq.${idx}.bodega.${bidx}`] && (
+  <p className="text-red-600 text-xs mt-1">
+    {stockErrors[`eq.${idx}.bodega.${bidx}`]}
+  </p>
+)}
+
                                     </div>
                                   </div>
                                 );
@@ -1753,122 +1750,6 @@ const ensureProductLoaded = async (id) => {
                 Guardar
               </button>
 
-              {/* ✅ BOTÓN DESCONTAR STOCK MEJORADO 
-              <button
-                onClick={async () => {
-                  try {
-                    console.log(
-                      "Descontando stock con detalle:",
-                      detalleActivo
-                    );
-
-                    const payload = {
-                      orden_trabajo_id: orden.id,
-                      orden_compra_id: detalleActivo.orden_compra_id,
-                      producto_id: detalleActivo.product_id,
-                      cantidad: detalleActivo.cantidad_total,
-
-                      // ✅ CORREGIR: Bodegas del producto original
-                      bodegas: (detalleActivo.bodegas || []).map((b) => {
-                        // ✅ CAMBIAR: Buscar en resumen_por_bodega, no inventarios
-                        const bodegaInfo = bodegasDisponibles.find(
-                          (bd) => bd.bodega_id === b.bodega_id
-                        );
-
-                        return {
-                          // ✅ NOTA: Si el backend requiere inventario_id específico,
-                          // necesitarás hacer una llamada adicional o cambiar la estructura
-                          inventario_id: null, // ✅ O buscar en productStock?.inventarios si existe
-                          bodega_id: b.bodega_id,
-                          cantidad: parseFloat(b.cantidad) || 0,
-                          // ✅ AGREGAR: Información adicional para el backend
-                          bodega_nombre:
-                            b.bodega_nombre || bodegaInfo?.bodega_nombre,
-                          sede_nombre: b.sede_nombre || bodegaInfo?.sede_nombre,
-                        };
-                      }),
-
-                      // ✅ CORREGIR: Productos equivalentes
-                      producto_equivalentes: (
-                        detalleActivo.producto_equivalentes || []
-                      ).map((pe) => ({
-                        id: pe.id,
-                        cantidad: (pe.bodegas || []).reduce(
-                          (sum, b) => sum + (parseFloat(b.cantidad) || 0),
-                          0
-                        ),
-                        razon: pe.razon || "",
-
-                        // ✅ CORREGIR: Bodegas de productos equivalentes
-                        bodegas: (pe.bodegas || []).map((b) => {
-                          // ✅ CAMBIAR: Buscar en resumen_por_bodega del equivalente
-                          const bodegaInfo = pe.resumen_por_bodega?.find(
-                            (bd) => bd.bodega_id === b.bodega_id
-                          );
-
-                          return {
-                            inventario_id: null, // ✅ O buscar en pe.inventarios si existe
-                            bodega_id: b.bodega_id,
-                            cantidad: parseFloat(b.cantidad) || 0,
-                            // ✅ AGREGAR: Información adicional
-                            bodega_nombre:
-                              b.bodega_nombre || bodegaInfo?.bodega_nombre,
-                            sede_nombre:
-                              b.sede_nombre || bodegaInfo?.sede_nombre,
-                          };
-                        }),
-                      })),
-                    };
-
-                    console.log(
-                      "🚀 Payload a enviar:",
-                      JSON.stringify(payload, null, 2)
-                    );
-
-                    const res = await productsApi.postDescontarStock(payload);
-                    console.log("✅ Respuesta exitosa:", res);
-
-                    if (res.data.success) {
-                      showToast(
-                        "success",
-                        res.data.message || "Stock descontado exitosamente"
-                      );
-                      setPdfUrl(res.data.movimiento_global?.pdf || null); // ✅ Guardamos la URL del PDF
-                      setModalOpen(false);
-                      setProductStock(null);
-                      setErrors({});
-                    } else {
-                      setErrors(res.data.errors || {});
-                      showToast("error", "Error en la respuesta del servidor");
-                    }
-                  } catch (err) {
-                    console.error("❌ Error al descontar stock:", err);
-
-                    if (err.response?.status === 422) {
-                      const backendErrors = err.response.data.errors || {};
-
-                      // 🔧 Normalizar claves de Laravel
-                      const fixed = {};
-                      Object.keys(backendErrors).forEach((key) => {
-                        fixed[key] = backendErrors[key];
-                      });
-
-                      setErrors(fixed);
-
-                      const mainMessage =
-                        err.response.data.message || "Error de validación";
-                      showToast("error", mainMessage);
-
-                      console.log("🔍 Errores normalizados:", fixed);
-                    } else {
-                      showToast("error", "Error inesperado al descontar stock");
-                    }
-                  }
-                }}
-                className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors"
-              >
-                Descontar Stock
-              </button>*/}
             </div>
           </div>
         </div>
