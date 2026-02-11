@@ -15,11 +15,13 @@ export default function DetalleTraslado({
   onRemove,
   empresaId,
   canRemove = true,
+  sedeDestinoId
 }) {
   const [ocproveedores, setOcproveedores] = useState([]);
   const [search, setSearch] = useState("");
   const { products, isLoading, isFetching, isEmpty } = useProducts({ search });
   const [bodegasDisponibles, setBodegasDisponibles] = useState([]);
+  const [ocCargadas, setOcCargadas] = useState([]); // Para evitar recargas innecesarias de OC
 
   // ========= TODA LA LÓGICA ORIGINAL SIN CAMBIOS =========
   const cargarOC = async (value = "") => {
@@ -41,7 +43,29 @@ export default function DetalleTraslado({
     }
   };
 
+const cargarOcPendientes = async (product_id) => {
+  if (!product_id || !sedeDestinoId) return;
+
+  try {
+    const params = {
+      producto_id: product_id,
+      sede_id: sedeDestinoId,
+    };
+
+    const response = await inventariosApi.OCpendientes(params);
+   // console.log("Órdenes de compra pendientes cargadas:", response.data);
+    setOcCargadas(response.data);
+  } catch (error) {
+    console.error("Error al cargar órdenes de compra pendientes:", error);
+  }
+};
+
+useEffect(() => {
+    cargarOcPendientes(detalle.product_id);
+  }, [detalle.product_id, sedeDestinoId]);
+
   useEffect(() => {
+   
     cargarOC();
   }, []);
 
@@ -104,7 +128,11 @@ export default function DetalleTraslado({
     }
   };
 
-  const selectedOc = ocproveedores.find((oc) => oc.id == detalle.orden_compra_id) || null;
+const selectedOc =
+  Array.isArray(ocCargadas)
+    ? ocCargadas.find((oc) => oc.id === detalle.orden_compra_id) || null
+    : null;
+
   // ========= FIN DE LA LÓGICA ORIGINAL =========
 
   return (
@@ -132,7 +160,7 @@ export default function DetalleTraslado({
   name="orden_compra_id"
   value={selectedOc}
   onChange={handleOcChange}
-  options={ocproveedores}
+  options={ocCargadas}
   getOptionLabel={(oc) => oc.numero_orden}
   getOptionValue={(oc) => oc.id}
   placeholder="OC..."

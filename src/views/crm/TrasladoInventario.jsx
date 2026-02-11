@@ -105,7 +105,7 @@ export default function TrasladoInventario() {
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               
-              {/* Sede Origen */}
+              {/* Sede Origen 
               <div className="space-y-2">
                 <label className="flex items-center text-sm font-medium text-gray-700">
                   <MapPin className="w-4 h-4 mr-1 text-blue-500" />
@@ -137,7 +137,7 @@ export default function TrasladoInventario() {
                 {errors?.sede_origen_id && (
                   <p className="text-red-500 text-sm">{errors.sede_origen_id}</p>
                 )}
-              </div>
+              </div>*/}
 
               {/* Sede Destino */}
               <div className="space-y-2">
@@ -269,6 +269,7 @@ export default function TrasladoInventario() {
                         detalle={detalle}
                         index={i}
                         sedeOrigenId={formData.sede_origen_id}
+                        sedeDestinoId={formData.sede_destino_id}
                         handleChange={handleChange}
                         handleBodegaChange={handleBodegaChange}
                         addBodega={addBodega}

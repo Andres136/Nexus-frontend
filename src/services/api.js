@@ -257,6 +257,8 @@ exportar: (params = {}) =>
   getOcShow: (id) => apiClient.get(`/api/oc-traslados/${id}`),
   movimientosStock: (params = {}) =>
     apiClient.get("/api/movimientos-stock", { params }),
+
+  OCpendientes: (params = {}) => apiClient.get("/api/ordenes-compra-pendientes", { params }),
 };
 
 //Documentacio SGI
