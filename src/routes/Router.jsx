@@ -78,6 +78,7 @@ import TrasladoBodegas from "../components/crm/Traslado-Bodegas/TrasladoBodegas"
 import ObtenerTrasladosBodegas from "../components/crm/Traslado-Bodegas/ObtenerTrasladosBodegas";
 import DetallesTraslados from "../components/crm/Traslado-Bodegas/DetallesTraslados";
 import EditTrasladoBodega from "../components/crm/Traslado-Bodegas/EditTrasladoBodega";
+import DashboardOrdenesAnual from "../components/calidad/DashboardOrdenesAnual";
 
 export default function Router() {
   return (
@@ -117,7 +118,14 @@ export default function Router() {
               <DetallesTraslados />
             </DynamicProtectedRoute>}
           />
-       
+       <Route>
+         <Route
+           path="/auth/crm/estadisticas-ordenes"
+           element={<DynamicProtectedRoute permission="/auth/crm/estadisticas-ordenes">
+        <DashboardOrdenesAnual />
+           </DynamicProtectedRoute>}
+         />
+       </Route>
           <Route
             path="editar-traslado/:id"
             element={<DynamicProtectedRoute permission="/auth/editar-traslado/:id">

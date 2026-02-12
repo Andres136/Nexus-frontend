@@ -221,6 +221,12 @@ export const ordenesCompraProveedoresApi = {
 
   sendEmailWithPdf: (id) =>
     apiClient.post(`/api/ordenes-compra-proveedor/${id}/enviar-email`),
+
+  createObservacion: (data) =>
+    apiClient.post("/api/ordenes-compra-proveedor/observaciones", data),
+  delete: (id) => apiClient.delete(`/api/detalles-orden/${id}`),
+  estadisticasOrdenes: (params) =>
+    apiClient.get("/api/dashboard/ordenes-anuales", { params }),
 };
 
 //Api para auditor
@@ -259,6 +265,8 @@ exportar: (params = {}) =>
     apiClient.get("/api/movimientos-stock", { params }),
 
   OCpendientes: (params = {}) => apiClient.get("/api/ordenes-compra-pendientes", { params }),
+
+
 };
 
 //Documentacio SGI

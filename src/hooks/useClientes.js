@@ -4,6 +4,7 @@ import { useAuth } from "./useAuth";
 import clienteAxios from "../config/axios";
 import { toast } from "react-toastify";    
 import useSWR from "swr";
+import { showToast } from "../helpers/utils/showToast";
 
 
 //fetcher para SWR
@@ -85,7 +86,7 @@ async function registrarCliente(e) {
             }
         });
 
-        toast.success(response.data.message);
+        showToast('success', response.data.message);
         const clienteNuevo = response.data.cliente;
 
         mutate(async current => {
