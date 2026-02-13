@@ -79,6 +79,10 @@ import ObtenerTrasladosBodegas from "../components/crm/Traslado-Bodegas/ObtenerT
 import DetallesTraslados from "../components/crm/Traslado-Bodegas/DetallesTraslados";
 import EditTrasladoBodega from "../components/crm/Traslado-Bodegas/EditTrasladoBodega";
 import DashboardOrdenesAnual from "../components/calidad/DashboardOrdenesAnual";
+import Registros from "../views/RegistroDiario/Registros";
+import VerificacionDiaria from "../components/RegistroDiario/VerificacionDiaria";
+import DashboardRegistroDiario from "../components/RegistroDiario/DashboardRegistroDiario";
+import DashboardProcesosAnuales from "../components/RegistroDiario/DashboardProcesosAnuales";
 
 export default function Router() {
   return (
@@ -141,6 +145,19 @@ export default function Router() {
               </DynamicProtectedRoute>
             }
           />
+{/*Rutas para control de calidad */}
+         <Route path="/auth/control-calidad" element={<DynamicProtectedRoute permission="/auth/control-calidad">
+           <Registros />
+         </DynamicProtectedRoute>} />
+         <Route path="/auth/registro-diario/verificacion" element={<DynamicProtectedRoute permission="/auth/registro-diario/verificacion">
+           <VerificacionDiaria />
+         </DynamicProtectedRoute>} />
+         <Route path="/auth/registro-diario/dashboard" element={<DynamicProtectedRoute permission="/auth/registro-diario/dashboard">
+           <DashboardRegistroDiario />
+         </DynamicProtectedRoute>} />
+         <Route path="/auth/registro-diario" element={<DynamicProtectedRoute permission="/auth/registro-diario">
+           <DashboardProcesosAnuales/>
+         </DynamicProtectedRoute>} />
 
           <Route
             path="marketing"
@@ -476,7 +493,7 @@ export default function Router() {
           <Route path="sedes" element={<Sedes />} />
           <Route path="rendimiento" element={<KpiTareas />} />
           <Route path="tareas" element={<Tareas />} />
-          <Route path="novedades" element={<Errores />} />
+        
           <Route path="departamentos" element={<DepartatamentosUpdate />} />
           <Route path="indicadores" element={<Indicadores />} />
           <Route

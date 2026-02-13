@@ -57,7 +57,7 @@ export default function Navbar() {
       hasSubmenu: true,
       submenu: [
        { name: "Marketing", to: "/auth/marketing", icon: Megaphone, allowedRoles: [1, 2, 10, 11] },
-        { name: "Novedades", to: "novedades", icon: Bell,Bell: [1,2, 10,11] },
+        { name: "Novedades", to: "/auth/control-calidad", icon: Bell, allowedRoles: [1, 2, 10, 11] },
         { name: "Tareas", to: "tareas", icon: ListChecks, allowedRoles: [1,2, 10,11] },
         {name: "Settings", to: "/admin/settings-permisos", icon: BarChart2, allowedRoles: [1] },
         {name: "Responsabilidades", to: "/auth/responsabilidades", icon: User2Icon, allowedRoles: [1] },
