@@ -17,6 +17,8 @@ import {
   TruckIcon,
   LogOutIcon,
   User2Icon,
+ 
+  Cpu,
 
 } from "lucide-react";
 
@@ -61,6 +63,7 @@ export default function Navbar() {
         { name: "Tareas", to: "tareas", icon: ListChecks, allowedRoles: [1,2, 10,11] },
         {name: "Settings", to: "/admin/settings-permisos", icon: BarChart2, allowedRoles: [1] },
         {name: "Responsabilidades", to: "/auth/responsabilidades", icon: User2Icon, allowedRoles: [1] },
+        {name: "TIC", to: "/auth/tic", icon: Cpu, allowedRoles: [1, 2] },
       ],
     },
   ];

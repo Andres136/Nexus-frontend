@@ -265,7 +265,7 @@ exportar: (params = {}) =>
     apiClient.get("/api/movimientos-stock", { params }),
 
   OCpendientes: (params = {}) => apiClient.get("/api/ordenes-compra-pendientes", { params }),
-
+  productosAsignadosUsuario: (params = {}) => apiClient.get("/api/productos-asignar", { params }),
 
 };
 

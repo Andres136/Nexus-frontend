@@ -29,6 +29,7 @@ export default function Registros() {
     { path: '/auth/registro-diario', label: 'Dashboard Procesos' },
     { path: '/auth/registro-diario/verificacion', label: 'Verificación' },
     { path: '/auth/registro-diario/dashboard', label: 'Dashboard Verificación' },
+    { path: '/auth/novedades', label: 'Novedades' },
   ];
 
   return (

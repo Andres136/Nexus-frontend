@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { productsApi } from "../services/api";
 
 export const useProducts = ({
@@ -9,6 +9,7 @@ export const useProducts = ({
   options = {}
 } = {}) => {
   const queryClient = useQueryClient();
+
 
 
   const {
@@ -65,6 +66,17 @@ export const useProducts = ({
   }, [selectedProductId, products, search, queryClient]);
 
 
+  //Traer categorias
+const categoriasQuery = useQuery({
+  queryKey: ["categorias"],
+  queryFn: async () => {
+    const res = await productsApi.getCategorias();
+    return res.data;
+  },
+  staleTime: 10 * 60 * 1000,
+});
+
+
   
 
   return {
@@ -75,6 +87,8 @@ export const useProducts = ({
     refetch: query.refetch,
     isFetching: query.isFetching,
     isEmpty: !query.isLoading && products.length === 0,
+     categorias: categoriasQuery.data ?? [],
+  categoriasLoading: categoriasQuery.isLoading,
 
   };
 };

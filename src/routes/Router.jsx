@@ -83,6 +83,9 @@ import Registros from "../views/RegistroDiario/Registros";
 import VerificacionDiaria from "../components/RegistroDiario/VerificacionDiaria";
 import DashboardRegistroDiario from "../components/RegistroDiario/DashboardRegistroDiario";
 import DashboardProcesosAnuales from "../components/RegistroDiario/DashboardProcesosAnuales";
+import Asignaciones from "../views/tic/Asignaciones";
+import Novedades from "../components/calidad/NovedadesCalidad";
+import NovedadesCalidad from "../components/calidad/NovedadesCalidad";
 
 export default function Router() {
   return (
@@ -157,6 +160,16 @@ export default function Router() {
          </DynamicProtectedRoute>} />
          <Route path="/auth/registro-diario" element={<DynamicProtectedRoute permission="/auth/registro-diario">
            <DashboardProcesosAnuales/>
+         </DynamicProtectedRoute>} />
+
+         <Route path="/auth/novedades" element={<DynamicProtectedRoute permission="/auth/novedades">
+           <NovedadesCalidad />
+         </DynamicProtectedRoute>} />
+{/*Fin de Rutas para control de calidad */}
+
+         {/*Rutas para TIC */}
+         <Route path="/auth/tic" element={<DynamicProtectedRoute permission="/auth/tic">
+           <Asignaciones />
          </DynamicProtectedRoute>} />
 
           <Route
