@@ -56,3 +56,22 @@ export const ticService = {
         });
     },
 }
+
+//MANTENIMIENTO DE EQUIPOS TIC
+export const mantenimientoEquiposTicService = {
+  getAll(params) {
+    return apiClient.get("api/mantenimiento-equipos-tic", { params });
+  },
+  getById(id) {
+    return apiClient.get(`api/mantenimiento-equipos-tic/${id}`);
+  },
+  create(data) {
+    return apiClient.post("api/mantenimiento-equipos-tic", data);
+  },
+  update(id, data) {
+    return apiClient.put(`api/mantenimiento-equipos-tic/${id}`, data);
+  },
+  delete(id) {
+    return apiClient.delete(`api/mantenimiento-equipos-tic/${id}`);
+  },
+};

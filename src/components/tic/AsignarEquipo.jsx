@@ -57,7 +57,6 @@ useEffect(() => {
 
 
 
-  // ...existing code...
 return (
   <div className="mx-auto w-full max-w-6xl px-4 py-8">
     <div className="rounded-2xl bg-white p-8 ">

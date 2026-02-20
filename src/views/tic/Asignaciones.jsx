@@ -3,6 +3,7 @@ import { Search, Plus, Building2, Users, Package, MapPin, Calendar, CheckCircle,
 import AsignarEquipo from '../../components/tic/AsignarEquipo'
 import { useAsignacionesEquipo } from '../../hooks/tic/useAsignacionesEquipo'
 import Select from 'react-select';  
+import { Link } from 'react-router-dom';
 
 export default function Asignaciones() {
   const {
@@ -47,7 +48,21 @@ export default function Asignaciones() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Asignaciones</h1>
             <p className="text-xs text-gray-500 mt-0.5">Gestiona la asignación de equipos</p>
+          
           </div>
+
+            {/* Acción principal */}
+  <Link
+    to="/auth/tic/mantenimientos"
+    className="inline-flex items-center gap-2 px-5 py-2.5 
+               bg-indigo-600 hover:bg-indigo-700 
+               text-white text-sm font-semibold 
+               rounded-xl shadow-md 
+               transition-all duration-200"
+  >
+    <Plus className="w-4 h-4" />
+    Programa Mantenimientos
+  </Link>
           <button
             onClick={() => setMostrarModal(true)}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"

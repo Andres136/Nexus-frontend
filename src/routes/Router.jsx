@@ -86,6 +86,7 @@ import DashboardProcesosAnuales from "../components/RegistroDiario/DashboardProc
 import Asignaciones from "../views/tic/Asignaciones";
 import Novedades from "../components/calidad/NovedadesCalidad";
 import NovedadesCalidad from "../components/calidad/NovedadesCalidad";
+import MantenimientoEquiposTic from "../components/tic/MantenimientoEquiposTic";
 
 export default function Router() {
   return (
@@ -181,6 +182,15 @@ export default function Router() {
             }
           />
 
+          <Route
+            path="/auth/tic/mantenimientos"
+            element={
+              <DynamicProtectedRoute permission="/auth/tic/mantenimientos">
+                <MantenimientoEquiposTic />
+              </DynamicProtectedRoute>
+            }
+          />
+         {/* Fin de Rutas para TIC */}
           <Route
             path="entregas"
             element={
