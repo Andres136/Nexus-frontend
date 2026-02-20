@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import clienteAxios from "../config/axios"
+import { usersApi } from "../services/api";
 // hooks/useVehiculos.js
 export function useVehiculos() {
   const [vehiculos, setVehiculos] = useState([]);
@@ -17,7 +18,7 @@ export function useVehiculos() {
       const { data } = await clienteAxios.get('/api/vehiculos-options', {
         headers: { Authorization: `Bearer ${token}` },
       });
-      console.log('Vehículos obtenidos:', data.vehiculos);
+    //  console.log('Vehículos obtenidos:', data.vehiculos);
     setVehiculos(Array.isArray(data) ? data : data.vehiculos ?? []);
     } catch (err) {
       console.error(err);
@@ -34,9 +35,7 @@ export function useVehiculos() {
       setCargando(true);
       const token = localStorage.getItem('token');
 
-      const { data } = await clienteAxios.get('/api/conductores', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const { data } = await usersApi.getUsers();
      
       setConductores(data);
     } catch (err) {

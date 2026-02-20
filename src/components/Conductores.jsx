@@ -108,7 +108,7 @@ export default function Conductores() {
           value: conductor.id,
           label: `${conductor.name}`,
         }))}
-        value={formData.user_id ? { value: formData.user_id, label: `${conductores.find(c => c.id === formData.user_id)?.name} ${conductores.find(c => c.id === formData.user_id)?.last_name}` } : null}
+        value={formData.user_id ? { value: formData.user_id, label: `${conductores.find(c => c.id === formData.user_id)?.name} ` } : null}
         onChange={(selected) => setFormData((prev) => ({ ...prev, user_id: selected?.value || '' }))}
         className="w-full"
       />

@@ -31,7 +31,7 @@ const location = useLocation();
   // Cargar usuarios para el Multiselect
   const fetchUsers = async () => {
     try {
-      const res = await usersApi.getAll();
+      const res = await usersApi.getUsers();
       setUsers(
         res.data.map((u) => ({
           value: u.id,
@@ -39,7 +39,7 @@ const location = useLocation();
         }))
       );
     } catch (e) {
-      console.error(e);
+      console.log(e);
       toast.error("No se pudieron cargar los usuarios");
     }
   };
