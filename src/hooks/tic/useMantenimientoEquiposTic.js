@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { mantenimientoEquiposTicService, ticService } from "../../services/ticService";
 import { showToast } from "../../helpers/utils/showToast";
+import { List } from "lucide-react";
+
 
 export const  useMantenimientoEquiposTic = () =>{
     const [formData, setFormData] = useState({
@@ -21,6 +23,9 @@ export const  useMantenimientoEquiposTic = () =>{
       const [loading, setLoading] = useState(false);
       const [mantenimientos, setMantenimientos] = useState([]);
       const [mantenimientoSeleccionado, setMantenimientoSeleccionado] = useState(null);
+      const [listarMantenimientos, setListarMantenimientos] = useState([]);
+      const [errorUpdate, setErrorUpdate] = useState([]);
+      
     
       const [pagination, setPagination] = useState({
         current_page: 1,
@@ -35,24 +40,20 @@ export const  useMantenimientoEquiposTic = () =>{
         search: "",
       });
 
+
 // ===============================
 // 🔹 LISTAR
 // ===============================
-const obtenerMantenimientos = async (customFilters = filters) => {
+const obtenerMantenimientos = async () => {
   setLoading(true);
   setError(null);
 
   try {
-    const response = await mantenimientoEquiposTicService.getAll(customFilters);
- console.log("Respuesta del servicio:", response.data);
+    const response = await mantenimientoEquiposTicService.getAll();
+ //console.log("Respuesta del servicio:", response.data);
     setMantenimientos(response.data);
 
-    setPagination({
-      current_page: response.data.current_page,
-      last_page: response.data.last_page,
-      per_page: response.data.per_page,
-      total: response.data.total,
-    });
+
 
   } catch (err) {
     setError("No se pudieron cargar los mantenimientos.");
@@ -60,6 +61,22 @@ const obtenerMantenimientos = async (customFilters = filters) => {
     setLoading(false);
   }
 };
+
+
+const ListarMantenimientosEquiposTable = async (customFilters = filters) => {
+    setLoading(true);
+    setError(null);
+    try {
+        const response = await mantenimientoEquiposTicService.getMantenimientosEquiposTic(customFilters);
+        console.log("Respuesta del servicio ListarMantenimientosEquiposTable:", response.data);
+        setListarMantenimientos(response.data.data);
+        setPagination(response.data);
+    } catch (err) {
+        setError("No se pudieron cargar los mantenimientos.");
+    } finally {
+        setLoading(false);
+    }
+}
    const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData((prev) => ({
@@ -80,10 +97,12 @@ const obtenerMantenimientos = async (customFilters = filters) => {
           } else {
             // Crear nuevo mantenimiento
            const response = await mantenimientoEquiposTicService.create(formData);
+
            showToast('success', response.data.message );
           }
     
           // Refrescar lista de mantenimientos
+          ListarMantenimientosEquiposTable();
           obtenerMantenimientos();
     
           // Limpiar formulario
@@ -105,7 +124,7 @@ const obtenerMantenimientos = async (customFilters = filters) => {
      console.error("Error al guardar mantenimiento:", err);
             //Mostraer errores por campo
             if (err.response && err.response.data && err.response.data.errors) {
-                setError(err.response.data.errors);
+                setErrorUpdate(err.response.data.errors);
             } else {
                 setError("Ocurrió un error inesperado.");
             }
@@ -115,8 +134,29 @@ const obtenerMantenimientos = async (customFilters = filters) => {
         }
       }  
 
+   //Cambiar estado del mantenimiento
+  const cambiarEstadoMantenimiento = async (id, formData) => {
 
-   
+  setLoading(true);
+  setError(null);
+  try {
+  const response = await mantenimientoEquiposTicService.update(id, formData);
+  console.log("Respuesta al cambiar estado:", response.data);
+    showToast('success', response.data.message);
+   ListarMantenimientosEquiposTable();
+  } catch (err) {
+    console.log("Error al cambiar estado:", err);
+    if (err.response && err.response.data && err.response.data.message) {
+      showToast('error', err.response.data.message);
+    } else {
+      showToast('error', 'No se pudo actualizar el estado.');
+    }
+    console.error("Error al cambiar estado:", err);
+    setError("No se pudo actualizar el estado.");
+  } finally {
+    setLoading(false);
+  }
+};
     return {
         formData,
         setFormData,
@@ -130,6 +170,10 @@ const obtenerMantenimientos = async (customFilters = filters) => {
         setFilters,
         handleChange,
         handleSubmit,
-        obtenerMantenimientos
+        obtenerMantenimientos,
+        ListarMantenimientosEquiposTable,
+        listarMantenimientos,
+        cambiarEstadoMantenimiento,
+        errorUpdate
     }
 }

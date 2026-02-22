@@ -8,6 +8,7 @@ import { useEmpresas } from "../../hooks/useEmpresas";
 import { useProducts } from "../../hooks/useProducts";
 import Select from "react-select";
 import { inventariosApi } from "../../services/api";
+import ListarMantenimientosEquipos from "./ListarMantenimientosEquipos";
 
 export default function MantenimientoEquiposTic() {
 
@@ -237,6 +238,7 @@ onEventClick={(data) => {
               <option value="">Selecciona tipo</option>
               <option value="preventivo">Preventivo</option>
               <option value="correctivo">Correctivo</option>
+              <option value="backup">Backup</option>
             </select>
             {error?.tipo && (
               <p className="text-xs text-red-600 mt-1">{error.tipo[0]}</p>
@@ -287,6 +289,8 @@ onEventClick={(data) => {
     </div>
   </div>
 )}
+
+<ListarMantenimientosEquipos />
 
         </div>
     );

@@ -38,7 +38,7 @@ const cargarProductosFiltrados = async () => {
     });
    
  setProductos(data.data.original.data);
-      //  console.log("Productos filtrados cargados:", data.data.original.data);
+        console.log("Productos filtrados cargados:", data.data.original.data);
   } catch (error) {
     console.error(error);
   }
@@ -192,27 +192,45 @@ return (
               <Package size={16} />
               Producto
             </label>
-            <Select
-              options={productos.map((producto) => ({
-                value: producto.producto_id,
-                label: producto.nombre,
-              }))}
-              value={
-                productos
-                  .map((producto) => ({
-                    value: producto.producto_id,
-                    label: producto.nombre,
-                  }))
-                  .find((opt) => opt.value === formData.producto_id) || null
-              }
-              onChange={(option) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  producto_id: option ? option.value : "",
-                }))
-              }
-              placeholder="Selecciona un producto"
-            />
+<Select
+  options={productos.map((producto) => ({
+    value: producto.producto_id,
+    label: producto.nombre,
+    descripcion: producto.descripcion,
+  }))}
+
+  value={
+    productos
+      .map((producto) => ({
+        value: producto.producto_id,
+        label: producto.nombre,
+        descripcion: producto.descripcion,
+      }))
+      .find((opt) => opt.value === formData.producto_id) || null
+  }
+
+  formatOptionLabel={(option) => (
+    <div className="flex flex-col">
+      <span className="font-medium text-gray-800">
+        {option.label}
+      </span>
+      {option.descripcion && (
+        <span className="text-xs text-gray-500">
+          {option.descripcion}
+        </span>
+      )}
+    </div>
+  )}
+
+  onChange={(option) =>
+    setFormData((prev) => ({
+      ...prev,
+      producto_id: option ? option.value : "",
+    }))
+  }
+
+  placeholder="Selecciona un producto"
+/>
             {error?.producto_id && (
               <p className="text-xs text-red-600">
                 {error.producto_id[0]}

@@ -68,10 +68,21 @@ export const mantenimientoEquiposTicService = {
   create(data) {
     return apiClient.post("api/mantenimiento-equipos-tic", data);
   },
-  update(id, data) {
-    return apiClient.put(`api/mantenimiento-equipos-tic/${id}`, data);
+  update: (id, formData) => apiClient.post(`/api/ejecutar-mantenimiento-equipos-tic/${id}`, formData,{
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  }),
+  delete(id, data) {
+    return apiClient.delete(`api/mantenimiento-equipos-tic/${id}`,{
+      data,
+      headers: {
+        "Content-Type": "multipart/form-data",
+      }
+    });
   },
-  delete(id) {
-    return apiClient.delete(`api/mantenimiento-equipos-tic/${id}`);
-  },
+
+  getMantenimientosEquiposTic(params) {
+    return apiClient.get("api/obtener-mantenimientos-tic", { params });
+  }
 };
