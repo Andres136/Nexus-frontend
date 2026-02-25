@@ -72,6 +72,7 @@ const [selectedNovedad, setSelectedNovedad] = useState(null);
                 <th className="px-4 py-3">Estado</th>
                 <th className="px-4 py-3">Departamento</th>
                 <th className="px-4 py-3">Responsable</th>
+                <th className="px-4 py-3">Fuente</th>
                 <th className="px-4 py-3">Soporte</th>
                 <th className="px-4 py-3">Acciones</th>
               </tr>
@@ -119,6 +120,14 @@ const [selectedNovedad, setSelectedNovedad] = useState(null);
                   <td className="px-4 py-3 text-gray-600">
                     {novedad.responsable?.name || "Sin responsable"}
                   </td>
+
+     <td className="px-4 py-3">
+  {novedad.fuentes ? (
+    <span className="text-xs text-gray-600">{novedad.fuentes}</span>
+  ) : (
+    <span className="text-xs text-gray-400">Sin fuente</span>
+  )}
+</td>
 
      <td className="px-4 py-3">
   {novedad.soporte ? (
@@ -194,6 +203,7 @@ const [selectedNovedad, setSelectedNovedad] = useState(null);
             <p>{selectedNovedad.registro_diario?.departamento?.nombre}</p>
           </div>
         </div>
+       
 
     <div>
   <span className="font-semibold">Soporte:</span>
@@ -284,7 +294,21 @@ const [selectedNovedad, setSelectedNovedad] = useState(null);
                 />
              </div>
               
-
+ <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">Selecione una fuente</label>
+                  <select name="fuentes" id="fuentes" className="mb-3 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    value={editData.fuentes || ''}
+                    onChange={(e) => setEditData({ ...editData, fuentes: e.target.value })}
+                  >
+                    <option value="">Selecciona una fuente</option>
+                    <option value="Auditoria Interna  de SGI">Auditoria Interna  de SGI</option>
+                    <option value="Auditoria Externa">Auditoria Externa</option>
+                    <option value="Producto y/o servicio no conforme">Producto y/o servicio no conforme</option>
+                    <option value="Reclamo de cliente">Reclamo de cliente</option>
+                    <option value="Sugerencia de mejora">Sugerencia de mejora</option>
+                    <option value="Otro">Otro</option>
+                  </select>
+        </div>
 
                 <Select
                   options={usuarios.map((u) => ({ value: u.id, label: u.name }))}

@@ -42,7 +42,7 @@ export const useNovedades = () => {
 
     try {
       const response = await calidadService.getNovedades(customFilters);
-
+    console.log("Respuesta de novedades:", response.data);
       setNovedades(response.data.data);
 
       setPagination({
@@ -88,6 +88,7 @@ const actualizarNovedad = async (id, data) => {
   formData.append('fecha_revision', data.fecha_revision || '');
   formData.append('fecha_terminado', data.fecha_terminado || '');
   formData.append('responsable_id', data.responsable_id || '');
+  formData.append('fuentes', data.fuentes || '');
 
   if (data.soporte instanceof File) {
     formData.append('soporte', data.soporte);
@@ -105,6 +106,7 @@ const actualizarNovedad = async (id, data) => {
     return response.data;
 
   } catch (err) {
+    console.log(err);
     showToast('error', 'No se pudo actualizar la novedad.');
     return null;
   } finally {

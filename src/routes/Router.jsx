@@ -84,7 +84,7 @@ import VerificacionDiaria from "../components/RegistroDiario/VerificacionDiaria"
 import DashboardRegistroDiario from "../components/RegistroDiario/DashboardRegistroDiario";
 import DashboardProcesosAnuales from "../components/RegistroDiario/DashboardProcesosAnuales";
 import Asignaciones from "../views/tic/Asignaciones";
-import Novedades from "../components/calidad/NovedadesCalidad";
+
 import NovedadesCalidad from "../components/calidad/NovedadesCalidad";
 import MantenimientoEquiposTic from "../components/tic/MantenimientoEquiposTic";
 
