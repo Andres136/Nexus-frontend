@@ -64,15 +64,10 @@ export default function ObtenerTrasladosBodegas() {
     filters,
     setFilters,
     fetchTraslados,
-    crearTraslado,
-    aprobarPorBodega,
-    aprobarInventario,
-    getByEstado,
+  
   } = useTrasladosBodega();
 
-  useEffect(() => {
-    fetchTraslados();
-  }, [filters]);
+
 
   // Función para manejar la búsqueda
   const handleSearch = (e) => {
@@ -450,7 +445,7 @@ export default function ObtenerTrasladosBodegas() {
                     return (
                       <button
                         key={i}
-                        onClick={() => fetchTraslados(pageNumber)}
+                        onClick={() => setFilters(prev => ({ ...prev, page: pageNumber }))}
                         className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg border transition-colors ${
                           isActive 
                             ? 'bg-indigo-600 text-white border-indigo-600' 

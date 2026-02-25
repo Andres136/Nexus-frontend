@@ -21,7 +21,7 @@ export default function RegistrarEntregaProveedor({ modo = "crear" }) {
     isSaving,
     bodegaSeleccionada,
     setBodegaSeleccionada,
-    errorBodega,
+    errorBodega,      
     setErrorBodega,
     isModalOpen,
     setIsModalOpen,

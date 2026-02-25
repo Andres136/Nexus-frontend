@@ -120,16 +120,20 @@ const [selectedNovedad, setSelectedNovedad] = useState(null);
                     {novedad.responsable?.name || "Sin responsable"}
                   </td>
 
-                 <td className="px-4 py-3">
-                  <a
-  href={`${import.meta.env.VITE_API_URL}/storage/${novedad.soporte}`}
-  target="_blank"
-  rel="noopener noreferrer"
-  className="inline-flex items-center rounded-md border border-blue-100 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 no-underline transition hover:bg-blue-100"
->
-  Ver soporte
-</a>
-                 </td>
+     <td className="px-4 py-3">
+  {novedad.soporte ? (
+    <a
+      href={`${import.meta.env.VITE_API_URL}/storage/${novedad.soporte}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center rounded-md border border-blue-100 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 no-underline transition hover:bg-blue-100"
+    >
+      Ver soporte
+    </a>
+  ) : (
+    <span className="text-xs text-gray-400">Sin archivo</span>
+  )}
+</td>
                   <td className="px-4 py-3">
                     <button
                       onClick={async () => {
@@ -191,19 +195,21 @@ const [selectedNovedad, setSelectedNovedad] = useState(null);
           </div>
         </div>
 
-        {selectedNovedad.soporte && (
-          <div>
-            <span className="font-semibold">Soporte:</span>
-            <a
-              href={`${import.meta.env.VITE_API_URL}/storage/${selectedNovedad.soporte}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="ml-2 inline-flex items-center rounded-md border border-blue-100 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 transition hover:bg-blue-100"
-            >
-              Ver archivo
-            </a>
-          </div>
-        )}
+    <div>
+  <span className="font-semibold">Soporte:</span>
+  {selectedNovedad.soporte ? (
+    <a
+      href={`${import.meta.env.VITE_API_URL}/storage/${selectedNovedad.soporte}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="ml-2 inline-flex items-center rounded-md border border-blue-100 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 transition hover:bg-blue-100"
+    >
+      Ver archivo
+    </a>
+  ) : (
+    <p className="mt-1 text-xs text-gray-400">No hay archivo disponible</p>
+  )}
+</div>
 
       </div>
 
@@ -215,7 +221,7 @@ const [selectedNovedad, setSelectedNovedad] = useState(null);
               <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
 
                 <h2 className="mb-4 text-lg font-semibold text-gray-800">Editar Novedad</h2>
-
+              
                 <input
                   type="text"
                   value={editData.descripcion}
@@ -236,7 +242,10 @@ const [selectedNovedad, setSelectedNovedad] = useState(null);
                   <option value="EN_PROCESO">EN PROCESO</option>
                   <option value="CERRADA">CERRADA</option>
                 </select>
-                <input
+
+                <div> 
+                  <label className="mb-1 block text-sm font-medium text-gray-700">Fecha Revision</label>
+                  <input
                   type="date"
                   value={
                     editData.fecha_revision
@@ -247,8 +256,10 @@ const [selectedNovedad, setSelectedNovedad] = useState(null);
                     setEditData({ ...editData, fecha_revision: e.target.value })
                   }
                   className="mb-3 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                />
-                <input
+                /></div>
+               <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">Fecha Terminado</label>
+                   <input
                   type="date"
                   value={
                     editData.fecha_terminado
@@ -261,12 +272,18 @@ const [selectedNovedad, setSelectedNovedad] = useState(null);
                   className="mb-3 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 />
 
+               </div>
+             <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700">Soporte</label>
+
                 <input
                   type="file"
 
                   onChange={(e) => setEditData({ ...editData, soporte: e.target.files[0] })}
                   className="mb-3 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 file:mr-3 file:rounded-md file:border-0 file:bg-gray-100 file:px-3 file:py-1.5 file:text-xs file:font-medium"
                 />
+             </div>
+              
 
 
                 <Select

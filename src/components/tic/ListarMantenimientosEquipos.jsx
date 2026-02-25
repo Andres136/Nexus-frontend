@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import  { useEffect, useState } from "react";
 import { useMantenimientoEquiposTic } from "../../hooks/tic/useMantenimientoEquiposTic";
 import { ChevronLeft, ChevronRight, Edit2, Search } from "lucide-react";
 import ModalEjecutarMantenimiento from "./ModalEjecutarMantenimiento";

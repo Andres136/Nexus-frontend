@@ -24,6 +24,7 @@ export function useTrasladosBodega() {
 
     try {
       const res = await trasladosBodegaApi.getAll(filters);
+      console.log("Respuesta de traslados:", res.data);
 
       const paginated = res.data.data;
 
@@ -175,7 +176,7 @@ const getTrasladoById = async (id) => {
      EFFECT
   ========================== */
   useEffect(() => {
-    fetchTraslados();
+    fetchTraslados(filters.page);
   }, [filters]);
 
   return {
