@@ -23,9 +23,9 @@ export default function MantenimientoEquiposTic() {
 
     const [mostrarModal, setMostrarModal] = useState(false);
     const { empresas } = useEmpresas();
-    const { categorias, categoriasLoading } = useProducts();
+    const { categorias} = useProducts();
     const [productos, setProductos] = useState([]);
-    const { obtenerUsuariosAll, usuarios } = useAuth({ middleware: "auth" });
+    const { obtenerUsuariosAll} = useAuth({ middleware: "auth" });
     const { sedes } = useSedes();
 
 
@@ -36,7 +36,7 @@ export default function MantenimientoEquiposTic() {
                 categoria_id: formData.categoria_id || undefined,
                 empresa_id: formData.empresa_id || undefined,
             });
-
+  // console.log("🚀  Productos filtrados:", data.data.original.data);
             setProductos(data.data.original.data);
          //   console.log("Productos filtrados cargados:", data.data.original.data);
         } catch (error) {
@@ -178,22 +178,47 @@ onEventClick={(data) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Producto</label>
-            <Select
-              value={formData.producto_id ? productos.find(p => p.producto_id === formData.producto_id) ? { value: formData.producto_id, label: productos.find(p => p.producto_id === formData.producto_id)?.nombre } : null : null}
-              options={productos.map((producto) => ({
-                value: producto.producto_id,
-                label: producto.nombre,
-              }))}
-              onChange={(option) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  producto_id: option ? option.value : "",
-                }))
-              }
-              placeholder="Selecciona producto"
-              isClearable
-              className="text-sm"
-            />
+  <Select
+  options={productos.map((producto) => ({
+    value: producto.producto_id,
+    label: producto.nombre,
+    descripcion: producto.descripcion,
+    asignado: producto.asignado_a
+  }))}
+
+  value={
+    formData.producto_id
+      ? {
+          value: formData.producto_id,
+          label: productos.find(p => p.producto_id === formData.producto_id)?.nombre
+        }
+      : null
+  }
+
+  onChange={(option) =>
+    setFormData((prev) => ({
+      ...prev,
+      producto_id: option ? option.value : ""
+    }))
+  }
+
+  placeholder="Selecciona producto"
+
+  formatOptionLabel={(option) => (
+    <div className="flex flex-col text-sm">
+      <span className="font-medium">{option.label}</span>
+      <span className="text-xs text-gray-500">
+        {option.descripcion} — {option.asignado}
+      </span>
+    </div>
+  )}
+
+  menuPortalTarget={document.body}
+
+  styles={{
+    menuPortal: (base) => ({ ...base, zIndex: 9999 })
+  }}
+/>
             {error?.producto_id && (
               <p className="text-xs text-red-600 mt-1">{error.producto_id[0]}</p>
             )}
@@ -239,6 +264,7 @@ onEventClick={(data) => {
               <option value="preventivo">Preventivo</option>
               <option value="correctivo">Correctivo</option>
               <option value="backup">Backup</option>
+              <option value="fisico">Fisico</option>
             </select>
             {error?.tipo && (
               <p className="text-xs text-red-600 mt-1">{error.tipo[0]}</p>

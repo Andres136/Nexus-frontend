@@ -227,7 +227,14 @@ export const ordenesCompraProveedoresApi = {
   delete: (id) => apiClient.delete(`/api/detalles-orden/${id}`),
   estadisticasOrdenes: (params) =>
     apiClient.get("/api/dashboard/ordenes-anuales", { params }),
+  faltantesPendientes: () =>
+    apiClient.get("/api/referencias-faltantes"),
+  actualizarEstadoObservacion: (observacionId, nuevoEstado) =>
+    apiClient.put(`/api/observaciones/${observacionId}/estado`, { estado: nuevoEstado }),
+  faltantesPendientesbyId: (id) =>
+    apiClient.get(`/api/referencias-faltantes/${id}`),
 };
+
 
 //Api para auditor
 export const auditApi = {
@@ -333,4 +340,19 @@ export const deliveryEventsApi = {
   getEntregasPorUsuario: () => apiClient.get("/api/eventos-entrega-por-usuario"),
   updateEstado: (id, data) => apiClient.post(`/api/eventos-entrega/${id}/change-status`, data),
 };
+
+//Api  para ordenes de Servicio
+export const ordenesServicioApi = {
+  getAll: (params = {}) => apiClient.get("/api/ordenes-servicio", { params }),
+  getById: (id) => apiClient.get(`/api/ordenes-servicio/${id}`),
+  create: (data) =>
+    apiClient.post("/api/ordenes-servicio", data, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }),
+    update: (id, data) =>
+      apiClient.put(`/api/ordenes-servicio/${id}`, data),
+  delete: (id) => apiClient.delete(`/api/ordenes-servicio/${id}`),
+  getShow: (id) => apiClient.get(`/api/ordenes-servicio/${id}/show`),
+};
+
 export default apiClient;

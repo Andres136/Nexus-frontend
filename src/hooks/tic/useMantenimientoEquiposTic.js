@@ -68,7 +68,7 @@ const ListarMantenimientosEquiposTable = async (customFilters = filters) => {
     setError(null);
     try {
         const response = await mantenimientoEquiposTicService.getMantenimientosEquiposTic(customFilters);
-        console.log("Respuesta del servicio ListarMantenimientosEquiposTable:", response.data);
+      //  console.log("Respuesta del servicio ListarMantenimientosEquiposTable:", response.data);
         setListarMantenimientos(response.data.data);
         setPagination(response.data);
     } catch (err) {

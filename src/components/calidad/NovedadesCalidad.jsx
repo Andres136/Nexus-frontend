@@ -64,13 +64,14 @@ const [selectedNovedad, setSelectedNovedad] = useState(null);
           <table className="min-w-full text-sm">
             <thead className="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-500">
               <tr>
+                <th className="px-4 py-3">ID</th>
                 <th className="px-4 py-3">Descripción</th>
                 <th className="px-4 py-3">Fecha</th>
                 <th className="px-4 py-3">Fecha de revisión</th>
                 <th className="px-4 py-3">Fecha de cierre</th>
 
                 <th className="px-4 py-3">Estado</th>
-                <th className="px-4 py-3">Departamento</th>
+                <th className="px-4 py-3">Procesos</th>
                 <th className="px-4 py-3">Responsable</th>
                 <th className="px-4 py-3">Fuente</th>
                 <th className="px-4 py-3">Soporte</th>
@@ -80,6 +81,7 @@ const [selectedNovedad, setSelectedNovedad] = useState(null);
             <tbody>
               {novedades.map((novedad) => (
                 <tr key={novedad.id} className="border-t border-gray-100 transition hover:bg-gray-50/80">
+            <td className="px-4 py-3 text-xs font-medium text-gray-700">{novedad.id}</td>
             <td
   className="max-w-[280px] cursor-pointer px-4 py-3 text-xs font-medium text-gray-700 transition hover:text-blue-600"
   onClick={() => {

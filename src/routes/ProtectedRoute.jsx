@@ -1,14 +1,27 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import PropTypes from 'prop-types';
+import NexusLoader from "../components/NexusLoader"
+
 
 const ProtectedRoute = ({ allowedRoles }) => {
-  const { user } = useAuth({ middleware: "auth" });
+  const { user, loadingUser } = useAuth({ middleware: "auth" });
 
-  if (!user) return <Navigate to="/" replace />; // Si no está autenticado, redirigir al login
+  // 🔄 Mientras está validando token
+  if (loadingUser) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <NexusLoader text="Validando sesión..." />
+      </div>
+    );
+  }
 
+  //  No autenticado
+  if (!user) return <Navigate to="/" replace />;
+
+  //  Sin permiso
   if (!allowedRoles.includes(user.role_id)) {
-    return <Navigate to="/auth/procesos" replace />; // Si no tiene permiso, redirigir
+    return <Navigate to="/auth/procesos" replace />;
   }
 
   return <Outlet />;

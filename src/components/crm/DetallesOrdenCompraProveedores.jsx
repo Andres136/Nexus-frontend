@@ -2,28 +2,32 @@ import { useEffect, useState } from "react";
 import { Trash2, Search, Plus } from "lucide-react";
 import { useProducts } from "../../hooks/useProducts";
 import Select from "react-select";
+import RegisterObservacionOcProveedorDetalles from "./RegisterObservacionOcProveedorDetalles";
 
 export default function DetallesOrdenCompraProveedores({
   onChange,
   errores = {},
 }) {
-  const [detalles, setDetalles] = useState([
-    {
-      item: 1,
-      descripcion: "",
-      cantidad_solicitada: 0,
-      cantidad_entregada: 0,
-      code: "",
-      producto_id: null,
-      campo_seleccionado: "name",
-    },
-  ]);
+ const createDetalle = (itemNumber) => ({
+  uid: crypto.randomUUID(),
+  item: itemNumber,
+  descripcion: "",
+  cantidad_solicitada: 0,
+  cantidad_entregada: 0,
+  code: "",
+  producto_id: null,
+  campo_seleccionado: "name",
+  procesos: [],
+});
 
+  const [detalles, setDetalles] = useState([createDetalle(1)]);
   const [search, setSearch] = useState("");
   const [selectorAbierto, setSelectorAbierto] = useState(null);
 
   const { products, isLoading, isFetching, isEmpty } = useProducts({ search });
   const [productCache, setProductCache] = useState({});
+  const [modalOpen, setModalOpen] = useState(false);
+const [detalleIndexSel, setDetalleIndexSel] = useState(null);
 useEffect(() => {
   if (!products || products.length === 0) return;
 
@@ -64,15 +68,7 @@ useEffect(() => {
   const agregarItem = () => {
     setDetalles((prev) => [
       ...prev,
-      {
-        item: prev.length + 1,
-        descripcion: "",
-        cantidad_solicitada: 0,
-        cantidad_entregada: 0,
-        code: "",
-        producto_id: null,
-        campo_seleccionado: "name",
-      },
+      createDetalle(prev.length + 1),
     ]);
   };
 
@@ -82,6 +78,40 @@ useEffect(() => {
     setDetalles(conReorden);
   };
 
+
+
+const agregarProcesoADetalle = (procesoData) => {
+  setDetalles(prev =>
+    prev.map((detalle, index) => {
+      if (index !== detalleIndexSel) return detalle;
+
+      return {
+        ...detalle,
+        procesos: [
+          ...detalle.procesos,
+          {
+            proceso_bolsas_id: procesoData.proceso_bolsas_id,
+            proceso_nombre: procesoData.proceso_nombre,
+            proveedor_id: procesoData.proveedor_id,
+            proveedor_nombre: procesoData.proveedor_nombre,
+            observacion: procesoData.observacion,
+            estado: procesoData.estado || "pendiente",
+          }
+        ]
+      };
+    })
+  );
+
+  setModalOpen(false);
+};
+const abrirModalProceso = (index) => {
+  setDetalleIndexSel(index);
+  setModalOpen(true);
+};
+
+useEffect(() => {
+  console.log(detalles);
+}, [detalles]);
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -118,6 +148,9 @@ useEffect(() => {
                   Descripción
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Procesos
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Campo a Usar
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -127,7 +160,7 @@ useEffect(() => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {detalles.map((detalle, index) => (
-                <tr key={index} className="hover:bg-gray-50 transition-colors">
+                <tr key={detalle.uid} className="hover:bg-gray-50 transition-colors">
                   {/* Acciones */}
                   <td className="px-4 py-3">
                     <button
@@ -250,7 +283,30 @@ useEffect(() => {
                       </p>
                     )}
                   </td>
+<td className="px-4 py-3">
+  <button
+    onClick={() => abrirModalProceso(index)}
+    className="px-2 py-1 bg-indigo-500 text-white rounded text-xs"
+  >
+    + Proceso
+  </button>
 
+  {/* Mostrar procesos agregados */}
+{detalle.procesos?.map((p, i) => (
+  <div key={i} className="text-xs bg-gray-100 rounded p-1 mt-1">
+    <div>Proceso: {p.proceso_nombre}</div>
+    <div>Proveedor: {p.proveedor_nombre}</div>
+  </div>
+))}
+{modalOpen && detalleIndexSel === index && (
+  <RegisterObservacionOcProveedorDetalles
+ isOpen={true}
+  onClose={() => setModalOpen(false)}
+    modo="local"
+    onSave={agregarProcesoADetalle}
+  />
+)}
+</td>
                   {/* Selector de campo a usar */}
                   <td className="px-4 py-3">
                     <div className="space-y-2">
@@ -308,6 +364,8 @@ useEffect(() => {
               ))}
             </tbody>
           </table>
+
+
         </div>
 
         {/* Mensaje cuando no hay productos */}

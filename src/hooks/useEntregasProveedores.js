@@ -29,6 +29,7 @@ export function useEntregasProveedores(){
            const res = await clienteAxios.get("/api/registrar-proceso-bolsa", {
                headers: { Authorization: `Bearer ${token}` },
            });
+         //  console.log("Procesos obtenidos:", res.data);
            setProcesos(res.data);
        } catch (error) {
            console.error("Error al obtener procesos:", error);

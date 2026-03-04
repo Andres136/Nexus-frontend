@@ -1,6 +1,7 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { Lock } from "lucide-react"; // ← icono elegante (usa lucide-react)
+import NexusLoader from "../components/NexusLoader";
 
 export default function DynamicProtectedRoute({ permission, children }) {
   const { permissions, loadingPermissions } = useAuth({ middleware: "auth" });
@@ -9,13 +10,12 @@ export default function DynamicProtectedRoute({ permission, children }) {
   if (loadingPermissions) {
     return (
       <div className="flex flex-col items-center justify-center h-full py-20 text-gray-600">
-        <span className="animate-spin rounded-full h-10 w-10 border-t-2 border-green-600 mb-4"></span>
-        <p className="text-lg font-medium">Cargando permisos...</p>
+     <NexusLoader text="Cargando permisos..." />
       </div>
     );
   }
 
-  // 🔴 2. NO TIENE PERMISO → Mostrar pantalla elegante
+  //  2. NO TIENE PERMISO → Mostrar pantalla elegante
   if (!permissions.includes(permission)) {
     return (
       <div className="flex flex-col items-center justify-center h-full py-20 text-center text-gray-700">
@@ -31,6 +31,6 @@ export default function DynamicProtectedRoute({ permission, children }) {
     );
   }
 
-  // 🟢 3. TIENE PERMISO → Renderiza la vista
+  //  3. TIENE PERMISO → Renderiza la vista
   return children;
 }

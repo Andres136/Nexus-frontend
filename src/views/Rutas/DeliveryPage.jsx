@@ -5,6 +5,7 @@ import DeliveryCalendar from "../../components/Rutas/DeliveryCalendar";
 import DeliveryForm from "../../components/Rutas/DeliveryForm";
 import { X } from "lucide-react";
 import DeliveryRecordsPage from "./DeliveryRecordsPage";
+import RegistrarOs from "../../components/crm/ordenesServicio/RegistrarOs";
 
 export default function DeliveryPage() {
   const [events, setEvents] = useState([]);
@@ -164,6 +165,8 @@ const handleEventClick = (eventData) => {
         </div>
       )}
       <DeliveryRecordsPage />
+
+
     </div>
   );
 }

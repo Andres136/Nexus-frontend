@@ -116,6 +116,12 @@ const tieneDocumentoCliente = Boolean(ordenSeleccionada?.cliente_documento);
 
   // 5. Enviar datos al backend
   const handleGenerarOrdenTrabajo = async () => {
+    console.log("Datos a enviar:", {
+      sede_id:Number(sedeId),
+      observaciones,
+      forzar_entrega_parcial: forzarEntregaParcial,
+      detalles
+    });
     if (!ordenSeleccionada) {
       toast.error("No se encontró la orden de compra");
       return;
@@ -131,7 +137,7 @@ const tieneDocumentoCliente = Boolean(ordenSeleccionada?.cliente_documento);
         `/api/orden-trabajo/${ordenSeleccionada.id}`,
         {
          
-          sede_id: parseInt(sedeId), 
+          sede_id: Number(sedeId),
           observaciones,
           forzar_entrega_parcial: forzarEntregaParcial, // << ESTE CAMPO NUEVO
  
@@ -200,6 +206,7 @@ const tieneDocumentoCliente = Boolean(ordenSeleccionada?.cliente_documento);
             Authorization: `Bearer ${token}`,
           },
         });
+        console.log("Sedes obtenidas:", response.data);
         setSedes(response.data);
       } catch (error) {
         toast.error("Error al cargar las sedes", error);

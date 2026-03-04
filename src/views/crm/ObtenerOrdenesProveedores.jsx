@@ -30,7 +30,7 @@ const isAdministrativo = [4, 5, 6,].includes(user?.role_id);
     setSearchTerm,
     eliminarOrden,
   } = useProveedores();
-console.log(ordenes);
+
   const handleBuscar = () => {
     setPagina(1);
     obtenerOrdenes(1, searchTerm, weekFilter);
@@ -38,19 +38,11 @@ console.log(ordenes);
 
   //Formatear fecha
 const formatearFecha = (fecha) => {
-  if (!fecha) return "";
+  if (!fecha) return ""
 
-  const soloFecha = fecha.split("T")[0]; // YYYY-MM-DD
-  const [y, m, d] = soloFecha.split("-");
-
-  const dateLocal = new Date(y, m - 1, d);
-
-  return dateLocal.toLocaleDateString("es-CO", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
-};
+  const [y, m, d] = fecha.split("T")[0].split("-")
+  return `${d}/${m}/${y}`
+}
 
   return (
     <div className="grid grid-cols-1 ">

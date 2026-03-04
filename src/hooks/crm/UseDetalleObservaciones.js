@@ -15,7 +15,7 @@ import {showToast} from "../../helpers/utils/showToast";
    const {proveedoresAll, procesos}=useEntregasProveedores();
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState({});
 
 
   const handleSubmit = async (e) => {

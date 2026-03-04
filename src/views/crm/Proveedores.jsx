@@ -44,6 +44,7 @@ export default function Proveedores() {
   const [currentPage, setCurrentPage] = useState(1)
   const [lastPage, setLastPage] = useState(1)
   const [proveedoresFiltrados, setProveedoresFiltrados] = useState([]);
+  const [errores, setErrores] = useState({});
 
   const handleChange = (e) => {
     setForm({
@@ -100,8 +101,9 @@ export default function Proveedores() {
 
       obtenerProveedores()
     } catch (error) {
+      console.log(error)
       if (error.response && error.response.status === 422) {
-        toast.error("Error de validación")
+        setErrores(error.response.data.errors || {})
       } else {
         toast.error("Error al guardar proveedor")
       }
@@ -131,7 +133,7 @@ export default function Proveedores() {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       if (error?.response?.status === 404) {
-        toast.info("No hay ítems pendientes para el filtro seleccionado.");
+        toast.error("No hay entregas pendientes para este proveedor");
       } else {
         console.error(error);
         toast.error("Error al descargar PDF");
@@ -253,6 +255,17 @@ export default function Proveedores() {
   </div>
 </Link>
 
+   <Link
+      to="/auth/crm/ordenes-servicio-proveedor"
+      className="flex items-center gap-3 p-3 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg border border-red-200 transition-colors"
+    >
+      <Eye className="w-4 h-4" />
+      <div>
+        <div className="font-medium text-sm">Ver Órdenes de Servicio</div>
+        <div className="text-xs text-red-600">Órdenes de Servicio</div>
+      </div>
+    </Link>
+
     {/* Eliminé el link duplicado y lo reemplacé con el modal */}
     <div className="flex items-center justify-center p-3 bg-gray-50 border border-gray-200 rounded-lg">
       <ModalRegistroProcesoBolsa />
@@ -330,6 +343,9 @@ export default function Proveedores() {
                   className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                   required
                 />
+                {errores.nombre && (
+                  <p className="text-red-500 text-sm mt-1">{errores.nombre[0]}</p>
+                )}
               </div>
 
               {/* NIT */}
@@ -347,6 +363,9 @@ export default function Proveedores() {
                   className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                   required
                 />
+                {errores.nit && (
+                  <p className="text-red-500 text-sm mt-1">{errores.nit[0]}</p>
+                )}
               </div>
 
               {/* Teléfono */}
@@ -363,6 +382,9 @@ export default function Proveedores() {
                   placeholder="Número de contacto"
                   className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 />
+                {errores.telefono && (
+                  <p className="text-red-500 text-sm mt-1">{errores.telefono[0]}</p>
+                )}
               </div>
 
               {/* Dirección */}
@@ -379,6 +401,9 @@ export default function Proveedores() {
                   placeholder="Dirección física"
                   className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 />
+                {errores.direccion && (
+                  <p className="text-red-500 text-sm mt-1">{errores.direccion[0]}</p>
+                )}
               </div>
 
               {/* Correo */}
@@ -395,6 +420,9 @@ export default function Proveedores() {
                   placeholder="email@empresa.com"
                   className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 />
+                {errores.correo && (
+                  <p className="text-red-500 text-sm mt-1">{errores.correo[0]}</p>
+                )}
               </div>
 
               {/* Ciudad */}

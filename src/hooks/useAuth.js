@@ -225,8 +225,7 @@ const loadPermissions = async () => {
   };
 
 
-
-
+const loadingUser = !user && !error && token;
   useEffect(() => {
   if (user) {
     loadPermissions();
@@ -291,7 +290,8 @@ const loadPermissions = async () => {
     loadPermissions,
     loadingPermissions,
     obtenerUsuariosAll,
-    usuarios
+    usuarios,
+    loadingUser,
 
 
   };

@@ -57,12 +57,13 @@ export default function FormOrdenesProveedores() {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-  const orden = response.data.orden; // 👈 aquí obtienes la orden
+  const orden = response.data; // 👈 aquí obtienes la orden
       toast.success(response.data.message);
+      
+      console.log(response.data);
       // Asegúrate de que el backend devuelva el ID correcto
       navigate(`/auth/crm/ordenes-proveedor-preview/${orden.id}`);
 
-      console.log(response.data);
       //limpiar el formulario
       setFormData({
         proveedor_id: "",

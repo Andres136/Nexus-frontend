@@ -87,6 +87,10 @@ import Asignaciones from "../views/tic/Asignaciones";
 
 import NovedadesCalidad from "../components/calidad/NovedadesCalidad";
 import MantenimientoEquiposTic from "../components/tic/MantenimientoEquiposTic";
+import ViewOrdenesOs from "../views/crm/ViewOrdenesOs/ViewOrdenesOs";
+import ViewDetallesOrdenesOs from "../views/crm/ViewOrdenesOs/ViewDetallesOrdenesOs";
+import RegistrarOs from "../components/crm/ordenesServicio/RegistrarOs";
+
 
 export default function Router() {
   return (
@@ -378,8 +382,34 @@ export default function Router() {
           />
 
 
-          {/* Rutas para responsabilidades */}
-       
+          {/* Rutas para Ordenes a proveedores */}
+
+          <Route
+            path="/auth/crm/ordenes-servicio-proveedor/create"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/ordenes-servicio-proveedor/create">
+                <RegistrarOs />
+              </DynamicProtectedRoute>
+            }
+          />
+          
+
+         <Route
+            path="/auth/crm/ordenes-servicio-proveedor"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/ordenes-servicio-proveedor">
+                <ViewOrdenesOs />
+              </DynamicProtectedRoute>
+            }
+          />
+        <Route
+            path="/auth/crm/ordenes-servicio-proveedor/:id"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/ordenes-servicio-proveedor/:id">
+               <ViewDetallesOrdenesOs />
+              </DynamicProtectedRoute>
+            }
+          />
           <Route
             path="proveedores-ordenes-compra"
             element={<FormOrdenesProveedores />}

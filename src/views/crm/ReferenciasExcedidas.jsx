@@ -1,70 +1,28 @@
-import { useEffect, useState } from "react";
-import clienteAxios from "../../config/axios";
-import { toast } from "react-toastify";
+
 import { useNavigate } from "react-router-dom";
+import useReferenciasExcedidas from "../../hooks/crm/useReferenciasExcedidas";
 
 
 export default function ReferenciasExcedidas() {
-  const [referencias, setReferencias] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [filtro, setFiltro] = useState("");
-  const [paginaActual, setPaginaActual] = useState(1);
-  const [filaAbierta, setFilaAbierta] = useState(null);
 
-  const elementosPorPagina = 15; // ✅ Aumentamos para tabla compacta
   const navigate = useNavigate();
+  const {
+    referenciasPaginadas,
+    totalPaginas,
+    paginaActual,
+    filtro,
+    filaAbierta,
+    loading,
+    setPaginaActual,
+    setFiltro,
+    setFilaAbierta,
+    totalFaltante,
+    proveedoresAfectados,
+    sinEntregar,
+    referencias,
+    referenciasFiltradas,
+  } = useReferenciasExcedidas();
 
-  useEffect(() => {
-    const obtenerReferencias = async () => {
-      try {
-        setLoading(true);
-        const token = localStorage.getItem("token");
-        
-        const response = await clienteAxios.get("/api/referencias-faltantes", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        
-        setReferencias(response.data.referencias_faltantes || []);
-        
-      } catch (error) {
-        console.error('Error al obtener referencias faltantes:', error);
-        toast.error("Error al obtener referencias faltantes");
-        setReferencias([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    obtenerReferencias();
-  }, []);
-
-  // Filtro en tiempo real
-  const referenciasFiltradas = referencias.filter((ref) => {
-    if (!filtro.trim()) return true;
-    
-    const texto = filtro.toLowerCase();
-    const descripcion = ref.descripcion?.toLowerCase() || '';
-    const proveedor = ref.proveedor?.toLowerCase() || '';
-    const numeroOrden = ref.numero_orden?.toString() || '';
-    
-    return (
-      descripcion.includes(texto) ||
-      proveedor.includes(texto) ||
-      numeroOrden.includes(texto)
-    );
-  });
-
-  // Paginación
-  const totalPaginas = Math.ceil(referenciasFiltradas.length / elementosPorPagina);
-  const referenciasPaginadas = referenciasFiltradas.slice(
-    (paginaActual - 1) * elementosPorPagina,
-    paginaActual * elementosPorPagina
-  );
-
-  // Estadísticas
-  const totalFaltante = referencias.reduce((sum, ref) => sum + (ref.cantidad_faltante || 0), 0);
-  const proveedoresAfectados = new Set(referencias.map(ref => ref.proveedor)).size;
-  const sinEntregar = referencias.filter(ref => ref.cantidad_entregada === 0).length;
 
   if (loading) {
     return (

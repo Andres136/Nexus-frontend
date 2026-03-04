@@ -7,9 +7,12 @@ import Modal from "../../components/calidad/Modal";
 
 import RegisterObservacionOcProveedorDetalles from "../../components/crm/RegisterObservacionOcProveedorDetalles";
 import { useRegistrarEntregaProveedor } from "../../hooks/EntregasProveedores/useRegistrarEntregaProveedor";
-import {  Trash} from "lucide-react";
+import { Trash } from "lucide-react";
+import useReferenciasExcedidas from "../../hooks/crm/useReferenciasExcedidas";
+import { useEffect } from "react";
 
 export default function RegistrarEntregaProveedor({ modo = "crear" }) {
+
   const {
     // Estados
     loading,
@@ -21,7 +24,7 @@ export default function RegistrarEntregaProveedor({ modo = "crear" }) {
     isSaving,
     bodegaSeleccionada,
     setBodegaSeleccionada,
-    errorBodega,      
+    errorBodega,
     setErrorBodega,
     isModalOpen,
     setIsModalOpen,
@@ -47,6 +50,9 @@ export default function RegistrarEntregaProveedor({ modo = "crear" }) {
     toDatetimeLocal,
     eliminarItem
   } = useRegistrarEntregaProveedor(modo);
+  const { referencias,
+    getEstadoStyles,
+    actualizarEstado, estadoAbierto, setEstadoAbierto, dropdownRef,  } = useReferenciasExcedidas(orden.id);
 
   if (loading)
     return (
@@ -304,7 +310,7 @@ export default function RegistrarEntregaProveedor({ modo = "crear" }) {
                       {/* Cantidad entregada - MÁS COMPACTO */}
                       <td className="px-2 py-2 whitespace-nowrap text-center w-20">
                         <div className="bg-green-100 rounded-md px-1 py-0.5">
-                          {" "}
+
                           {/* ✅ COMPACTO: rounded-lg→md, px-2 py-1→px-1 py-0.5 */}
                           <span className="text-xs font-semibold text-green-800">
                             {detalle.cantidad_entregada_sede}
@@ -329,7 +335,7 @@ export default function RegistrarEntregaProveedor({ modo = "crear" }) {
                         <span
                           className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${estado.color} text-white shadow-sm`}
                         >
-                          {" "}
+
                           {/* ✅ COMPACTO: px-2 py-1→px-1.5 py-0.5 */}
                           <div className="w-1 h-1 bg-white rounded-full mr-1"></div>{" "}
                           {/* ✅ COMPACTO: w-1.5 h-1.5→w-1 h-1 */}
@@ -337,138 +343,156 @@ export default function RegistrarEntregaProveedor({ modo = "crear" }) {
                         </span>
                       </td>
 
-                      {/* Proveedor - MÁS COMPACTO 
-              <td className="px-2 py-2 w-36">
-                {detalle.cantidad_entregada >= detalle.cantidad_solicitada ? (
-                  <div className="relative">
-                    <div className="bg-gray-100 border border-gray-300 rounded-md px-2 py-1 text-xs text-gray-600 flex items-center"> 
-                      <svg className="w-3 h-3 mr-1 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span className="truncate text-xs">
-                        {detalle.proveedor_id ? 
-                          proveedoresAll.find(p => p.id === detalle.proveedor_id)?.nombre || 'Definido' 
-                          : 'Sin asignar'
-                        }
-                      </span>
-                    </div>
-                    <div className="text-xs text-green-600 mt-0.5">✅ Completado</div>
-                  </div>
-                ) : (
-                  <div>
-                    <Select
-                      options={proveedoresAll.map((p) => ({ value: p.id, label: p.nombre }))}
-                      value={proveedoresAll.find((p) => p.id === detalle.proveedor_id) ? { 
-                        value: detalle.proveedor_id, 
-                        label: proveedoresAll.find((p) => p.id === detalle.proveedor_id).nombre 
-                      } : null}
-                      onChange={(selected) => {
-                        const nuevos = [...detalles];
-                        nuevos[index] = {
-                          ...nuevos[index],
-                          proveedor_id: selected?.value ?? null,
-                        };
-                        setDetalles(nuevos);
-                      }}
-                      placeholder="Seleccionar..."
-                      isClearable
-                      styles={{
-                        control: (provided) => ({
-                          ...provided,
-                          borderColor: '#d1d5db',
-                          borderRadius: '0.375rem', 
-                          fontSize: '0.75rem',
-                          minHeight: '28px' 
-                        }),
-                        option: (provided) => ({
-                          ...provided,
-                          fontSize: '0.75rem'
-                        })
-                      }}
-                    />
-                    <div className="text-xs text-amber-600 mt-0.5">⏳ Pendiente</div>
-                  </div>
-                )}
-              </td>
-*/}
-                      {/* Proceso - MÁS COMPACTO 
-              <td className="px-2 py-2 w-32">
-                {detalle.cantidad_entregada >= detalle.cantidad_solicitada ? (
-                  <div className="relative">
-                    <div className="bg-gray-100 border border-gray-300 rounded-md px-2 py-1 text-xs text-gray-600 flex items-center">
-                      <svg className="w-3 h-3 mr-1 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span className="truncate text-xs">
-                        {detalle.proceso_bolsas_id ? 
-                          procesos.find(p => p.id === detalle.proceso_bolsas_id)?.nombre || 'Definido' 
-                          : 'Sin asignar'
-                        }
-                      </span>
-                    </div>
-                    <div className="text-xs text-green-600 mt-0.5">✅ Finalizado</div>
-                  </div>
-                ) : (
-                  <div>
-                    <Select
-                      options={procesos.map((p) => ({ value: p.id, label: p.nombre }))}
-                      value={procesos.find((p) => p.id === detalle.proceso_bolsas_id) ? { 
-                        value: detalle.proceso_bolsas_id, 
-                        label: procesos.find((p) => p.id === detalle.proceso_bolsas_id).nombre 
-                      } : null}
-                      onChange={(selected) => {
-                        const nuevos = [...detalles];
-                        nuevos[index] = {
-                          ...nuevos[index],
-                          proceso_bolsas_id: selected?.value ?? null,
-                        };
-                        setDetalles(nuevos);
-                      }}
-                      placeholder="Seleccionar..."
-                      isClearable
-                      styles={{
-                        control: (provided) => ({
-                          ...provided,
-                          borderColor: '#d1d5db',
-                          borderRadius: '0.375rem',
-                          fontSize: '0.75rem',
-                          minHeight: '28px'
-                        }),
-                        option: (provided) => ({
-                          ...provided,
-                          fontSize: '0.75rem'
-                        })
-                      }}
-                    />
-                               <button
-  onClick={() => {
-    setDetalleSeleccionado(detalle.id);
-    setObservacionModalAbierta(true);
-  }}
-  className="px-2 py-1 text-xs bg-indigo-600 text-white rounded"
->
-  + 
-</button>
-          
 
-                    <div className="text-xs text-orange-600 mt-0.5">En proceso</div>
+                      <td className="px-2 py-2 w-44">
+                        <div className="flex flex-col gap-2">
+                          {/* Observaciones existentes */}
+                    
+                            <div className="max-h-32 overflow-y-auto space-y-1.5 scrollbar-thin scrollbar-thumb-gray-300">
+                              {referencias
+                              .filter(ref => ref.detalle_id === detalle.id)
+                              .map((ref) => (
+                                <div key={`${ref.orden_id}-${ref.item}`}>
+                                  {ref.observaciones?.length > 0 &&
+                                    ref.observaciones.map((obs) => (
+                                      <div
+                                        key={obs.id}
+                                        className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 text-xs p-2 rounded-lg shadow-sm hover:shadow-md transition-shadow"
+                                      >
+                                        <div className="flex items-center justify-between mb-1">
+                                          <div className="relative inline-block" ref={dropdownRef}>
+                                            <button
+                                       onClick={(e) => {
+  e.stopPropagation();
+  setEstadoAbierto(
+    estadoAbierto === obs.id ? null : obs.id
+  );
+}}
+                                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold transition-all ${getEstadoStyles(
+                                                obs.estado
+                                              )}`}
+                                            >
+                                              <span className="w-2 h-2 rounded-full bg-current"></span>
+                                              {obs.estado.replace("_", " ")}
+                                              <svg
+                                                className="w-3 h-3 ml-1 opacity-60"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                              >
+                                                <path
+                                                  strokeLinecap="round"
+                                                  strokeLinejoin="round"
+                                                  strokeWidth="2"
+                                                  d="M19 9l-7 7-7-7"
+                                                />
+                                              </svg>
+                                            </button>
 
-            </div>
-                )}
- 
+                                            {estadoAbierto === obs.id && (
+                                              <div className="absolute left-15 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50 animate-fadeIn">
+                                                {["pendiente", "en_proceso", "completada"].map(
+                                                  (estado) => (
+                                                    <button
+                                                      key={estado}
+                                                      disabled={estado === obs.estado}
+                                               
+                                               onClick={(e) => {
+  e.stopPropagation();
+  actualizarEstado(obs.id, estado);
+  setEstadoAbierto(null);
+}}
+                                                      className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-gray-50 transition-colors ${estado === obs.estado
+                                                          ? "opacity-50 cursor-not-allowed"
+                                                          : ""
+                                                        }`}
+                                                    >
+                                                      <span className="flex items-center gap-2">
+                                                        <span
+                                                          className={`w-2 h-2 rounded-full ${estado === "pendiente"
+                                                              ? "bg-yellow-500"
+                                                              : estado === "en_proceso"
+                                                                ? "bg-blue-500"
+                                                                : estado === "completada"
+                                                                  ? "bg-green-500"
+                                                                  : "bg-red-500"
+                                                            }`}
+                                                        ></span>
+                                                        {estado.replace("_", " ")}
+                                                      </span>
 
-              </td>*/}
+                                                      {estado === obs.estado && (
+                                                        <svg
+                                                          className="w-3 h-3 text-green-500"
+                                                          fill="none"
+                                                          stroke="currentColor"
+                                                          viewBox="0 0 24 24"
+                                                        >
+                                                          <path
+                                                            strokeLinecap="round"
+                                                            strokeLinejoin="round"
+                                                            strokeWidth="2"
+                                                            d="M5 13l4 4L19 7"
+                                                          />
+                                                        </svg>
+                                                      )}
+                                                    </button>
+                                                  )
+                                                )}
+                                              </div>
+                                            )}
+                                          </div>
+                                          <span className="inline-flex items-center gap-1 text-[10px] text-gray-600">
+                                            <svg className="w-2.5 h-2.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                            </svg>
+                                            <span className="font-medium truncate max-w-[80px]">{obs.proveedor}</span>
+                                          </span>
+                                          <span className="text-[10px] text-gray-400 flex items-center gap-0.5"></span>
+                                          <span className="text-[10px] text-gray-400 flex items-center gap-0.5">
+                                            <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                            {new Date(obs.fecha).toLocaleDateString("es-CO")}
+                                          </span>
+                                        </div>
+                                        <p className="text-gray-700 text-[11px] leading-tight mb-1 line-clamp-2">
+                                          {obs.observacion}
+                                        </p>
+                                        <div className="flex items-center gap-1 text-[10px] text-gray-500">
+                                          <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                          </svg>
+                                          <span className="truncate max-w-[60px]">{obs.usuario}</span>
+                                          {obs.proceso?.nombre && (
+                                            <>
+                                              <span className="text-gray-300">•</span>
+                                              <span className="truncate max-w-[50px]">{obs.proceso.nombre}</span>
 
-                      <td className="text-center">
-                        <button
-                          onClick={() => {
-                            setDetalleSeleccionado(detalle.id);
-                            setObservacionModalAbierta(true);
-                          }}
-                          className="px-2 py-1 text-xs bg-indigo-600 text-white rounded"
-                        >
-                          +
-                        </button>
+                                            </>
+                                          )}
+                                        </div>
+                                      </div>
+                                    ))}
+                                </div>
+                              ))}
+                            </div>
+                      
+
+                          {/* Botón agregar */}
+                          <button
+                            onClick={() => {
+                              setDetalleSeleccionado(detalle.id);
+                              setObservacionModalAbierta(true);
+                            }}
+                            className="flex items-center justify-center gap-1 w-full px-2 py-1.5 text-xs font-medium bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                            Agregar
+                          </button>
+                        </div>
                       </td>
 
                       {/* Historial - MÁS COMPACTO */}
@@ -506,10 +530,10 @@ export default function RegistrarEntregaProveedor({ modo = "crear" }) {
                       {/* Nueva Entrega - MÁS COMPACTO */}
                       <td className="px-2 py-2 w-36">
                         <div className="bg-green-50 rounded-md p-2">
-                          {" "}
+
                           {/* ✅ COMPACTO: rounded-lg→md, p-3→p-2 */}
                           <div className="space-y-1.5">
-                            {" "}
+
                             {/* ✅ COMPACTO: space-y-2→space-y-1.5 */}
                             <div>
                               <label className="block text-xs font-medium text-gray-700 mb-0.5">
@@ -538,11 +562,10 @@ export default function RegistrarEntregaProveedor({ modo = "crear" }) {
                                 onChange={(e) =>
                                   handleFechaChange(index, e.target.value)
                                 }
-                                className={`w-full rounded-md px-1.5 py-1 text-xs focus:ring-1 focus:ring-green-500 ${
-                                  erroresFecha[index]
-                                    ? "border-red-500 bg-red-50"
-                                    : "border-gray-300 focus:border-green-500"
-                                }`}
+                                className={`w-full rounded-md px-1.5 py-1 text-xs focus:ring-1 focus:ring-green-500 ${erroresFecha[index]
+                                  ? "border-red-500 bg-red-50"
+                                  : "border-gray-300 focus:border-green-500"
+                                  }`}
                               />
                               {erroresFecha[index] && (
                                 <p className="text-red-500 text-xs mt-0.5">
@@ -594,11 +617,10 @@ export default function RegistrarEntregaProveedor({ modo = "crear" }) {
           <button
             onClick={handleSubmit}
             disabled={isSaving}
-            className={`flex items-center px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-200 ${
-              isSaving
-                ? "bg-gray-400 text-gray-200 cursor-not-allowed"
-                : "bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-lg hover:shadow-xl transform hover:scale-105"
-            }`}
+            className={`flex items-center px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-200 ${isSaving
+              ? "bg-gray-400 text-gray-200 cursor-not-allowed"
+              : "bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-lg hover:shadow-xl transform hover:scale-105"
+              }`}
           >
             {isSaving ? (
               <>
@@ -632,6 +654,7 @@ export default function RegistrarEntregaProveedor({ modo = "crear" }) {
         isOpen={observacionModalAbierta}
         onClose={() => setObservacionModalAbierta(false)}
         detalleId={detalleSeleccionado}
+        modo="api"
       />
 
       <Modal
@@ -716,41 +739,50 @@ export default function RegistrarEntregaProveedor({ modo = "crear" }) {
                       )}
 
                       {/* Solo si quieres permitir cambiarla */}
-                      <Select
-                        options={bodegas.map((b) => ({
-                          value: b.id,
-                          label: b.nombre,
-                        }))}
-                        value={
-                          entrega.bodega_id
-                            ? {
-                                value: entrega.bodega_id,
-                                label:
-                                  bodegas.find(
-                                    (b) => b.id === entrega.bodega_id,
-                                  )?.nombre || "Desconocida",
-                              }
-                            : null
-                        }
-                        onChange={(selected) => {
-                          const nuevas = [...historialEntregas];
-                          nuevas[idx] = {
-                            ...nuevas[idx],
-                            bodega_id: selected ? selected.value : null,
-                          };
-                          setHistorialEntregas(nuevas);
-                        }}
-                        placeholder="Cambiar bodega"
-                        isClearable
-                        className="mt-1 text-xs"
-                        styles={{
-                          control: (provided) => ({
-                            ...provided,
-                            minHeight: "32px",
-                            fontSize: "0.8rem",
-                          }),
-                        }}
-                      />
+                     <Select
+  options={bodegas.map((b) => ({
+    value: b.id,
+    label: b.nombre,
+  }))}
+
+  value={
+    entrega.bodega_id
+      ? {
+          value: entrega.bodega_id,
+          label:
+            bodegas.find((b) => b.id === entrega.bodega_id)?.nombre ||
+            "Desconocida",
+        }
+      : null
+  }
+
+  onChange={(selected) => {
+    const nuevas = [...historialEntregas];
+    nuevas[idx] = {
+      ...nuevas[idx],
+      bodega_id: selected ? selected.value : null,
+    };
+    setHistorialEntregas(nuevas);
+  }}
+
+  placeholder="Cambiar bodega"
+  isClearable
+  className="mt-1 text-xs"
+
+  menuPortalTarget={document.body}
+
+  styles={{
+    control: (provided) => ({
+      ...provided,
+      minHeight: "32px",
+      fontSize: "0.8rem",
+    }),
+    menuPortal: (base) => ({
+      ...base,
+      zIndex: 9999,
+    }),
+  }}
+/>
                     </td>
 
                     {/* Observaciones */}

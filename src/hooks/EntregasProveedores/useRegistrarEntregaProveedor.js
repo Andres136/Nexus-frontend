@@ -8,6 +8,7 @@ import { useSedes } from "../useSedes";
 import { useEntregasProveedores } from "../useEntregasProveedores"; 
 import Swal from "sweetalert2";
 import { ordenesCompraProveedoresApi } from "../../services/api";
+import { showToast } from "../../helpers/utils/showToast";
 
 // Util: convierte a "YYYY-MM-DD" local
 function toDatetimeLocal(dateString) {
@@ -131,6 +132,7 @@ export function useRegistrarEntregaProveedor(modo = "crear") {
         );
 
         setOrden({
+          id: data.id,
           proveedor_id: data.proveedor_id ?? null,
           numero_orden: data.numero_orden,
           proveedor_nombre: data.proveedor_nombre ?? null,
@@ -293,7 +295,7 @@ export function useRegistrarEntregaProveedor(modo = "crear") {
 
       // Crear/actualizar entregas
       for (const entrega of entregas) {
-        await clienteAxios({
+     const response = await clienteAxios({
           method: entrega.id ? "put" : "post",
           url: entrega.id ? `/api/entregas-proveedor/${entrega.id}` : "/api/entregas-proveedor",
           data: {
@@ -308,9 +310,9 @@ export function useRegistrarEntregaProveedor(modo = "crear") {
           },
           headers: { Authorization: `Bearer ${token}` },
         });
+        showToast("success",response.data.message);
       }
 
-      toast.success("Entrega registrada correctamente");
       navigate(-1);
     } catch (error) {
       console.error(error);
