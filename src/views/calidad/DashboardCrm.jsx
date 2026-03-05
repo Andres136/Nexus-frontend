@@ -29,25 +29,6 @@ export default function DashboardCrm() {
   const money = (n) => `$${Number(n || 0).toLocaleString()}`
   const pct = (n) => `${Number(n || 0).toFixed(2)}%`
 
-  const safeDiv = (a,b) => {
-    const A = Number(a || 0)
-    const B = Number(b || 0)
-    if(!B) return 0
-    return A/B
-  }
-
-  /* KPI DERIVADOS */
-
-  const retencion =
-    totales.clientes_totales > 0
-      ? (1 - (totales.clientes_perdidos / totales.clientes_totales)) * 100
-      : 0
-
-  const ticketPromedio =
-    totales.ordenes > 0
-      ? totales.ventas / totales.ordenes
-      : 0
-
   /* KPI CARDS */
 
   const kpisCards = [
@@ -60,20 +41,24 @@ export default function DashboardCrm() {
       value: totales.ordenes
     },
     {
-      label: "Clientes Nuevos",
-      value: totales.clientes_nuevos
+      label: "Clientes Totales",
+      value: totales.clientes_totales
     },
     {
-      label: "Conversión",
-      value: pct(totales.conversion_pct)
+      label: "Gestión Clientes",
+      value: pct(totales.gestion_clientes_pct)
     },
     {
-      label: "Retención",
-      value: pct(retencion)
+      label: "Conversión Clientes",
+      value: pct(totales.conversion_clientes_pct)
+    },
+    {
+      label: "Fidelización",
+      value: pct(totales.fidelizacion_clientes_pct)
     },
     {
       label: "Ticket Promedio",
-      value: money(ticketPromedio)
+      value: money(totales.ticket_promedio)
     }
   ]
 
@@ -81,7 +66,7 @@ export default function DashboardCrm() {
 
   const ticketSeries = series.map(m => ({
     label: m.label,
-    ticket: safeDiv(m.ventas, m.ordenes)
+    ticket: m.ordenes ? m.ventas / m.ordenes : 0
   }))
 
   /* Ranking vendedores */
@@ -133,7 +118,7 @@ export default function DashboardCrm() {
 
       {/* KPIs */}
 
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-7 gap-6">
 
         {kpisCards.map((kpi,i)=>(
 
@@ -174,9 +159,7 @@ export default function DashboardCrm() {
 
             <YAxis/>
 
-            <Tooltip
-              formatter={(v)=>money(v)}
-            />
+            <Tooltip formatter={(v)=>money(v)} />
 
             <Line
               type="monotone"
@@ -255,12 +238,12 @@ export default function DashboardCrm() {
 
       </div>
 
-      {/* FUNNEL */}
+      {/* FUNNEL CRM */}
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
 
         <h3 className="font-semibold text-gray-700 mb-4">
-          Cotizaciones vs Órdenes
+          Funnel CRM
         </h3>
 
         <ResponsiveContainer width="100%" height={320}>
@@ -278,13 +261,21 @@ export default function DashboardCrm() {
             <Legend/>
 
             <Bar
-              dataKey="cotizaciones"
+              dataKey="clientes_gestionados"
               fill="#f59e0b"
+              name="Gestionados"
             />
 
             <Bar
-              dataKey="ordenes"
+              dataKey="clientes_con_orden"
               fill="#10b981"
+              name="Compradores"
+            />
+
+            <Bar
+              dataKey="clientes_fieles"
+              fill="#6366f1"
+              name="Fieles"
             />
 
           </BarChart>
@@ -311,9 +302,7 @@ export default function DashboardCrm() {
 
             <YAxis/>
 
-            <Tooltip
-              formatter={(v)=>money(v)}
-            />
+            <Tooltip formatter={(v)=>money(v)} />
 
             <Line
               type="monotone"
