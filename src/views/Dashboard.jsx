@@ -3,10 +3,10 @@ import { useDashboard } from '../hooks/useDashboard';
 import { useDashboardMonthly } from '../hooks/useDashboardMonthly';
 import { useEffect, useState } from 'react';
 import clienteAxios from '../config/axios';
-import TopClientes from '../components/calidad/TopClientes';
+
 import { Link } from 'react-router-dom';
 import NexusLoader from '../components/NexusLoader';
-import DashboardCrm from './calidad/DashboardCrm';
+
 
 
 
@@ -253,7 +253,6 @@ const Dashboard = () => {
             />
           </div>
 
-       <DashboardCrm />
         </div>
       </div>
 

@@ -73,136 +73,152 @@ export default function ResumenMeta() {
     obtenerDatosGrafico(null, periodo);
   }, [periodo]);
 
-
+// ...existing code...
   return (
-    <div className="max-w-4xl mx-auto mt-10 bg-white p-6 rounded shadow-md">
-      <h2 className="text-2xl font-bold mb-6 text-center">Gestión de Meta Mensual</h2>
-
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <div>
-          <label className="block font-semibold">Año</label>
-          <input
-            type="number"
-            value={anio}
-            onChange={(e) => setAnio(e.target.value)}
-            className="w-full border px-3 py-2 rounded"
-            min="2020"
-            max="2100"
-            required
-          />
+    <div className="max-w-6xl mx-auto mt-8 px-4">
+      <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+        <div className="px-6 md:px-8 py-6 bg-gradient-to-r from-blue-600 to-indigo-600">
+          <h2 className="text-2xl md:text-3xl font-bold text-white text-center">
+            Gestión de Meta Mensual
+          </h2>
+          <p className="text-blue-100 text-sm text-center mt-1">
+            Registra y visualiza el cumplimiento por periodo
+          </p>
         </div>
 
-        <div>
-          <label className="block font-semibold">Mes</label>
-       <select
-  value={mes}
-  onChange={e => setMes(Number(e.target.value))}
-  className="w-full border px-3 py-2 rounded"
->
-  {[...Array(12)].map((_, i) => (
-    <option key={i+1} value={i+1}>
-      {new Date(0,i).toLocaleString('es-CO',{month:'long'})}
-    </option>
-  ))}
-</select>
+        <div className="p-6 md:p-8">
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Año</label>
+              <input
+                type="number"
+                value={anio}
+                onChange={(e) => setAnio(e.target.value)}
+                className="w-full border border-gray-300 px-3 py-2.5 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                min="2020"
+                max="2100"
+                required
+              />
+            </div>
 
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Mes</label>
+              <select
+                value={mes}
+                onChange={e => setMes(Number(e.target.value))}
+                className="w-full border border-gray-300 px-3 py-2.5 rounded-lg bg-white capitalize focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+              >
+                {[...Array(12)].map((_, i) => (
+                  <option key={i + 1} value={i + 1}>
+                    {new Date(0, i).toLocaleString('es-CO', { month: 'long' })}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Meta en millones</label>
+              <input
+                type="number"
+                value={meta}
+                onChange={(e) => setMeta(e.target.value)}
+                className="w-full border border-gray-300 px-3 py-2.5 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                step="0.01"
+                min="0"
+                required
+              />
+            </div>
+
+            {errores && (
+              <div className="col-span-full bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                {typeof errores === 'string' ? errores : Object.values(errores).flat().join(', ')}
+              </div>
+            )}
+
+            <div className="col-span-full">
+              <button
+                type="submit"
+                className="w-full md:w-auto md:px-8 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold py-2.5 rounded-lg transition shadow-sm"
+              >
+                Guardar Meta
+              </button>
+            </div>
+          </form>
+
+          <section className="mt-6 bg-gray-50 border border-gray-100 p-4 md:p-6 rounded-xl shadow-inner">
+            <h3 className="text-lg md:text-xl font-semibold mb-4 text-center text-gray-700">
+              Resumen Anual
+            </h3>
+
+            <div className="h-[420px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={datosGrafico} margin={{ top: 10, right: 20, left: 0, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="mes" tick={{ fill: '#374151', fontSize: 12 }} />
+                  <YAxis
+                    yAxisId="left"
+                    domain={[0, 'dataMax + 1']}
+                    tick={{ fill: '#374151', fontSize: 12 }}
+                  />
+                  <YAxis
+                    yAxisId="right"
+                    orientation="right"
+                    domain={[0, 100]}
+                    tickFormatter={v => `${v}%`}
+                    tick={{ fill: '#374151', fontSize: 12 }}
+                  />
+
+                  <Tooltip
+                    contentStyle={{
+                      borderRadius: '0.75rem',
+                      border: '1px solid #e5e7eb',
+                      boxShadow: '0 4px 16px rgba(0,0,0,0.08)'
+                    }}
+                    formatter={(value, name) => {
+                      if (name === 'Cumplimiento %') {
+                        return [`${value.toFixed(2)}%`, name];
+                      }
+                      return [`$${value.toLocaleString('es-CO')} M`, name];
+                    }}
+                  />
+
+                  <Legend wrapperStyle={{ fontSize: 13 }} />
+
+                  <Bar yAxisId="left" dataKey="meta" fill="#6366f1" name="Meta mensual" radius={[8, 8, 0, 0]} />
+                  <Bar yAxisId="left" dataKey="ordenes" fill="#10b981" name="Total órdenes" radius={[8, 8, 0, 0]}>
+                    <LabelList
+                      dataKey="cumplimiento"
+                      position="insideTop"
+                      formatter={(value) => (value > 1000 ? '+1000%' : `${value.toFixed(1)}%`)}
+                      fill="#111827"
+                      fontSize={12}
+                      fontWeight="bold"
+                    />
+                  </Bar>
+
+                  <Line
+                    yAxisId="right"
+                    type="monotone"
+                    dataKey="cumplimiento"
+                    stroke="#f59e0b"
+                    strokeWidth={2.5}
+                    dot={{ r: 3 }}
+                    activeDot={{ r: 5 }}
+                    name="Cumplimiento %"
+                  >
+                    <LabelList
+                      dataKey="cumplimiento"
+                      position="top"
+                      formatter={(v) => `${v.toFixed(1)}%`}
+                    />
+                  </Line>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </section>
         </div>
-
-        <div>
-          <label className="block font-semibold">Meta en millones</label>
-          <input
-            type="number"
-            value={meta}
-            onChange={(e) => setMeta(e.target.value)}
-            className="w-full border px-3 py-2 rounded"
-            step="0.01"
-            min="0"
-            required
-          />
-        </div>
-
-        {errores && (
-          <div className="col-span-full bg-red-100 text-red-800 px-3 py-2 rounded text-sm mt-2">
-            {typeof errores === 'string' ? errores : Object.values(errores).flat().join(', ')}
-          </div>
-        )}
-
-        <div className="col-span-full">
-          <button
-            type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded mt-2"
-          >
-            Guardar Meta
-          </button>
-        </div>
-      </form>
-
-      <section className="mt-8 bg-gray-50 p-6 rounded-lg shadow-sm">
-        <h3 className="text-xl font-semibold mb-4 text-center text-gray-700">Resumen Anual</h3>
- <ResponsiveContainer width="100%" height={400}>
-  <BarChart data={datosGrafico}>
-    <CartesianGrid strokeDasharray="3 3" />
-    <XAxis dataKey="mes" />
-
- <YAxis yAxisId="left" 
-       domain={[0, 'dataMax + 1']}       // margen superior dinámico  
-/>
-<YAxis yAxisId="right"
-       orientation="right"
-       domain={[0, 100]}                 // siempre 0 a 100%
-       tickFormatter={v => `${v}%`}     
-/>
-
-
-  <Tooltip
-  formatter={(value, name) => {
-    if (name === 'Cumplimiento %') {
-      return [`${value.toFixed(2)}%`, name];
-    }
-    // Meta y órdenes están en millones
-    return [`$${value.toLocaleString('es-CO')} M`, name];
-  }}
-/>
-
-    <Legend />
-
-    {/* Barras de Meta y Órdenes */}
-    <Bar yAxisId="left" dataKey="meta" fill="#8884d8" name="Meta mensual" />
-    
-    <Bar yAxisId="left" dataKey="ordenes" fill="#82ca9d" name="Total órdenes">
-      <LabelList
-        dataKey="cumplimiento"
-        position="insideTop"
-        formatter={(value) =>
-          value > 1000 ? '+1000%' : `${value.toFixed(1)}%`
-        }
-        fill="#111827"
-        fontSize={12}
-        fontWeight="bold"
-      />
-    </Bar>
-
-    {/* Línea de cumplimiento */}
-  <Line
-  yAxisId="right"
-  type="monotone"
-  dataKey="cumplimiento"
-  stroke="#f59e0b"
-  name="Cumplimiento %"
->
-  <LabelList
-    dataKey="cumplimiento"
-    position="top"
-    formatter={(v) => `${v.toFixed(1)}%`}
-  />
-</Line>
-
-  </BarChart>
-</ResponsiveContainer>
-
-
-
-      </section>
+      </div>
     </div>
   );
+
 }

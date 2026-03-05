@@ -1,6 +1,7 @@
 
 import ResumenDashboard from '../../components/crm/ResumenDashboard'
 import ResumenMeta from '../../components/crm/ResumenMeta'
+import DashboardCrm from '../calidad/DashboardCrm'
 
 
 
@@ -13,6 +14,7 @@ export default function Kpi() {
   <div className=' col-span-1'>
    <ResumenMeta />
 <ResumenDashboard />
+<DashboardCrm />
   </div>
 </div>
 
