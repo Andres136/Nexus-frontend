@@ -355,4 +355,8 @@ export const ordenesServicioApi = {
   getShow: (id) => apiClient.get(`/api/ordenes-servicio/${id}/show`),
 };
 
+export const dashboardApi = {
+  getKpis: (year) => apiClient.get("/api/dashboard/kpis", { params: { year } }),
+};
+
 export default apiClient;

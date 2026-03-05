@@ -21,6 +21,7 @@ export default function ReferenciasExcedidas() {
     sinEntregar,
     referencias,
     referenciasFiltradas,
+    elementosPorPagina,
   } = useReferenciasExcedidas();
 
 
