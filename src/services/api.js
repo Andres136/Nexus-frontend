@@ -300,8 +300,18 @@ export const crearQrApi = {
 
 //Exportar ordenes con falta de Stock
 export const ordenesApi = {
-  getFaltantesPendientes: () =>
-    apiClient.get("/api/ordenes-compra/faltantes/pendientes"),
+
+  getFaltantesPendientes: (page = 1, search = "") => {
+
+    return apiClient.get("/api/ordenes-compra/faltantes/pendientes", {
+      params: {
+        page,
+        search
+      }
+    });
+
+  }
+
 };
 
 //Registrar plantillas de correo

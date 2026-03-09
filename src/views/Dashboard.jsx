@@ -9,12 +9,6 @@ import NexusLoader from '../components/NexusLoader';
 
 
 
-
-
-
-
-
-
 const Dashboard = () => {
   const today = new Date();
   const [month, setMonth] = useState(today.getMonth() + 1);
@@ -23,7 +17,7 @@ const Dashboard = () => {
   const { data: monthly, isLoading: loading2, error: error2 } = useDashboardMonthly(month, year);
 
  
-
+//console.log('Datos del dashboard:', monthly);
 
 
   // Tooltip externo
@@ -92,7 +86,11 @@ const Dashboard = () => {
     { name: 'Entrega Parcial', value: data.entrega_parcial, clientes: data.entrega_parcial_detalle || [] },
   ];
 
-  const { total_despachadas = 0, vencidas = 0, pendientes = 0 } = monthly || {};
+ const {
+  entregadas_a_tiempo = 0,
+  entregadas_tarde = 0,
+  pendientes_vencidas = 0
+} = monthly || {};
 
   return (
     <>
@@ -234,9 +232,17 @@ const Dashboard = () => {
             <ApexChart
               type="donut"
               height={300}
-              series={[total_despachadas, vencidas, pendientes]}
+            series={[
+  entregadas_a_tiempo,
+  entregadas_tarde,
+  pendientes_vencidas
+]}
               options={{
-                labels: ['Despachadas', 'Vencidas', 'Pendientes'],
+         labels: [
+  'Entregadas a tiempo',
+  'Entregadas tarde',
+  'Pendientes vencidas'
+],
                 legend: { position: 'bottom' },
                 colors: ['#16a34a', '#dc2626', '#f59e0b'],
                 plotOptions: {
