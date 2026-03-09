@@ -24,42 +24,19 @@ export default function DashboardCrm() {
   const series = kpis?.series_mensual || []
   const totales = kpis?.totales || {}
 
-  /* helpers */
-
   const money = (n) => `$${Number(n || 0).toLocaleString()}`
   const pct = (n) => `${Number(n || 0).toFixed(2)}%`
 
   /* KPI CARDS */
 
   const kpisCards = [
-    {
-      label: "Ventas Totales",
-      value: money(totales.ventas)
-    },
-    {
-      label: "Órdenes",
-      value: totales.ordenes
-    },
-    {
-      label: "Clientes Totales",
-      value: totales.clientes_totales
-    },
-    {
-      label: "Gestión Clientes",
-      value: pct(totales.gestion_clientes_pct)
-    },
-    {
-      label: "Conversión Clientes",
-      value: pct(totales.conversion_clientes_pct)
-    },
-    {
-      label: "Fidelización",
-      value: pct(totales.fidelizacion_clientes_pct)
-    },
-    {
-      label: "Ticket Promedio",
-      value: money(totales.ticket_promedio)
-    }
+    { label: "Ventas Totales", value: money(totales.ventas) },
+    { label: "Órdenes", value: totales.ordenes },
+    { label: "Clientes Totales", value: totales.clientes_totales },
+    { label: "Gestión Clientes", value: pct(totales.gestion_clientes_pct) },
+    { label: "Conversión Clientes", value: pct(totales.conversion_clientes_pct) },
+    { label: "Fidelización", value: pct(totales.fidelizacion_clientes_pct) },
+    { label: "Ticket Promedio", value: money(totales.ticket_promedio) }
   ]
 
   /* Ticket promedio por mes */
@@ -73,11 +50,11 @@ export default function DashboardCrm() {
 
   const rankingMap = new Map()
 
-  for(const mes of series){
+  for (const mes of series) {
 
     const usuarios = mes.ventas_por_usuario || []
 
-    for(const u of usuarios){
+    for (const u of usuarios) {
 
       const id = u.user_id
 
@@ -91,14 +68,14 @@ export default function DashboardCrm() {
       current.ventas += Number(u.ventas)
       current.ordenes += Number(u.total_ordenes)
 
-      rankingMap.set(id,current)
+      rankingMap.set(id, current)
 
     }
 
   }
 
   const ranking = Array.from(rankingMap.values())
-    .sort((a,b)=> b.ventas - a.ventas)
+    .sort((a, b) => b.ventas - a.ventas)
 
   return (
 
@@ -116,11 +93,11 @@ export default function DashboardCrm() {
         </p>
       </div>
 
-      {/* KPIs */}
+      {/* KPI CARDS */}
 
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-7 gap-6">
 
-        {kpisCards.map((kpi,i)=>(
+        {kpisCards.map((kpi, i) => (
 
           <div
             key={i}
@@ -141,34 +118,47 @@ export default function DashboardCrm() {
 
       </div>
 
-      {/* VENTAS */}
+      {/* PIPELINE COMERCIAL */}
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
 
         <h3 className="font-semibold text-gray-700 mb-4">
-          Ventas por mes
+          Pipeline Comercial (Cotizaciones → Órdenes → Ventas)
         </h3>
 
         <ResponsiveContainer width="100%" height={320}>
 
-          <LineChart data={series}>
+          <BarChart data={series}>
 
-            <CartesianGrid strokeDasharray="3 3"/>
+            <CartesianGrid strokeDasharray="3 3" />
 
-            <XAxis dataKey="label"/>
+            <XAxis dataKey="label" />
 
-            <YAxis/>
+            <YAxis tickFormatter={(v) => `$${(v / 1000000).toFixed(0)}M`} />
 
-            <Tooltip formatter={(v)=>money(v)} />
+            <Tooltip formatter={(v) => money(v)} />
 
-            <Line
-              type="monotone"
-              dataKey="ventas"
-              stroke="#6366f1"
-              strokeWidth={3}
+            <Legend />
+
+            <Bar
+              dataKey="cotizaciones"
+              fill="#f59e0b"
+              name="Cotizaciones"
             />
 
-          </LineChart>
+            <Bar
+              dataKey="ordenes"
+              fill="#10b981"
+              name="Órdenes"
+            />
+
+            <Bar
+              dataKey="ventas"
+              fill="#6366f1"
+              name="Ventas"
+            />
+
+          </BarChart>
 
         </ResponsiveContainer>
 
@@ -188,13 +178,13 @@ export default function DashboardCrm() {
 
             <BarChart data={series}>
 
-              <CartesianGrid strokeDasharray="3 3"/>
+              <CartesianGrid strokeDasharray="3 3" />
 
-              <XAxis dataKey="label"/>
+              <XAxis dataKey="label" />
 
-              <YAxis/>
+              <YAxis />
 
-              <Tooltip/>
+              <Tooltip />
 
               <Bar
                 dataKey="ordenes"
@@ -217,13 +207,13 @@ export default function DashboardCrm() {
 
             <BarChart data={series}>
 
-              <CartesianGrid strokeDasharray="3 3"/>
+              <CartesianGrid strokeDasharray="3 3" />
 
-              <XAxis dataKey="label"/>
+              <XAxis dataKey="label" />
 
-              <YAxis/>
+              <YAxis />
 
-              <Tooltip/>
+              <Tooltip />
 
               <Bar
                 dataKey="clientes_nuevos"
@@ -250,15 +240,15 @@ export default function DashboardCrm() {
 
           <BarChart data={series}>
 
-            <CartesianGrid strokeDasharray="3 3"/>
+            <CartesianGrid strokeDasharray="3 3" />
 
-            <XAxis dataKey="label"/>
+            <XAxis dataKey="label" />
 
-            <YAxis/>
+            <YAxis />
 
-            <Tooltip/>
+            <Tooltip />
 
-            <Legend/>
+            <Legend />
 
             <Bar
               dataKey="clientes_gestionados"
@@ -284,6 +274,50 @@ export default function DashboardCrm() {
 
       </div>
 
+      {/* CONVERSION MENSUAL */}
+
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+
+        <h3 className="font-semibold text-gray-700 mb-4">
+          Conversión mensual
+        </h3>
+
+        <ResponsiveContainer width="100%" height={300}>
+
+          <LineChart data={series}>
+
+            <CartesianGrid strokeDasharray="3 3" />
+
+            <XAxis dataKey="label" />
+
+            <YAxis />
+
+            <Tooltip formatter={(v) => `${v}%`} />
+
+            <Legend />
+
+            <Line
+              type="monotone"
+              dataKey="conversion_clientes_pct"
+              stroke="#6366f1"
+              name="Conversión Clientes"
+              strokeWidth={3}
+            />
+
+            <Line
+              type="monotone"
+              dataKey="conversion_cotizaciones_pct"
+              stroke="#10b981"
+              name="Conversión Cotizaciones"
+              strokeWidth={3}
+            />
+
+          </LineChart>
+
+        </ResponsiveContainer>
+
+      </div>
+
       {/* TICKET PROMEDIO */}
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -296,13 +330,13 @@ export default function DashboardCrm() {
 
           <LineChart data={ticketSeries}>
 
-            <CartesianGrid strokeDasharray="3 3"/>
+            <CartesianGrid strokeDasharray="3 3" />
 
-            <XAxis dataKey="label"/>
+            <XAxis dataKey="label" />
 
-            <YAxis/>
+            <YAxis tickFormatter={(v) => `$${(v / 1000).toFixed(0)}K`} />
 
-            <Tooltip formatter={(v)=>money(v)} />
+            <Tooltip formatter={(v) => money(v)} />
 
             <Line
               type="monotone"
@@ -317,7 +351,7 @@ export default function DashboardCrm() {
 
       </div>
 
-      {/* RANKING */}
+      {/* RANKING VENDEDORES */}
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
 
@@ -325,7 +359,7 @@ export default function DashboardCrm() {
           Ranking de vendedores
         </h3>
 
-        {ranking.map((u,i)=>(
+        {ranking.map((u, i) => (
 
           <div
             key={u.user_id}
@@ -335,7 +369,7 @@ export default function DashboardCrm() {
             <div className="flex gap-3 items-center">
 
               <span className="w-6 text-gray-500">
-                {i+1}
+                {i + 1}
               </span>
 
               <span className="font-medium">

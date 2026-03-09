@@ -8,6 +8,7 @@ import { useOrdenesOsBydi } from "./useOrdenesOsBydi"
 import { useEntregasProveedores } from "../useEntregasProveedores"
 
 
+
 export function useOrdenServicioDetalle() {
 
   const { id } = useParams()

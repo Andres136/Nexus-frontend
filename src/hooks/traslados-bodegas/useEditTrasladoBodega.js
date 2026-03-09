@@ -63,7 +63,7 @@ export const useEditTrasladoBodega = (id) => {
   };
 
   const agregarProducto = () => {
-    if (!selectedProduct || !cantidad || Number(cantidad) <= 0) return;
+    if (!selectedProduct || !cantidad || parseFloat(cantidad) <= 0) return;
 
     const existe = formData.detalles.find(
       d => d.producto_id === selectedProduct.value
@@ -74,7 +74,7 @@ export const useEditTrasladoBodega = (id) => {
         ...prev,
         detalles: prev.detalles.map(d =>
           d.producto_id === selectedProduct.value
-            ? { ...d, cantidad: d.cantidad + Number(cantidad) }
+            ? { ...d, cantidad: d.cantidad + parseFloat(cantidad) }
             : d
         )
       }));
@@ -87,7 +87,7 @@ export const useEditTrasladoBodega = (id) => {
             producto_id: selectedProduct.value,
             producto_nombre: selectedProduct.label,
             producto_code: selectedProduct.code,
-            cantidad: Number(cantidad),
+            cantidad: parseFloat(cantidad),
             stock_disponible: stockInfo?.stock_total ?? 0
           }
         ]
@@ -113,7 +113,7 @@ export const useEditTrasladoBodega = (id) => {
       ...prev,
       detalles: prev.detalles.map(d =>
         d.producto_id === productoId
-          ? { ...d, cantidad: Number(nuevaCantidad) }
+          ? { ...d, cantidad: parseFloat(nuevaCantidad) }
           : d
       )
     }));
@@ -171,7 +171,7 @@ export const useEditTrasladoBodega = (id) => {
         producto_code: d.producto.code,
         producto_id: d.producto_id,
         producto_nombre: d.producto.name,
-        cantidad: Number(d.cantidad),
+        cantidad: parseFloat(d.cantidad),
         stock_disponible: null,
       })),
     });

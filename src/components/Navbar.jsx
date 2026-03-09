@@ -64,6 +64,7 @@ export default function Navbar() {
         {name: "Settings", to: "/admin/settings-permisos", icon: BarChart2, allowedRoles: [1] },
         {name: "Responsabilidades", to: "/auth/responsabilidades", icon: User2Icon, allowedRoles: [1] },
         {name: "TIC", to: "/auth/tic", icon: Cpu, allowedRoles: [1, 2] },
+        {name: "Cartera", to: "/auth/cartera", icon: Building2, alwaysVisible: true },
       ],
     },
   ];
@@ -131,21 +132,22 @@ export default function Navbar() {
                   <ChevronDown className="w-3 h-3 ml-1" />
                 </button>
 
-                {openMenu === link.name && (
-                  <div
-                    className="absolute right-0 top-full mt-2 flex flex-col bg-gray-800 border border-gray-700
-                               rounded-lg shadow-lg w-56 transition-all duration-200 ease-in-out z-50"
-                  >
+             {openMenu === link.name && (
+  <div
+    className="absolute right-0 top-full mt-2 grid grid-cols-2 gap-2 bg-gray-800 border border-gray-700
+               rounded-lg shadow-xl w-[420px] p-3 transition-all duration-200 ease-in-out z-50"
+  >
                     {link.submenu.map((sub) => (
-                      <Link
-                        key={sub.name}
-                        to={sub.to}
-                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 hover:text-green-400"
-                        onClick={() => setOpenMenu(null)}
-                      >
-                        {sub.icon && <sub.icon className="w-4 h-4" />}
-                        {sub.name}
-                      </Link>
+                 <Link
+  key={sub.name}
+  to={sub.to}
+  onClick={() => setOpenMenu(null)}
+  className="flex flex-col items-center justify-center p-4 rounded-lg
+             bg-gray-900 hover:bg-gray-700 transition-all text-gray-200 hover:text-green-400"
+>
+  {sub.icon && <sub.icon className="w-6 h-6 mb-2" />}
+  <span className="text-sm font-medium text-center">{sub.name}</span>
+</Link>
                     ))}
                   </div>
                 )}
