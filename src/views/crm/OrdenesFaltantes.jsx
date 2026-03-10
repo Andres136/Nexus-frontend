@@ -159,7 +159,6 @@ export default function OrdenesFaltantes() {
                     </div>
                   </div>
 
-       
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="text-sm font-semibold text-gray-900">{orden.codigo}</h3>
@@ -177,7 +176,7 @@ export default function OrdenesFaltantes() {
                         </>
                       )}
                     </div>
-                    <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
+                    <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
                       <span className="inline-flex items-center gap-1">
                         <User className="w-3 h-3" />
                         <span className="truncate max-w-[150px]">{orden.cliente?.nombre}</span>
@@ -186,6 +185,10 @@ export default function OrdenesFaltantes() {
                       <span className="inline-flex items-center gap-1">
                         <Building className="w-3 h-3" />
                         <span className="truncate max-w-[120px]">{orden.sede?.nombre}</span>
+                      </span>
+                      <span className="text-gray-300">|</span>
+                      <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-700 px-2 py-0.5 rounded-md font-medium">
+                        📅 {orden.fecha_entrega}
                       </span>
                     </div>
                   </div>
