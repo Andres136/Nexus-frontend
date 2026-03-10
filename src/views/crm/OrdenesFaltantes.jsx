@@ -159,16 +159,33 @@ export default function OrdenesFaltantes() {
                     </div>
                   </div>
 
+       
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-semibold text-gray-900 truncate">{orden.codigo}</h3>
-                    <div className="flex items-center gap-3 mt-0.5">
-                      <span className="inline-flex items-center gap-1 text-xs text-gray-500">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="text-sm font-semibold text-gray-900">{orden.codigo}</h3>
+                      {orden.ordenes_trabajo?.length > 0 && (
+                        <>
+                          <span className="text-gray-300">•</span>
+                          {orden.ordenes_trabajo.map((ot) => (
+                            <span
+                              key={ot.id}
+                              className="text-[10px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-medium"
+                            >
+                              {ot.codigo}
+                            </span>
+                          ))}
+                        </>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
+                      <span className="inline-flex items-center gap-1">
                         <User className="w-3 h-3" />
-                        <span className="truncate max-w-[120px]">{orden.cliente?.nombre}</span>
+                        <span className="truncate max-w-[150px]">{orden.cliente?.nombre}</span>
                       </span>
-                      <span className="inline-flex items-center gap-1 text-xs text-gray-500">
+                      <span className="text-gray-300">|</span>
+                      <span className="inline-flex items-center gap-1">
                         <Building className="w-3 h-3" />
-                        <span className="truncate max-w-[100px]">{orden.sede?.nombre}</span>
+                        <span className="truncate max-w-[120px]">{orden.sede?.nombre}</span>
                       </span>
                     </div>
                   </div>
