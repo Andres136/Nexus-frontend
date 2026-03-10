@@ -18,7 +18,7 @@ export function useOrdenesFaltantes(page = 1, search = "") {
 
         const res = await ordenesApi.getFaltantesPendientes(page, search);
 
-        console.log("Respuesta de ordenes faltantes:", res.data.original);
+      //  console.log("Respuesta de ordenes faltantes:", res.data.original);
 
         const payload = res.data.original;
 

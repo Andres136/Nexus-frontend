@@ -233,9 +233,24 @@ export default function OrdenesFaltantes() {
                               <td className="px-2 py-2.5 text-center text-gray-700 font-medium">
                                 {f.cantidad_requerida.toFixed(2)}
                               </td>
-                              <td className="px-2 py-2.5 text-center">
-                                <span className="text-emerald-600 font-medium">{f.stock_disponible.toFixed(2)}</span>
-                              </td>
+                          <td className="px-2 py-2.5 text-center">
+  <span className="text-emerald-600 font-medium">
+    {f.stock_disponible.toFixed(2)}
+  </span>
+
+  {f.resumen_bodegas?.length > 0 && (
+    <div className="flex flex-wrap justify-center gap-1 mt-1">
+      {f.resumen_bodegas.map((b) => (
+        <span
+          key={b.bodega_id}
+          className="text-[10px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded"
+        >
+          {b.bodega_nombre}: {Number(b.stock_total).toFixed(2)}
+        </span>
+      ))}
+    </div>
+  )}
+</td>
                               <td className="px-2 py-2.5 text-center">
                                 <span className="text-blue-600 font-medium">{f.solicitado_proveedor ?? 0}</span>
                                 {f.ordenes_proveedor?.length > 0 && (
