@@ -3,213 +3,124 @@ import clienteAxios from "../../config/axios";
 import { toast } from "react-toastify";
 import { useAuth } from "../../hooks/useAuth";
 import { 
-  ChevronDown, ChevronUp, Calendar, User, Building, Hash, Edit3, X, Save,
-  LayoutGrid, Columns3, Clock, CheckCircle2, PlayCircle, AlertCircle, Search,
-  MoreHorizontal
+  ChevronDown, ChevronUp, Calendar, User, Edit3, X, Save,
+  Clock, PlayCircle, AlertCircle, Search
 } from "lucide-react";
 import { BsListTask } from "react-icons/bs";
 
 export default function Tareas() {
+
   const [tareas, setTareas] = useState([]);
-  const [pagina, setPagina] = useState(1);
-  const [pagination, setPagination] = useState({});
   const [actualizar, setActualizar] = useState(false);
   const [busqueda, setBusqueda] = useState("");
   const [tareasExpandidas, setTareasExpandidas] = useState(new Set());
-  
-  // ✅ NUEVO: Vista Kanban o Grid
-  const [vistaKanban, setVistaKanban] = useState(true);
-  
-  // Estados para edición
+
   const [modalEdicion, setModalEdicion] = useState(false);
   const [tareaEditando, setTareaEditando] = useState(null);
+
   const [formData, setFormData] = useState({
-    nombre: '',
-    descripcion: '',
-    fecha_fin: ''
+    nombre: "",
+    descripcion: "",
+    fecha_fin: ""
   });
+
   const [cargandoEdicion, setCargandoEdicion] = useState(false);
-  
+
   const { user } = useAuth({ middleware: "auth" });
 
-  // ✅ NUEVO: Agrupar tareas por estado para vista Kanban
+  /*
+  =====================================
+  OBTENER TAREAS
+  =====================================
+  */
+
+  const obtenerTareas = async () => {
+    const token = localStorage.getItem("token");
+    try {
+      const params = new URLSearchParams();
+      if (busqueda.trim() !== "") {
+        params.append("usuario", busqueda.trim());
+      }
+      const response = await clienteAxios.get(
+        `/api/tareas?${params.toString()}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setTareas(response.data);
+    } catch (error) {
+      console.log("Error al obtener tareas", error);
+      setTareas([]);
+    }
+  };
+
+  /*
+  =====================================
+  AGRUPAR TAREAS
+  =====================================
+  */
+
   const tareasAgrupadas = useMemo(() => {
     const grupos = {
+      vencidas: [],
       pendientes: [],
-      enCurso: [],
-      completadas: [],
-      vencidas: []
+      enCurso: []
     };
-    
+
     tareas.forEach(tarea => {
       const fechaLimite = tarea.fecha_fin ? new Date(tarea.fecha_fin) : null;
       const esVencida = fechaLimite && fechaLimite < new Date() && tarea.estado_id === 1;
-      
-      if (esVencida) {
-        grupos.vencidas.push(tarea);
-      } else if (tarea.estado_id === 1) {
-        grupos.pendientes.push(tarea);
-      } else if (tarea.estado_id === 5) {
-        grupos.enCurso.push(tarea);
-      } else if (tarea.estado_id === 2) {
-        grupos.completadas.push(tarea);
-      }
+
+      if (esVencida) grupos.vencidas.push(tarea);
+      else if (tarea.estado_id === 1) grupos.pendientes.push(tarea);
+      else if (tarea.estado_id === 5) grupos.enCurso.push(tarea);
     });
-    
+
     return grupos;
   }, [tareas]);
 
-  // ✅ Configuración de columnas Kanban
+  /*
+  =====================================
+  COLUMNAS KANBAN
+  =====================================
+  */
+
   const columnas = [
     {
-      id: 'vencidas',
-      titulo: 'Vencidas',
+      id: "vencidas",
+      titulo: "Vencidas",
       icon: AlertCircle,
-      color: 'red',
-      bgColor: 'bg-red-50',
-      borderColor: 'border-red-200',
-      headerBg: 'bg-red-100',
-      textColor: 'text-red-700',
+      gradient: "from-red-500 to-rose-600",
+      bgCard: "bg-gradient-to-br from-red-50 to-rose-50",
+      borderAccent: "border-l-red-500",
+      badgeBg: "bg-red-500",
       tareas: tareasAgrupadas.vencidas
     },
     {
-      id: 'pendientes',
-      titulo: 'Pendientes',
+      id: "pendientes",
+      titulo: "Pendientes",
       icon: Clock,
-      color: 'yellow',
-      bgColor: 'bg-amber-50',
-      borderColor: 'border-amber-200',
-      headerBg: 'bg-amber-100',
-      textColor: 'text-amber-700',
+      gradient: "from-amber-500 to-orange-500",
+      bgCard: "bg-gradient-to-br from-amber-50 to-orange-50",
+      borderAccent: "border-l-amber-500",
+      badgeBg: "bg-amber-500",
       tareas: tareasAgrupadas.pendientes
     },
     {
-      id: 'enCurso',
-      titulo: 'En Curso',
+      id: "enCurso",
+      titulo: "En Curso",
       icon: PlayCircle,
-      color: 'blue',
-      bgColor: 'bg-blue-50',
-      borderColor: 'border-blue-200',
-      headerBg: 'bg-blue-100',
-      textColor: 'text-blue-700',
+      gradient: "from-blue-500 to-indigo-600",
+      bgCard: "bg-gradient-to-br from-blue-50 to-indigo-50",
+      borderAccent: "border-l-blue-500",
+      badgeBg: "bg-blue-500",
       tareas: tareasAgrupadas.enCurso
-    },
-    {
-      id: 'completadas',
-      titulo: 'Completadas',
-      icon: CheckCircle2,
-      color: 'green',
-      bgColor: 'bg-emerald-50',
-      borderColor: 'border-emerald-200',
-      headerBg: 'bg-emerald-100',
-      textColor: 'text-emerald-700',
-      tareas: tareasAgrupadas.completadas
     }
   ];
 
-  const toggleTareaExpandida = (tareaId) => {
-    const nuevasExpandidas = new Set(tareasExpandidas);
-    if (nuevasExpandidas.has(tareaId)) {
-      nuevasExpandidas.delete(tareaId);
-    } else {
-      nuevasExpandidas.add(tareaId);
-    }
-    setTareasExpandidas(nuevasExpandidas);
-  };
-
-  const abrirModalEdicion = (tarea) => {
-    setTareaEditando(tarea);
-    setFormData({
-      nombre: tarea.nombre || '',
-      descripcion: tarea.descripcion || '',
-      fecha_fin: tarea.fecha_fin ? tarea.fecha_fin.split('T')[0] : ''
-    });
-    setModalEdicion(true);
-  };
-
-  const cerrarModalEdicion = () => {
-    setModalEdicion(false);
-    setTareaEditando(null);
-    setFormData({ nombre: '', descripcion: '', fecha_fin: '' });
-  };
-
-  const actualizarTarea = async () => {
-    if (!tareaEditando) return;
-    
-    if (!formData.nombre.trim()) {
-      toast.error('El nombre de la tarea es obligatorio');
-      return;
-    }
-    
-    if (!formData.descripcion.trim()) {
-      toast.error('La descripción es obligatoria');
-      return;
-    }
-
-    setCargandoEdicion(true);
-    const token = localStorage.getItem("token");
-    
-    try {
-      const dataToSend = {
-        nombre: formData.nombre.trim(),
-        descripcion: formData.descripcion.trim(),
-        fecha_fin: formData.fecha_fin || null,
-        usuario_id: tareaEditando.usuario_id,
-        departamento_id: tareaEditando.departamento_id
-      };
-
-      await clienteAxios.put(`/api/tareas/update/${tareaEditando.id}`, dataToSend, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      toast.success('Tarea actualizada correctamente');
-      cerrarModalEdicion();
-      setActualizar(!actualizar);
-    } catch (error) {
-      console.error('Error al actualizar tarea:', error);
-      toast.error(error.response?.data?.message || 'Error al actualizar la tarea');
-    } finally {
-      setCargandoEdicion(false);
-    }
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-const obtenerTareas = async (paginaActual = 1) => {
-  const token = localStorage.getItem("token");
-
-  try {
-    const params = new URLSearchParams({
-      page: paginaActual
-    });
-
-    // Solo agregar filtro si hay búsqueda
-    if (busqueda.trim() !== "") {
-      params.append("usuario", busqueda.trim());
-    }
-
-    const response = await clienteAxios.get(
-      `/api/tareas?${params.toString()}`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-
-    setTareas(response.data.data);
-
-    setPagination({
-      current_page: response.data.current_page,
-      next_page_url: response.data.next_page_url,
-      prev_page_url: response.data.prev_page_url,
-      total: response.data.total,
-    });
-
-  } catch (error) {
-    console.log("Error al obtener tareas", error);
-    setTareas([]);
-  }
-};
+  /*
+  =====================================
+  CAMBIAR ESTADO
+  =====================================
+  */
 
   const cambiarEstado = async (id, estado_id) => {
     const token = localStorage.getItem("token");
@@ -223,439 +134,394 @@ const obtenerTareas = async (paginaActual = 1) => {
         { estado_id: nuevoEstado },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
+      toast.success("Estado actualizado");
       setActualizar(!actualizar);
-      toast.success("Estado actualizado correctamente");
-    } catch (error) {
+    } catch {
       toast.error("Error al actualizar estado");
-      console.error(error);
     }
   };
 
-  const generarNotificaciones = async () => {
+  /*
+  =====================================
+  EXPANDIR TAREA
+  =====================================
+  */
+
+  const toggleTareaExpandida = (id) => {
+    const nuevas = new Set(tareasExpandidas);
+    if (nuevas.has(id)) nuevas.delete(id);
+    else nuevas.add(id);
+    setTareasExpandidas(nuevas);
+  };
+
+  /*
+  =====================================
+  EDITAR TAREA
+  =====================================
+  */
+
+  const abrirModalEdicion = (tarea) => {
+    setTareaEditando(tarea);
+    setFormData({
+      nombre: tarea.nombre,
+      descripcion: tarea.descripcion,
+      fecha_fin: tarea.fecha_fin?.split("T")[0] || ""
+    });
+    setModalEdicion(true);
+  };
+
+  const cerrarModalEdicion = () => {
+    setModalEdicion(false);
+    setTareaEditando(null);
+  };
+
+  /*
+  =====================================
+  ACTUALIZAR TAREA
+  =====================================
+  */
+
+  const actualizarTarea = async () => {
     const token = localStorage.getItem("token");
     try {
-      await clienteAxios.get("api/tareas-vencidas", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-    } catch (error) {
-      console.error("Error al generar notificaciones:", error);
+      setCargandoEdicion(true);
+      await clienteAxios.put(
+        `/api/tareas/update/${tareaEditando.id}`,
+        formData,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success("Tarea actualizada");
+      cerrarModalEdicion();
+      setActualizar(!actualizar);
+    } catch {
+      toast.error("Error al actualizar");
+    } finally {
+      setCargandoEdicion(false);
     }
   };
 
-  const truncateText = (text, maxLength = 100) => {
-    if (!text || text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + "...";
-  };
+  /*
+  =====================================
+  FORMATEAR FECHA
+  =====================================
+  */
 
   const formatearFecha = (fecha) => {
-    if (!fecha) return null;
-    return new Date(fecha).toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: 'short'
+    if (!fecha) return "";
+    return new Date(fecha).toLocaleDateString("es-ES", {
+      day: "2-digit",
+      month: "short"
     });
   };
 
-  useEffect(() => {
-    obtenerTareas(pagina);
-    generarNotificaciones();
-  }, [actualizar, pagina, busqueda]);
+  /*
+  =====================================
+  USE EFFECT
+  =====================================
+  */
 
-  // ✅ Componente de Tarjeta Kanban (compacta estilo Notion/Trello)
-  const TarjetaKanban = ({ tarea, columna }) => {
+  useEffect(() => {
+    obtenerTareas();
+  }, [actualizar, busqueda]);
+
+  /*
+  =====================================
+  TARJETA KANBAN
+  =====================================
+  */
+
+  const TarjetaKanban = ({ tarea, borderAccent }) => {
     const fechaLimite = tarea.fecha_fin ? new Date(tarea.fecha_fin) : null;
-    const esVencida = fechaLimite && fechaLimite < new Date() && tarea.estado_id === 1;
-    
+    const expandida = tareasExpandidas.has(tarea.id);
+
     return (
       <div 
-        className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 mb-2 hover:shadow-md transition-all duration-200 cursor-pointer group"
-        onClick={() => toggleTareaExpandida(tarea.id)}
+        className={`
+          bg-white rounded-xl border-l-4 ${borderAccent} 
+          shadow-sm hover:shadow-md transition-all duration-200
+          overflow-hidden
+        `}
       >
-        {/* Header con título y acciones */}
-        <div className="flex items-start justify-between gap-2 mb-2">
-          <h4 className="text-sm font-medium text-gray-900 leading-snug flex-1">
-            {truncateText(tarea.nombre, 60)}
-          </h4>
-          
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        {/* Header clickeable */}
+        <div 
+          onClick={() => toggleTareaExpandida(tarea.id)}
+          className="p-4 cursor-pointer hover:bg-gray-50/50 transition-colors"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <h4 className="font-semibold text-gray-800 text-sm truncate">
+                  {tarea.nombre}
+                </h4>
+                {expandida ? (
+                  <ChevronUp size={16} className="text-gray-400 flex-shrink-0" />
+                ) : (
+                  <ChevronDown size={16} className="text-gray-400 flex-shrink-0" />
+                )}
+              </div>
+
+              {/* Info compacta */}
+              <div className="flex items-center gap-3 mt-2">
+                <span className="flex items-center gap-1.5 text-xs text-gray-500">
+                  <User size={12} className="text-gray-400" />
+                  {tarea.usuario?.name || "Sin asignar"}
+                </span>
+
+                {fechaLimite && (
+                  <span className="flex items-center gap-1.5 text-xs text-gray-500">
+                    <Calendar size={12} className="text-gray-400" />
+                    {formatearFecha(fechaLimite)}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Botón editar */}
             {(user?.role_id === 1 || user?.role_id === 2) && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   abrirModalEdicion(tarea);
                 }}
-                className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                className="p-2 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-blue-600 transition-colors"
               >
-                <Edit3 className="w-3.5 h-3.5" />
+                <Edit3 size={16} />
               </button>
             )}
           </div>
         </div>
 
-        {/* Descripción (solo si está expandida) */}
-        {tareasExpandidas.has(tarea.id) && (
-          <p className="text-xs text-gray-500 mb-3 leading-relaxed">
-            {tarea.descripcion}
-          </p>
-        )}
+        {/* Contenido expandible */}
+        <div className={`
+          overflow-hidden transition-all duration-300 ease-in-out
+          ${expandida ? "max-h-96" : "max-h-0"}
+        `}>
+          <div className="px-4 pb-4 border-t border-gray-100">
+            <p className="text-sm text-gray-600 mt-3 leading-relaxed">
+              {tarea.descripcion || "Sin descripción"}
+            </p>
 
-        {/* Tags y metadata */}
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Usuario asignado */}
-          <div className="flex items-center gap-1 text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-            <User className="w-3 h-3" />
-            <span className="max-w-[80px] truncate">{tarea.usuario?.name || "N/A"}</span>
+            {tarea.estado_id !== 2 && (
+              <button
+                onClick={() => cambiarEstado(tarea.id, tarea.estado_id)}
+                className={`
+                  w-full mt-4 py-2.5 text-sm font-medium rounded-lg
+                  transition-all duration-200
+                  ${tarea.estado_id === 1 
+                    ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:shadow-lg hover:shadow-blue-500/25" 
+                    : "bg-gradient-to-r from-emerald-500 to-green-600 text-white hover:shadow-lg hover:shadow-emerald-500/25"
+                  }
+                `}
+              >
+                {tarea.estado_id === 1 ? "Iniciar Tarea" : "Marcar Completada"}
+              </button>
+            )}
           </div>
-          
-          {/* Fecha límite */}
-          {fechaLimite && (
-            <div className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full ${
-              esVencida 
-                ? 'bg-red-100 text-red-700' 
-                : 'bg-gray-100 text-gray-600'
-            }`}>
-              <Calendar className="w-3 h-3" />
-              <span>{formatearFecha(fechaLimite)}</span>
-            </div>
-          )}
-          
-          {/* ID */}
-          <span className="text-xs text-gray-400">#{tarea.id}</span>
         </div>
-
-        {/* Botón de acción (solo si no está completada) */}
-        {tarea.estado_id !== 2 && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              cambiarEstado(tarea.id, tarea.estado_id);
-            }}
-            className={`w-full mt-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-              tarea.estado_id === 1
-                ? 'bg-blue-50 text-blue-600 hover:bg-blue-100'
-                : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
-            }`}
-          >
-            {tarea.estado_id === 1 ? '▶ Iniciar' : '✓ Completar'}
-          </button>
-        )}
       </div>
     );
   };
 
-  // ✅ Componente de Columna Kanban
-  const ColumnaKanban = ({ columna }) => {
-    const IconoColumna = columna.icon;
-    
+  /*
+  =====================================
+  COLUMNA
+  =====================================
+  */
+
+  const Columna = ({ col }) => {
+    const Icon = col.icon;
+
     return (
-      <div className={`flex flex-col min-w-[280px] max-w-[320px] ${columna.bgColor} rounded-xl border ${columna.borderColor}`}>
-        {/* Header de columna */}
-        <div className={`${columna.headerBg} px-4 py-3 rounded-t-xl border-b ${columna.borderColor}`}>
+      <div className="flex flex-col">
+        {/* Header columna */}
+        <div className={`
+          bg-gradient-to-r ${col.gradient} 
+          rounded-t-2xl p-4 shadow-lg
+        `}>
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <IconoColumna className={`w-4 h-4 ${columna.textColor}`} />
-              <h3 className={`font-semibold text-sm ${columna.textColor}`}>
-                {columna.titulo}
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                <Icon size={20} className="text-white" />
+              </div>
+              <h3 className="font-bold text-white text-lg">
+                {col.titulo}
               </h3>
-              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${columna.headerBg} ${columna.textColor}`}>
-                {columna.tareas.length}
-              </span>
             </div>
-            <button className="p-1 hover:bg-white/50 rounded transition-colors">
-              <MoreHorizontal className="w-4 h-4 text-gray-500" />
-            </button>
+            <span className={`
+              px-3 py-1 rounded-full text-sm font-bold
+              bg-white/20 text-white backdrop-blur-sm
+            `}>
+              {col.tareas.length}
+            </span>
           </div>
         </div>
-        
+
         {/* Lista de tareas */}
-        <div className="flex-1 p-3 overflow-y-auto max-h-[calc(100vh-320px)] space-y-2">
-          {columna.tareas.length > 0 ? (
-            columna.tareas.map(tarea => (
-              <TarjetaKanban key={tarea.id} tarea={tarea} columna={columna} />
-            ))
-          ) : (
-            <div className="text-center py-8 text-gray-400">
+        <div className={`
+          ${col.bgCard} rounded-b-2xl p-3 
+          min-h-[200px] max-h-[calc(100vh-280px)] 
+          overflow-y-auto space-y-3
+          border border-t-0 border-gray-200/50
+        `}>
+          {col.tareas.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+              <Icon size={40} strokeWidth={1.5} className="mb-3 opacity-40" />
               <p className="text-sm">Sin tareas</p>
             </div>
+          ) : (
+            col.tareas.map(t => (
+              <TarjetaKanban 
+                key={t.id} 
+                tarea={t} 
+                borderAccent={col.borderAccent}
+              />
+            ))
           )}
         </div>
       </div>
     );
   };
 
+  /*
+  =====================================
+  RENDER
+  =====================================
+  */
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header estilo Notion */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            {/* Título */}
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <BsListTask className="w-6 h-6 text-blue-600" />
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-gray-100 to-zinc-100">
+
+      {/* Header */}
+      <div className="bg-white/80 backdrop-blur-md border-b border-gray-200/60 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 py-5">
+          <div className="flex justify-between items-center">
+
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg shadow-indigo-500/30">
+                <BsListTask size={26} className="text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">Gestión de Tareas</h1>
-                <p className="text-sm text-gray-500">{pagination.total || 0} tareas en total</p>
+                <h1 className="font-bold text-2xl text-gray-800">
+                  Gestión de Tareas
+                </h1>
+                <p className="text-sm text-gray-500 mt-0.5 flex items-center gap-2">
+                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                  {tareas.length} tareas activas
+                </p>
               </div>
             </div>
 
-            {/* Controles */}
-            <div className="flex items-center gap-3">
-              {/* Búsqueda */}
-              <div className="relative">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Buscar por usuario..."
-                  value={busqueda}
-                  onChange={(e) => setBusqueda(e.target.value)}
-                  className="pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg w-64 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                />
-              </div>
-
-              {/* Toggle Vista */}
-              <div className="flex items-center bg-gray-100 rounded-lg p-1">
-                <button
-                  onClick={() => setVistaKanban(true)}
-                  className={`p-2 rounded-md transition-all ${
-                    vistaKanban 
-                      ? 'bg-white shadow-sm text-blue-600' 
-                      : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                  title="Vista Kanban"
-                >
-                  <Columns3 className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setVistaKanban(false)}
-                  className={`p-2 rounded-md transition-all ${
-                    !vistaKanban 
-                      ? 'bg-white shadow-sm text-blue-600' 
-                      : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                  title="Vista Tarjetas"
-                >
-                  <LayoutGrid className="w-4 h-4" />
-                </button>
-              </div>
+            {/* Search */}
+            <div className="relative">
+              <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Buscar por usuario..."
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                className="
+                  w-72 pl-11 pr-4 py-3
+                  bg-gray-50 border border-gray-200 rounded-xl
+                  text-sm placeholder:text-gray-400
+                  focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400
+                  transition-all duration-200
+                "
+              />
             </div>
+
           </div>
         </div>
       </div>
 
-      {/* Contenido principal */}
-      <div className="container mx-auto px-6 py-6">
-        {vistaKanban ? (
-          /* ✅ VISTA KANBAN */
-          <div className="flex gap-4 overflow-x-auto pb-4">
-            {columnas.map(columna => (
-              <ColumnaKanban key={columna.id} columna={columna} />
-            ))}
-          </div>
-        ) : (
-          /* ✅ VISTA GRID (original mejorada) */
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {Array.isArray(tareas) && tareas.length > 0 ? (
-                tareas.map((tarea) => {
-                  const fechaLimite = tarea.fecha_fin ? new Date(tarea.fecha_fin) : null;
-                  const esVencida = fechaLimite && fechaLimite < new Date() && tarea.estado_id === 1;
-                  const estaExpandida = tareasExpandidas.has(tarea.id);
-                  
-                  return (
-                    <div
-                      key={tarea.id}
-                      className={`bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden border-l-4 ${
-                        tarea.estado_id === 1 
-                          ? esVencida ? 'border-red-500' : 'border-amber-500'
-                          : tarea.estado_id === 5 ? 'border-blue-500' : 'border-emerald-500'
-                      }`}
-                    >
-                      <div className="p-4">
-                        {/* Header */}
-                        <div className="flex items-start justify-between mb-2">
-                          <h3 className="text-sm font-semibold text-gray-900 leading-tight flex-1">
-                            {truncateText(tarea.nombre, 50)}
-                          </h3>
-                          
-                          <div className="flex items-center gap-1 ml-2">
-                            {(user?.role_id === 1 || user?.role_id === 2) && (
-                              <button
-                                onClick={() => abrirModalEdicion(tarea)}
-                                className="p-1 text-gray-400 hover:text-blue-600 rounded transition-colors"
-                              >
-                                <Edit3 className="w-3.5 h-3.5" />
-                              </button>
-                            )}
-                            
-                            <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-                              tarea.estado_id === 1
-                                ? esVencida ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"
-                                : tarea.estado_id === 5 ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"
-                            }`}>
-                              {tarea.estado_id === 1 && (esVencida ? "Vencida" : "Pendiente")}
-                              {tarea.estado_id === 5 && "En curso"}
-                              {tarea.estado_id === 2 && "Completada"}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Descripción */}
-                        <p className="text-xs text-gray-500 mb-3 leading-relaxed">
-                          {estaExpandida ? tarea.descripcion : truncateText(tarea.descripcion, 80)}
-                        </p>
-
-                        {/* Metadata */}
-                        <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500 mb-3">
-                          <div className="flex items-center gap-1">
-                            <User className="w-3 h-3" />
-                            <span>{tarea.usuario?.name || "N/A"}</span>
-                          </div>
-                          {fechaLimite && (
-                            <div className="flex items-center gap-1">
-                              <Calendar className="w-3 h-3" />
-                              <span>{formatearFecha(fechaLimite)}</span>
-                            </div>
-                          )}
-                          <span className="text-gray-400">#{tarea.id}</span>
-                        </div>
-
-                        {/* Expandir */}
-                        <button
-                          onClick={() => toggleTareaExpandida(tarea.id)}
-                          className="text-xs text-blue-600 hover:text-blue-700 mb-3 flex items-center gap-1"
-                        >
-                          {estaExpandida ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                          {estaExpandida ? 'Ver menos' : 'Ver más'}
-                        </button>
-
-                        {/* Botón de acción */}
-                        <button
-                          className={`w-full py-2 text-xs font-medium rounded-lg transition-all ${
-                            tarea.estado_id === 1
-                              ? "bg-blue-600 text-white hover:bg-blue-700"
-                              : tarea.estado_id === 5
-                              ? "bg-emerald-600 text-white hover:bg-emerald-700"
-                              : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                          }`}
-                          onClick={() => cambiarEstado(tarea.id, tarea.estado_id)}
-                          disabled={tarea.estado_id === 2}
-                        >
-                          {tarea.estado_id === 1 && "▶ Iniciar tarea"}
-                          {tarea.estado_id === 5 && "✓ Completar tarea"}
-                          {tarea.estado_id === 2 && "✅ Completada"}
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })
-              ) : (
-                <div className="col-span-full text-center py-12">
-                  <div className="text-5xl mb-4">📋</div>
-                  <h3 className="text-lg font-medium text-gray-600 mb-1">No hay tareas</h3>
-                  <p className="text-sm text-gray-400">No se encontraron tareas</p>
-                </div>
-              )}
-            </div>
-
-            {/* Paginación */}
-            {pagination.total > 0 && (
-              <div className="flex justify-center items-center gap-2 mt-6">
-                <button
-                  className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={!pagination.prev_page_url}
-                  onClick={() => setPagina(pagina - 1)}
-                >
-                  ← Anterior
-                </button>
-                <span className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg font-medium">
-                  {pagination.current_page || 1}
-                </span>
-                <button
-                  className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={!pagination.next_page_url}
-                  onClick={() => setPagina(pagina + 1)}
-                >
-                  Siguiente →
-                </button>
-              </div>
-            )}
-          </>
-        )}
+      {/* Tablero Kanban */}
+      <div className="p-6 ">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {columnas.map(col => (
+            <Columna key={col.id} col={col} />
+          ))}
+        </div>
       </div>
 
-      {/* Modal de Edición (sin cambios en lógica) */}
+      {/* Modal Edición */}
       {modalEdicion && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-hidden">
-            <div className="flex items-center justify-between p-4 border-b">
-              <div>
-                <h2 className="text-lg font-bold text-gray-900">Editar Tarea</h2>
-                <p className="text-xs text-gray-500">#{tareaEditando?.id} • {tareaEditando?.usuario?.name}</p>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+            
+            {/* Header Modal */}
+            <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-5">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold text-white">Editar Tarea</h3>
+                <button 
+                  onClick={cerrarModalEdicion}
+                  className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                >
+                  <X size={20} className="text-white" />
+                </button>
               </div>
-              <button onClick={cerrarModalEdicion} className="p-1 hover:bg-gray-100 rounded">
-                <X className="w-5 h-5 text-gray-500" />
-              </button>
             </div>
 
-            <div className="p-4 space-y-4">
+            {/* Form */}
+            <div className="p-6 space-y-5">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Nombre
+                </label>
                 <input
                   type="text"
-                  name="nombre"
                   value={formData.nombre}
-                  onChange={handleInputChange}
-                  className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                  onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Descripción *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Descripción
+                </label>
                 <textarea
-                  name="descripcion"
+                  rows={4}
                   value={formData.descripcion}
-                  onChange={handleInputChange}
-                  rows={3}
-                  className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+                  onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 resize-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Fecha límite</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Fecha límite
+                </label>
                 <input
                   type="date"
-                  name="fecha_fin"
                   value={formData.fecha_fin}
-                  onChange={handleInputChange}
-                  className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                  onChange={(e) => setFormData({ ...formData, fecha_fin: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
                 />
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 p-4 border-t bg-gray-50">
+            {/* Actions */}
+            <div className="px-6 pb-6 flex gap-3">
               <button
                 onClick={cerrarModalEdicion}
-                className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50"
-                disabled={cargandoEdicion}
+                className="flex-1 py-3 border border-gray-200 rounded-xl text-gray-600 font-medium hover:bg-gray-50 transition-colors"
               >
                 Cancelar
               </button>
               <button
                 onClick={actualizarTarea}
                 disabled={cargandoEdicion}
-                className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+                className="flex-1 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-indigo-500/25 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {cargandoEdicion ? (
-                  <><div className="animate-spin h-4 w-4 border-2 border-white/30 border-t-white rounded-full" /> Guardando...</>
-                ) : (
-                  <><Save className="w-4 h-4" /> Guardar</>
-                )}
+                <Save size={18} />
+                {cargandoEdicion ? "Guardando..." : "Guardar"}
               </button>
             </div>
+
           </div>
         </div>
       )}
+
     </div>
   );
 }
