@@ -3,8 +3,7 @@ import Select from "react-select";
 import { useGestionProcesos } from "../../hooks/useGestionProcesos";
 import { useRegistrosProcesoshoy } from "../../hooks/RegistroDiario/useRegistrosProcesoshoy";
 import { useVerificacionDiaria } from "../../hooks/RegistroDiario/useVerificacionDiaria";
-import DashboardRegistroDiario from "./DashboardRegistroDiario";
-import DashboardProcesosAnuales from "./DashboardProcesosAnuales";
+
 
 export default function VerificacionDiaria() {
   const { departamentos } = useGestionProcesos();
@@ -23,7 +22,6 @@ export default function VerificacionDiaria() {
   const {
     formData,
     handleChange,
-    handleSelectChange,
     handleSubmit,
     loading: loadingSubmit,
     error,

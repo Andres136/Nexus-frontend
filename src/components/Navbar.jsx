@@ -60,11 +60,11 @@ export default function Navbar() {
       submenu: [
        { name: "Marketing", to: "/auth/marketing", icon: Megaphone, allowedRoles: [1, 2, 10, 11] },
         { name: "Novedades", to: "/auth/control-calidad", icon: Bell, allowedRoles: [1, 2, 10, 11] },
-        { name: "Tareas", to: "tareas", icon: ListChecks, allowedRoles: [1,2, 10,11] },
+        { name: "Tareas", to: "/auth/tareas", icon: ListChecks, allowedRoles: [1,2, 10,11] },
         {name: "Settings", to: "/admin/settings-permisos", icon: BarChart2, allowedRoles: [1] },
         {name: "Responsabilidades", to: "/auth/responsabilidades", icon: User2Icon, allowedRoles: [1] },
         {name: "TIC", to: "/auth/tic", icon: Cpu, allowedRoles: [1, 2] },
-        {name: "Cartera", to: "/auth/cartera", icon: Building2, alwaysVisible: true },
+        {name: "Cartera", to: "/auth/crm/cartera-clientes", icon: Building2, alwaysVisible: true },
       ],
     },
   ];
@@ -134,7 +134,7 @@ export default function Navbar() {
 
              {openMenu === link.name && (
   <div
-    className="absolute right-0 top-full mt-2 grid grid-cols-2 gap-2 bg-gray-800 border border-gray-700
+    className="absolute right-0 top-full mt-2 grid grid-cols-3 gap-2 bg-gray-800 border border-gray-700
                rounded-lg shadow-xl w-[420px] p-3 transition-all duration-200 ease-in-out z-50"
   >
                     {link.submenu.map((sub) => (

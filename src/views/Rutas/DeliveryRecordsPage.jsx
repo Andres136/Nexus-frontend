@@ -25,11 +25,8 @@ export default function DeliveryRecordsPage() {
 
     setEventos(res.data.data);
     
-    // ✅ Obtener el nombre del primer usuario para el saludo
-    if (res.data.data && res.data.data.length > 0) {
-      const primerEvento = res.data.data[0];
-      setNombreUsuario(primerEvento.usuario?.name || "Usuario");
-    }
+    // ✅ Obtener nombre del usuario
+     setNombreUsuario(res.data.user?.name || "Usuario");
   };
 
   useEffect(() => {
@@ -89,9 +86,11 @@ export default function DeliveryRecordsPage() {
             </div>
             <div>
               {/* ✅ Saludo personalizado */}
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
-                Hola {nombreUsuario}, tus entregas
-              </h2>
+             <h1 className="text-xl font-bold text-gray-900">
+  {eventos.length > 0
+    ? `Hola ${nombreUsuario}, estas son tus entregas`
+    : `Hola ${nombreUsuario}, no tienes entregas asignadas`}
+</h1>
               <p className="text-sm text-gray-600 hidden sm:block">
                 Gestiona el estado de tus entregas asignadas
               </p>

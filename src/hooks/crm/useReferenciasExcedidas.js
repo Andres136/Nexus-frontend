@@ -4,7 +4,8 @@ import { toast } from "react-toastify";
 import { ordenesCompraProveedoresApi } from "../../services/api";
 import { showToast } from "../../helpers/utils/showToast";
  
-export default function useReferenciasExcedidas(ordenId = null) {
+export default function useReferenciasExcedidas({ ordenId = null, modo = "orden" }={}) {
+ // console.log("🚀  ordenId en useReferenciasExcedidas:", ordenId);
 
 
     const [referencias, setReferencias] = useState([]);
@@ -13,25 +14,26 @@ export default function useReferenciasExcedidas(ordenId = null) {
   const [paginaActual, setPaginaActual] = useState(1);
   const [filaAbierta, setFilaAbierta] = useState(null);
     const [estadoAbierto, setEstadoAbierto] = useState(null);
-
+const dropdownRef = useRef(null);
 
   const elementosPorPagina = 15; // ✅ Aumentamos para tabla compacta
- 
-useEffect(() => {
+ useEffect(() => {
+
   const obtenerReferencias = async () => {
     try {
       setLoading(true);
 
       let response;
 
-      if (ordenId) {
+      if (modo === "orden" && ordenId) {
         response = await ordenesCompraProveedoresApi.faltantesPendientesbyId(ordenId);
-     //   console.log("🚀  response:", response);
-      } else {
+      }
+
+      if (modo === "global") {
         response = await ordenesCompraProveedoresApi.faltantesPendientes();
       }
 
-      setReferencias(response.data.referencias_faltantes || []);
+      setReferencias(response?.data?.referencias_faltantes || []);
 
     } catch (error) {
       console.log("Error al obtener referencias:", error);
@@ -43,7 +45,8 @@ useEffect(() => {
   };
 
   obtenerReferencias();
-}, [ordenId]);
+
+}, [ordenId, modo]);
 
 
   const getEstadoStyles = (estado) => {
@@ -129,6 +132,7 @@ const actualizarEstado = async (observacionId, nuevoEstado) => {
     actualizarEstado,
     estadoAbierto,
      setEstadoAbierto,
+      dropdownRef,
   
 
  

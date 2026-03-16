@@ -3,6 +3,8 @@ import { carteraApi } from "../../services/api"
 import { useClientes } from "../useClientes"
 import { useAuth } from "../useAuth"
 import { showToast } from "../../helpers/utils/showToast"
+import Swal from "sweetalert2"
+import { useNavigate } from "react-router-dom"
 
 export const useGestionCartera = () => {
 
@@ -35,6 +37,7 @@ export const useGestionCartera = () => {
 
   const { clientes } = useClientes()
   const { usuarios, obtenerUsuariosAll } = useAuth({ middleware: 'auth' })
+  const navigate = useNavigate()
 
   useEffect(() => {
     obtenerUsuariosAll()
@@ -117,7 +120,7 @@ export const useGestionCartera = () => {
       })
 
       showToast('success', response.data.message)
-
+        navigate("/auth/crm/cartera-clientes")
       setRegistros([registroInicial])
 
     } catch (error) {
@@ -133,6 +136,36 @@ export const useGestionCartera = () => {
     }
   }
 
+
+  //Cancelar la deuda
+ const cancelarDeuda = async (carteraId) => {
+
+  const confirm = await Swal.fire({
+    title: "¿Cancelar deuda?",
+    text: "Esto pondrá el saldo pendiente en 0",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Sí, cancelar",
+    cancelButtonText: "No"
+  })
+
+  if (!confirm.isConfirmed) return
+
+  try {
+    setLoading(true)
+
+    const response = await carteraApi.cancelar(carteraId)
+
+    Swal.fire("Cancelado", response.data.message, "success")
+
+  } catch (error) {
+    console.log("Error al cancelar deuda:", error)
+    showToast("error", "Error al cancelar la deuda")
+  } finally {
+    setLoading(false)
+  }
+}
+
   return {
     registros,
     porcentajes,
@@ -144,6 +177,7 @@ export const useGestionCartera = () => {
     handlePorcentajeChange,
     handleSubmit,
     clientes,
-    usuarios
+    usuarios,
+    cancelarDeuda
   }
 }

@@ -90,6 +90,8 @@ import MantenimientoEquiposTic from "../components/tic/MantenimientoEquiposTic";
 import ViewOrdenesOs from "../views/crm/ViewOrdenesOs/ViewOrdenesOs";
 import ViewDetallesOrdenesOs from "../views/crm/ViewOrdenesOs/ViewDetallesOrdenesOs";
 import RegistrarOs from "../components/crm/ordenesServicio/RegistrarOs";
+import GestionCartera from "../views/crm/GestionCartera";
+import ObtenerGestionCartera from "../components/crm/ObtenerGestionCartera";
 
 
 export default function Router() {
@@ -220,7 +222,7 @@ export default function Router() {
             }
           />
           <Route
-            path="tareas"
+            path="/auth/tareas"
             element={
               <DynamicProtectedRoute permission="/auth/tareas">
                 <Tareas />
@@ -410,6 +412,31 @@ export default function Router() {
               </DynamicProtectedRoute>
             }
           />
+          
+          {/* Fin de Rutas para Ordenes a proveedores */}
+
+       
+          {/* Rutas para  gestion de cartera */}   
+
+          <Route
+            path="/auth/crm/cartera-clientes"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/cartera-clientes">
+                <ObtenerGestionCartera/>
+              </DynamicProtectedRoute>
+            }
+          />
+  
+  <Route
+            path="/auth/crm/registrar-cartera"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/registrar-cartera">
+                <GestionCartera />
+              </DynamicProtectedRoute>
+            }
+          />
+           
+          {/*  Fin Rutas para  gestion de cartera */}  
           <Route
             path="proveedores-ordenes-compra"
             element={<FormOrdenesProveedores />}
@@ -545,7 +572,7 @@ export default function Router() {
           />
           <Route path="sedes" element={<Sedes />} />
           <Route path="rendimiento" element={<KpiTareas />} />
-          <Route path="tareas" element={<Tareas />} />
+      
         
           <Route path="departamentos" element={<DepartatamentosUpdate />} />
           <Route path="indicadores" element={<Indicadores />} />

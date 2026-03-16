@@ -1,8 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import clienteAxios from "../../config/axios";
 import { toast } from "react-toastify";
 import { useAuth } from "../../hooks/useAuth";
-import { ChevronDown, ChevronUp, Calendar, User, Building, Hash, Edit3, X, Save } from "lucide-react";
+import { 
+  ChevronDown, ChevronUp, Calendar, User, Building, Hash, Edit3, X, Save,
+  LayoutGrid, Columns3, Clock, CheckCircle2, PlayCircle, AlertCircle, Search,
+  MoreHorizontal
+} from "lucide-react";
 import { BsListTask } from "react-icons/bs";
 
 export default function Tareas() {
@@ -13,7 +17,10 @@ export default function Tareas() {
   const [busqueda, setBusqueda] = useState("");
   const [tareasExpandidas, setTareasExpandidas] = useState(new Set());
   
-  // ✅ ESTADOS SIMPLIFICADOS PARA EDICIÓN
+  // ✅ NUEVO: Vista Kanban o Grid
+  const [vistaKanban, setVistaKanban] = useState(true);
+  
+  // Estados para edición
   const [modalEdicion, setModalEdicion] = useState(false);
   const [tareaEditando, setTareaEditando] = useState(null);
   const [formData, setFormData] = useState({
@@ -25,6 +32,81 @@ export default function Tareas() {
   
   const { user } = useAuth({ middleware: "auth" });
 
+  // ✅ NUEVO: Agrupar tareas por estado para vista Kanban
+  const tareasAgrupadas = useMemo(() => {
+    const grupos = {
+      pendientes: [],
+      enCurso: [],
+      completadas: [],
+      vencidas: []
+    };
+    
+    tareas.forEach(tarea => {
+      const fechaLimite = tarea.fecha_fin ? new Date(tarea.fecha_fin) : null;
+      const esVencida = fechaLimite && fechaLimite < new Date() && tarea.estado_id === 1;
+      
+      if (esVencida) {
+        grupos.vencidas.push(tarea);
+      } else if (tarea.estado_id === 1) {
+        grupos.pendientes.push(tarea);
+      } else if (tarea.estado_id === 5) {
+        grupos.enCurso.push(tarea);
+      } else if (tarea.estado_id === 2) {
+        grupos.completadas.push(tarea);
+      }
+    });
+    
+    return grupos;
+  }, [tareas]);
+
+  // ✅ Configuración de columnas Kanban
+  const columnas = [
+    {
+      id: 'vencidas',
+      titulo: 'Vencidas',
+      icon: AlertCircle,
+      color: 'red',
+      bgColor: 'bg-red-50',
+      borderColor: 'border-red-200',
+      headerBg: 'bg-red-100',
+      textColor: 'text-red-700',
+      tareas: tareasAgrupadas.vencidas
+    },
+    {
+      id: 'pendientes',
+      titulo: 'Pendientes',
+      icon: Clock,
+      color: 'yellow',
+      bgColor: 'bg-amber-50',
+      borderColor: 'border-amber-200',
+      headerBg: 'bg-amber-100',
+      textColor: 'text-amber-700',
+      tareas: tareasAgrupadas.pendientes
+    },
+    {
+      id: 'enCurso',
+      titulo: 'En Curso',
+      icon: PlayCircle,
+      color: 'blue',
+      bgColor: 'bg-blue-50',
+      borderColor: 'border-blue-200',
+      headerBg: 'bg-blue-100',
+      textColor: 'text-blue-700',
+      tareas: tareasAgrupadas.enCurso
+    },
+    {
+      id: 'completadas',
+      titulo: 'Completadas',
+      icon: CheckCircle2,
+      color: 'green',
+      bgColor: 'bg-emerald-50',
+      borderColor: 'border-emerald-200',
+      headerBg: 'bg-emerald-100',
+      textColor: 'text-emerald-700',
+      tareas: tareasAgrupadas.completadas
+    }
+  ];
+
   const toggleTareaExpandida = (tareaId) => {
     const nuevasExpandidas = new Set(tareasExpandidas);
     if (nuevasExpandidas.has(tareaId)) {
@@ -35,7 +117,6 @@ export default function Tareas() {
     setTareasExpandidas(nuevasExpandidas);
   };
 
-  // ✅ FUNCIONES SIMPLIFICADAS PARA EDICIÓN
   const abrirModalEdicion = (tarea) => {
     setTareaEditando(tarea);
     setFormData({
@@ -49,17 +130,12 @@ export default function Tareas() {
   const cerrarModalEdicion = () => {
     setModalEdicion(false);
     setTareaEditando(null);
-    setFormData({
-      nombre: '',
-      descripcion: '',
-      fecha_fin: ''
-    });
+    setFormData({ nombre: '', descripcion: '', fecha_fin: '' });
   };
 
   const actualizarTarea = async () => {
     if (!tareaEditando) return;
     
-    // Validaciones básicas
     if (!formData.nombre.trim()) {
       toast.error('El nombre de la tarea es obligatorio');
       return;
@@ -74,13 +150,12 @@ export default function Tareas() {
     const token = localStorage.getItem("token");
     
     try {
-      // ✅ Solo enviar los campos editables, mantener usuario_id y departamento_id originales
       const dataToSend = {
         nombre: formData.nombre.trim(),
         descripcion: formData.descripcion.trim(),
         fecha_fin: formData.fecha_fin || null,
-        usuario_id: tareaEditando.usuario_id, // Mantener original
-        departamento_id: tareaEditando.departamento_id // Mantener original
+        usuario_id: tareaEditando.usuario_id,
+        departamento_id: tareaEditando.departamento_id
       };
 
       await clienteAxios.put(`/api/tareas/update/${tareaEditando.id}`, dataToSend, {
@@ -89,14 +164,10 @@ export default function Tareas() {
       
       toast.success('Tarea actualizada correctamente');
       cerrarModalEdicion();
-      setActualizar(!actualizar); // Recargar lista
+      setActualizar(!actualizar);
     } catch (error) {
       console.error('Error al actualizar tarea:', error);
-      if (error.response?.data?.message) {
-        toast.error(error.response.data.message);
-      } else {
-        toast.error('Error al actualizar la tarea');
-      }
+      toast.error(error.response?.data?.message || 'Error al actualizar la tarea');
     } finally {
       setCargandoEdicion(false);
     }
@@ -104,13 +175,9 @@ export default function Tareas() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Funciones existentes...
   const obtenerTareas = async (paginaActual = 1) => {
     const token = localStorage.getItem("token");
     try {
@@ -118,7 +185,6 @@ export default function Tareas() {
         `/api/tareas?page=${paginaActual}&usuario=${busqueda}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
       setTareas(response.data.data);
       setPagination({
         current_page: response.data.current_page,
@@ -135,7 +201,10 @@ export default function Tareas() {
   const cambiarEstado = async (id, estado_id) => {
     const token = localStorage.getItem("token");
     try {
-      const nuevoEstado = estado_id === 1 ? 2 : 1;
+      let nuevoEstado = estado_id;
+      if (estado_id === 1) nuevoEstado = 5;
+      else if (estado_id === 5) nuevoEstado = 2;
+
       await clienteAxios.patch(
         `/api/tareas/estado/${id}`,
         { estado_id: nuevoEstado },
@@ -145,7 +214,7 @@ export default function Tareas() {
       toast.success("Estado actualizado correctamente");
     } catch (error) {
       toast.error("Error al actualizar estado");
-      console.error("Error al actualizar estado", error);
+      console.error(error);
     }
   };
 
@@ -165,355 +234,396 @@ export default function Tareas() {
     return text.substring(0, maxLength) + "...";
   };
 
+  const formatearFecha = (fecha) => {
+    if (!fecha) return null;
+    return new Date(fecha).toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: 'short'
+    });
+  };
+
   useEffect(() => {
     obtenerTareas(pagina);
     generarNotificaciones();
   }, [actualizar, pagina, busqueda]);
 
-  return (
-    <div className="container mx-auto text-sm p-6 bg-gray-50 min-h-screen">
-      {/* Header mejorado */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-800 mb-2">
-          <BsListTask /> Gestión de Tareas
-        </h1>
-        <p className="text-gray-600">Administra y realiza seguimiento a todas las tareas asignadas</p>
-      </div>
-
-      {/* Input de búsqueda mejorado */}
-      <div className="mb-8">
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <div className="flex flex-col md:flex-row gap-4 items-center">
-            <div className="flex-1">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Buscar tareas
-              </label>
-              <input
-                type="text"
-                placeholder="Buscar por usuario asignado..."
-                value={busqueda}
-                onChange={(e) => setBusqueda(e.target.value)}
-                className="border border-gray-300 p-3 rounded-lg w-full shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition"
-              />
-            </div>
-            <div className="text-sm text-gray-500">
-              <span className="font-semibold">{pagination.total || 0}</span> tareas encontradas
-            </div>
+  // ✅ Componente de Tarjeta Kanban (compacta estilo Notion/Trello)
+  const TarjetaKanban = ({ tarea, columna }) => {
+    const fechaLimite = tarea.fecha_fin ? new Date(tarea.fecha_fin) : null;
+    const esVencida = fechaLimite && fechaLimite < new Date() && tarea.estado_id === 1;
+    
+    return (
+      <div 
+        className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 mb-2 hover:shadow-md transition-all duration-200 cursor-pointer group"
+        onClick={() => toggleTareaExpandida(tarea.id)}
+      >
+        {/* Header con título y acciones */}
+        <div className="flex items-start justify-between gap-2 mb-2">
+          <h4 className="text-sm font-medium text-gray-900 leading-snug flex-1">
+            {truncateText(tarea.nombre, 60)}
+          </h4>
+          
+          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            {(user?.role_id === 1 || user?.role_id === 2) && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  abrirModalEdicion(tarea);
+                }}
+                className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
         </div>
-      </div>
 
-      {/* Lista de tareas mejorada */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {Array.isArray(tareas) && tareas.length > 0 ? (
-          tareas.map((tarea) => {
-            const estaExpandida = tareasExpandidas.has(tarea.id);
-            const fechaLimite = tarea.fecha_fin ? new Date(tarea.fecha_fin) : null;
-            const fechaCreacion = tarea.created_at ? new Date(tarea.created_at) : null;
-            const esVencida = fechaLimite && fechaLimite < new Date() && tarea.estado_id === 1;
-            
-          // En la sección de cada tarjeta de tarea, alrededor de la línea 190:
-return (
-  <div
-    key={tarea.id}
-    className={`bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-200 overflow-hidden border-l-4 ${
-      tarea.estado_id === 1 
-        ? esVencida 
-          ? 'border-red-500' 
-          : 'border-yellow-500'
-        : 'border-green-500'
-    }`}
-  >
-    {/* Header de la tarea */}
-    <div className="p-5 pb-3">
-      <div className="flex items-start justify-between mb-3">
-        <h3 className="text-lg font-bold text-gray-800 leading-tight flex-1">
-          {truncateText(tarea.nombre, 50)}
-        </h3>
-        
-        <div className="flex items-center gap-2 ml-2">
-          {/* ✅ Botón de editar - Solo para roles específicos */}
-          {(user?.role_id === 1 || user?.role_id === 2) && (
-            <button
-              onClick={() => abrirModalEdicion(tarea)}
-              className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-              title="Editar tarea"
-            >
-              <Edit3 className="w-4 h-4" />
-            </button>
+        {/* Descripción (solo si está expandida) */}
+        {tareasExpandidas.has(tarea.id) && (
+          <p className="text-xs text-gray-500 mb-3 leading-relaxed">
+            {tarea.descripcion}
+          </p>
+        )}
+
+        {/* Tags y metadata */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Usuario asignado */}
+          <div className="flex items-center gap-1 text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+            <User className="w-3 h-3" />
+            <span className="max-w-[80px] truncate">{tarea.usuario?.name || "N/A"}</span>
+          </div>
+          
+          {/* Fecha límite */}
+          {fechaLimite && (
+            <div className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full ${
+              esVencida 
+                ? 'bg-red-100 text-red-700' 
+                : 'bg-gray-100 text-gray-600'
+            }`}>
+              <Calendar className="w-3 h-3" />
+              <span>{formatearFecha(fechaLimite)}</span>
+            </div>
           )}
           
-          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-            tarea.estado_id === 1 
-              ? esVencida
-                ? 'bg-red-100 text-red-700'
-                : 'bg-yellow-100 text-yellow-700'
-              : 'bg-green-100 text-green-700'
-          }`}>
-            {tarea.estado_id === 1 
-              ? esVencida 
-                ? 'Vencida' 
-                : 'Pendiente'
-              : 'Completada'}
-          </span>
-        </div>
-      </div>
-
-      {/* Descripción con truncado */}
-      <p className="text-gray-600 mb-4 leading-relaxed">
-        {estaExpandida 
-          ? tarea.descripcion 
-          : truncateText(tarea.descripcion, 80)
-        }
-      </p>
-
-      {/* ✅ INFORMACIÓN BÁSICA EXPANDIDA - SIEMPRE VISIBLE */}
-      <div className="grid grid-cols-1 gap-3 text-sm mb-4">
-        
-        {/* Primera fila */}
-        <div className="grid grid-cols-2 gap-3 text-xs text-gray-500">
-          <div className="flex items-center gap-1">
-            <Hash className="w-3 h-3" />
-            <span>#{tarea.id}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <User className="w-3 h-3" />
-            <span className="truncate">{tarea.usuario?.name || "N/A"}</span>
-          </div>
+          {/* ID */}
+          <span className="text-xs text-gray-400">#{tarea.id}</span>
         </div>
 
-        {/* Segunda fila - Departamento */}
-        <div className="flex items-center gap-2 text-gray-600">
-          <Building className="w-4 h-4 text-blue-500" />
-          <span className="font-medium text-xs">Departamento:</span>
-          <span className="text-sm font-semibold text-gray-900">
-            {tarea.departamentos?.nombre || "N/A"}
-          </span>
-        </div>
-        
-        {/* Tercera fila - Fecha límite */}
-        <div className="flex items-center gap-2 text-gray-600">
-          <Calendar className="w-4 h-4 text-green-500" />
-          <span className="font-medium text-xs">Fecha límite:</span>
-          <span className={`text-sm font-semibold ${esVencida ? 'text-red-600' : 'text-gray-900'}`}>
-            {fechaLimite 
-              ? fechaLimite.toLocaleDateString('es-ES', {
-                  day: '2-digit',
-                  month: 'short',
-                  year: 'numeric'
-                })
-              : "Sin definir"
-            }
-          </span>
-        </div>
-
-        {/* Cuarta fila - Fecha de asignación */}
-        <div className="flex items-center gap-2 text-gray-600">
-          <Calendar className="w-4 h-4 text-gray-500" />
-          <span className="font-medium text-xs">Fecha asignada:</span>
-          <span className="text-sm text-gray-900">
-            {fechaCreacion 
-              ? fechaCreacion.toLocaleDateString('es-ES', {
-                  day: '2-digit',
-                  month: 'short',
-                  year: 'numeric'
-                })
-              : "N/A"
-            }
-          </span>
-        </div>
-      </div>
-    </div>
-
-
-
-    {/* Footer de la tarea */}
-    <div className="px-5 pb-5">
-      {/* Botón Leer más/menos */}
-      <button
-        onClick={() => toggleTareaExpandida(tarea.id)}
-        className="w-full mb-3 px-3 py-2 text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors flex items-center justify-center gap-1 border border-blue-200"
-      >
-        {estaExpandida ? (
-          <>
-            <ChevronUp className="w-4 h-4" />
-            Ver menos detalles
-          </>
-        ) : (
-          <>
-            <ChevronDown className="w-4 h-4" />
-            Ver más detalles
-          </>
+        {/* Botón de acción (solo si no está completada) */}
+        {tarea.estado_id !== 2 && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              cambiarEstado(tarea.id, tarea.estado_id);
+            }}
+            className={`w-full mt-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+              tarea.estado_id === 1
+                ? 'bg-blue-50 text-blue-600 hover:bg-blue-100'
+                : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
+            }`}
+          >
+            {tarea.estado_id === 1 ? '▶ Iniciar' : '✓ Completar'}
+          </button>
         )}
-      </button>
+      </div>
+    );
+  };
 
-      {/* Botón de estado */}
-      <button
-        className={`px-4 py-3 text-sm font-semibold rounded-lg w-full transition-all ${
-          tarea.estado_id === 1
-            ? "bg-gradient-to-r from-yellow-500 to-orange-500 text-white hover:from-green-500 hover:to-green-600 transform hover:scale-105"
-            : "bg-gradient-to-r from-green-500 to-green-600 text-white cursor-not-allowed opacity-75"
-        }`}
-        onClick={() => cambiarEstado(tarea.id, tarea.estado_id)}
-        disabled={tarea.estado_id !== 1}
-      >
-        {tarea.estado_id === 1 ? (
-          <span className="flex items-center justify-center gap-2">
-            ⏳ Marcar como completada
-          </span>
-        ) : (
-          <span className="flex items-center justify-center gap-2">
-            ✅ Tarea completada
-          </span>
-        )}
-      </button>
-    </div>
-  </div>
-);
-          })
-        ) : (
-          <div className="col-span-full">
-            <div className="bg-white rounded-xl shadow-sm p-12 text-center">
-              <div className="text-6xl mb-4">📋</div>
-              <h3 className="text-xl font-semibold text-gray-600 mb-2">
-                No hay tareas disponibles
+  // ✅ Componente de Columna Kanban
+  const ColumnaKanban = ({ columna }) => {
+    const IconoColumna = columna.icon;
+    
+    return (
+      <div className={`flex flex-col min-w-[280px] max-w-[320px] ${columna.bgColor} rounded-xl border ${columna.borderColor}`}>
+        {/* Header de columna */}
+        <div className={`${columna.headerBg} px-4 py-3 rounded-t-xl border-b ${columna.borderColor}`}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <IconoColumna className={`w-4 h-4 ${columna.textColor}`} />
+              <h3 className={`font-semibold text-sm ${columna.textColor}`}>
+                {columna.titulo}
               </h3>
-              <p className="text-gray-500">
-                No se encontraron tareas que coincidan con tu búsqueda.
-              </p>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Paginación mejorada */}
-      {pagination.total > 0 && (
-        <div className="bg-white rounded-xl shadow-sm p-6 mt-8">
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div className="text-sm text-gray-600">
-              Mostrando página <span className="font-semibold">{pagination.current_page || 1}</span> de {Math.ceil(pagination.total / 10)} páginas
-            </div>
-            
-            <div className="flex items-center space-x-3">
-              <button
-                className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
-                disabled={!pagination.prev_page_url}
-                onClick={() => setPagina(pagina - 1)}
-              >
-                ← Anterior
-              </button>
-              
-              <span className="px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold">
-                {pagination.current_page || 1}
+              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${columna.headerBg} ${columna.textColor}`}>
+                {columna.tareas.length}
               </span>
-              
-              <button
-                className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
-                disabled={!pagination.next_page_url}
-                onClick={() => setPagina(pagina + 1)}
-              >
-                Siguiente →
-              </button>
+            </div>
+            <button className="p-1 hover:bg-white/50 rounded transition-colors">
+              <MoreHorizontal className="w-4 h-4 text-gray-500" />
+            </button>
+          </div>
+        </div>
+        
+        {/* Lista de tareas */}
+        <div className="flex-1 p-3 overflow-y-auto max-h-[calc(100vh-320px)] space-y-2">
+          {columna.tareas.length > 0 ? (
+            columna.tareas.map(tarea => (
+              <TarjetaKanban key={tarea.id} tarea={tarea} columna={columna} />
+            ))
+          ) : (
+            <div className="text-center py-8 text-gray-400">
+              <p className="text-sm">Sin tareas</p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header estilo Notion */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            {/* Título */}
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <BsListTask className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">Gestión de Tareas</h1>
+                <p className="text-sm text-gray-500">{pagination.total || 0} tareas en total</p>
+              </div>
+            </div>
+
+            {/* Controles */}
+            <div className="flex items-center gap-3">
+              {/* Búsqueda */}
+              <div className="relative">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Buscar por usuario..."
+                  value={busqueda}
+                  onChange={(e) => setBusqueda(e.target.value)}
+                  className="pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg w-64 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                />
+              </div>
+
+              {/* Toggle Vista */}
+              <div className="flex items-center bg-gray-100 rounded-lg p-1">
+                <button
+                  onClick={() => setVistaKanban(true)}
+                  className={`p-2 rounded-md transition-all ${
+                    vistaKanban 
+                      ? 'bg-white shadow-sm text-blue-600' 
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                  title="Vista Kanban"
+                >
+                  <Columns3 className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setVistaKanban(false)}
+                  className={`p-2 rounded-md transition-all ${
+                    !vistaKanban 
+                      ? 'bg-white shadow-sm text-blue-600' 
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                  title="Vista Tarjetas"
+                >
+                  <LayoutGrid className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      )}
+      </div>
 
-      {/* ✅ MODAL SIMPLIFICADO DE EDICIÓN */}
-      {modalEdicion && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
-            
-            {/* Header del modal */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <div>
-                <h2 className="text-xl font-bold text-gray-900">Editar Tarea</h2>
-                <p className="text-gray-600 text-sm">
-                  ID: #{tareaEditando?.id} • Asignada a: {tareaEditando?.usuario?.name || 'N/A'}
-                </p>
+      {/* Contenido principal */}
+      <div className="container mx-auto px-6 py-6">
+        {vistaKanban ? (
+          /* ✅ VISTA KANBAN */
+          <div className="flex gap-4 overflow-x-auto pb-4">
+            {columnas.map(columna => (
+              <ColumnaKanban key={columna.id} columna={columna} />
+            ))}
+          </div>
+        ) : (
+          /* ✅ VISTA GRID (original mejorada) */
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {Array.isArray(tareas) && tareas.length > 0 ? (
+                tareas.map((tarea) => {
+                  const fechaLimite = tarea.fecha_fin ? new Date(tarea.fecha_fin) : null;
+                  const esVencida = fechaLimite && fechaLimite < new Date() && tarea.estado_id === 1;
+                  const estaExpandida = tareasExpandidas.has(tarea.id);
+                  
+                  return (
+                    <div
+                      key={tarea.id}
+                      className={`bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden border-l-4 ${
+                        tarea.estado_id === 1 
+                          ? esVencida ? 'border-red-500' : 'border-amber-500'
+                          : tarea.estado_id === 5 ? 'border-blue-500' : 'border-emerald-500'
+                      }`}
+                    >
+                      <div className="p-4">
+                        {/* Header */}
+                        <div className="flex items-start justify-between mb-2">
+                          <h3 className="text-sm font-semibold text-gray-900 leading-tight flex-1">
+                            {truncateText(tarea.nombre, 50)}
+                          </h3>
+                          
+                          <div className="flex items-center gap-1 ml-2">
+                            {(user?.role_id === 1 || user?.role_id === 2) && (
+                              <button
+                                onClick={() => abrirModalEdicion(tarea)}
+                                className="p-1 text-gray-400 hover:text-blue-600 rounded transition-colors"
+                              >
+                                <Edit3 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                            
+                            <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+                              tarea.estado_id === 1
+                                ? esVencida ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"
+                                : tarea.estado_id === 5 ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"
+                            }`}>
+                              {tarea.estado_id === 1 && (esVencida ? "Vencida" : "Pendiente")}
+                              {tarea.estado_id === 5 && "En curso"}
+                              {tarea.estado_id === 2 && "Completada"}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Descripción */}
+                        <p className="text-xs text-gray-500 mb-3 leading-relaxed">
+                          {estaExpandida ? tarea.descripcion : truncateText(tarea.descripcion, 80)}
+                        </p>
+
+                        {/* Metadata */}
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500 mb-3">
+                          <div className="flex items-center gap-1">
+                            <User className="w-3 h-3" />
+                            <span>{tarea.usuario?.name || "N/A"}</span>
+                          </div>
+                          {fechaLimite && (
+                            <div className="flex items-center gap-1">
+                              <Calendar className="w-3 h-3" />
+                              <span>{formatearFecha(fechaLimite)}</span>
+                            </div>
+                          )}
+                          <span className="text-gray-400">#{tarea.id}</span>
+                        </div>
+
+                        {/* Expandir */}
+                        <button
+                          onClick={() => toggleTareaExpandida(tarea.id)}
+                          className="text-xs text-blue-600 hover:text-blue-700 mb-3 flex items-center gap-1"
+                        >
+                          {estaExpandida ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                          {estaExpandida ? 'Ver menos' : 'Ver más'}
+                        </button>
+
+                        {/* Botón de acción */}
+                        <button
+                          className={`w-full py-2 text-xs font-medium rounded-lg transition-all ${
+                            tarea.estado_id === 1
+                              ? "bg-blue-600 text-white hover:bg-blue-700"
+                              : tarea.estado_id === 5
+                              ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                              : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                          }`}
+                          onClick={() => cambiarEstado(tarea.id, tarea.estado_id)}
+                          disabled={tarea.estado_id === 2}
+                        >
+                          {tarea.estado_id === 1 && "▶ Iniciar tarea"}
+                          {tarea.estado_id === 5 && "✓ Completar tarea"}
+                          {tarea.estado_id === 2 && "✅ Completada"}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="col-span-full text-center py-12">
+                  <div className="text-5xl mb-4">📋</div>
+                  <h3 className="text-lg font-medium text-gray-600 mb-1">No hay tareas</h3>
+                  <p className="text-sm text-gray-400">No se encontraron tareas</p>
+                </div>
+              )}
+            </div>
+
+            {/* Paginación */}
+            {pagination.total > 0 && (
+              <div className="flex justify-center items-center gap-2 mt-6">
+                <button
+                  className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={!pagination.prev_page_url}
+                  onClick={() => setPagina(pagina - 1)}
+                >
+                  ← Anterior
+                </button>
+                <span className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg font-medium">
+                  {pagination.current_page || 1}
+                </span>
+                <button
+                  className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={!pagination.next_page_url}
+                  onClick={() => setPagina(pagina + 1)}
+                >
+                  Siguiente →
+                </button>
               </div>
-              <button
-                onClick={cerrarModalEdicion}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <X className="w-6 h-6" />
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Modal de Edición (sin cambios en lógica) */}
+      {modalEdicion && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b">
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">Editar Tarea</h2>
+                <p className="text-xs text-gray-500">#{tareaEditando?.id} • {tareaEditando?.usuario?.name}</p>
+              </div>
+              <button onClick={cerrarModalEdicion} className="p-1 hover:bg-gray-100 rounded">
+                <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>
 
-            {/* ✅ Información no editable */}
-            <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div className="flex items-center gap-2 text-gray-600">
-                  <User className="w-4 h-4 text-blue-500" />
-                  <span className="font-medium">Usuario asignado:</span>
-                  <span className="text-gray-900">{tareaEditando?.usuario?.name || 'N/A'}</span>
-                </div>
-                <div className="flex items-center gap-2 text-gray-600">
-                  <Building className="w-4 h-4 text-green-500" />
-                  <span className="font-medium">Departamento:</span>
-                  <span className="text-gray-900">{tareaEditando?.departamentos?.nombre || 'N/A'}</span>
-                </div>
+            <div className="p-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+                <input
+                  type="text"
+                  name="nombre"
+                  value={formData.nombre}
+                  onChange={handleInputChange}
+                  className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Descripción *</label>
+                <textarea
+                  name="descripcion"
+                  value={formData.descripcion}
+                  onChange={handleInputChange}
+                  rows={3}
+                  className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Fecha límite</label>
+                <input
+                  type="date"
+                  name="fecha_fin"
+                  value={formData.fecha_fin}
+                  onChange={handleInputChange}
+                  className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                />
               </div>
             </div>
 
-            {/* Contenido del modal - solo campos editables */}
-            <div className="p-6 overflow-y-auto max-h-[calc(90vh-240px)]">
-              <div className="space-y-6">
-                
-                {/* Nombre de la tarea */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nombre de la tarea *
-                  </label>
-                  <input
-                    type="text"
-                    name="nombre"
-                    value={formData.nombre}
-                    onChange={handleInputChange}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Ingrese el nombre de la tarea"
-                  />
-                </div>
-
-                {/* Descripción */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Descripción *
-                  </label>
-                  <textarea
-                    name="descripcion"
-                    value={formData.descripcion}
-                    onChange={handleInputChange}
-                    rows={4}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-                    placeholder="Describe la tarea detalladamente"
-                  />
-                </div>
-
-                {/* Fecha límite */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Fecha límite
-                  </label>
-                  <input
-                    type="date"
-                    name="fecha_fin"
-                    value={formData.fecha_fin}
-                    onChange={handleInputChange}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Opcional. Si no se especifica, la tarea no tendrá fecha límite.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Footer del modal */}
-            <div className="flex justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50">
+            <div className="flex justify-end gap-2 p-4 border-t bg-gray-50">
               <button
                 onClick={cerrarModalEdicion}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50"
                 disabled={cargandoEdicion}
               >
                 Cancelar
@@ -521,18 +631,12 @@ return (
               <button
                 onClick={actualizarTarea}
                 disabled={cargandoEdicion}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
               >
                 {cargandoEdicion ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    Guardando...
-                  </>
+                  <><div className="animate-spin h-4 w-4 border-2 border-white/30 border-t-white rounded-full" /> Guardando...</>
                 ) : (
-                  <>
-                    <Save className="w-4 h-4" />
-                    Guardar cambios
-                  </>
+                  <><Save className="w-4 h-4" /> Guardar</>
                 )}
               </button>
             </div>

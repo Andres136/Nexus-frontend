@@ -22,6 +22,7 @@ export function useGestionProcesos() {
 
   // Estados para validación / errores
   const [error, setError] = useState({});
+  const[isloading, setIsLoading] = useState(false);
   const [errorProceso, setErrorProceso] = useState({});
   const [erroresProceso, setErroresProceso] = useState({});
   const [erroresDocumentacion, setErroresDocumentacion] = useState({});
@@ -185,8 +186,9 @@ export function useGestionProcesos() {
   }
 
   async function registrarTarea(e) {
-    console.log()
+  
     e.preventDefault();
+       setIsLoading(true);
     const nombre = nuevaTareaNombreRef.current?.value || '';
     const descripcion = nuevaTareaDescripcionRef.current?.value || '';
     const fecha_fin = nuevaTareaFechaRef.current?.value || '';
@@ -222,6 +224,9 @@ export function useGestionProcesos() {
       } else {
         console.error('Error al registrar tarea:', error);
       }
+    } finally {
+      setIsLoading(false);
+
     }
   }
 
@@ -312,6 +317,7 @@ async function moverAObsoletos(documentoId) {
     errorProceso,
     erroresProceso,
     erroresDocumentacion,
+    isloading,
 
     // Refs
     nuevoProcesoRef,
@@ -325,6 +331,7 @@ async function moverAObsoletos(documentoId) {
     nuevaTareaUsuarioRef,
     nuevaDocumentacionObservacionesRef,
 
+
     // Métodos
     cargarDatos,
     cargarProcesos,
@@ -335,6 +342,7 @@ async function moverAObsoletos(documentoId) {
     registrarError,
     formatDate,
     moverAObsoletos,
+    
     
   };
 }

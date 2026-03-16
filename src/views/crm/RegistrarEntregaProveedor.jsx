@@ -50,9 +50,11 @@ export default function RegistrarEntregaProveedor({ modo = "crear" }) {
     toDatetimeLocal,
     eliminarItem
   } = useRegistrarEntregaProveedor(modo);
+
   const { referencias,
-    getEstadoStyles,
-    actualizarEstado, estadoAbierto, setEstadoAbierto, dropdownRef,  } = useReferenciasExcedidas(orden.id);
+            getEstadoStyles,
+            actualizarEstado, estadoAbierto, setEstadoAbierto, dropdownRef,  } = useReferenciasExcedidas({ ordenId: orden?.id ?? null, modo: "orden" });
+ 
 
   if (loading)
     return (
@@ -350,7 +352,7 @@ export default function RegistrarEntregaProveedor({ modo = "crear" }) {
                     
                             <div className="max-h-32 overflow-y-auto space-y-1.5 scrollbar-thin scrollbar-thumb-gray-300">
                               {referencias
-                              .filter(ref => ref.detalle_id === detalle.id)
+                               .filter(ref => Number(ref.item) === Number(detalle.item))
                               .map((ref) => (
                                 <div key={`${ref.orden_id}-${ref.item}`}>
                                   {ref.observaciones?.length > 0 &&

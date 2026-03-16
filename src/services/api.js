@@ -383,6 +383,10 @@ export const carteraApi = {
 
   createAbono: (data) =>
     apiClient.post("/api/abonos-cartera", data),
+  cancelar: (id) => apiClient.delete(`/api/gestion-cartera/${id}`),
+
+  getEstadisticasCartera: (params = {}) =>
+    apiClient.get("/api/estadisticas-cartera", { params }),
 };
 
 

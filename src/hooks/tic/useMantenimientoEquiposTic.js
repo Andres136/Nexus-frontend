@@ -50,7 +50,7 @@ const obtenerMantenimientos = async () => {
 
   try {
     const response = await mantenimientoEquiposTicService.getAll();
- //console.log("Respuesta del servicio:", response.data);
+ console.log("Respuesta del servicio:", response.data);
     setMantenimientos(response.data);
 
 

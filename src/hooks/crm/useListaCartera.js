@@ -5,16 +5,30 @@ export const useListaCartera = (filtros = {}) => {
 
   const obtenerCartera = async () => {
 
+
     const response = await carteraApi.getCartera(filtros)
 
- // console.log("Respuesta API:", response.data)
+//console.log("Respuesta de cartera API:", response.data) // Verificar la estructura de la respuesta
 
     // devolver TODA la paginación
-    return response.data.data
+return {
+  ...response.data.data,
+  total_cartera: response.data.total
+}
   }
 
   const query = useQuery({
-    queryKey: ["cartera", filtros],
+ queryKey: [
+ "cartera",
+ filtros.buscar,
+ filtros.fecha_inicio,
+ filtros.fecha_fin,
+ filtros.cliente_id,
+ filtros.user_comercial_id,
+ filtros.estado,
+ filtros.page,
+ filtros.per_page
+],
     queryFn: obtenerCartera,
     keepPreviousData: true
   })
@@ -23,6 +37,8 @@ export const useListaCartera = (filtros = {}) => {
     registros: query.data?.data || [],
     pagination: query.data,
     isLoading: query.isLoading,
-    error: query.error
+    error: query.error,
+    total_cartera: query.data?.total_cartera || 0
+    
   }
 }

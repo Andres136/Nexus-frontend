@@ -4,7 +4,7 @@ import { useGestionProcesos } from '../../hooks/useGestionProcesos';
 import { useAuth } from '../../hooks/useAuth';
 import clienteAxios from '../../config/axios';
 import { toast } from 'react-toastify';
-import { Download, Edit, Folder, Move3DIcon, Search, Plus, Building2, FileText, Users, AlertCircle, Calendar, Upload, X, Save, FolderOpen, Archive, User, Clock, Filter } from 'lucide-react';
+import { Download, Edit, Folder, Move3DIcon, Search, Plus, Building2, FileText, Users, AlertCircle, Calendar, Upload, X, Save, FolderOpen, Archive, User, Clock, Filter, SplineIcon } from 'lucide-react';
 import Swal from 'sweetalert2';
 
 function ProcesosDepartamento() {
@@ -17,8 +17,7 @@ function ProcesosDepartamento() {
   const [acordeonAbierto, setAcordeonAbierto] = useState("");
 
   const [usuariosDepartamento, setUsuariosDepartamento] = useState();
-  // Dentro de ProcesosDepartamento, junto al resto de useState:
-  const [filtroDocs, setFiltroDocs] = useState('');
+  
   // Añade junto a los otros useState:
   const [editingDocId, setEditingDocId] = useState(null);
   const [newDocName, setNewDocName] = useState('');
@@ -76,6 +75,7 @@ function ProcesosDepartamento() {
     registrarError,
     formatDate,
     moverAObsoletos,
+    isloading
   } = useGestionProcesos();
 
   // Cuando el componente monte o cambie el departamentoId, cargamos los procesos
@@ -764,12 +764,26 @@ function ProcesosDepartamento() {
                           </div>
                         </div>
 
+                        {/* Botón de asignar tarea con isloading */}
                         <button
                           onClick={registrarTarea}
-                          className="w-full bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 text-white py-3 px-4 rounded-lg font-medium transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2"
+                          className="w-full bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 text-white py-3 px-4 rounded-lg font-medium transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                          disabled={isloading}
                         >
-                          <Calendar className="w-4 h-4" />
-                          Asignar Tarea
+                          {isloading ? (
+                            <>
+                              <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                              </svg>
+                              Asignando...
+                            </>
+                          ) : (
+                            <>
+                              <Calendar className="w-4 h-4" />
+                              Asignar Tarea
+                            </>
+                          )}
                         </button>
                       </div>
                     </div>

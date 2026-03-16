@@ -11,7 +11,7 @@ export const useEstadisticasDashboard = (anio = new Date().getFullYear()) => {
       setLoading(true);
       try {
         const res = await apiClienteVerificacion.getEstadisticas(anio);
-        console.log(res.data);
+    
         setData(res.data);
       } catch (error) {
         console.error(error);

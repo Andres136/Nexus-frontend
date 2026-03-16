@@ -22,7 +22,7 @@ export default function ReferenciasExcedidas() {
     referencias,
     referenciasFiltradas,
     elementosPorPagina,
-  } = useReferenciasExcedidas();
+  } = useReferenciasExcedidas({ ordenId: null, modo: "global" });
 
 
   if (loading) {

@@ -1,5 +1,8 @@
 import { useGestionCartera } from "../../hooks/crm/useGestionCartera"
+
 import Select from "react-select"
+import CarteraEstadisticas from "../../components/crm/CarteraEstadisticas"
+
 
 export default function GestionCartera() {
 
@@ -29,10 +32,11 @@ export default function GestionCartera() {
 
   return (
     <div className=" mt-6 bg-white border rounded-xl shadow">
-
+<CarteraEstadisticas  />
       <div className="px-6 py-4 bg-blue-600 text-white text-center font-bold">
         Gestión de Cartera
       </div>
+
 
       <form onSubmit={handleSubmit} className="p-6">
 
@@ -307,7 +311,7 @@ export default function GestionCartera() {
         </div>
 
       </form>
-
+   
     </div>
   )
 }
