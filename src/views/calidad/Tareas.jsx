@@ -178,25 +178,38 @@ export default function Tareas() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const obtenerTareas = async (paginaActual = 1) => {
-    const token = localStorage.getItem("token");
-    try {
-      const response = await clienteAxios.get(
-        `/api/tareas?page=${paginaActual}&usuario=${busqueda}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setTareas(response.data.data);
-      setPagination({
-        current_page: response.data.current_page,
-        next_page_url: response.data.next_page_url,
-        prev_page_url: response.data.prev_page_url,
-        total: response.data.total,
-      });
-    } catch (error) {
-      console.log("Error al obtener tareas", error);
-      setTareas([]);
+const obtenerTareas = async (paginaActual = 1) => {
+  const token = localStorage.getItem("token");
+
+  try {
+    const params = new URLSearchParams({
+      page: paginaActual
+    });
+
+    // Solo agregar filtro si hay búsqueda
+    if (busqueda.trim() !== "") {
+      params.append("usuario", busqueda.trim());
     }
-  };
+
+    const response = await clienteAxios.get(
+      `/api/tareas?${params.toString()}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    setTareas(response.data.data);
+
+    setPagination({
+      current_page: response.data.current_page,
+      next_page_url: response.data.next_page_url,
+      prev_page_url: response.data.prev_page_url,
+      total: response.data.total,
+    });
+
+  } catch (error) {
+    console.log("Error al obtener tareas", error);
+    setTareas([]);
+  }
+};
 
   const cambiarEstado = async (id, estado_id) => {
     const token = localStorage.getItem("token");
