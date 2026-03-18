@@ -108,6 +108,7 @@ export default function DashboardProcesosAnuales() {
             mes: m.nombre_mes,
             cumplimiento: m.cumplimiento,
             estabilidad: m.estabilidad,
+              rendimiento: m.rendimiento || 0, 
             registros: m.total_registros,
             novedades: m.novedades,
           }));
@@ -166,6 +167,15 @@ export default function DashboardProcesosAnuales() {
                         name="Estabilidad %"
                         dot={{ r: 4 }}
                       />
+
+                      <Line
+  type="monotone"
+  dataKey="rendimiento"
+  stroke="#f59e0b"
+  strokeWidth={2}
+  name="Rendimiento Tareas %"
+  dot={{ r: 4 }}
+/>
                     </LineChart>
                   </ResponsiveContainer>
                 </div>

@@ -49,7 +49,7 @@ export default function Crm() {
       icon: Users,
       roles: [1, 9, 7, 4,11,10],
     },
-    { name: "KPIs", to: "/auth/crm/kpis", icon: BarChart, roles: [1, 7] },
+    { name: "Gestion Comercial", to: "/auth/crm/kpis", icon: BarChart, roles: [1, 7] },
     {
       name: "Crear Orden de Compra",
       to: "/auth/crm/crear-ordenes-compras",

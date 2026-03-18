@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
-import { mantenimientoEquiposTicService, ticService } from "../../services/ticService";
+import {  useState } from "react";
+import { mantenimientoEquiposTicService, } from "../../services/ticService";
 import { showToast } from "../../helpers/utils/showToast";
-import { List } from "lucide-react";
+
 
 
 export const  useMantenimientoEquiposTic = () =>{
@@ -50,7 +50,7 @@ const obtenerMantenimientos = async () => {
 
   try {
     const response = await mantenimientoEquiposTicService.getAll();
- console.log("Respuesta del servicio:", response.data);
+ //nsole.log("Respuesta del servicio:", response.data);
     setMantenimientos(response.data);
 
 
@@ -134,6 +134,31 @@ const ListarMantenimientosEquiposTable = async (customFilters = filters) => {
         }
       }  
 
+    
+   //Actualizar mantenimiento
+   const actualizarMantenimiento = async (id, formData) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await mantenimientoEquiposTicService.actualizarMantenimiento(id, formData);
+      console.log("Respuesta al actualizar mantenimiento:", response.data);
+      showToast('success', response.data.message);
+      ListarMantenimientosEquiposTable();
+    } catch (err) {
+      console.log("Error al actualizar mantenimiento:", err);
+      if (err.response && err.response.data && err.response.data.message) {
+        showToast('error', err.response.data.message);
+      } else {
+        showToast('error', 'No se pudo actualizar el mantenimiento.');
+      }
+      console.error("Error al actualizar mantenimiento:", err);
+      setError("No se pudo actualizar el mantenimiento.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
    //Cambiar estado del mantenimiento
   const cambiarEstadoMantenimiento = async (id, formData) => {
 
@@ -174,6 +199,7 @@ const ListarMantenimientosEquiposTable = async (customFilters = filters) => {
         ListarMantenimientosEquiposTable,
         listarMantenimientos,
         cambiarEstadoMantenimiento,
+        actualizarMantenimiento,
         errorUpdate
     }
 }

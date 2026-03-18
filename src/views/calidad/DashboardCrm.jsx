@@ -23,22 +23,26 @@ export default function DashboardCrm() {
 
   const series = kpis?.series_mensual || []
   const totales = kpis?.totales || {}
-
+const mesActual = new Date().getMonth() + 1
+const mesData = series.find(m => m.month === mesActual) || {}
   const money = (n) => `$${Number(n || 0).toLocaleString()}`
   const pct = (n) => `${Number(n || 0).toFixed(2)}%`
 
   /* KPI CARDS */
 
-  const kpisCards = [
-    { label: "Ventas Totales", value: money(totales.ventas) },
-    { label: "Órdenes", value: totales.ordenes },
-    { label: "Clientes Totales", value: totales.clientes_totales },
-    { label: "Gestión Clientes", value: pct(totales.gestion_clientes_pct) },
-    { label: "Conversión Clientes", value: pct(totales.conversion_clientes_pct) },
-    { label: "Fidelización", value: pct(totales.fidelizacion_clientes_pct) },
-    { label: "Ticket Promedio", value: money(totales.ticket_promedio) }
-  ]
+const kpisCards = [
+  { label: "Ventas Totales", value: money(totales.ventas) },
+  { label: "Órdenes", value: totales.ordenes },
+  { label: "Clientes Totales", value: totales.clientes_totales },
 
+  // 👇 AHORA SON DEL MES ACTUAL
+  { label: "Gestión Clientes", value: pct(mesData.gestion_clientes_pct) },
+  
+  { label: "Conversión Clientes", value: pct(mesData.conversion_clientes_pct) },
+  { label: "Fidelización", value: pct(mesData.fidelizacion_clientes_pct) },
+
+  { label: "Ticket Promedio", value: money(totales.ticket_promedio) }
+]
   /* Ticket promedio por mes */
 
   const ticketSeries = series.map(m => ({
@@ -230,93 +234,57 @@ export default function DashboardCrm() {
 
       {/* FUNNEL CRM */}
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
 
-        <h3 className="font-semibold text-gray-700 mb-4">
-          Funnel CRM
-        </h3>
+  <h3 className="font-semibold text-gray-700 mb-4">
+    KPIs CRM por mes (%)
+  </h3>
 
-        <ResponsiveContainer width="100%" height={320}>
+  <ResponsiveContainer width="100%" height={320}>
 
-          <BarChart data={series}>
+    <LineChart data={series}>
 
-            <CartesianGrid strokeDasharray="3 3" />
+      <CartesianGrid strokeDasharray="3 3" />
 
-            <XAxis dataKey="label" />
+      <XAxis dataKey="label" />
 
-            <YAxis />
+      <YAxis domain={[0, 100]} />
 
-            <Tooltip />
+      <Tooltip formatter={(v) => `${v}%`} />
 
-            <Legend />
+      <Legend />
 
-            <Bar
-              dataKey="clientes_gestionados"
-              fill="#f59e0b"
-              name="Gestionados"
-            />
+      <Line
+        type="monotone"
+        dataKey="gestion_clientes_pct"
+        stroke="#f59e0b"
+        name="Gestión"
+        strokeWidth={3}
+      />
 
-            <Bar
-              dataKey="clientes_con_orden"
-              fill="#10b981"
-              name="Compradores"
-            />
+      <Line
+        type="monotone"
+        dataKey="conversion_clientes_pct"
+        stroke="#10b981"
+        name="Conversión"
+        strokeWidth={3}
+      />
 
-            <Bar
-              dataKey="clientes_fieles"
-              fill="#6366f1"
-              name="Fieles"
-            />
+      <Line
+        type="monotone"
+        dataKey="fidelizacion_clientes_pct"
+        stroke="#6366f1"
+        name="Fidelización"
+        strokeWidth={3}
+      />
 
-          </BarChart>
+    </LineChart>
 
-        </ResponsiveContainer>
+  </ResponsiveContainer>
 
-      </div>
+</div>
 
-      {/* CONVERSION MENSUAL */}
-
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-
-        <h3 className="font-semibold text-gray-700 mb-4">
-          Conversión mensual
-        </h3>
-
-        <ResponsiveContainer width="100%" height={300}>
-
-          <LineChart data={series}>
-
-            <CartesianGrid strokeDasharray="3 3" />
-
-            <XAxis dataKey="label" />
-
-            <YAxis />
-
-            <Tooltip formatter={(v) => `${v}%`} />
-
-            <Legend />
-
-            <Line
-              type="monotone"
-              dataKey="conversion_clientes_pct"
-              stroke="#6366f1"
-              name="Conversión Clientes"
-              strokeWidth={3}
-            />
-
-            <Line
-              type="monotone"
-              dataKey="conversion_cotizaciones_pct"
-              stroke="#10b981"
-              name="Conversión Cotizaciones"
-              strokeWidth={3}
-            />
-
-          </LineChart>
-
-        </ResponsiveContainer>
-
-      </div>
+    
 
       {/* TICKET PROMEDIO */}
 

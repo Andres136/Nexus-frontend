@@ -17,7 +17,8 @@ export default function GestionCartera() {
     handlePorcentajeChange,
     handleSubmit,
     clientes,
-    usuarios
+    usuarios,
+    empresas,
   } = useGestionCartera()
 
   const clienteOptions = clientes.map(c => ({
@@ -48,6 +49,7 @@ export default function GestionCartera() {
               <tr>
 
                 <th className="p-2 border">Factura</th>
+                 <th className="p-2 border">Empresa</th>
                 <th className="p-2 border">Cliente</th>
                 <th className="p-2 border">Comercial</th>
                 <th className="p-2 border">Fecha</th>
@@ -95,6 +97,29 @@ export default function GestionCartera() {
                         </p>}
                     </td>
 
+                    {/* EMPRESA */}
+                    <td className="p-2 border">
+                    <Select
+  options={empresas.map(e => ({ value: e.id, label: e.nombre }))}
+  value={empresas.find(e => String(e.id) === String(registro.empresa_id)) ? { value: registro.empresa_id, label: empresas.find(e => String(e.id) === String(registro.empresa_id)).nombre } : null}
+  onChange={(option) =>
+    handleChange(index, {
+      target: {
+        name: "empresa_id",
+        value: option?.value || ""
+      }
+    })
+  }
+  menuPortalTarget={document.body}
+  styles={{
+    menuPortal: base => ({ ...base, zIndex: 9999 })
+  }}
+/>
+                      {errors?.[`registros.${index}.empresa_id`] &&
+                        <p className="text-red-500 text-xs">
+                          {errors[`registros.${index}.empresa_id`]}
+                        </p>}
+                    </td>
                     {/* CLIENTE */}
                     <td className="p-2 border min-w-[200px]">
            <Select

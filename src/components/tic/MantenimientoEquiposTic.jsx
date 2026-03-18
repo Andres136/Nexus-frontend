@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useMantenimientoEquiposTic } from "../../hooks/tic/useMantenimientoEquiposTic";
 import MantenimientoCalendar from "../../components/tic/MantenimientoCalendar";
-import { X, Calendar, Wrench, Divide } from "lucide-react";
+import { X, Calendar, Wrench } from "lucide-react";
 import { useSedes } from "../../hooks/useSedes";
 import { useAuth } from "../../hooks/useAuth";
 import { useEmpresas } from "../../hooks/useEmpresas";
@@ -9,6 +9,7 @@ import { useProducts } from "../../hooks/useProducts";
 import Select from "react-select";
 import { inventariosApi } from "../../services/api";
 import ListarMantenimientosEquipos from "./ListarMantenimientosEquipos";
+
 
 export default function MantenimientoEquiposTic() {
 
@@ -18,6 +19,7 @@ export default function MantenimientoEquiposTic() {
         mantenimientos,
         handleSubmit,
         obtenerMantenimientos,
+        actualizarMantenimiento,
         error,
     } = useMantenimientoEquiposTic();
 
@@ -25,6 +27,7 @@ export default function MantenimientoEquiposTic() {
     const { empresas } = useEmpresas();
     const { categorias} = useProducts();
     const [productos, setProductos] = useState([]);
+    const [editandoId, setEditandoId] = useState(null);
     const { obtenerUsuariosAll} = useAuth({ middleware: "auth" });
     const { sedes } = useSedes();
 
@@ -63,13 +66,19 @@ const eventos = mantenimientos;
 
 const handleFormSubmit = async (e) => {
   e.preventDefault();
-  await handleSubmit(e);
+
+  if (editandoId) {
+    await actualizarMantenimiento(editandoId, formData);
+  } else {
+    await handleSubmit(e);
+  }
 
   if (!error) {
     setMostrarModal(false);
+    setEditandoId(null);
+    obtenerMantenimientos();
   }
 };
-
     return (
         <div className="p-6 space-y-6">
 
@@ -83,6 +92,7 @@ const handleFormSubmit = async (e) => {
                     setMostrarModal(true);
                 }}
 onEventClick={(data) => {
+  setEditandoId(data.id);
   setFormData({
     producto_id: data.producto_id || "",
     sede_id: data.sede_id || "",

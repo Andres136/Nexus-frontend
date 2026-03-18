@@ -227,7 +227,9 @@ console.log('Total cartera:', total_cartera) // Verificar el valor de total_cart
               <tr className="bg-gradient-to-r from-gray-700 to-gray-800 text-white">
                 <th className="px-3 py-3 text-left font-semibold">ID</th>
                 <th className="px-3 py-3 text-left font-semibold">Cliente</th>
+                  <th className="px-3 py-3 text-left font-semibold">Empresa</th>
                 <th className="px-3 py-3 text-left font-semibold">Comercial</th>
+                <th className="px-3 py-3 text-left font-semibold">Fecha Factura</th>
                 <th className="px-3 py-3 text-left font-semibold">Factura</th>
                 <th className="px-3 py-3 text-center font-semibold">Días</th>
                 <th className="px-3 py-3 text-center font-semibold">Vencimiento</th>
@@ -290,10 +292,13 @@ console.log('Total cartera:', total_cartera) // Verificar el valor de total_cart
                           )}
                         </div>
                       </td>
-
+                       <td className="px-3 py-2.5 text-gray-600 truncate max-w-[100px]" title={reg.empresa?.nombre}>
+                        {reg.empresa?.nombre ?? "N/A"}
+                      </td>
                       <td className="px-3 py-2.5 text-gray-600 truncate max-w-[100px]" title={reg.comercial?.name}>
                         {reg.comercial?.name ?? "N/A"}
                       </td>
+                      <td className="px-3 py-2.5 font-mono text-gray-700">{new Date(reg.fecha_factura).toLocaleDateString("es-CO")}</td>
 
                       <td className="px-3 py-2.5 font-mono text-gray-700">{reg.numero_factura}</td>
 

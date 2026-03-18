@@ -73,13 +73,9 @@ export const mantenimientoEquiposTicService = {
       "Content-Type": "multipart/form-data",
     },
   }),
-  delete(id, data) {
-    return apiClient.delete(`api/mantenimiento-equipos-tic/${id}`,{
-      data,
-      headers: {
-        "Content-Type": "multipart/form-data",
-      }
-    });
+  actualizarMantenimiento(id, data) {
+
+    return apiClient.post(`api/mantenimiento-equipos-tic/${id}/actualizar`, data);
   },
 
   getMantenimientosEquiposTic(params) {

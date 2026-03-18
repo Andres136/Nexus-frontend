@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { carteraApi } from "../../services/api"
 import { useClientes } from "../useClientes"
+import{useEmpresas} from "../useEmpresas"
 import { useAuth } from "../useAuth"
 import { showToast } from "../../helpers/utils/showToast"
 import Swal from "sweetalert2"
@@ -9,6 +10,7 @@ import { useNavigate } from "react-router-dom"
 export const useGestionCartera = () => {
 
   const registroInicial = {
+    empresa_id: '',
     numero_factura: '',
     user_comercial_id: '',
     cliente_id: '',
@@ -36,6 +38,7 @@ export const useGestionCartera = () => {
   const [loading, setLoading] = useState(false)
 
   const { clientes } = useClientes()
+  const { empresas } = useEmpresas()
   const { usuarios, obtenerUsuariosAll } = useAuth({ middleware: 'auth' })
   const navigate = useNavigate()
 
@@ -178,6 +181,7 @@ export const useGestionCartera = () => {
     handleSubmit,
     clientes,
     usuarios,
+    empresas,
     cancelarDeuda
   }
 }
