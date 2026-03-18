@@ -16,12 +16,12 @@ export default function GestionCartera() {
     handleChange,
     handlePorcentajeChange,
     handleSubmit,
-    clientes,
+  clientesTodos,
     usuarios,
     empresas,
   } = useGestionCartera()
 
-  const clienteOptions = clientes.map(c => ({
+  const clienteOptions = clientesTodos.map(c => ({
     value: c.id,
     label: c.nombre
   }))

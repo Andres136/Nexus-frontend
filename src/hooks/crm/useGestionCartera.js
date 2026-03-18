@@ -37,7 +37,7 @@ export const useGestionCartera = () => {
   const [errors, setErrors] = useState(null)
   const [loading, setLoading] = useState(false)
 
-  const { clientes } = useClientes()
+  const { clientesTodos} = useClientes()
   const { empresas } = useEmpresas()
   const { usuarios, obtenerUsuariosAll } = useAuth({ middleware: 'auth' })
   const navigate = useNavigate()
@@ -179,7 +179,7 @@ export const useGestionCartera = () => {
     handleChange,
     handlePorcentajeChange,
     handleSubmit,
-    clientes,
+   clientesTodos,
     usuarios,
     empresas,
     cancelarDeuda
