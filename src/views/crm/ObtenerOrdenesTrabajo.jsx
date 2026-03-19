@@ -216,7 +216,7 @@ export default function ObtenerOrdenesTrabajo() {
 
                     {/* Fecha Entrega */}
                     <td className="px-3 sm:px-4 py-3 sm:py-4">
-                      <div className="text-gray-900">{orden.fecha_entrega}</div>
+                      <div className="text-gray-900">{orden.orden_compra?.fecha_entrega}</div>
                       {orden.orden_compra?.fecha_despacho && (
                         <div className="text-xs text-green-600 mt-1 bg-green-50 px-2 py-1 rounded">
                           ✓ Completado: {orden.orden_compra.fecha_despacho}

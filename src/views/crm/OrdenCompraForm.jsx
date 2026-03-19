@@ -418,49 +418,49 @@ detallesNormalizados.forEach((detalle, i) => {
           />
         </div>
 
-        {/* Botones */}
-        <div className="flex justify-end gap-3 pt-4 border-t">
-          
-          {/* Botón Actualizar */}
-          {modo === "edicion" && [1, 2, 4, 7].includes(user?.role_id) && (
-            <button
-              onClick={enviarOrden}
-              disabled={guardando}
-              className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-medium rounded-md transition-colors"
-            >
-              {guardando ? "Actualizando..." : "Actualizar Orden"}
-            </button>
-          )}
+    {/* Botones */}
+<div className="flex justify-end gap-3 pt-4 border-t">
+  
+  {/* Botón Actualizar */}
+  {modo === "edicion" && (
+    <button
+      onClick={enviarOrden}
+      disabled={guardando}
+      className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-medium rounded-md transition-colors"
+    >
+      {guardando ? "Actualizando..." : "Actualizar Orden"}
+    </button>
+  )}
 
-          {/* Botón Guardar */}
-          {modo !== "edicion" && (
-            <button
-              onClick={enviarOrden}
-              disabled={guardando}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium rounded-md transition-colors"
-            >
-              {guardando ? "Guardando..." : "Guardar Orden"}
-            </button>
-          )}
+  {/* Botón Guardar */}
+  {modo !== "edicion" && (
+    <button
+      onClick={enviarOrden}
+      disabled={guardando}
+      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium rounded-md transition-colors"
+    >
+      {guardando ? "Guardando..." : "Guardar Orden"}
+    </button>
+  )}
 
-          {/* Botón Descargar PDF */}
-          {modo === "edicion" && [1, 2, 4, 7].includes(user?.role_id) && id && (
-            <button
-              type="button"
-              onClick={() => {
-                const link = document.createElement('a');
-                link.href = `${import.meta.env.VITE_API_URL}/api/orden-compras/${encodeURIComponent(id)}/pdf`;
-                link.setAttribute('download', `orden_compra_${id}.pdf`);
-                document.body.appendChild(link);
-                link.click();
-                link.remove();
-              }}
-              className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-md transition-colors"
-            >
-              Descargar PDF
-            </button>
-          )}
-        </div>
+  {/* Botón Descargar PDF */}
+  {modo === "edicion" && id && (
+    <button
+      type="button"
+      onClick={() => {
+        const link = document.createElement('a');
+        link.href = `${import.meta.env.VITE_API_URL}/api/orden-compras/${encodeURIComponent(id)}/pdf`;
+        link.setAttribute('download', `orden_compra_${id}.pdf`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      }}
+      className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-md transition-colors"
+    >
+      Descargar PDF
+    </button>
+  )}
+</div>
       </div>
     </div>
   );
