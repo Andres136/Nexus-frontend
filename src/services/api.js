@@ -1,6 +1,6 @@
 import axios from "axios";
 import clienteAxios from "../config/axios";
-import { create } from "lodash";
+import { create, get } from "lodash";
 
 const apiClient = axios.create({
   baseURL: clienteAxios.defaults.baseURL,
@@ -387,6 +387,9 @@ export const carteraApi = {
 
   getEstadisticasCartera: (params = {}) =>
     apiClient.get("/api/estadisticas-cartera", { params }),
+  getEstadisticasSemanalCartera: (params = {}) =>
+    apiClient.get("/api/recaudo-semanal", { params }),
+
 };
 
 

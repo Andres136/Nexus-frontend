@@ -2,6 +2,8 @@ import { useGestionCartera } from "../../hooks/crm/useGestionCartera"
 
 import Select from "react-select"
 import CarteraEstadisticas from "../../components/crm/CarteraEstadisticas"
+import ObtenerRecaudoCarteraSemanal from "../../components/crm/ObtenerRecaudoCarteraSemanal"
+import { formatNumber } from "../../helpers"
 
 
 export default function GestionCartera() {
@@ -19,6 +21,7 @@ export default function GestionCartera() {
   clientesTodos,
     usuarios,
     empresas,
+    handleNumberChange,
   } = useGestionCartera()
 
   const clienteOptions = clientesTodos.map(c => ({
@@ -33,7 +36,10 @@ export default function GestionCartera() {
 
   return (
     <div className=" mt-6 bg-white border rounded-xl shadow">
+      <div className="grid grid-cols-1" >
+      <ObtenerRecaudoCarteraSemanal />
 <CarteraEstadisticas  />
+
       <div className="px-6 py-4 bg-blue-600 text-white text-center font-bold">
         Gestión de Cartera
       </div>
@@ -98,7 +104,7 @@ export default function GestionCartera() {
                     </td>
 
                     {/* EMPRESA */}
-                    <td className="p-2 border">
+                    <td className="p-2 border min-w-[200px]">
                     <Select
   options={empresas.map(e => ({ value: e.id, label: e.nombre }))}
   value={empresas.find(e => String(e.id) === String(registro.empresa_id)) ? { value: registro.empresa_id, label: empresas.find(e => String(e.id) === String(registro.empresa_id)).nombre } : null}
@@ -203,13 +209,13 @@ export default function GestionCartera() {
 
                     {/* BASE */}
                     <td className="p-2 border">
-                      <input
-                        type="number"
-                        name="base"
-                        value={registro.base}
-                        onChange={(e) => handleChange(index, e)}
-                        className="border p-1"
-                      />
+                <input
+  type="text"
+  name="base"
+  value={formatNumber(registro.base)}
+  onChange={(e) => handleNumberChange(index, e)}
+  className="border p-1"
+/>
                       {errors?.[`registros.${index}.base`] &&
                         <p className="text-red-500 text-xs">
                           {errors[`registros.${index}.base`]}
@@ -243,6 +249,10 @@ export default function GestionCartera() {
                       <div className="text-xs">
                         {registro.iva}
                       </div>
+                      {errors?.[`registros.${index}.iva`] &&
+                        <p className="text-red-500 text-xs">
+                          {errors[`registros.${index}.iva`]}
+                        </p>}
                     </td>
 
                     {/* RETE RENTA */}
@@ -257,6 +267,11 @@ export default function GestionCartera() {
                       <div className="text-xs">
                         {registro.rete_renta}
                       </div>
+
+                      {errors?.[`registros.${index}.rete_renta`] &&
+                        <p className="text-red-500 text-xs">
+                          {errors[`registros.${index}.rete_renta`]}
+                        </p>}
                     </td>
 
                     {/* RETE ICA */}
@@ -336,7 +351,7 @@ export default function GestionCartera() {
         </div>
 
       </form>
-   
+   </div>
     </div>
   )
 }

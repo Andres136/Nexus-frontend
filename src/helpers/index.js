@@ -15,5 +15,7 @@ export function formatDate(date) {
   return new Date(date).toLocaleDateString("es-CO", options);
 }
 
-
-  
+export function formatNumber(value) {
+  if (!value) return "0";
+  return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}

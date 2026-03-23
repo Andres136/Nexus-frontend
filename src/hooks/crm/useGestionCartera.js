@@ -6,6 +6,7 @@ import { useAuth } from "../useAuth"
 import { showToast } from "../../helpers/utils/showToast"
 import Swal from "sweetalert2"
 import { useNavigate } from "react-router-dom"
+import { useQueryClient } from "@tanstack/react-query"
 
 export const useGestionCartera = () => {
 
@@ -41,7 +42,7 @@ export const useGestionCartera = () => {
   const { empresas } = useEmpresas()
   const { usuarios, obtenerUsuariosAll } = useAuth({ middleware: 'auth' })
   const navigate = useNavigate()
-
+  const queryClient = useQueryClient()
   useEffect(() => {
     obtenerUsuariosAll()
   }, [])
@@ -84,6 +85,24 @@ export const useGestionCartera = () => {
     setPorcentajes(prev => ({ ...prev, [name]: value }))
   }
 
+  const handleNumberChange = (index, e) => {
+  const { name, value } = e.target;
+
+  // quitar puntos y comas
+  const rawValue = value.replace(/\./g, "").replace(/,/g, "");
+
+  if (!/^\d*$/.test(rawValue)) return; // solo números
+
+  setRegistros(prev => {
+    const nuevos = [...prev];
+    nuevos[index] = {
+      ...nuevos[index],
+      [name]: rawValue
+    };
+    return nuevos;
+  });
+};
+
   // cálculo automático
   useEffect(() => {
 
@@ -123,6 +142,7 @@ export const useGestionCartera = () => {
       })
 
       showToast('success', response.data.message)
+      queryClient.invalidateQueries(["carteraClientes"]);
         navigate("/auth/crm/cartera-clientes")
       setRegistros([registroInicial])
 
@@ -160,7 +180,7 @@ export const useGestionCartera = () => {
     const response = await carteraApi.cancelar(carteraId)
 
     Swal.fire("Cancelado", response.data.message, "success")
-
+    queryClient.invalidateQueries(["carteraClientes"]);
   } catch (error) {
     console.log("Error al cancelar deuda:", error)
     showToast("error", "Error al cancelar la deuda")
@@ -182,6 +202,7 @@ export const useGestionCartera = () => {
    clientesTodos,
     usuarios,
     empresas,
-    cancelarDeuda
+    cancelarDeuda,
+    handleNumberChange,
   }
 }

@@ -92,6 +92,10 @@ import ViewDetallesOrdenesOs from "../views/crm/ViewOrdenesOs/ViewDetallesOrdene
 import RegistrarOs from "../components/crm/ordenesServicio/RegistrarOs";
 import GestionCartera from "../views/crm/GestionCartera";
 import ObtenerGestionCartera from "../components/crm/ObtenerGestionCartera";
+import ViewHseq from "../views/hseq/ViewHseq";
+import RegistroTipoInspecciones from "../components/hseq/RegistroTipoInspecciones";
+import RegistrarPreguntasInspecciones from "../components/hseq/RegistrarPreguntasInspecciones";
+import CalendarioInspecciones from "../components/hseq/CalendarioInspecciones";
 
 
 export default function Router() {
@@ -437,6 +441,47 @@ export default function Router() {
           />
            
           {/*  Fin Rutas para  gestion de cartera */}  
+            {/*   Rutas para  HSEQ */} 
+            <Route
+            path="/auth/crm/hseq/inspecciones"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/hseq/inspecciones">
+                <ViewHseq />
+              </DynamicProtectedRoute>
+            }
+          />
+
+
+          <Route
+            path="/auth/crm/hseq/tipos-inspeccion"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/hseq/tipos-inspeccion">
+                <RegistroTipoInspecciones />
+              </DynamicProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/auth/crm/hseq/preguntas"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/hseq/preguntas">
+                <RegistrarPreguntasInspecciones />
+              </DynamicProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/auth/crm/hseq/registro-inspeccion"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/hseq/registro-inspeccion">
+                <CalendarioInspecciones />
+              </DynamicProtectedRoute>
+            }
+          />
+           {/*   Fin Rutas para  HSEQ */} 
+
+
+
           <Route
             path="proveedores-ordenes-compra"
             element={<FormOrdenesProveedores />}

@@ -407,3 +407,17 @@
 .animate-spin-reverse {
   animation: spin-reverse 2s linear infinite;
 }
+/* Quitar estilos por defecto de FullCalendar */
+.fc-event {
+  background: transparent !important;
+  border: none !important;
+}
+
+.fc-event-main {
+  padding: 0 !important;
+}
+
+.fc-daygrid-event {
+  background: transparent !important;
+  border: none !important;
+}

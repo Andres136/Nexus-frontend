@@ -52,7 +52,7 @@ export default function DashboardRegistroDiario() {
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
 
           <h1 className="text-2xl sm:text-3xl font-semibold text-gray-800">
-            Dashboard Incidentes Operativos
+            Dashboard Registros Diarios - {anio}
           </h1>
 
           <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
@@ -139,7 +139,7 @@ export default function DashboardRegistroDiario() {
                 <div className="grid grid-cols-2 gap-3">
 
                   <KPI
-                    label="Incidentes"
+                    label="Registros Diarios"
                     value={totalIncidentes}
                     color="blue"
                   />
@@ -183,7 +183,7 @@ export default function DashboardRegistroDiario() {
 
                       <Bar
                         dataKey="total"
-                        name="Incidentes"
+                        name="Total registros"
                         fill="#ef4444"
                       />
 

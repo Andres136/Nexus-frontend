@@ -7,6 +7,7 @@ import { useGestionCartera } from "../../hooks/crm/useGestionCartera"
 import { useAuth } from "../../hooks/useAuth"
 import { Link } from "react-router-dom"
 
+
 export default function ObtenerGestionCartera() {
 const { user } = useAuth({middleware: 'auth'})
 
@@ -24,8 +25,8 @@ const { user } = useAuth({middleware: 'auth'})
   const [carteraSeleccionada, setCarteraSeleccionada] = useState(null)
   const [openModal, setOpenModal] = useState(false)
 const{cancelarDeuda}=useGestionCartera()
-  const { registros, pagination, isLoading, error, total_cartera } = useListaCartera(useDebounce(filtros, 500))
-console.log('Total cartera:', total_cartera) // Verificar el valor de total_cartera
+  const { registros, pagination, isLoading, error, total_cartera, total_vencido} = useListaCartera(useDebounce(filtros, 500))
+   
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -96,7 +97,7 @@ console.log('Total cartera:', total_cartera) // Verificar el valor de total_cart
 
   return (
     <div className="p-4 space-y-4 bg-gray-50 min-h-screen">
-
+   <div className="grid grid-cols-1">
       {/* HEADER */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100">
 
@@ -276,22 +277,50 @@ console.log('Total cartera:', total_cartera) // Verificar el valor de total_cart
                     >
                       <td className="px-3 py-2.5 text-gray-500 font-mono">{reg.id}</td>
 
-                      <td className="px-3 py-2.5">
-                        <div className="flex flex-col gap-1">
-                          <span className="font-medium text-gray-800 truncate max-w-[120px]" title={reg.cliente?.nombre}>
-                            {reg.cliente?.nombre ?? "N/A"}
-                          </span>
-                          {reg.estado === "pendiente" ? (
-                            <span className="inline-flex items-center w-fit px-2 py-0.5 text-[10px] font-medium bg-amber-100 text-amber-700 rounded-full">
-                              ⏳ Pendiente
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center w-fit px-2 py-0.5 text-[10px] font-medium bg-green-100 text-green-700 rounded-full">
-                              ✓ Pagado
-                            </span>
-                          )}
-                        </div>
-                      </td>
+                <td className="px-3 py-2.5">
+  <div className="flex flex-col gap-1">
+    <span className="font-medium text-gray-800 truncate max-w-[120px]" title={reg.cliente?.nombre}>
+      {reg.cliente?.nombre ?? "N/A"}
+    </span>
+    
+    {/* Estado */}
+    {reg.estado === "pendiente" ? (
+      <span className="inline-flex items-center w-fit px-2 py-0.5 text-[10px] font-medium bg-amber-100 text-amber-700 rounded-full">
+        ⏳ Pendiente
+      </span>
+    ) : (
+      <span className="inline-flex items-center w-fit px-2 py-0.5 text-[10px] font-medium bg-green-100 text-green-700 rounded-full">
+        ✓ Pagado
+      </span>
+    )}
+
+    {/* Pagos realizados */}
+    {reg.pagos?.length > 0 && (
+      <div className="mt-1 space-y-1">
+        <span className="text-[10px] font-semibold text-gray-500 uppercase">
+          Pagos ({reg.pagos.length})
+        </span>
+        {reg.pagos.map((pago) => (
+          <div 
+            key={pago.id} 
+            className="flex items-center gap-2 text-[10px] bg-green-50 px-2 py-1 rounded border border-green-100"
+          >
+          
+            <span className="text-gray-600">
+              {new Date(pago.fecha_pago).toLocaleDateString("es-CO", {
+                day: "2-digit",
+                month: "short"
+              })}
+            </span>
+            <span className="font-semibold text-green-700">
+              {formatMoney(pago.valor_pago)}
+            </span>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+</td>
                        <td className="px-3 py-2.5 text-gray-600 truncate max-w-[100px]" title={reg.empresa?.nombre}>
                         {reg.empresa?.nombre ?? "N/A"}
                       </td>
@@ -368,10 +397,24 @@ console.log('Total cartera:', total_cartera) // Verificar el valor de total_cart
               )}
             </tbody>
           </table>
-
-          <div className="text-lg font-bold text-blue-600">
+<div className="">    
+  
+   <div className="text-lg font-bold text-blue-600">
  Total cartera: {formatMoney(total_cartera)}
-</div>          
+</div>
+ 
+ <div>
+  <span className="text-sm text-gray-500">
+    Total Vencido :{" "}
+    <span className="font-semibold text-red-600">
+      {formatMoney(
+        total_vencido
+      )}
+    </span>
+  </span>
+ </div>
+ </div>
+              
         </div>
 
         {/* PAGINACIÓN */}
@@ -407,6 +450,7 @@ console.log('Total cartera:', total_cartera) // Verificar el valor de total_cart
           onClose={() => setOpenModal(false)}
         />
       )}
+      </div>
     </div>
   )
 }

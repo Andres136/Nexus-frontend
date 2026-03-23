@@ -9,6 +9,7 @@ import { useProducts } from "../../hooks/useProducts";
 import Select from "react-select";
 import { inventariosApi } from "../../services/api";
 import ListarMantenimientosEquipos from "./ListarMantenimientosEquipos";
+import EstadisticasMensalTic from "./EstadisticasMensalTic";
 
 
 export default function MantenimientoEquiposTic() {
@@ -81,7 +82,7 @@ const handleFormSubmit = async (e) => {
 };
     return (
         <div className="p-6 space-y-6">
-
+  <EstadisticasMensalTic />
             <MantenimientoCalendar
                 events={eventos}
                 onDateClick={(fecha) => {

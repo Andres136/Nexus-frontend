@@ -259,7 +259,7 @@ async function consultarHistorialCliente(clienteId){
                 Authorization: `Bearer ${token}`
             }
         });
-         console.log(response.data);
+       
         setHistorialCliente(response.data);
       
         return response.data;

@@ -19,6 +19,10 @@ import {
   User2Icon,
  
   Cpu,
+  Monitor,
+  ShieldCheck,
+  Wallet,
+  Settings,
 
 } from "lucide-react";
 
@@ -54,17 +58,18 @@ export default function Navbar() {
     { name: "Indicadores", to: "indicadores", icon: BarChart2, allowedRoles: [1,2], onlyIfResponsable: true },
     {
       name: "",
-      icon: Menu,
-      allowedRoles: [1, 2, 4, 5, 6, 7, 9, 10, 11],
+      icon: Settings,
+      alwaysVisible: true,
       hasSubmenu: true,
       submenu: [
        { name: "Marketing", to: "/auth/marketing", icon: Megaphone, allowedRoles: [1, 2, 10, 11] },
         { name: "Novedades", to: "/auth/control-calidad", icon: Bell, allowedRoles: [1, 2, 10, 11] },
         { name: "Tareas", to: "/auth/tareas", icon: ListChecks, allowedRoles: [1,2, 10,11] },
-        {name: "Settings", to: "/admin/settings-permisos", icon: BarChart2, allowedRoles: [1] },
+        {name: "Settings", to: "/admin/settings-permisos", icon: Settings, allowedRoles: [1] },
         {name: "Responsabilidades", to: "/auth/responsabilidades", icon: User2Icon, allowedRoles: [1] },
-        {name: "TIC", to: "/auth/tic", icon: Cpu, allowedRoles: [1, 2] },
-        {name: "Cartera", to: "/auth/crm/cartera-clientes", icon: Building2, alwaysVisible: true },
+        {name: "TIC", to: "/auth/tic", icon: Monitor, allowedRoles: [1, 2] },
+        {name: "Cartera", to: "/auth/crm/cartera-clientes", icon: Wallet, alwaysVisible: true },
+        {name: "HSEQ", to: "/auth/crm/hseq/inspecciones", icon: ShieldCheck, alwaysVisible: true },
       ],
     },
   ];

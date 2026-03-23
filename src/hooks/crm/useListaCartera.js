@@ -13,7 +13,8 @@ export const useListaCartera = (filtros = {}) => {
     // devolver TODA la paginación
 return {
   ...response.data.data,
-  total_cartera: response.data.total
+  total_cartera: response.data.total,
+  total_vencido: response.data.total_vencido
 }
   }
 
@@ -38,7 +39,9 @@ return {
     pagination: query.data,
     isLoading: query.isLoading,
     error: query.error,
-    total_cartera: query.data?.total_cartera || 0
+    total_cartera: query.data?.total_cartera || 0,
+    total_vencido: query.data?.total_vencido || 0
+
     
   }
 }

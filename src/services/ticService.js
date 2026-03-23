@@ -80,5 +80,8 @@ export const mantenimientoEquiposTicService = {
 
   getMantenimientosEquiposTic(params) {
     return apiClient.get("api/obtener-mantenimientos-tic", { params });
+  },
+  getEstadisticasMantenimientoTic(params) {
+    return apiClient.get("api/tic-estadisticas-mensuales", { params });
   }
 };
