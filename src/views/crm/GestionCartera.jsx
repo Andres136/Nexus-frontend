@@ -10,13 +10,13 @@ export default function GestionCartera() {
 
   const {
     registros,
-    porcentajes,
+
     errors,
     loading,
     agregarRegistro,
     eliminarRegistro,
     handleChange,
-    handlePorcentajeChange,
+  
     handleSubmit,
   clientesTodos,
     usuarios,
@@ -237,56 +237,50 @@ export default function GestionCartera() {
                         </p>}
                     </td>*/}
 
-                    {/* IVA */}
-                    <td className="p-2 border">
-                      <input
-                        type="number"
-                        name="iva"
-                        value={porcentajes.iva}
-                        onChange={handlePorcentajeChange}
-                        className="border p-1 w-16"
-                      />
-                      <div className="text-xs">
-                        {registro.iva}
-                      </div>
-                      {errors?.[`registros.${index}.iva`] &&
-                        <p className="text-red-500 text-xs">
-                          {errors[`registros.${index}.iva`]}
-                        </p>}
-                    </td>
+           {/* IVA - ahora usa el porcentaje del registro */}
+<td className="p-2 border">
+  <input
+    type="number"
+    name="porcentaje_iva"
+    value={registro.porcentaje_iva}
+    onChange={(e) => handleChange(index, e)}
+    className="border p-1 w-16"
+    placeholder="%"
+  />
+  <div className="text-xs text-gray-600">
+    {formatNumber(registro.iva)}
+  </div>
+</td>
 
-                    {/* RETE RENTA */}
-                    <td className="p-2 border">
-                      <input
-                        type="number"
-                        name="rete_renta"
-                        value={porcentajes.rete_renta}
-                        onChange={handlePorcentajeChange}
-                        className="border p-1 w-16"
-                      />
-                      <div className="text-xs">
-                        {registro.rete_renta}
-                      </div>
+{/* RETE RENTA */}
+<td className="p-2 border">
+  <input
+    type="number"
+    name="porcentaje_rete_renta"
+    value={registro.porcentaje_rete_renta}
+    onChange={(e) => handleChange(index, e)}
+    className="border p-1 w-16"
+    placeholder="%"
+  />
+  <div className="text-xs text-gray-600">
+    {formatNumber(registro.rete_renta)}
+  </div>
+</td>
 
-                      {errors?.[`registros.${index}.rete_renta`] &&
-                        <p className="text-red-500 text-xs">
-                          {errors[`registros.${index}.rete_renta`]}
-                        </p>}
-                    </td>
-
-                    {/* RETE ICA */}
-                    <td className="p-2 border">
-                      <input
-                        type="number"
-                        name="rete_ica"
-                        value={porcentajes.rete_ica}
-                        onChange={handlePorcentajeChange}
-                        className="border p-1 w-16"
-                      />
-                      <div className="text-xs">
-                        {registro.rete_ica}
-                      </div>
-                    </td>
+{/* RETE ICA */}
+<td className="p-2 border">
+  <input
+    type="number"
+    name="porcentaje_rete_ica"
+    value={registro.porcentaje_rete_ica}
+    onChange={(e) => handleChange(index, e)}
+    className="border p-1 w-16"
+    placeholder="%"
+  />
+  <div className="text-xs text-gray-600">
+    {formatNumber(registro.rete_ica)}
+  </div>
+</td>
 
                     {/* TOTAL */}
                     <td className="p-2 border font-semibold">

@@ -96,6 +96,7 @@ import ViewHseq from "../views/hseq/ViewHseq";
 import RegistroTipoInspecciones from "../components/hseq/RegistroTipoInspecciones";
 import RegistrarPreguntasInspecciones from "../components/hseq/RegistrarPreguntasInspecciones";
 import CalendarioInspecciones from "../components/hseq/CalendarioInspecciones";
+import UpdateCartera from "../views/crm/UpdateCartera";
 
 
 export default function Router() {
@@ -436,6 +437,14 @@ export default function Router() {
             element={
               <DynamicProtectedRoute permission="/auth/crm/registrar-cartera">
                 <GestionCartera />
+              </DynamicProtectedRoute>
+            }
+          />
+          <Route
+            path="/auth/crm/editar-cartera/:id"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/editar-cartera/:id">
+                <UpdateCartera modo="editar" />
               </DynamicProtectedRoute>
             }
           />

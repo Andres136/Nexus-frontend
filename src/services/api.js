@@ -1,6 +1,6 @@
 import axios from "axios";
 import clienteAxios from "../config/axios";
-import { create, get } from "lodash";
+import { create, get, update } from "lodash";
 
 const apiClient = axios.create({
   baseURL: clienteAxios.defaults.baseURL,
@@ -380,7 +380,7 @@ export const carteraApi = {
   getDetalleCartera: (id) => apiClient.get(`/api/gestion-cartera/${id}`),
   exportarCartera: (params = {}) =>
     apiClient.get("/api/gestion-cartera/exportar", { params }),
-
+  update: (id, data) => apiClient.put(`/api/gestion-cartera/${id}`, data),
   createAbono: (data) =>
     apiClient.post("/api/abonos-cartera", data),
   cancelar: (id) => apiClient.delete(`/api/gestion-cartera/${id}`),

@@ -6,7 +6,8 @@ import { useDebounce } from "../../hooks/useDebounce"
 import { useGestionCartera } from "../../hooks/crm/useGestionCartera"
 import { useAuth } from "../../hooks/useAuth"
 import { Link } from "react-router-dom"
-
+import { CheckCircle, DollarSign, Pencil } from "lucide-react"
+import { formatDate } from "../../helpers"
 
 export default function ObtenerGestionCartera() {
 const { user } = useAuth({middleware: 'auth'})
@@ -26,7 +27,7 @@ const { user } = useAuth({middleware: 'auth'})
   const [openModal, setOpenModal] = useState(false)
 const{cancelarDeuda}=useGestionCartera()
   const { registros, pagination, isLoading, error, total_cartera, total_vencido} = useListaCartera(useDebounce(filtros, 500))
-   
+   console.log(registros);
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -307,10 +308,7 @@ const{cancelarDeuda}=useGestionCartera()
           >
           
             <span className="text-gray-600">
-              {new Date(pago.fecha_pago).toLocaleDateString("es-CO", {
-                day: "2-digit",
-                month: "short"
-              })}
+              {formatDate(pago.fecha_pago)}
             </span>
             <span className="font-semibold text-green-700">
               {formatMoney(pago.valor_pago)}
@@ -327,7 +325,7 @@ const{cancelarDeuda}=useGestionCartera()
                       <td className="px-3 py-2.5 text-gray-600 truncate max-w-[100px]" title={reg.comercial?.name}>
                         {reg.comercial?.name ?? "N/A"}
                       </td>
-                      <td className="px-3 py-2.5 font-mono text-gray-700">{new Date(reg.fecha_factura).toLocaleDateString("es-CO")}</td>
+                      <td className="px-3 py-2.5 font-mono text-gray-700">{formatDate(reg.fecha_factura)}</td>
 
                       <td className="px-3 py-2.5 font-mono text-gray-700">{reg.numero_factura}</td>
 
@@ -339,10 +337,7 @@ const{cancelarDeuda}=useGestionCartera()
 
                       <td className="px-3 py-2.5 text-center">
                         <span className={`text-xs ${vencida ? "text-red-600 font-semibold" : "text-gray-600"}`}>
-                          {new Date(reg.fecha_vencimiento).toLocaleDateString("es-CO", {
-                            day: "2-digit",
-                            month: "short"
-                          })}
+                          {formatDate(reg.fecha_vencimiento)}
                         </span>
                       </td>
 
@@ -368,30 +363,48 @@ const{cancelarDeuda}=useGestionCartera()
                         </span>
                       </td>
 
-                     {puedeGestionar && (
-<td className="px-3 py-2.5 text-center">
+{puedeGestionar && (
+  <td className="px-3 py-2.5">
+    <div className="flex items-center justify-center gap-2">
 
-  {reg.estado === "pendiente" && (
-    <button
-      onClick={() => abrirModalAbono(reg)}
-      className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white rounded-lg text-xs font-medium transition-colors shadow-sm hover:shadow"
-    >
-      💸 Abonar
-    </button>
-  )}
+      {reg.estado === "pendiente" && (
+        <>
+          {/* Abonar */}
+          <button
+            onClick={() => abrirModalAbono(reg)}
+            className="flex items-center gap-1 px-2.5 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-md text-xs font-medium transition-all"
+            title="Registrar abono parcial"
+          >
+            <DollarSign size={14} />
+            <span className="hidden sm:inline">Abonar</span>
+          </button>
 
-  {reg.estado === "pendiente" && (
-    <button
-      onClick={() => cancelarDeuda(reg.id)}
-      className="inline-flex items-center gap-1 px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-xs font-medium transition-colors shadow-sm hover:shadow"
-    >
-      ❌ Cancelar
-    </button>
-  )}
+          {/* Pagar total */}
+          <button
+            onClick={() => cancelarDeuda(reg.id)}
+            className="flex items-center gap-1 px-2.5 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-md text-xs font-medium transition-all"
+            title="Pagar deuda completa"
+          >
+            <CheckCircle size={14} />
+            <span className="hidden sm:inline">Pagar</span>
+          </button>
+        </>
+      )}
 
-</td>
-)}
-                    </tr>
+      {/* Editar */}
+      <Link to={`/auth/crm/editar-cartera/${reg.id}`}>
+        <button
+          className="flex items-center gap-1 px-2.5 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md text-xs font-medium transition-all"
+          title="Editar registro"
+        >
+          <Pencil size={14} />
+          <span className="hidden sm:inline">Editar</span>
+        </button>
+      </Link>
+
+    </div>
+  </td>
+)}                 </tr>
                   )
                 })
               )}

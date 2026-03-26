@@ -25,6 +25,10 @@ export const useGestionCartera = () => {
     iva: '',
     rete_renta: '',
     rete_ica: '',
+      // NUEVOS: porcentajes individuales por registro
+  porcentaje_iva: '',
+  porcentaje_rete_renta: '',
+  porcentaje_rete_ica: '',
   }
 
   const [registros, setRegistros] = useState([registroInicial])
@@ -64,69 +68,77 @@ export const useGestionCartera = () => {
 
   // cambiar valores de cada fila
   const handleChange = (index, e) => {
+  const { name, value } = e.target
 
-    const { name, value } = e.target
+  setRegistros(prev => {
+    const nuevos = [...prev]
+    nuevos[index] = {
+      ...nuevos[index],
+      [name]: value
+    }
 
-    setRegistros(prev => {
-
-      const nuevos = [...prev]
+    // Recalcular si cambió base o algún porcentaje
+    if (['base', 'porcentaje_iva', 'porcentaje_rete_renta', 'porcentaje_rete_ica'].includes(name)) {
+      const reg = nuevos[index]
+      const baseNum = toNumber(reg.base)
+      const ivaValor = baseNum * (toNumber(reg.porcentaje_iva) / 100)
+      const reteRentaValor = baseNum * (toNumber(reg.porcentaje_rete_renta) / 100)
+      const reteIcaValor = baseNum * (toNumber(reg.porcentaje_rete_ica) / 100)
+      const total = baseNum + ivaValor - reteRentaValor - reteIcaValor
 
       nuevos[index] = {
         ...nuevos[index],
-        [name]: value
+        iva: ivaValor.toFixed(2),
+        rete_renta: reteRentaValor.toFixed(2),
+        rete_ica: reteIcaValor.toFixed(2),
+        valor_total: total.toFixed(2)
       }
+    }
 
-      return nuevos
-    })
-  }
+    return nuevos
+  })
+}
 
   const handlePorcentajeChange = (e) => {
     const { name, value } = e.target
     setPorcentajes(prev => ({ ...prev, [name]: value }))
   }
 
-  const handleNumberChange = (index, e) => {
-  const { name, value } = e.target;
+ // Modificar handleNumberChange también para recalcular
+const handleNumberChange = (index, e) => {
+  const { name, value } = e.target
+  const rawValue = value.replace(/\./g, "").replace(/,/g, "")
 
-  // quitar puntos y comas
-  const rawValue = value.replace(/\./g, "").replace(/,/g, "");
-
-  if (!/^\d*$/.test(rawValue)) return; // solo números
+  if (!/^\d*$/.test(rawValue)) return
 
   setRegistros(prev => {
-    const nuevos = [...prev];
+    const nuevos = [...prev]
     nuevos[index] = {
       ...nuevos[index],
       [name]: rawValue
-    };
-    return nuevos;
-  });
-};
+    }
 
-  // cálculo automático
-  useEffect(() => {
+    // Recalcular valores
+    const reg = nuevos[index]
+    const baseNum = toNumber(reg.base)
+    const ivaValor = baseNum * (toNumber(reg.porcentaje_iva) / 100)
+    const reteRentaValor = baseNum * (toNumber(reg.porcentaje_rete_renta) / 100)
+    const reteIcaValor = baseNum * (toNumber(reg.porcentaje_rete_ica) / 100)
+    const total = baseNum + ivaValor - reteRentaValor - reteIcaValor
 
-    setRegistros(prev => prev.map(reg => {
+    nuevos[index] = {
+      ...nuevos[index],
+      iva: ivaValor.toFixed(2),
+      rete_renta: reteRentaValor.toFixed(2),
+      rete_ica: reteIcaValor.toFixed(2),
+      valor_total: total.toFixed(2)
+    }
 
-      const baseNum = toNumber(reg.base || reg.valor)
+    return nuevos
+  })
+}
 
-      const ivaValor = baseNum * (toNumber(porcentajes.iva) / 100)
-      const reteRentaValor = baseNum * (toNumber(porcentajes.rete_renta) / 100)
-      const reteIcaValor = baseNum * (toNumber(porcentajes.rete_ica) / 100)
-
-      const total = baseNum + ivaValor - reteRentaValor - reteIcaValor
-
-      return {
-        ...reg,
-        iva: ivaValor.toFixed(2),
-        rete_renta: reteRentaValor.toFixed(2),
-        rete_ica: reteIcaValor.toFixed(2),
-        valor_total: total.toFixed(2)
-      }
-
-    }))
-
-  }, [porcentajes])
+ 
 
   const handleSubmit = async (e) => {
 
