@@ -226,7 +226,9 @@ useEffect(() => {
         if (ya && ya.length > 0) continue;
 
         try {
-          const res = await productsApi.getStock(productId);
+          const res = await productsApi.getStock(productId,{
+            sede_id: sedeId, // PASAR SEDE SI ES NECESARIO
+          });
              
           const stockData = res?.data?.stock || null;
           if (stockData) {
