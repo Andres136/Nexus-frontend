@@ -274,6 +274,7 @@ const enviarInstruccionesAlistamiento = async () => {
   bodega_id: b.bodega_id,
   cantidad: parseFloat(b.cantidad) || 0,
   tipo: "original",
+  observacion: b.razon || null
 }));
 
       // 🔹 Productos equivalentes
@@ -285,6 +286,7 @@ const enviarInstruccionesAlistamiento = async () => {
           bodega_id: b.bodega_id,
           cantidad: parseFloat(b.cantidad) || 0,
           tipo: "equivalente",
+          observacion: eq.razon || null
         }))
       );
 
