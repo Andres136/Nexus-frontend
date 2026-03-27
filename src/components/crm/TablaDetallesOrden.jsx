@@ -1108,7 +1108,7 @@ export default function TablaDetallesOrden({
       nuevosIds.map(async (id) => {
         try {
           const res = await productsApi.getStock(id, {
-  sede_id: orden?.orden_compra?.sede?.id
+  sede_id: orden?.orden_compra?.sede_id, // ✅ Usar sede de la orden de compra
 });
           const stock = res?.data?.stock;
 
