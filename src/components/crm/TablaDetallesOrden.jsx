@@ -1,10 +1,8 @@
 import { formatCurrency } from "../../helpers";
-import { useContext, useEffect, useState } from "react";
-import { ProductContext } from "../../context/ProductContext";
-import { useProducts } from "../../hooks/useProducts";
+
 import Select from "react-select";
 import { productsApi } from "../../services/api";
-import { showToast } from "../../helpers/utils/showToast";
+
 
 import {
   Package,
@@ -16,9 +14,12 @@ import {
   Search,
   Eye,
   Loader2,
-  CheckCircle,
+
+  ClipboardList,
+  Save,
 } from "lucide-react";
-import Swal from "sweetalert2";
+
+import { useTablaDetallesOrden } from "../../hooks/crm/useTablaDetallesOrden";
 
 export default function TablaDetallesOrden({
   orden,
@@ -28,338 +29,43 @@ export default function TablaDetallesOrden({
   handleChangeDetalle,
   valorTotal = 0,
 }) {
-  const [search, setSearch] = useState("");
-  const { stockInfo, getStockWithSuggestions } = useContext(ProductContext);
+  const{
+ 
+        setSearch,
+        products,
+        isLoading,
+        isFetching,
+        isEmpty,
+        bodegasDisponibles,
+        
+        loadingStock,
+        modalOpen,
+        setModalOpen,
+        detalleActivo,
+        setDetalleActivo,
+        errors,
+        setErrors,
+        pdfUrl,
+    
+        stockErrors,
+        setStockErrors,
+        ensureProductLoaded,
+        handleDescontarStockMasivo,
+        formatNumber,
+        stockCache,
+        fetchStockForProduct,
+        setProductStock,
+        setBodegasDisponibles,
+        setLoadingStock,
+        productCache,
+        enviarInstruccionesAlistamiento,
+        configuracionesDescuento,
+        guardarConfiguracionDescuento,
 
-  const { products, isLoading, isFetching, isEmpty } = useProducts({ search });
-  // Cache interno para conservar todos los productos vistos
-const [productCache, setProductCache] = useState({});
+        alistamientosPorDetalle
 
-  const [bodegasDisponibles, setBodegasDisponibles] = useState([]);
-  const [productStock, setProductStock] = useState(null);
-  const [loadingStock, setLoadingStock] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [detalleActivo, setDetalleActivo] = useState(null);
-  const [errors, setErrors] = useState({});
-  const [pdfUrl, setPdfUrl] = useState(null);
-  const [stockErrors, setStockErrors] = useState({});
-//console.log("DEttalles orden:", orden);
+  }=useTablaDetallesOrden(detalles, orden);
 
-  // AGREGAR: Estados para cache y tracking
-  const [stockCache, setStockCache] = useState({});
-  // Estado local para alternar modo
-
-  // useEffect para calcular automáticamente la cantidad total
-  useEffect(() => {
-    if (detalleActivo) {
-      // Sumar cantidades de bodegas del producto original
-      const totalBodegas = (detalleActivo.bodegas || []).reduce(
-        (sum, b) => sum + (parseFloat(b.cantidad) || 0),
-        0
-      );
-
-      // Sumar cantidades de bodegas de productos equivalentes
-      const totalEquivalentes = (
-        detalleActivo.producto_equivalentes || []
-      ).reduce(
-        (sumEq, eq) =>
-          sumEq +
-          (eq.bodegas || []).reduce(
-            (sumB, b) => sumB + (parseFloat(b.cantidad) || 0),
-            0
-          ),
-        0
-      );
-
-      const nuevoTotal = parseFloat(
-        (totalBodegas + totalEquivalentes).toFixed(2)
-      );
-
-      // Actualizar el valor total solo si cambió
-      if (nuevoTotal !== detalleActivo.cantidad_total) {
-        setDetalleActivo((prev) => ({
-          ...prev,
-          cantidad_total: nuevoTotal,
-        }));
-      }
-    }
-  }, [detalleActivo?.bodegas, detalleActivo?.producto_equivalentes]);
-// Poblamos el cache con productos traídos por búsqueda
-useEffect(() => {
-  if (!products) return;
-
-  setProductCache(prev => {
-    const nuevo = { ...prev };
-    products.forEach(p => {
-      nuevo[p.id] = p;
-    });
-    return nuevo;
-  });
-}, [products]);
-
-// Si un producto equivalente no está en la búsqueda actual, lo cargamos por ID
-const ensureProductLoaded = async (id) => {
-  if (productCache[id]) return productCache[id];
-
-  try {
-    const res = await productsApi.getById(id);
-    const prod = res.data.product;
-
-    setProductCache(prev => ({ ...prev, [id]: prod }));
-
-    return prod;
-  } catch (e) {
-    console.error("Error cargando producto por ID:", id, e);
-    return null;
-  }
-};
-
-
-  const fetchStockForProduct = async (detalle) => {
-    const id = detalle.product_id || detalle.product?.id;
-    if (!id) return null;
-
-    try {
-      setLoadingStock(true);
-      const res = await productsApi.getStock(id); // sigue usando tu función global
-      const data = res?.data?.stock;
-      return data || null;
-    } catch (err) {
-      console.error("❌ Error al obtener stock del producto:", err);
-      return null;
-    } finally {
-      setLoadingStock(false);
-    }
-  };
-
-  useEffect(() => {
-    if (!detalles || detalles.length === 0) return;
-    let cancelado = false;
-
-    const fetchAllStock = async () => {
-      const results = await Promise.allSettled(
-        detalles.map(async (detalle) => {
-          const productId = detalle.product_id || detalle.product?.id;
-          if (!productId) return null;
-          try {
-            const res = await getStockWithSuggestions(productId);
-            const data = res?.data;
-            return { productId, data };
-          } catch (e) {
-            return { productId, data: null };
-          }
-        })
-      );
-
-      if (cancelado) return;
-
-      const nuevoCache = {};
-      results.forEach((r) => {
-        if (r.status === "fulfilled" && r.value?.data) {
-          const { productId, data } = r.value;
-          nuevoCache[productId] = data;
-        }
-      });
-
-      setStockCache((prev) => ({ ...prev, ...nuevoCache }));
-    };
-
-    fetchAllStock();
-    return () => {
-      cancelado = true;
-    };
-  }, [JSON.stringify(detalles)]);
-
-  // ✅ CAMBIAR: useEffect para usar resumen_por_bodega
-  useEffect(() => {
-    if (!modalOpen || !detalleActivo) return;
-    if (stockInfo?.stock) {
-      setProductStock(stockInfo.stock || null);
-
-      // ✅ USAR: resumen_por_bodega como en DetalleTraslado
-      setBodegasDisponibles(stockInfo.stock?.resumen_por_bodega || []);
-
-      /*    console.log(
-        "Stock info actualizado en modal:",
-        stockInfo.stock?.resumen_por_bodega
-      );*/
-      setLoadingStock(false);
-    }
-  }, [stockInfo, modalOpen, detalleActivo]);
-  useEffect(() => {
-    setPdfUrl(null);
-  }, [orden.id]);
-
-  // 🔹 Prefetch de stock por producto (para poblar la columna Bodegas)
-  useEffect(() => {
-    if (!detalles || detalles.length === 0) return;
-
-    const fetch = async () => {
-      for (const d of detalles) {
-        const productId = d.product_id || d.product?.id;
-        if (!productId) continue;
-
-        // si ya tenemos cache con bodegas, no vuelvas a pedir
-        const ya = stockCache[productId]?.producto_base?.resumen_por_bodega;
-        if (ya && ya.length > 0) continue;
-
-        try {
-          const res = await productsApi.getStock(productId);
-          const stockData = res?.data?.stock || null;
-          if (stockData) {
-            setStockCache((prev) => ({
-              ...prev,
-              [productId]: {
-                ...(prev[productId] || {}),
-                producto_base: {
-                  stock_total: stockData.stock_total ?? 0,
-                  resumen_por_bodega: stockData.resumen_por_bodega ?? [],
-                },
-              },
-            }));
-          }
-        } catch (e) {
-          // silencioso
-        }
-      }
-    };
-
-    fetch();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(detalles)]);
-
-  const handleDescontarStockMasivo = async () => {
-    try {
-      setLoadingStock(true);
-      showToast("info", "Procesando descuento masivo de stock...");
-
-      // 🔹 Construir el payload con todos los productos visibles
-      const items = detalles.map((detalle) => ({
-        orden_trabajo_id: orden.id,
-        orden_compra_id: detalle.orden_compra_id,
-        producto_id: detalle.product_id,
-        cantidad: parseFloat(detalle.cantidad) || 0,
-        bodegas: (detalle.bodegas || []).map((b) => ({
-          bodega_id: b.bodega_id,
-          cantidad: parseFloat(b.cantidad) || 0,
-          bodega_nombre: b.bodega_nombre,
-          sede_nombre: b.sede_nombre,
-        })),
-        producto_equivalentes: (detalle.producto_equivalentes || []).map(
-          (eq) => ({
-            id: eq.id,
-            razon: eq.razon || "",
-            bodegas: (eq.bodegas || []).map((b) => ({
-              bodega_id: b.bodega_id,
-              cantidad: parseFloat(b.cantidad) || 0,
-              bodega_nombre: b.bodega_nombre,
-              sede_nombre: b.sede_nombre,
-            })),
-          })
-        ),
-      }));
-
-      // 🔹 Llamar tu endpoint Laravel
-      const res = await productsApi.postDescontarStockMasivo({ items });
-
-      if (res?.data?.success) {
-        const pdfs = res.data.pdfs || [];
-        showToast("success", "Descuento masivo completado correctamente ");
-
-        // 🔹 Si solo hay un PDF, abrirlo directamente
-        if (pdfs.length === 1) {
-          window.open(pdfs[0].pdf, "_blank");
-        }
-        // 🔹 Si hay varios, mostrar lista interactiva
-        else if (pdfs.length > 1) {
-          const links = pdfs
-            .map(
-              (p) =>
-                `<a href="${p.pdf}" target="_blank" style="display:block;margin:4px 0;color:#0d6efd;text-decoration:none;">
-                📄 OT-${p.orden_trabajo_id}
-              </a>`
-            )
-            .join("");
-
-          Swal.fire({
-            title: "PDFs generados",
-            html: `<div style="text-align:left;">${links}</div>`,
-            icon: "success",
-            confirmButtonText: "Cerrar",
-            width: 600,
-          });
-        } else {
-          showToast("info", "No se generaron documentos PDF.");
-        }
-
-        // Abrir todos los PDFs generados (uno por movimiento)
-
-        // Limpieza TOTAL DE LOS ESTADOS GLOBALES
-        setModalOpen(false);
-        setProductStock(null);
-        setDetalleActivo(null);
-        setStockCache({});
-      } else {
-        showToast(
-          "warning",
-          res?.data?.error ||
-            "El proceso terminó con advertencias. Revisa los faltantes o errores parciales."
-        );
-        console.warn("⚠️ Errores parciales:", res?.data?.errores);
-      }
-    } catch (error) {
-      console.error("❌ Error en descuento masivo:", error);
-
-  const response = error.response?.data;
-  console.error("Respuesta de error:", response);
-
-  //  ERRORES DE NEGOCIO POR ÍTEM (stock insuficiente)
-  if (error.response?.status === 400 && Array.isArray(response?.errores)) {
-    const fieldErrors = {};
-
-    response.errores.forEach((err) => {
-      const index = detalles.findIndex(
-        (d) => d.product_id === err.producto_id
-      );
-
-      if (index !== -1) {
-        // Error global del item
-        fieldErrors[`items.${index}.cantidad`] = [err.mensaje];
-
-        // Error específico por bodega
-        fieldErrors[`items.${index}.bodegas.${err.bodega_id}`] = [err.mensaje];
-      }
-    });
-
-    setErrors(fieldErrors);
-    console.warn("⚠️ Errores parciales:", fieldErrors);
-
-    showToast(
-      "error",
-      "Hay productos con stock insuficiente. Revisa los campos marcados."
-    );
-    return;
-  }
-
-  if (error.response?.status === 422 && response?.errors) {
-  setErrors(response.errors);
-  showToast("warning", "Hay errores de validación.");
-  return;
-}
-
-    } finally {
-      setLoadingStock(false);
-    }
-  };
-
-  const formatNumber = (num) => {
-    if (num === undefined || num === null) return "0";
-    // ✅ CAMBIO: Sin Math.floor para mantener decimales
-    return new Intl.NumberFormat("es-CO", {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2,
-    }).format(num);
-  };
 
   // ✅ Componente customizado para opciones de bodega
   const BodegaOption = ({
@@ -539,18 +245,17 @@ const ensureProductLoaded = async (id) => {
               {[
                 "Item",
                 "Referencia",
-                "Bodegas",
-
-                "Ancho cm",
-                "Largo cm",
-                "Calibre",
-                "Cliente",
+                "Stock",
+                "Medidas",
+                 "Descripción",
+                "Clb Cl",
                 "Peso (Kg)",
-                "Descripción",
+       
                 "Cantidad",
                 "Enviada",
                 "Faltantes",
                 "Entregas",
+                'Alistamiento',
                 "Valor Unit.",
                 "Total",
               ].map((head) => (
@@ -704,6 +409,7 @@ const ensureProductLoaded = async (id) => {
                                 index,
                                 ...detalle,
                                 producto_sugerencias: sugerencias,
+                                cantidad_total: detalle.cantidad_requerida_kg, // 🔹 Usamos cantidad requerida para sugerencias
                                 stock_local: stockData, // 🔹 Guardamos stock local
                               });
 
@@ -778,70 +484,26 @@ const ensureProductLoaded = async (id) => {
                     );
                   })()}
                 </td>
-
-                <td className="px-3 py-3">
-                  <input
-                    type="number"
-                    className={`w-20 border rounded-lg px-2 py-1 text-sm transition-colors ${
-                      errores?.[index]?.ancho_cm
-                        ? "border-red-500 focus:border-red-500"
-                        : "border-gray-300 focus:border-blue-500"
-                    } focus:outline-none`}
-                    value={parseInt(detalle.ancho_cm) || ""}
-                    onChange={(e) =>
-                      handleChangeDetalle(index, "ancho_cm", e.target.value)
-                    }
-                    placeholder="0"
-                  />
-                  {errores?.[index]?.ancho_cm && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errores[index].ancho_cm[0]}
-                    </p>
-                  )}
+{/* Medidas (Ancho x Largo x Calibre) - Solo lectura */}
+<td className="px-3 py-3 text-sm text-gray-900">
+  <div className="flex flex-col gap-0.5">
+    <span className="font-medium">
+      ancho {parseInt(detalle.ancho_cm) || 0} * Largo {parseInt(detalle.largo_cm) || 0}
+    </span>
+    <span className="text-xs text-gray-500">
+      Calibre: {parseInt(detalle.calibre) || 0}
+    </span>
+  </div>
+</td>
+             
+    <td className="px-3 py-3 text-sm text-gray-900 max-w-32 truncate">
+                  <textarea 
+                  readOnly
+                  value={detalle.descripcion}
+                  name="descripcion" id="" className="w-full border rounded-lg px-2 py-1 text-sm transition-colors">
+                    {detalle.descripcion}
+                  </textarea>
                 </td>
-
-                <td className="px-3 py-3">
-                  <input
-                    type="number"
-                    className={`w-20 border rounded-lg px-2 py-1 text-sm transition-colors ${
-                      errores?.[index]?.largo_cm
-                        ? "border-red-500 focus:border-red-500"
-                        : "border-gray-300 focus:border-blue-500"
-                    } focus:outline-none`}
-                    value={parseInt(detalle.largo_cm) || ""}
-                    onChange={(e) =>
-                      handleChangeDetalle(index, "largo_cm", e.target.value)
-                    }
-                    placeholder="0"
-                  />
-                  {errores?.[index]?.largo_cm && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errores[index].largo_cm[0]}
-                    </p>
-                  )}
-                </td>
-
-                <td className="px-3 py-3">
-                  <input
-                    type="number"
-                    className={`w-20 border rounded-lg px-2 py-1 text-sm transition-colors ${
-                      errores?.[index]?.calibre
-                        ? "border-red-500 focus:border-red-500"
-                        : "border-gray-300 focus:border-blue-500"
-                    } focus:outline-none`}
-                    value={detalle.calibre}
-                    onChange={(e) =>
-                      handleChangeDetalle(index, "calibre", e.target.value)
-                    }
-                    placeholder="0"
-                  />
-                  {errores?.[index]?.calibre && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errores[index].calibre[0]}
-                    </p>
-                  )}
-                </td>
-
                 <td className="px-3 py-3 text-sm text-gray-900">
                   {detalle.cliente_clb}
                 </td>
@@ -850,14 +512,7 @@ const ensureProductLoaded = async (id) => {
                   {detalle.cantidad_requerida_kg?.toFixed(2) || 0}
                 </td>
 
-                <td className="px-3 py-3 text-sm text-gray-900 max-w-32 truncate">
-                  <textarea 
-                  readOnly
-                  value={detalle.descripcion}
-                  name="descripcion" id="" className="w-full border rounded-lg px-2 py-1 text-sm transition-colors">
-                    {detalle.descripcion}
-                  </textarea>
-                </td>
+            
 
                 <td className="px-3 py-3">
                   <input
@@ -974,6 +629,57 @@ const ensureProductLoaded = async (id) => {
                   </div>
                 </td>
 
+  <td className="px-3 py-3 text-xs">
+  {(() => {
+    const lista = alistamientosPorDetalle(detalle.id);
+
+    if (lista.length === 0) {
+      return <span className="text-gray-400">Sin alistar</span>;
+    }
+
+    // 🔥 AGRUPAR (CLAVE)
+    const agrupado = Object.values(
+      lista.reduce((acc, item) => {
+        const key = `${item.producto_id}-${item.bodega_id}`;
+
+        if (!acc[key]) {
+          acc[key] = { ...item, cantidad: 0 };
+        }
+
+        acc[key].cantidad += parseFloat(item.cantidad);
+        return acc;
+      }, {})
+    );
+
+    return (
+      <div className="max-h-20 overflow-y-auto space-y-1">
+        {agrupado.map((a, i) => (
+          <div
+            key={i}
+            className="flex justify-between items-center text-xs border-b last:border-0 pb-1"
+          >
+            {/* 🔹 Producto + ubicación */}
+            <div className="flex flex-col truncate">
+              <span className="font-medium text-gray-800 truncate">
+                {a.producto?.name}
+              </span>
+           <span className="text-gray-400 truncate">
+  {a.bodega?.nombre}
+  {a.bodega?.sede?.nombre && ` - ${a.bodega.sede.nombre}`}
+</span>
+            </div>
+
+            {/* 🔹 Cantidad */}
+            <span className="text-green-600 font-semibold ml-2">
+              {a.cantidad}
+            </span>
+          </div>
+        ))}
+      </div>
+    );
+  })()}
+</td>
+
                 <td className="px-3 py-3 text-right text-sm">
                   {formatCurrency(detalle.valor_unitario)}
                 </td>
@@ -1015,6 +721,29 @@ const ensureProductLoaded = async (id) => {
             </>
           )}
         </button>
+
+
+        {/* Junto al botón "Descontar Masivamente" */}
+<button
+  onClick={enviarInstruccionesAlistamiento}
+  className="bg-amber-600 text-white px-5 py-2 rounded-lg hover:bg-amber-700 flex items-center gap-2 transition-colors"
+  disabled={loadingStock || Object.keys(configuracionesDescuento).length === 0}
+>
+  {loadingStock ? (
+    <>
+      <Loader2 className="w-4 h-4 animate-spin" /> Enviando...
+    </>
+  ) : (
+    <>
+      <ClipboardList className="w-4 h-4" />
+      Enviar a Alistamiento ({Object.keys(configuracionesDescuento).length})
+    </>
+  )}
+</button>
+        {/* Debajo del botón "Descontar Masivamente"
+<pre className="text-xs bg-gray-100 p-2 rounded overflow-auto max-h-40">
+  {JSON.stringify(configuracionesDescuento, null, 2)}
+</pre> */}
       </div>
 
       {/* Total simple */}
@@ -1378,7 +1107,9 @@ const ensureProductLoaded = async (id) => {
     const nuevos = await Promise.all(
       nuevosIds.map(async (id) => {
         try {
-          const res = await productsApi.getStock(id);
+          const res = await productsApi.getStock(id, {
+  sede_id: orden?.orden_compra?.sede?.id
+});
           const stock = res?.data?.stock;
 
           return {
@@ -1728,32 +1459,47 @@ const ensureProductLoaded = async (id) => {
             </div>
 
             {/* Footer */}
-            <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t border-gray-200">
-              <button
-        onClick={() => {
-  const index = detalleActivo.index;
+        {/* Footer del modal */}
+{/* Footer del modal */}
+<div className="bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t border-gray-200">
+  {/* Botón para guardar en estado de alistamiento */}
+  <button
+    onClick={() => {
+      guardarConfiguracionDescuento(detalleActivo.index, detalleActivo);
+      handleChangeDetalle(detalleActivo.index, "bodegas", detalleActivo.bodegas);
+      handleChangeDetalle(detalleActivo.index, "producto_equivalentes", detalleActivo.producto_equivalentes);
+      setModalOpen(false);
+      setProductStock(null);
+      setErrors({});
+    }}
+    className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors flex items-center gap-2 shadow-sm"
+  >
+    <ClipboardList className="w-4 h-4" />
+    Guardar para Alistamiento
+  </button>
 
-  handleChangeDetalle(index, "bodegas", detalleActivo.bodegas || []);
-  handleChangeDetalle(
-    index,
-    "producto_equivalentes",
-    detalleActivo.producto_equivalentes || []
-  );
-
-  setModalOpen(false);
-  setProductStock(null);
-  setErrors({});
-}}
-
-                className="px-4 py-2 border border-green-600 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                Guardar
-              </button>
-
-            </div>
+  {/* Botón Guardar mejorado */}
+  <button
+    onClick={() => {
+      handleChangeDetalle(detalleActivo.index, "bodegas", detalleActivo.bodegas);
+      handleChangeDetalle(detalleActivo.index, "producto_equivalentes", detalleActivo.producto_equivalentes);
+      setModalOpen(false);
+      setProductStock(null);
+      setErrors({});
+    }}
+    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 shadow-sm"
+  >
+    <Save className="w-4 h-4" />
+    Guardar
+  </button>
+</div>
           </div>
         </div>
       )}
     </div>
   );
 }
+
+
+
+

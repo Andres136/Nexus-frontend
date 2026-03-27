@@ -151,10 +151,9 @@ const getStockProduct = async (id, params = {}) => {
     return refetchAllProducts();
   };
 
-const getStockWithSuggestions = async (id) => {
+const getStockWithSuggestions = async (id, params = {}) => {
   try {
-    // 🔹 Llamada directa al endpoint, sin tocar react-query ni stockParams
-    const res = await productsApi.getStockWithSuggestions(id);
+    const res = await productsApi.getStockWithSuggestions(id, params);
     return res;
   } catch (error) {
     console.error(`❌ Error en getStockWithSuggestions(${id}):`, error);

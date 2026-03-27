@@ -167,8 +167,8 @@ export const productsApi = {
       headers: { "Content-Type": "multipart/form-data" },
     }),
 
-  getStockWithSuggestions: (id) =>
-    apiClient.get(`/api/stock-products-sugerencias/${id}`),
+  getStockWithSuggestions: (id, params = {}) =>
+    apiClient.get(`/api/stock-products-sugerencias/${id}`, { params }),
 
   postDescontarStockMasivo: (data) =>
     apiClient.post("/api/products/descontar-stock-masivo", data),
@@ -204,7 +204,11 @@ generarBarcodes: (data) =>
       headers: { "Content-Type": "multipart/form-data" },
       responseType: "blob",
     }),
-
+postInstruccionesAlistamiento: (data) =>
+  apiClient.post("/api/alistamientos-ot", data),
+  
+getAlistamientosByOT: (id) =>
+  apiClient.get(`/api/alistamientos-ot/${id}`),
 };
 
 

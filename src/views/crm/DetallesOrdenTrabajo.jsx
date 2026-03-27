@@ -27,7 +27,6 @@ export default function DetallesOrdenTrabajo() {
 
 
 
-
   if (!orden) return  <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <div className="bg-white p-8 rounded-lg shadow-lg text-center">
             <FiRefreshCw className="w-8 h-8 text-blue-600 animate-spin mx-auto mb-4" />

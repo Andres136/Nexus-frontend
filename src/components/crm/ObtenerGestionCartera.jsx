@@ -27,7 +27,7 @@ const { user } = useAuth({middleware: 'auth'})
   const [openModal, setOpenModal] = useState(false)
 const{cancelarDeuda}=useGestionCartera()
   const { registros, pagination, isLoading, error, total_cartera, total_vencido} = useListaCartera(useDebounce(filtros, 500))
-   console.log(registros);
+  
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
