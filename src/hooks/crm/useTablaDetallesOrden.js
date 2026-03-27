@@ -314,7 +314,30 @@ const enviarInstruccionesAlistamiento = async () => {
 
   } catch (error) {
     console.error("❌ Error enviando alistamiento:", error);
-    showToast("error", "Error al enviar instrucciones de alistamiento");
+ if (error.response?.status === 400 && Array.isArray(error.response?.data?.errores)) {
+
+  const html = error.response.data.errores.map(err => `
+    <div style="text-align:left; margin-bottom:10px;">
+      <b>📦 ${err.producto}</b><br/>
+      🏬 Bodega: ${err.bodega}<br/>
+      📍 Sede: ${err.sede}<br/>
+      📊 Stock: ${err.stock}<br/>
+      📦 Ya alistado: ${err.ya_alistado_global}<br/>
+      ➕ Solicitado: ${err.solicitado}<br/>
+      ❌ <span style="color:red;">${err.mensaje}</span>
+    </div>
+  `).join("");
+
+  Swal.fire({
+    title: "Stock insuficiente",
+    html: html,
+    icon: "error",
+    confirmButtonText: "Entendido",
+    width: 600,
+  });
+
+  return;
+}
   } finally {
     setLoadingStock(false);
   }

@@ -76,4 +76,5 @@ export const HallazgosInspeccionesService = {
     createHallazgoInspeccion: (data) => apiClient.post("/api/hallazgos-inspecciones", data),
     updateHallazgoInspeccion: (id, data) => apiClient.put(`/api/hallazgos-inspecciones/${id}`, data),
     deleteHallazgoInspeccion: (id) => apiClient.delete(`/api/hallazgos-inspecciones/${id}`),
+    getEstadisticasHseq: (params) => apiClient.get("/api/hseq-dashboard", { params }),
 }

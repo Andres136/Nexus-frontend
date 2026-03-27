@@ -107,8 +107,8 @@ export default function ObtenerOrdenesCompra() {
       <table className="w-full min-w-[600px] border-collapse border border-gray-300 shadow-lg">
         <thead className="bg-gray-800 text-white text-sm">
           <tr>
-            <th className="border border-gray-300 px-4 py-2">Id</th>
-            <th className="border border-gray-300 px-4 py-2">Cliente</th>
+            <th className="border border-gray-300 px-2 py-2">Id</th>
+            <th className="border border-gray-300 px-4 py-2 ">Cliente</th>
             <th className="border border-gray-300 px-4 py-2">Fecha de Creacion</th>
             <th className="border border-gray-300 px-4 py-2">Fecha Entrega</th>
             <th className="border border-gray-300 px-4 py-2">OT</th>
@@ -123,7 +123,7 @@ export default function ObtenerOrdenesCompra() {
         <tbody>
           {ordenesOrdenadas?.map((orden) => (
             <tr key={orden.id} className="hover:bg-gray-100">
-              <td className="border border-gray-300 px-4 py-2">{orden.id}</td>
+              <td className="border border-gray-300 px-2 py-2">{orden.id}</td>
               <td className="border border-gray-300 px-4 py-2">{orden.cliente.nombre}</td>
               <td className="border border-gray-300 px-4 py-2">
 

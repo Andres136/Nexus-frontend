@@ -34,16 +34,7 @@ const Dashboard = () => {
     setTipPos({ x, y });
   };
 
-  const generarNotificaciones = async () => {
-    const token = localStorage.getItem('token');
-    try {
-      await clienteAxios.get('api/notificar-ordenes', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-    } catch (error) {
-      console.error('Error al generar notificaciones:', error);
-    }
-  };
+ 
 
   const descargarpdf = async () => {
     try {
@@ -66,9 +57,7 @@ const Dashboard = () => {
     }
   };
 
-  useEffect(() => {
-    generarNotificaciones();
-  }, []);
+
 
   if (isLoading || loading2)
     return (

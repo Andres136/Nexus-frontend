@@ -9,6 +9,7 @@ import {
   Settings,
   ChevronRight 
 } from "lucide-react";
+import HseqDashboard from "../../components/hseq/HseqDashboard";
 
 export default function ViewHseq() {
   const location = useLocation();
@@ -96,6 +97,7 @@ export default function ViewHseq() {
 
       {/* Contenido */}
       <div className="container mx-auto px-4 pb-8">
+        <HseqDashboard />
         <Outlet />
       </div>
     </div>
