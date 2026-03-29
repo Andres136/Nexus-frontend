@@ -18,7 +18,7 @@ export default function DashboardCrm() {
 
   const year = new Date().getFullYear()
   const { kpis, loading } = useDashboardKpis(year)
-
+ console.log("KPI DATA:", kpis)
   if (loading) return <NexusLoader text="Cargando dashboard..." />
 
   const series = kpis?.series_mensual || []

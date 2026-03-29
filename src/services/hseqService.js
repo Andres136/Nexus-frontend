@@ -78,3 +78,37 @@ export const HallazgosInspeccionesService = {
     deleteHallazgoInspeccion: (id) => apiClient.delete(`/api/hallazgos-inspecciones/${id}`),
     getEstadisticasHseq: (params) => apiClient.get("/api/hseq-dashboard", { params }),
 }
+
+
+export const TipoServiciosService = {
+    getTipoServicios: () => apiClient.get("/api/tipo-servicios"),
+    createTipoServicio: (data) => apiClient.post("/api/tipo-servicios", data),
+    updateTipoServicio: (id, data) => apiClient.put(`/api/tipo-servicios/${id}`, data),
+    deleteTipoServicio: (id) => apiClient.delete(`/api/tipo-servicios/${id}`),
+}
+export const TipoResiduosService = {
+    getTipoResiduos: () => apiClient.get("/api/tipo-residuos"),
+    createTipoResiduo: (data) => apiClient.post("/api/tipo-residuos", data),
+    updateTipoResiduo: (id, data) => apiClient.put(`/api/tipo-residuos/${id}`, data),
+    deleteTipoResiduo: (id) => apiClient.delete(`/api/tipo-residuos/${id}`),
+}
+
+export const ConsumoServiciosService = {
+    getConsumoServicios: () => apiClient.get("/api/consumo-servicios"),
+    createConsumoServicio: (data) => apiClient.post("/api/consumo-servicios", data),
+    updateConsumoServicio: (id, data) => apiClient.put(`/api/consumo-servicios/${id}`, data),
+    deleteConsumoServicio: (id) => apiClient.delete(`/api/consumo-servicios/${id}`),
+    getConsumoServicioById: (id) => apiClient.get(`/api/consumo-servicios/${id}`),
+}
+export const GeneracionResiduosService = {
+    getGeneracionResiduos: (params) => apiClient.get("/api/generacion-residuos", { params }),
+    createGeneracionResiduo: (data) => apiClient.post("/api/generacion-residuos", data),
+    updateGeneracionResiduo: (id, data) => apiClient.put(`/api/generacion-residuos/${id}`, data),
+    deleteGeneracionResiduo: (id) => apiClient.delete(`/api/generacion-residuos/${id}`),
+    getGeneracionResiduosById: (id) => apiClient.get(`/api/generacion-residuos/${id}`),
+}
+
+export const HseqDashboardService = {
+    getEstadisticasConsumo: (params) => apiClient.get("/api/estadisticas-anuales-consumo", { params }),
+    getEstadisticasGeneracionResiduos: (params) => apiClient.get("/api/estadisticas-anuales-residuos", { params }),
+}

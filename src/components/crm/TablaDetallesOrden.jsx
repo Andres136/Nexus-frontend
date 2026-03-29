@@ -725,6 +725,7 @@ export default function TablaDetallesOrden({
 
         {/* Junto al botón "Descontar Masivamente" */}
 <button
+
   onClick={enviarInstruccionesAlistamiento}
   className="bg-amber-600 text-white px-5 py-2 rounded-lg hover:bg-amber-700 flex items-center gap-2 transition-colors"
   disabled={loadingStock || Object.keys(configuracionesDescuento).length === 0}

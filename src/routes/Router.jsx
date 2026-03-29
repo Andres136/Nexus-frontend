@@ -97,6 +97,12 @@ import RegistroTipoInspecciones from "../components/hseq/RegistroTipoInspeccione
 import RegistrarPreguntasInspecciones from "../components/hseq/RegistrarPreguntasInspecciones";
 import CalendarioInspecciones from "../components/hseq/CalendarioInspecciones";
 import UpdateCartera from "../views/crm/UpdateCartera";
+import TipoServicios from "../components/hseq/TipoServicios";
+import TipoResiduos from "../components/hseq/TipoResiduos";
+import RegistrarConsumoServicios from "../components/hseq/RegistrarConsumoServicios";
+import RegistrarGeneracionResiduos from "../components/hseq/RegistrarGeneracionResiduos";
+import DashboardConsumoServicios from "../components/hseq/DashBoardConsumoServicio";
+import DashboardResiduos from "../components/hseq/DashboardResiduos";
 
 
 export default function Router() {
@@ -487,6 +493,61 @@ export default function Router() {
               </DynamicProtectedRoute>
             }
           />
+
+          <Route
+            path="/auth/crm/hseq/tipo-servicios"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/hseq/tipo-servicios">
+                <TipoServicios />
+              </DynamicProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/auth/crm/hseq/tipo-residuos"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/hseq/tipo-residuos">
+                <TipoResiduos />
+              </DynamicProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/auth/crm/hseq/consumo-servicios"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/hseq/consumo-servicios">
+                <RegistrarConsumoServicios />
+              </DynamicProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/auth/crm/hseq/generacion-residuos"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/hseq/generacion-residuos">
+                <RegistrarGeneracionResiduos />
+              </DynamicProtectedRoute>
+            }
+          />
+          <Route
+            path="/auth/crm/hseq/dashboard-consumo-servicios"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/hseq/dashboard-consumo-servicios">
+                <DashboardConsumoServicios />
+              </DynamicProtectedRoute>
+            }
+          />
+          <Route
+            path="/auth/crm/hseq/dashboard-generacion-residuos"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/hseq/dashboard-generacion-residuos">
+                <DashboardResiduos/>
+              </DynamicProtectedRoute>
+            }
+          />
+
+
+
            {/*   Fin Rutas para  HSEQ */} 
 
 

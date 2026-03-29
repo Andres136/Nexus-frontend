@@ -372,6 +372,7 @@ const enviarInstruccionesAlistamiento = async () => {
           })
         ),
       }));
+      console.log("🔥 PAYLOAD DESCUENTO:", JSON.stringify(items, null, 2));
 
       // 🔹 Llamar tu endpoint Laravel
       const res = await productsApi.postDescontarStockMasivo({ items });
