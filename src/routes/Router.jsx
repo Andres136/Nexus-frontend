@@ -103,6 +103,8 @@ import RegistrarConsumoServicios from "../components/hseq/RegistrarConsumoServic
 import RegistrarGeneracionResiduos from "../components/hseq/RegistrarGeneracionResiduos";
 import DashboardConsumoServicios from "../components/hseq/DashBoardConsumoServicio";
 import DashboardResiduos from "../components/hseq/DashboardResiduos";
+import GestionNovedadesCalidad from "../views/calidad/GestionNovedadesCalidad";
+import DashboardSemestral from "../components/calidad/DashboardSemestral";
 
 
 export default function Router() {
@@ -183,6 +185,16 @@ export default function Router() {
          <Route path="/auth/novedades" element={<DynamicProtectedRoute permission="/auth/novedades">
            <NovedadesCalidad />
          </DynamicProtectedRoute>} />
+
+
+         <Route path="/auth/gestion-calidad/:id" element={<DynamicProtectedRoute permission="/auth/gestion-calidad/:id">
+           <GestionNovedadesCalidad />
+         </DynamicProtectedRoute>} />
+
+         <Route path="/auth/dashboard-semestral" element={<DynamicProtectedRoute permission="/auth/dashboard-semestral">
+           <DashboardSemestral />
+         </DynamicProtectedRoute>} />
+
 {/*Fin de Rutas para control de calidad */}
 
          {/*Rutas para TIC */}

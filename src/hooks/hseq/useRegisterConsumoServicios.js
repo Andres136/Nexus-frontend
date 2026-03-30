@@ -51,8 +51,11 @@ const handleSubmit = async (e) => {
         queryClient.invalidateQueries("consumo_servicios");
      // Aquí puedes agregar lógica adicional, como redirigir al usuario o limpiar el formulario
     } catch (error) {
-        console.error("Error al registrar consumo de servicio:", error);
-        setErrors({ submit: "Hubo un error al registrar el consumo del servicio. Por favor, intenta nuevamente." });
+   if (error.response?.status === 422) {
+                setErrors(error.response.data.errors);
+            } else {
+                showToast("error", error.response?.data?.message || "Hubo un problema al actualizar el tipo de residuo");
+            }
     } finally {
         setIsLoading(false);
     }
@@ -71,8 +74,11 @@ const handleEdit = async (id) => {
      // Aquí puedes agregar lógica adicional, como redirigir al usuario o limpiar el formulario
         queryClient.invalidateQueries("consumo_servicios");
     } catch (error) {
-        console.error("Error al actualizar consumo de servicio:", error);
-        setErrors({ submit: "Hubo un error al actualizar el consumo del servicio. Por favor, intenta nuevamente." });
+         if (error.response?.status === 422) {
+                setErrors(error.response.data.errors);
+            } else {
+                showToast("error", error.response?.data?.message || "Hubo un problema al actualizar el tipo de residuo");
+            }
     } finally {
         setIsLoading(false);
     }

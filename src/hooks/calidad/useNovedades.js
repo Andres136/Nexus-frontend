@@ -3,7 +3,9 @@ import { calidadService } from "../../services/calidaService";
 import { showToast } from "../../helpers/utils/showToast";
 
 
+
 export const useNovedades = () => {
+ 
 
   const [formData, setFormData] = useState({
     registro_diario_id: null,
@@ -42,7 +44,7 @@ export const useNovedades = () => {
 
     try {
       const response = await calidadService.getNovedades(customFilters);
-    console.log("Respuesta de novedades:", response.data);
+  //    console.log("Respuesta de novedades:", response.data);
       setNovedades(response.data.data);
 
       setPagination({
@@ -66,6 +68,7 @@ export const useNovedades = () => {
     setLoading(true);
     try {
       const response = await calidadService.getNovedadesById(id);
+  //    console.log("Respuesta de novedad por ID:", response.data);
       setNovedadSeleccionada(response.data);
       return response.data;
     } catch (err) {

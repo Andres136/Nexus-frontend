@@ -29,6 +29,7 @@ export default function RegistrarConsumoServicios() {
     handleDelete
   } = useRegisterConsumoServicios();
 
+
   const { sedes = [] } = useSedes();
   const { data: tiposServicios = [] } = useGetTipoServicios();
   const {
@@ -115,6 +116,7 @@ export default function RegistrarConsumoServicios() {
                 onChange={(opt) => setFiltros({ ...filtros, sede_id: opt?.value || null, page: 1 })}
                 styles={customSelectStyles}
               />
+  
             </div>
             <div className="space-y-1">
               <label className="text-xs font-bold text-slate-400 uppercase ml-1">Servicio</label>
@@ -246,6 +248,8 @@ export default function RegistrarConsumoServicios() {
                   onChange={(opt) => handleChange({ target: { name: 'sede_id', value: opt.value } })}
                   styles={customSelectStyles}
                 />
+                            {errors.sede_id && <p className="text-red-500 text-xs mt-1">{errors.sede_id[0]}</p>}
+
               </div>
 
               <div className="space-y-1">
@@ -256,6 +260,7 @@ export default function RegistrarConsumoServicios() {
                   onChange={(opt) => handleChange({ target: { name: 'tipo_servicio_id', value: opt.value } })}
                   styles={customSelectStyles}
                 />
+                {errors.tipo_servicio_id && <p className="text-red-500 text-xs mt-1">{errors.tipo_servicio_id[0]}</p>}
               </div>
 
               <div className="space-y-1">
@@ -268,6 +273,7 @@ export default function RegistrarConsumoServicios() {
                   placeholder="0.00"
                   className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500"
                 />
+                {errors.valor_factura && <p className="text-red-500 text-xs mt-1">{errors.valor_factura[0]}</p>}
               </div>
 
               <div className="space-y-1">
@@ -280,6 +286,7 @@ export default function RegistrarConsumoServicios() {
                   placeholder="Ej: 150"
                   className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500"
                 />
+                {errors.consumo && <p className="text-red-500 text-xs mt-1">{errors.consumo[0]}</p>}
               </div>
 
               <div className="space-y-1">
@@ -291,6 +298,7 @@ export default function RegistrarConsumoServicios() {
                   onChange={handleChange}
                   className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500"
                 />
+                {errors.fecha_consumo && <p className="text-red-500 text-xs mt-1">{errors.fecha_consumo[0]}</p>}
               </div>
 
               <div className="space-y-1">
@@ -302,6 +310,7 @@ export default function RegistrarConsumoServicios() {
                   onChange={handleChange}
                   className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500"
                 />
+                {errors.fecha_pago && <p className="text-red-500 text-xs mt-1">{errors.fecha_pago[0]}</p>}
               </div>
 
               <div className="md:col-span-2 space-y-1">

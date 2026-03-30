@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNovedades } from "../../hooks/calidad/useNovedades";
 import NexusLoader from "../NexusLoader";
-import { useAuth } from "../../hooks/useAuth";
-import Select from "react-select";
+
+
 import { Edit2 } from "lucide-react";
+import { Link } from "react-router-dom";
 export default function Novedades() {
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editData, setEditData] = useState(null);
-  const [modalOpenDescripcion, setModalOpenDescripcion] = useState(false);
-const [selectedNovedad, setSelectedNovedad] = useState(null);
+ 
+
+
 
   const { novedades,
     loading,
@@ -16,24 +16,35 @@ const [selectedNovedad, setSelectedNovedad] = useState(null);
     filters,
     setFilters,
     pagination,
-    obtenerNovedadById,
-    actualizarNovedad,
+  
+
     obtenerNovedades } = useNovedades();
 
-  const { usuarios, obtenerUsuariosAll } = useAuth({ middleware: "auth" });
-  //console.log("Usuarios disponibles:", usuarios);
-
-  useEffect(() => {
-
-    obtenerUsuariosAll();
-  }, []);
 
   return (
     <div className="p-4 md:p-6">
-      <div className="mb-6 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm md:p-6">
-        <h1 className="text-2xl font-bold text-gray-800 md:text-3xl">Gestión de productos no conformes</h1>
-        <p className="mt-1 text-sm text-gray-500">Consulta, filtra y actualiza novedades de calidad.</p>
-      </div>
+    <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm md:p-6">
+  
+  {/* TEXTO */}
+  <div>
+    <h1 className="text-2xl font-bold text-gray-800 md:text-3xl">
+      Gestión de calidad
+    </h1>
+
+    <p className="mt-1 text-sm text-gray-500">
+      Visualiza indicadores, cumplimiento y estado de las novedades de calidad.
+    </p>
+  </div>
+
+  {/* BOTÓN */}
+  <Link  
+    to="/auth/dashboard-semestral"
+    className="inline-flex items-center justify-center rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-700"
+  >
+    Dashboard Calidad
+  </Link>
+
+</div>
 
 
       {/* Filtros */}
@@ -47,6 +58,8 @@ const [selectedNovedad, setSelectedNovedad] = useState(null);
           className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 md:max-w-sm"
         />
         </div>
+
+
       </div>
 
       {loading && <NexusLoader text="Cargando Novedades" />}
@@ -83,11 +96,8 @@ const [selectedNovedad, setSelectedNovedad] = useState(null);
                 <tr key={novedad.id} className="border-t border-gray-100 transition hover:bg-gray-50/80">
             <td className="px-4 py-3 text-xs font-medium text-gray-700">{novedad.id}</td>
             <td
-  className="max-w-[280px] cursor-pointer px-4 py-3 text-xs font-medium text-gray-700 transition hover:text-blue-600"
-  onClick={() => {
-    setSelectedNovedad(novedad);
-    setModalOpenDescripcion(true);
-  }}
+  className="max-w-[280px]  px-4 py-3 text-xs font-medium text-gray-700 transition hover:text-blue-600"
+
 >
   <p className="truncate" title={novedad.descripcion}>{novedad.descripcion}</p>
 </td>
@@ -146,16 +156,12 @@ const [selectedNovedad, setSelectedNovedad] = useState(null);
   )}
 </td>
                   <td className="px-4 py-3">
-                    <button
-                      onClick={async () => {
-                        const data = await obtenerNovedadById(novedad.id);
-                        setEditData(data);
-                        setModalOpen(true);
-                      }}
+                    <Link
+                      to={`/auth/gestion-calidad/${novedad.id}`}
                       className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-blue-700"
                     >
                       <Edit2 size={16} />
-                    </button>
+                    </Link>
                   </td>
 
 
@@ -165,190 +171,7 @@ const [selectedNovedad, setSelectedNovedad] = useState(null);
           </table>
           </div>
 
-          {modalOpenDescripcion && selectedNovedad && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-    <div className="relative w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl md:p-7">
-
-      <button
-        onClick={() => setModalOpenDescripcion(false)}
-        className="absolute right-4 top-4 rounded-md p-1 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
-      >
-        ✕
-      </button>
-
-      <h2 className="mb-4 text-xl font-semibold text-gray-800">
-        Detalle de Novedad
-      </h2>
-
-      <div className="space-y-4 text-sm text-gray-700">
-
-        <div>
-          <span className="font-semibold">Descripción:</span>
-          <p className="mt-2 rounded-lg bg-gray-50 p-3 whitespace-pre-line">
-            {selectedNovedad.descripcion}
-          </p>
-        </div>
-
-        <div className="grid gap-4 rounded-lg bg-gray-50 p-3 sm:grid-cols-3">
-          <div>
-            <span className="font-semibold">Estado:</span>
-            <p>{selectedNovedad.estado}</p>
-          </div>
-
-          <div>
-            <span className="font-semibold">Responsable:</span>
-            <p>{selectedNovedad.responsable?.name || "Sin asignar"}</p>
-          </div>
-
-          <div>
-            <span className="font-semibold">Departamento:</span>
-            <p>{selectedNovedad.registro_diario?.departamento?.nombre}</p>
-          </div>
-        </div>
-       
-
-    <div>
-  <span className="font-semibold">Soporte:</span>
-  {selectedNovedad.soporte ? (
-    <a
-      href={`${import.meta.env.VITE_API_URL}/storage/${selectedNovedad.soporte}`}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="ml-2 inline-flex items-center rounded-md border border-blue-100 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 transition hover:bg-blue-100"
-    >
-      Ver archivo
-    </a>
-  ) : (
-    <p className="mt-1 text-xs text-gray-400">No hay archivo disponible</p>
-  )}
-</div>
-
-      </div>
-
-    </div>
-  </div>
-)}
-          {modalOpen && editData && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-              <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
-
-                <h2 className="mb-4 text-lg font-semibold text-gray-800">Editar Novedad</h2>
-              
-                <input
-                  type="text"
-                  value={editData.descripcion}
-                  onChange={(e) =>
-                    setEditData({ ...editData, descripcion: e.target.value })
-                  }
-                  className="mb-3 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                />
-
-                <select
-                  value={editData.estado}
-                  onChange={(e) =>
-                    setEditData({ ...editData, estado: e.target.value })
-                  }
-                  className="mb-3 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                >
-                  <option value="ABIERTA">ABIERTA</option>
-                  <option value="EN_PROCESO">EN PROCESO</option>
-                  <option value="CERRADA">CERRADA</option>
-                </select>
-
-                <div> 
-                  <label className="mb-1 block text-sm font-medium text-gray-700">Fecha Revision</label>
-                  <input
-                  type="date"
-                  value={
-                    editData.fecha_revision
-                      ? new Date(editData.fecha_revision).toISOString().split("T")[0]
-                      : ""
-                  }
-                  onChange={(e) =>
-                    setEditData({ ...editData, fecha_revision: e.target.value })
-                  }
-                  className="mb-3 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                /></div>
-               <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">Fecha Terminado</label>
-                   <input
-                  type="date"
-                  value={
-                    editData.fecha_terminado
-                      ? new Date(editData.fecha_terminado).toISOString().split("T")[0]
-                      : ""
-                  }
-                  onChange={(e) =>
-                    setEditData({ ...editData, fecha_terminado: e.target.value })
-                  }
-                  className="mb-3 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                />
-
-               </div>
-             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">Soporte</label>
-
-                <input
-                  type="file"
-
-                  onChange={(e) => setEditData({ ...editData, soporte: e.target.files[0] })}
-                  className="mb-3 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 file:mr-3 file:rounded-md file:border-0 file:bg-gray-100 file:px-3 file:py-1.5 file:text-xs file:font-medium"
-                />
-             </div>
-              
- <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">Selecione una fuente</label>
-                  <select name="fuentes" id="fuentes" className="mb-3 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                    value={editData.fuentes || ''}
-                    onChange={(e) => setEditData({ ...editData, fuentes: e.target.value })}
-                  >
-                    <option value="">Selecciona una fuente</option>
-                    <option value="Auditoria Interna  de SGI">Auditoria Interna  de SGI</option>
-                    <option value="Auditoria Externa">Auditoria Externa</option>
-                    <option value="Producto y/o servicio no conforme">Producto y/o servicio no conforme</option>
-                    <option value="Reclamo de cliente">Reclamo de cliente</option>
-                    <option value="Sugerencia de mejora">Sugerencia de mejora</option>
-                    <option value="Otro">Otro</option>
-                  </select>
-        </div>
-
-                <Select
-                  options={usuarios.map((u) => ({ value: u.id, label: u.name }))}
-                  value={
-                    editData.responsable_id
-                      ? { value: editData.responsable_id, label: usuarios.find(u => u.id === editData.responsable_id)?.name || "Selecciona un responsable" }
-                      : null
-                  }
-                  onChange={(option) =>
-                    setEditData((prev) => ({
-                      ...prev,
-                      responsable_id: option ? option.value : null,
-                    }))
-                  }
-                  placeholder="Selecciona un responsable"
-                />
-                <div className="flex justify-end gap-3 mt-4">
-                  <button
-                    onClick={() => setModalOpen(false)}
-                    className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-200"
-                  >
-                    Cancelar
-                  </button>
-
-                  <button
-                    onClick={async () => {
-                      await actualizarNovedad(editData.id, editData);
-                      setModalOpen(false);
-                    }}
-                    className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-700"
-                  >
-                    Guardar
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
+    
           <div className="flex items-center justify-between border-t border-gray-100 px-4 py-4 md:px-6">
 
             <button

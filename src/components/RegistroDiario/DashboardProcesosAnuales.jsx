@@ -13,13 +13,14 @@ import {
 } from "recharts";
 import Select from "react-select";
 import { useEstadisticasDashboardProcesos } from "../../hooks/RegistroDiario/useEstadisticasDashboardProcesos";
+import NexusLoader from "../NexusLoader";
 
 export default function DashboardProcesosAnuales() {
   const [anio, setAnio] = useState(new Date().getFullYear());
   const [departamentosFiltro, setDepartamentosFiltro] = useState([]);
   const { data, loading } = useEstadisticasDashboardProcesos(anio);
-
-  if (loading) return <div className="text-center py-10">Cargando…</div>;
+// console.log("Datos del dashboard:", data);
+  if (loading) return <div className="text-center py-10"><NexusLoader text="Cargando datos del dashboard" /></div>;
   if (!data) return <div>No hay datos disponibles</div>;
 
   // Obtener lista única de departamentos para el filtro
