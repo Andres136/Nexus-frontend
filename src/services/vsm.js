@@ -91,9 +91,11 @@ export const otAlistamientoService = {
   ordenesParaAlistamiento: () =>
     apiClient.get("/api/ordenes-trabajo-alistamiento"),
 
-  alistamientoActivoPorOT: () =>
-    apiClient.get('/api/alistamientos-activos'),
+  alistamientoActivoPorOT: (params) =>
+    apiClient.get('/api/alistamientos-activos', { params }),
 }
+
+
 
 //DAtos para pronóstico VSM
 export const vsmForecastService = {
@@ -112,4 +114,7 @@ export const alistamientosFinalizadosService = {
     apiClient.get('/api/vsm/ots-finalizadas', { params }),
 }
 
-
+export const vsmProduccionService = {
+registerProduccion: (data) =>
+  apiClient.post('/api/alistamiento/produccion', data),
+}

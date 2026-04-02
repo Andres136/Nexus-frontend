@@ -1,32 +1,32 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { otAlistamientoService } from "../../services/vsm";
-
+import { useState } from "react";
 
 export function useAlistamientosActivos() {
-  const [alistamientos, setAlistamientos] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState({});
 
-  const fetchActivos = async () => {
-    try {
-      const res = await otAlistamientoService.alistamientoActivoPorOT();
+  const query = useQuery({
+    queryKey: ["alistamientos-activos", filters], // 🔥 clave con filtros
+    queryFn: async () => {
+      const res = await otAlistamientoService.alistamientoActivoPorOT(filters);
+      console.log("ReactQuery data:", res.data);
+      return res.data;
+    },
+    refetchInterval: 2000, // 🔥 reemplaza setInterval
+    keepPreviousData: true, // 🔥 evita parpadeos
+  });
 
-      console.log("Alistamientos activos:", res.data);
-      setAlistamientos(res.data);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
+  const refresh = (newFilters = null) => {
+    if (newFilters) {
+      setFilters(newFilters); // 🔥 cambia filtro → refetch automático
+    } else {
+      query.refetch(); // 🔥 manual
     }
   };
 
-  useEffect(() => {
-    fetchActivos();
-
-    // refrescar cada 2 segundos
-    const interval = setInterval(fetchActivos, 2000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  return { alistamientos, loading, refresh: fetchActivos };
+  return {
+    alistamientos: query.data || [],
+    loading: query.isLoading,
+    refresh,
+  };
 }

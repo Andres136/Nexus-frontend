@@ -39,12 +39,13 @@ export const useNovedades = () => {
   // 🔹 LISTAR
   // ===============================
   const obtenerNovedades = async (customFilters = filters) => {
+    console.log("Obteniendo novedades con filtros:", customFilters);
     setLoading(true);
     setError(null);
 
     try {
       const response = await calidadService.getNovedades(customFilters);
-  //    console.log("Respuesta de novedades:", response.data);
+    console.log("Respuesta de novedades:", response.data);
       setNovedades(response.data.data);
 
       setPagination({
@@ -92,6 +93,7 @@ const actualizarNovedad = async (id, data) => {
   formData.append('fecha_terminado', data.fecha_terminado || '');
   formData.append('responsable_id', data.responsable_id || '');
   formData.append('fuentes', data.fuentes || '');
+  formData.append('causa', data.causa || '');
 
   if (data.soporte instanceof File) {
     formData.append('soporte', data.soporte);
@@ -120,9 +122,13 @@ const actualizarNovedad = async (id, data) => {
   // ===============================
   // 🔹 EFECTO INICIAL
   // ===============================
-  useEffect(() => {
-    obtenerNovedades();
-  }, []);
+useEffect(() => {
+  const delay = setTimeout(() => {
+    obtenerNovedades(filters);
+  }, 500);
+
+  return () => clearTimeout(delay);
+}, [filters]);
 
   return {
     formData,

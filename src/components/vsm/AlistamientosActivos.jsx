@@ -1,116 +1,111 @@
 import { FaPause, FaPlay } from "react-icons/fa";
 import { useAlistamientosActivos } from "../../hooks/vsm/useAlistamientoActivos";
-import { vsmService } from "../../services/vsm";
+import { vsmProduccionService, vsmService } from "../../services/vsm";
 import { toast } from "react-toastify";
 import { useAlistamientos } from "../../hooks/vsm/useAlistamiento";
 import { 
-  Clock, 
-  Users, 
-  Package, 
-  Building2, 
-  Play, 
-  Pause, 
-  Square,
-  Timer,
-  User,
-
+  Clock,  Package,Play, Pause, 
+  Square, Timer,  Plus, ChevronDown, ChevronUp, CheckCircle2 
 } from "lucide-react";
 import Swal from "sweetalert2";
-import { usersApi } from "../../services/api";
-
+import { useState } from "react";
+import {useSedes} from "../../hooks/useSedes";
 
 export default function AlistamientosActivos() {
-  const { alistamientos, loading, refresh } = useAlistamientosActivos();
+  const { alistamientos, loading, refresh,  } = useAlistamientosActivos();
   const { pausar, reanudar, finalizar } = useAlistamientos();
+  const { sedes } = useSedes();
+const [sedeSeleccionada, setSedeSeleccionada] = useState("");
 
-  // -------------------------------------------------------------------
-  // 4. PAUSAR / REANUDAR / FINALIZAR
-  // -------------------------------------------------------------------
- const handlePausa = async (alistId) => {
-  const { value: razon } = await Swal.fire({
-    title: "Pausar alistamiento",
-    text: "Describe el motivo de la pausa",
-    input: "text",
-    inputPlaceholder: "Motivo...",
-    showCancelButton: true,
-    confirmButtonText: "Guardar",
-    cancelButtonText: "Cancelar",
-    confirmButtonColor: "#d97706", // Amarillo
-    cancelButtonColor: "#6b7280", // Gris
-    inputValidator: (value) => {
-      if (!value) {
-        return "Debes escribir un motivo.";
-      }
-    }
-  });
-
-  if (!razon) return;
-
-  await pausar(alistId, razon);
-  refresh();
-};
-const handleReanudar = async (alistId) => {
-  await Swal.fire({
-    title: "¿Reanudar alistamiento?",
-    icon: "question",
-    showCancelButton: true,
-    confirmButtonText: "Sí, reanudar",
-    cancelButtonText: "Cancelar",
-    confirmButtonColor: "#16a34a", // Verde
-    cancelButtonColor: "#6b7280",
-  });
-
-  await reanudar(alistId);
-  refresh();
-};
-
-
-  const handleFinalizar = async (alistId) => {
-    const data = await finalizar(alistId);
-   toast.success(data.message || "Alistamiento finalizado");
-    refresh();
+  const handlePausa = async (alistId) => {
+    const { value: razon } = await Swal.fire({
+      title: "Pausar alistamiento",
+      text: "Describe el motivo de la pausa",
+      input: "text",
+      inputPlaceholder: "Motivo...",
+      showCancelButton: true,
+      confirmButtonText: "Guardar",
+      confirmButtonColor: "#d97706",
+      inputValidator: (value) => !value && "Debes escribir un motivo."
+    });
+    if (razon) { await pausar(alistId, razon); refresh(sedeSeleccionada ? { sede_id: sedeSeleccionada } : {}); }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <div className="flex items-center gap-3">
-          <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-          <span className="text-gray-600">Cargando alistamientos...</span>
-        </div>
-      </div>
-    );
-  }
+  const handleReanudar = async (alistId) => {
+    const res = await Swal.fire({
+      title: "¿Reanudar alistamiento?",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Sí, reanudar",
+      confirmButtonColor: "#16a34a",
+    });
+    if (res.isConfirmed) { await reanudar(alistId); refresh(sedeSeleccionada ? { sede_id: sedeSeleccionada } : {}); }
+  };
+
+  const handleFinalizar = async (alistId) => {
+    const res = await Swal.fire({
+      title: "¿Finalizar alistamiento?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Sí, finalizar",
+      confirmButtonColor: "#dc2626",
+    });
+    if (res.isConfirmed) {
+      const data = await finalizar(alistId);
+      toast.success(data.message || "Alistamiento finalizado");
+      refresh(sedeSeleccionada ? { sede_id: sedeSeleccionada } : {});
+    }
+  };
+
+  if (loading) return (
+    <div className="flex flex-col items-center justify-center p-12 gap-3">
+      <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+      <span className="text-gray-500 font-medium">Cargando operaciones...</span>
+    </div>
+  );
 
   return (
-    <div className="space-y-4">
-      {/* ✅ Header compacto */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Clock className="w-5 h-5 text-blue-600" />
-          <h2 className="text-lg font-semibold text-gray-900">Alistamientos Activos</h2>
-          <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm font-medium">
-            {alistamientos.length}
-          </span>
-        </div>
-      </div>
+    <div className="space-y-6 p-4">
+<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
 
-      {alistamientos.length === 0 && (
-        <div className="text-center py-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-gray-100 rounded-full mb-3">
-            <Clock className="w-6 h-6 text-gray-400" />
-          </div>
-          <p className="text-gray-500">No hay alistamientos activos</p>
-        </div>
-      )}
+  {/* IZQUIERDA */}
+  <div className="flex items-center gap-3">
+    <div className="bg-blue-600 p-2 rounded-lg text-white shadow-lg">
+      <Clock className="w-5 h-5" />
+    </div>
+    <h2 className="text-2xl font-bold text-gray-800">Alistamientos Activos</h2>
+    <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-black">
+      {alistamientos.length}
+    </span>
+  </div>
 
-      {/* ✅ Grid de 4 columnas responsivo */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+  {/* 🔥 SELECT SEDE */}
+  <div className="flex items-center gap-2">
+    <select
+      value={sedeSeleccionada}
+      onChange={(e) => {
+        setSedeSeleccionada(e.target.value);
+        refresh({ sede_id: e.target.value }); // 🔥 aquí llamas filtro
+      }}
+      className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+    >
+      <option value="">Mi sede</option>
+      {sedes?.map(s => (
+        <option key={s.id} value={s.id}>
+          {s.nombre}
+        </option>
+      ))}
+    </select>
+  </div>
+
+</div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
         {alistamientos.map((alist) => (
           <AlistamientoCard 
             key={alist.id} 
             alist={alist}
-            onUpdate={refresh} 
+            onUpdate={() => refresh(sedeSeleccionada ? { sede_id: sedeSeleccionada } : {})}
             onPausa={handlePausa}
             onReanudar={handleReanudar}
             onFinalizar={handleFinalizar}
@@ -122,336 +117,250 @@ const handleReanudar = async (alistId) => {
 }
 
 function AlistamientoCard({ alist, onUpdate, onPausa, onReanudar, onFinalizar }) {
-  const formatTime = (seg) => {
-    const h = Math.floor(seg / 3600);
-    const m = Math.floor((seg % 3600) / 60);
-    const s = seg % 60;
-    return `${h}h ${m}m ${s}s`;
-  };
+  const [activeUserPanel, setActiveUserPanel] = useState(null);
+
+ const formatTime = (seg) => {
+  const safe = Math.max(0, Math.floor(Number(seg) || 0));
+  const h = Math.floor(safe / 3600);
+  const m = Math.floor((safe % 3600) / 60);
+  const s = safe % 60;
+  return `${h}h ${m}m ${s}s`;
+};
+
+
 
   const onAgregarUsuario = async (alistId) => {
-  try {
-    const response = await vsmService.usuariosDisponibles(alistId);
-    //console.log("Usuarios disponibles:", response.data);
-    // 🔒 Blindaje total
-    const options = {};
-    response.data.forEach((user) => {
-      options[user.id] = user.name;
-    });
+    try {
+      const response = await vsmService.usuariosDisponibles(alistId);
+      const options = {};
+      response.data.forEach(user => options[user.id] = user.name);
 
-    if (Object.keys(options).length === 0) {
-      toast.info("No hay usuarios disponibles para agregar");
-      return;
-    }
-
-    const { value: userId } = await Swal.fire({
-      title: "Agregar usuario al alistamiento",
-      input: "select",
-      inputOptions: options,
-      inputPlaceholder: "Selecciona un usuario",
-      showCancelButton: true,
-      confirmButtonText: "Agregar",
-      cancelButtonText: "Cancelar",
-      inputValidator: (value) => {
-        if (!value) return "Debes seleccionar un usuario";
+      if (Object.keys(options).length === 0) {
+        return toast.info("No hay usuarios disponibles");
       }
-    });
 
-    if (!userId) return;
+      const { value: userId } = await Swal.fire({
+        title: "Agregar operario",
+        input: "select",
+        inputOptions: options,
+        inputPlaceholder: "Selecciona un usuario",
+        showCancelButton: true,
+        confirmButtonColor: "#2563eb"
+      });
 
-    await vsmService.agregarUsuario(alistId, { usuario_id: userId });
-    toast.success("Usuario agregado correctamente");
-    onUpdate();
-
-  } catch (e) {
-    console.error(e);
-    toast.error("Error al cargar usuarios");
-  }
-};
-
-
-  // ✅ Función para determinar color del estado
-  const getEstadoColor = (estado) => {
-    switch (estado) {
-      case 'INICIADO':
-      case 'REANUDADO':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'PAUSADO':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };const getFechaEntregaUI = (fecha) => {
-  if (!fecha) {
-    return { text: "Sin fecha", className: "text-gray-400" };
-  }
-
-  const vencida = new Date(fecha + "T00:00:00") < new Date();
-
-  return {
-    text: new Date(fecha).toLocaleDateString("es-CO"),
-    className: vencida ? "text-red-600" : "text-gray-600",
-    vencida
+      if (userId) {
+        await vsmService.agregarUsuario(alistId, { usuario_id: userId });
+        toast.success("Usuario agregado");
+        onUpdate();
+      }
+    } catch (e) { toast.error("Error al cargar usuarios"); }
   };
-};
-
-
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-200">
-      
-      {/* ✅ Header compacto con estado */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 border-b border-gray-200">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <div className="bg-blue-600 p-1.5 rounded-lg">
-              <Package className="w-3 h-3 text-white" />
-            </div>
-            <span className="font-bold text-gray-900 text-sm">OT #{alist.orden_trabajo_id}</span>
-            <span className="text-xs text-gray-500">{alist.cliente?.nombre}</span>
-         
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-full">
+      {/* HEADER */}
+      <div className="p-4 bg-gradient-to-br from-slate-50 to-blue-50 border-b">
+        <div className="flex justify-between items-start mb-2">
+          <div>
+            <span className="text-[10px] font-bold text-blue-600 uppercase tracking-tighter">Orden Trabajo</span>
+            <h3 className="font-black text-gray-900 text-lg leading-tight">#{alist.orden_trabajo_id}</h3>
+            <p className="text-xs text-gray-500 truncate w-40">{alist.cliente?.nombre}</p>
           </div>
-          <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getEstadoColor(alist.estado)}`}>
+          <div className={`px-2 py-1 rounded-md text-[10px] font-bold border ${
+            alist.estado === 'PAUSADO' ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-green-100 text-green-700 border-green-200'
+          }`}>
             {alist.estado}
-          </span>
+          </div>
         </div>
+        <div className="flex items-center gap-2 mt-3">
+          <Timer className="w-4 h-4 text-blue-600" />
+          <span className="font-mono font-bold text-sm">{formatTime(alist.segundos_transcurridos)}</span>
+        </div>
+      </div>
 
-        {/* ✅ Info principal compacta */}
+      {/* CONTENIDO */}
+      <div className="p-4 flex-1 space-y-4 overflow-y-auto max-h-[450px]">
+        {/* RESUMEN PRODUCTOS (Solo Lectura) */}
         <div className="space-y-1">
-          <div className="flex items-center gap-1 text-xs text-gray-600">
-            <Building2 className="w-3 h-3" />
-            <span>{alist.sede?.nombre ?? "Sin sede"}</span>
-  
-
+          <div className="flex items-center gap-2 mb-2 text-gray-400">
+            <Package className="w-3 h-3" />
+            <h4 className="text-[10px] font-bold uppercase">Estado de Productos</h4>
           </div>
-             {(() => {
-  const info = getFechaEntregaUI(alist.orden_trabajo?.orden_compra?.fecha_entrega);
-
-  return (
-    <span className={`text-xs font-medium ${info.className}`}>
-  Fecha entrega {info.text}
-      {info.vencida && " (Vencida)"}
-    </span>
-  );
-})()}
-          <div className="flex items-center gap-1">
-            <Timer className="w-3 h-3 text-blue-600" />
-            <span className="font-semibold text-sm text-gray-900">
-              {formatTime(alist.segundos_transcurridos)}
-            </span>
-          </div>
+          {alist.detalles.map(d => (
+            <div key={d.id} className="flex justify-between text-[11px] bg-gray-50 p-1.5 rounded">
+              <span className="truncate pr-2">{d.product}</span>
+              <span className="font-mono font-bold">{d.alistada}/{d.programada}</span>
+            </div>
+          ))}
         </div>
-      </div>
 
-      {/* ✅ Contenido compacto */}
-      <div className="p-4 space-y-4">
-        
-        {/* Usuarios compactos */}
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <Users className="w-4 h-4 text-purple-600" />
-            <h4 className="font-medium text-sm text-gray-900">
-              Usuarios ({alist.usuarios.length})
-            </h4>
-            <button
-  onClick={() => onAgregarUsuario(alist.id)}
-  className="ml-auto flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800"
->
-  <User className="w-3 h-3" />
-  Agregar
-</button>
-
+        {/* LISTA DE USUARIOS */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <h4 className="text-[10px] font-bold uppercase text-gray-400">Personal & Producción</h4>
+            <button onClick={() => onAgregarUsuario(alist.id)} className="text-blue-600 hover:text-blue-800 text-[10px] font-bold flex items-center gap-1">
+              <Plus className="w-3 h-3" /> AGREGAR
+            </button>
           </div>
           
-          <div className="space-y-2">
-            {alist.usuarios.map((u) => (
-              <UsuarioRow
-                key={u.id}
-                usuario={u}
-                alistId={alist.id}
+          {alist.usuarios.map(u => (
+            <div key={u.id} className="border rounded-xl bg-white overflow-hidden">
+              <UsuarioRow 
+                usuario={u} 
+                alistId={alist.id} 
                 onUpdate={onUpdate}
+                isExpanded={activeUserPanel === u.id}
+                onToggle={() => setActiveUserPanel(activeUserPanel === u.id ? null : u.id)}
               />
-            ))}
-          </div>
-        </div>
-
-        {/* Productos compactos */}
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <Package className="w-4 h-4 text-green-600" />
-            <h4 className="font-medium text-sm text-gray-900">
-              Productos ({alist.detalles.length})
-            </h4>
-          </div>
-          
-          <div className="space-y-2">
-            {alist.detalles.map((d, i) => (
-              <div key={i} className="bg-gray-50 border border-gray-200 p-2 rounded-lg">
-                <div className="font-medium text-xs text-gray-900 mb-1 truncate" title={d.producto}>
-                  {d.producto}
+              
+              {activeUserPanel === u.id && (
+                <div className="bg-slate-50 border-t p-3 animate-in fade-in duration-200">
+                  <ProductionForm 
+                    usuario={u} 
+                    detalles={alist.detalles} 
+                    alistId={alist.id} 
+                    onUpdate={onUpdate} 
+                  />
                 </div>
-                <div className="grid grid-cols-3 gap-1 text-xs">
-                  <div className="text-center">
-                    <div className="text-gray-500">Prog.</div>
-                    <div className="font-medium">{d.programada}</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-green-600">Alist.</div>
-                    <div className="font-medium">{d.alistada}</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-red-600">Falt.</div>
-                    <div className="font-medium">{d.faltante}</div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+              )}
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* ✅ Botones de acción compactos */}
-      <div className="border-t border-gray-200 p-3 bg-gray-50">
-        <div className="grid grid-cols-3 gap-2">
-          <button
-            onClick={() => onPausa(alist.id)}
-            className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-yellow-600 hover:bg-yellow-700 text-white text-xs font-medium transition-colors"
-            disabled={alist.estado === 'PAUSADO'}
-          >
-            <Pause className="w-3 h-3" />
-            Pausar
-          </button>
-          
-          <button
-            onClick={() => onReanudar(alist.id)}
-            className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-medium transition-colors"
-            disabled={alist.estado === 'INICIADO' || alist.estado === 'REANUDADO'}
-          >
-            <Play className="w-3 h-3" />
-            Reanudar
-          </button>
-          
-          <button
-            onClick={() => onFinalizar(alist.id)}
-            className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-colors"
-          >
-            <Square className="w-3 h-3" />
-            Finalizar
-          </button>
-        </div>
+      {/* FOOTER ACCIONES */}
+      <div className="p-3 bg-gray-50 border-t grid grid-cols-3 gap-2">
+        <button onClick={() => onPausa(alist.id)} disabled={alist.estado === 'PAUSADO'} className="flex flex-col items-center py-2 rounded-lg bg-white border border-amber-200 text-amber-600 hover:bg-amber-50 disabled:opacity-40">
+          <Pause size={14} /><span className="text-[9px] font-bold mt-1">PAUSAR</span>
+        </button>
+        <button onClick={() => onReanudar(alist.id)} disabled={alist.estado !== 'PAUSADO'} className="flex flex-col items-center py-2 rounded-lg bg-white border border-green-200 text-green-600 hover:bg-green-50 disabled:opacity-40">
+          <Play size={14} /><span className="text-[9px] font-bold mt-1">REANUDAR</span>
+        </button>
+        <button onClick={() => onFinalizar(alist.id)} className="flex flex-col items-center py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors">
+          <Square size={14} /><span className="text-[9px] font-bold mt-1 text-white">FINALIZAR</span>
+        </button>
       </div>
     </div>
   );
 }
 
-function UsuarioRow({ usuario, alistId, onUpdate }) {
-const toggleEstado = async () => {
-  try {
-    // --------------------------------------------
-    // SI ESTÁ PAUSADO → REANUDAR DIRECTO
-    // --------------------------------------------
-    if (usuario.estado === "PAUSADO") {
-
-      const confirm = await Swal.fire({
-        title: "Reanudar usuario",
-        text: `¿Deseas reanudar a ${usuario.name}?`,
-        icon: "question",
-        showCancelButton: true,
-        confirmButtonText: "Sí, reanudar",
-        cancelButtonText: "Cancelar",
-        confirmButtonColor: "#16a34a",
-        cancelButtonColor: "#6b7280",
-      });
-
-      if (!confirm.isConfirmed) return;
-
-      await vsmService.reanudarUsuario(alistId, usuario.id);
-      onUpdate();
-      return;
-    }
-
-    // --------------------------------------------
-    // SI ESTÁ EN PROGRESO → PAUSAR (REQUIERE RAZÓN)
-    // --------------------------------------------
-
-    const { value: razon } = await Swal.fire({
-      title: "Pausar usuario",
-      text: `Ingresa el motivo de la pausa para ${usuario.name}:`,
-      input: "text",
-      inputPlaceholder: "Motivo...",
-      showCancelButton: true,
-      confirmButtonText: "Guardar",
-      cancelButtonText: "Cancelar",
-      confirmButtonColor: "#d97706",
-      cancelButtonColor: "#6b7280",
-      inputValidator: (value) => {
-        if (!value) {
-          return "Debes ingresar un motivo para pausar.";
-        }
+function UsuarioRow({ usuario, alistId, onUpdate, isExpanded, onToggle }) {
+  const toggleEstado = async (e) => {
+    e.stopPropagation(); // Evitar que abra el panel de producción al hacer clic en el botón
+    try {
+      if (usuario.estado === "PAUSADO") {
+        const res = await Swal.fire({
+          title: "Reanudar usuario",
+          text: `¿Reanudar a ${usuario.name}?`,
+          icon: "question",
+          showCancelButton: true,
+          confirmButtonColor: "#16a34a"
+        });
+        if (res.isConfirmed) { await vsmService.reanudarUsuario(alistId, usuario.id); onUpdate(); }
+      } else {
+        const { value: razon } = await Swal.fire({
+          title: "Pausar usuario",
+          input: "text",
+          inputPlaceholder: "Motivo de la pausa...",
+          showCancelButton: true,
+          inputValidator: (value) => !value && "Requerido"
+        });
+        if (razon) { await vsmService.pausarUsuario(alistId, usuario.id, { razon }); onUpdate(); }
       }
-    });
-
-    if (!razon) return;
-
-    await vsmService.pausarUsuario(alistId, usuario.id, { razon });
-    onUpdate();
-
-  } catch (error) {
-    console.error("Error al cambiar estado del usuario:", error);
-    toast.error("No se pudo cambiar el estado del usuario");
-  }
+    } catch (e) { toast.error("Error al cambiar estado"); }
+  };
+const formatUserTime = (seg) => {
+  const safe = Math.max(0, Math.floor(Number(seg) || 0));
+  const h = Math.floor(safe / 3600);
+  const m = Math.floor((safe % 3600) / 60);
+  const s = safe % 60;
+  return `${h}h ${m}m ${s}s`;
 };
-
-
   return (
-    <div className="flex items-center justify-between bg-white border border-gray-200 p-2 rounded-lg">
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <div className="bg-blue-100 p-1 rounded-full">
-            <User className="w-3 h-3 text-blue-600" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="font-medium text-sm text-gray-900 truncate">
-              {usuario.name}
-            </div>
-            <div className="flex items-center gap-2 text-xs">
-              <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
-                usuario.estado === "PAUSADO" 
-                  ? 'bg-yellow-100 text-yellow-800' 
-                  : 'bg-green-100 text-green-800'
-              }`}>
-                {usuario.estado ?? "ACTIVO"}
-              </span>
-              <span className="text-gray-500">
-                {usuario.segundos_usuario}s
-              </span>
-            </div>
-          </div>
+    <div 
+      onClick={onToggle}
+      className="flex items-center justify-between p-3 cursor-pointer hover:bg-slate-50 transition-colors"
+    >
+      <div className="flex items-center gap-3 min-w-0">
+        <div className={`w-2 h-2 rounded-full ${usuario.estado === 'PAUSADO' ? 'bg-amber-500' : 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]'}`} />
+        <div className="min-w-0">
+          <p className="text-sm font-bold text-gray-800 truncate">{usuario.name}</p>
+       <p className="text-[10px] text-gray-400 font-mono">
+  Tiempo: {formatUserTime(usuario.segundos_usuario)}
+</p>
         </div>
       </div>
+      
+      <div className="flex items-center gap-2">
+        <button 
+          onClick={toggleEstado}
+          className={`p-2 rounded-lg transition-colors ${usuario.estado === 'PAUSADO' ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'}`}
+        >
+          {usuario.estado === 'PAUSADO' ? <FaPlay size={10} /> : <FaPause size={10} />}
+        </button>
+        {isExpanded ? <ChevronUp size={16} className="text-gray-300" /> : <ChevronDown size={16} className="text-gray-300" />}
+      </div>
+    </div>
+  );
+}
 
-      <button
-        onClick={toggleEstado}
-        className={`flex items-center gap-1 px-2 py-1 rounded-lg text-white text-xs font-medium transition-colors ${
-          usuario.estado === "PAUSADO" 
-            ? "bg-green-600 hover:bg-green-700" 
-            : "bg-yellow-600 hover:bg-yellow-700"
-        }`}
-      >
-        {usuario.estado === "PAUSADO" ? (
-          <>
-            <FaPlay className="w-2 h-2" />
-            <span className="hidden sm:inline">Reanudar</span>
-          </>
-        ) : (
-          <>
-            <FaPause className="w-2 h-2" />
-            <span className="hidden sm:inline">Pausar</span>
-          </>
-        )}
-      </button>
+function ProductionForm({ usuario, detalles, alistId, onUpdate }) {
+  const [vals, setVals] = useState({});
 
- 
+  const handleRegister = async (detalleId) => {
+    const data = vals[detalleId] || {};
+    const total = (Number(data.paq) || 0) * (Number(data.und) || 0);
+
+    if (total <= 0) return toast.warning("Ingresa cantidades");
+
+    try {
+      await vsmProduccionService.registerProduccion({
+        alistamiento_id: alistId,
+        usuario_id: usuario.id,
+        detalle_id: detalleId,
+        cantidad_alistada: total
+      });
+      toast.success(`+${total} para ${usuario.name}`);
+      setVals({ ...vals, [detalleId]: { paq: '', und: '' } });
+      onUpdate();
+    } catch (e) { toast.error("Error al registrar"); }
+  };
+
+  return (
+    <div className="space-y-3">
+      <p className="text-[10px] font-black text-blue-600 uppercase mb-2 tracking-widest">Panel de Producción</p>
+      {detalles.map(d => {
+        const subtotal = (Number(vals[d.id]?.paq || 0) * Number(vals[d.id]?.und || 0));
+        return (
+          <div key={d.id} className="bg-white border rounded-lg p-2 shadow-sm">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-[11px] font-bold text-gray-700 truncate w-32">{d.product}</span>
+              <span className="text-[10px] font-bold text-red-500">Pend: {d.faltante}</span>
+            </div>
+            <div className="flex gap-1">
+              <input 
+                type="number" placeholder="Paq" 
+                className="w-full text-xs p-1.5 border rounded"
+                value={vals[d.id]?.paq || ''}
+                onChange={e => setVals({...vals, [d.id]: {...vals[d.id], paq: e.target.value}})}
+              />
+              <input 
+                type="number" placeholder="Und" 
+                className="w-full text-xs p-1.5 border rounded"
+                value={vals[d.id]?.und || ''}
+                onChange={e => setVals({...vals, [d.id]: {...vals[d.id], und: e.target.value}})}
+              />
+              <button 
+                onClick={() => handleRegister(d.id)}
+                className="bg-blue-600 text-white px-3 rounded-lg hover:bg-blue-700 flex items-center gap-1 shrink-0"
+              >
+                <CheckCircle2 size={14} />
+                {subtotal > 0 && <span className="text-[10px] font-bold">{subtotal}</span>}
+              </button>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }

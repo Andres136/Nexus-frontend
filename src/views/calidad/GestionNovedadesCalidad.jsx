@@ -45,7 +45,8 @@ export default function GestionNovedadesCalidad() {
     fecha_terminado: "",
     responsable_id: null,
     soporte: null,
-    fuentes: ""
+    fuentes: "",
+    causa: "",
   });
 
   useEffect(() => {
@@ -62,7 +63,8 @@ export default function GestionNovedadesCalidad() {
         fecha_terminado: novedadSeleccionada.fecha_terminado || "",
         responsable_id: novedadSeleccionada.responsable_id || null,
         soporte: null,
-        fuentes: novedadSeleccionada.fuentes || ""
+        fuentes: novedadSeleccionada.fuentes || "",
+        causa: novedadSeleccionada.causa || ""
       });
 
       if (novedadSeleccionada.hallazgos) {
@@ -140,6 +142,24 @@ export default function GestionNovedadesCalidad() {
     marginBottom: "24px"
   };
 
+const opcionesFuentes = [
+  { value: "Auditoría Interna", label: "Auditoría Interna" },
+  { value: "Auditoría Externa", label: "Auditoría Externa" },
+  { value: "Cliente", label: "Cliente" },
+  { value: "Proveedor", label: "Proveedor" },
+  { value: "Inspección Interna", label: "Inspección Interna" },
+  { value: "Control de Proceso", label: "Control de Proceso" },
+  { value: "Queja", label: "Queja" },
+  { value: "Revisión Gerencial", label: "Revisión Gerencial" },
+  { value: "Indicadores", label: "Indicadores / KPIs" },
+  { value: "Acción Correctiva", label: "Acción Correctiva" },
+  { value: "Acción Preventiva", label: "Acción Preventiva" },
+  { value: "Hallazgo SST", label: "Seguridad y Salud en el Trabajo (SST)" },
+  { value: "Ambiental", label: "Gestión Ambiental" },
+  { value: "Otro", label: "Otro" }
+];
+ 
+ 
   return (
     <div style={{ padding: "40px 20px", maxWidth: "1100px", margin: "0 auto", backgroundColor: "#f8fafc", minHeight: "100vh", fontFamily: "'Inter', sans-serif" }}>
       
@@ -171,6 +191,24 @@ export default function GestionNovedadesCalidad() {
               style={{ ...inputStyle, minHeight: "100px", resize: "vertical" }}
             />
           </div>
+             
+          <div>
+            <label style={labelStyle}>Causa de la Novedad</label>
+            <textarea
+              name="causa"
+              value={form.causa}
+              onChange={handleChangeNovedad}
+              placeholder="Detalle la causa de los hallazgos..."
+    style={{ 
+  ...inputStyle, 
+  minHeight: "120px", 
+  resize: "vertical",
+  lineHeight: "1.6",
+  padding: "12px",
+  whiteSpace: "pre-wrap"
+}}
+            />
+          </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
             <div>
@@ -194,6 +232,20 @@ export default function GestionNovedadesCalidad() {
               </select>
             </div>
           </div>
+
+          {/* --- FUENTES --- */}
+
+<div>
+  <label style={labelStyle}>Fuente de la Novedad</label>
+  <Select
+    options={opcionesFuentes}
+    value={opcionesFuentes.find(f => f.value === form.fuentes)}
+    onChange={(selected) => setForm(prev => ({ ...prev, fuentes: selected?.value }))}
+    styles={{ control: (base) => ({ ...base, borderRadius: "8px", padding: "2px" }) }}
+    placeholder="Seleccione la fuente"
+  />
+</div>
+          
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px", alignItems: "end" }}>
             <div>

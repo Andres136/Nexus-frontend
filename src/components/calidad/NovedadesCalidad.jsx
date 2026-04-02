@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+
 import { useNovedades } from "../../hooks/calidad/useNovedades";
 import NexusLoader from "../NexusLoader";
 
@@ -18,7 +18,7 @@ export default function Novedades() {
     pagination,
   
 
-    obtenerNovedades } = useNovedades();
+ } = useNovedades();
 
 
   return (
@@ -50,13 +50,19 @@ export default function Novedades() {
       {/* Filtros */}
       <div className="mb-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
         <div className="flex flex-wrap gap-4">
-        <input
-          type="text"
-          placeholder="Buscar por descripción..."
-          value={filters.descripcion || ''}
-          onChange={(e) => setFilters(prev => ({ ...prev, descripcion: e.target.value }))}
-          className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 md:max-w-sm"
-        />
+  <input
+  type="text"
+  placeholder="Buscar..."
+  value={filters.search || ''}
+  onChange={(e) =>
+    setFilters(prev => ({
+      ...prev,
+      search: e.target.value,
+      page: 1 // 🔥 importante resetear paginación
+    }))
+  }
+  className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm"
+/>
         </div>
 
 
@@ -176,7 +182,12 @@ export default function Novedades() {
 
             <button
               disabled={pagination.current_page === 1}
-              onClick={() => obtenerNovedades(pagination.current_page - 1)}
+              onClick={() =>
+  setFilters(prev => ({
+    ...prev,
+    page: prev.page - 1
+  }))
+  }
               className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Anterior
@@ -188,7 +199,11 @@ export default function Novedades() {
 
             <button
               disabled={pagination.current_page === pagination.last_page}
-              onClick={() => obtenerNovedades(pagination.current_page + 1)}
+              onClick={() =>
+  setFilters(prev => ({
+    ...prev,  page: prev.page + 1
+  }))
+  }
               className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Siguiente

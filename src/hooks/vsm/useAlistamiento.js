@@ -33,7 +33,7 @@ export function useAlistamientos() {
       return res.data;
 
     } catch (error) {
-      console.error(error);
+      console.log(error);
       toast.error("Error al crear alistamiento");
       throw error;
 
@@ -87,6 +87,7 @@ export function useAlistamientos() {
       return res.data;
 
     } catch (error) {
+      console.log(error);
       console.error(error);
       toast.error("No se pudo reanudar");
       throw error;
