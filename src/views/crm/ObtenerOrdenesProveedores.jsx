@@ -2,7 +2,7 @@ import { Edit,  Eye,  SplitIcon,  Trash2, Truck } from "lucide-react";
 import { useProveedores } from "../../hooks/useProveedores";
 import {  Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 
 
@@ -35,7 +35,9 @@ const isAdministrativo = [4, 5, 6,].includes(user?.role_id);
     setPagina(1);
     obtenerOrdenes(1, searchTerm, weekFilter);
   };
-
+useEffect(() => {
+  obtenerOrdenes(pagina, searchTerm, weekFilter);
+}, [pagina]);
   //Formatear fecha
 const formatearFecha = (fecha) => {
   if (!fecha) return ""
@@ -189,21 +191,27 @@ const formatearFecha = (fecha) => {
       )}
 
       <div className="mt-4 flex justify-between">
-        <button
-          disabled={pagina === 1}
-          onClick={() => setPagina(pagina - 1)}
-          className="px-4 py-2 bg-gray-200 rounded"
-        >
+     <button
+  disabled={pagina === 1}
+  onClick={() => {
+    const nuevaPagina = pagina - 1;
+    setPagina(nuevaPagina);
+    obtenerOrdenes(nuevaPagina, searchTerm, weekFilter);
+  }}
+>
           Anterior
         </button>
         <span>
           Página {pagina} de {lastPage}
         </span>
-        <button
-          disabled={pagina === lastPage}
-          onClick={() => setPagina(pagina + 1)}
-          className="px-4 py-2 bg-gray-200 rounded"
-        >
+       <button
+  disabled={pagina === lastPage}
+  onClick={() => {
+    const nuevaPagina = pagina + 1;
+    setPagina(nuevaPagina);
+    obtenerOrdenes(nuevaPagina, searchTerm, weekFilter);
+  }}
+>
           Siguiente
         </button>
       </div>

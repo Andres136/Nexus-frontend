@@ -77,6 +77,11 @@ export default function Tareas() {
     return grupos;
   }, [tareas]);
 
+  const esVencida = (tarea) => {
+  const fechaLimite = tarea.fecha_fin ? new Date(tarea.fecha_fin) : null;
+  return fechaLimite && fechaLimite < new Date();
+};
+
   /*
   =====================================
   COLUMNAS KANBAN
@@ -123,24 +128,38 @@ export default function Tareas() {
   */
 
   const cambiarEstado = async (id, estado_id) => {
-    const token = localStorage.getItem("token");
-    try {
-      let nuevoEstado = estado_id;
-      if (estado_id === 1) nuevoEstado = 5;
-      else if (estado_id === 5) nuevoEstado = 2;
+  const token = localStorage.getItem("token");
 
-      await clienteAxios.patch(
-        `/api/tareas/estado/${id}`,
-        { estado_id: nuevoEstado },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+  try {
+    let nuevoEstado = estado_id;
 
-      toast.success("Estado actualizado");
-      setActualizar(!actualizar);
-    } catch {
-      toast.error("Error al actualizar estado");
+    // 👉 SI está pendiente → cualquiera puede iniciar
+    if (estado_id === 1) {
+      nuevoEstado = 5;
     }
-  };
+
+    // 👉 SI está en curso → SOLO ADMIN puede completar
+    else if (estado_id === 5) {
+      if (user?.role_id !== 1) {
+        toast.error("No tienes permiso para completar esta tarea");
+        return;
+      }
+      nuevoEstado = 2;
+    }
+
+    await clienteAxios.patch(
+      `/api/tareas/estado/${id}`,
+      { estado_id: nuevoEstado },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    toast.success("Estado actualizado");
+    setActualizar(!actualizar);
+
+  } catch {
+    toast.error("Error al actualizar estado");
+  }
+};
 
   /*
   =====================================
@@ -234,11 +253,13 @@ export default function Tareas() {
   const TarjetaKanban = ({ tarea, borderAccent }) => {
     const fechaLimite = tarea.fecha_fin ? new Date(tarea.fecha_fin) : null;
     const expandida = tareasExpandidas.has(tarea.id);
+    const vencida = esVencida(tarea);
+     const colorAcento = vencida ? "border-l-red-500" : borderAccent;
 
     return (
       <div 
         className={`
-          bg-white rounded-xl border-l-4 ${borderAccent} 
+          bg-white rounded-xl border-l-4 ${colorAcento} 
           shadow-sm hover:shadow-md transition-all duration-200
           overflow-hidden
         `}
@@ -278,7 +299,7 @@ export default function Tareas() {
             </div>
 
             {/* Botón editar */}
-            {(user?.role_id === 1 || user?.role_id === 2) && (
+            {(user?.role_id === 1 ) && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -314,7 +335,12 @@ export default function Tareas() {
                   }
                 `}
               >
-                {tarea.estado_id === 1 ? "Iniciar Tarea" : "Marcar Completada"}
+              {tarea.estado_id === 1 
+  ? "Iniciar Tarea" 
+  : user?.role_id === 1 
+    ? "Marcar Completada" 
+    : "En proceso"
+}
               </button>
             )}
           </div>
