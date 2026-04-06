@@ -117,4 +117,7 @@ export const alistamientosFinalizadosService = {
 export const vsmProduccionService = {
 registerProduccion: (data) =>
   apiClient.post('/api/alistamiento/produccion', data),
+getRendimiento: (params) =>
+  apiClient.get('/api/kpi-productividad', { params }),
+
 }

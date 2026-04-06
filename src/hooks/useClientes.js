@@ -38,8 +38,8 @@ const [historialCliente, setHistorialCliente] = useState([]);
 const[clientesTodos, setClientesTodos]=useState([]);
 
 
-// Verifica si el usuario es admin (rol 1 o 7)
-const esAdmin = user?.role_id === 1 || user?.role_id === 7;
+// Verifica si el usuario es admin (rol 1, 4 o 7)
+const esAdmin = user?.role_id === 1 || user?.role_id === 7 || user?.role_id === 4;
 
 // Define la ruta base según el rol
 const rutaBase = esAdmin ? "/api/clientes" : "/api/clientes-registro-user";
@@ -122,7 +122,7 @@ const obtenerClientes = async (page = 1, search = "") => {
     console.log("Usuario no disponible aún, esperando...");
     return
       }
-          const esAdmin = user.role_id === 1 || user.role_id === 7;
+          const esAdmin = user.role_id === 1 || user.role_id === 7 || user.role_id === 4;
     try {
        const url = esAdmin
          ? `/api/clientes?page=${page}&search=${search}`

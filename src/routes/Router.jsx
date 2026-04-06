@@ -105,6 +105,7 @@ import DashboardConsumoServicios from "../components/hseq/DashBoardConsumoServic
 import DashboardResiduos from "../components/hseq/DashboardResiduos";
 import GestionNovedadesCalidad from "../views/calidad/GestionNovedadesCalidad";
 import DashboardSemestral from "../components/calidad/DashboardSemestral";
+import DashboardProductividaIndividual from "../views/vsm/DashboardProductividaIndividual";
 
 
 export default function Router() {
@@ -194,6 +195,13 @@ export default function Router() {
          <Route path="/auth/dashboard-semestral" element={<DynamicProtectedRoute permission="/auth/dashboard-semestral">
            <DashboardSemestral />
          </DynamicProtectedRoute>} />
+
+         <Route path="/auth/crm/vsm/productividad-individual"
+          element={<DynamicProtectedRoute permission="/auth/crm/vsm/productividad-individual">
+            <DashboardProductividaIndividual />
+          </DynamicProtectedRoute>}
+         />
+
 
 {/*Fin de Rutas para control de calidad */}
 

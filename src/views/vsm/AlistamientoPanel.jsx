@@ -172,6 +172,19 @@ const location = useLocation();
           Auditoría de Alistamientos
         </Link>
 
+        
+        {/* PRODUCTIVIDAD INDIVIDUAL */}       
+         <Link
+          to="/auth/crm/vsm/productividad-individual"
+          className={`text-sm font-medium transition-all ${
+            location.pathname === "/auth/crm/vsm/productividad-individual"
+              ? "text-blue-600 border-b-2 border-blue-600 pb-1"
+              : "text-gray-600 hover:text-gray-900"
+          }`}
+        >
+          Productividad Individual
+        </Link>
+
       </div>
 
     </div>

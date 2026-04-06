@@ -323,7 +323,15 @@ function ProductionForm({ usuario, detalles, alistId, onUpdate }) {
       toast.success(`+${total} para ${usuario.name}`);
       setVals({ ...vals, [detalleId]: { paq: '', und: '' } });
       onUpdate();
-    } catch (e) { toast.error("Error al registrar"); }
+    } catch (e) {
+      console.log(e);
+     const msg =
+    e?.response?.data?.message ||
+    e?.response?.data?.error ||
+    "Error al registrar";
+
+  toast.error(msg);
+    }
   };
 
   return (
