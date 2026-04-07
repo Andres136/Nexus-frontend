@@ -393,8 +393,22 @@ export const carteraApi = {
     apiClient.get("/api/estadisticas-cartera", { params }),
   getEstadisticasSemanalCartera: (params = {}) =>
     apiClient.get("/api/recaudo-semanal", { params }),
+  eliminar: (id) => apiClient.delete(`/api/gestion-cartera-destroy/${id}`),
 
 };
+
+export  const GestionarFacturaApi = {
+  create: (data) =>
+    apiClient.post("/api/gestion-facturas-cartera", data,{
+       headers: {
+      "Content-Type": "multipart/form-data",
+    },
+    }),
+  getCartera: (params = {}) => apiClient.get("/api/gestion-facturas-cartera", { params }),
+  getDetalleCartera: (id) => apiClient.get(`/api/gestion-facturas-cartera/${id}`),
+  update: (id, data) => apiClient.put(`/api/gestion-facturas-cartera/${id}`, data),
+delete: (id) => apiClient.delete(`/api/gestion-facturas-cartera/${id}`),
+}
 
 
 

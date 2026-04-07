@@ -34,11 +34,17 @@ export const  useMantenimientoEquiposTic = () =>{
         total: 0,
       });
     
-      const [filters, setFilters] = useState({
-        page: 1,
-        per_page: 10,
-        search: "",
-      });
+ const [filters, setFilters] = useState({
+  page: 1,
+  per_page: 10,
+  search: "",
+
+  sede_id: "",
+  producto_id: "",
+  empresa_id: "",
+  tipo: "",
+  estado: ""
+});
 
 
 // ===============================
@@ -72,6 +78,7 @@ const ListarMantenimientosEquiposTable = async (customFilters = filters) => {
         setListarMantenimientos(response.data.data);
         setPagination(response.data);
     } catch (err) {
+      console.error("Error al listar mantenimientos:", err);
         setError("No se pudieron cargar los mantenimientos.");
     } finally {
         setLoading(false);

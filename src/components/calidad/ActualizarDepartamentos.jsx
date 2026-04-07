@@ -25,7 +25,7 @@ export default function ActualizarDepartamentos({ onClose, departamentoId,  }) {
   // Cargar datos del departamento
   useEffect(() => {
     if (departamentoId) {
-        console.log("Cargando datos para el departamento:", departamentoId); // Verifica en consola
+   //     console.log("Cargando datos para el departamento:", departamentoId); // Verifica en consola
         const token = localStorage.getItem("token");
 
         clienteAxios

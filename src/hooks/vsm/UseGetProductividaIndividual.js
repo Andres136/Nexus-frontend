@@ -5,7 +5,7 @@ export const useGetProductividadIndividual = (filters) => {
 
   const obtenerProductividad = async () => {
     const response = await vsmProduccionService.getRendimiento(filters)
-    console.log("Respuesta productividad individual:", response.data)
+   // console.log("Respuesta productividad individual:", response.data)
     return response.data
   }
 

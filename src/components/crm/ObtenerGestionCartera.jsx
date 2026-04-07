@@ -6,12 +6,12 @@ import { useDebounce } from "../../hooks/useDebounce"
 import { useGestionCartera } from "../../hooks/crm/useGestionCartera"
 import { useAuth } from "../../hooks/useAuth"
 import { Link } from "react-router-dom"
-import { CheckCircle, DollarSign, Pencil } from "lucide-react"
+import { Briefcase, CheckCircle, DollarSign, Pencil } from "lucide-react"
 import { formatDate } from "../../helpers"
 
 export default function ObtenerGestionCartera() {
 const { user } = useAuth({middleware: 'auth'})
-
+//console.log("USUARIO DESDE CARTERA:", user)
   const [filtros, setFiltros] = useState({
     buscar: "",
     fecha_inicio: "",
@@ -25,7 +25,7 @@ const { user } = useAuth({middleware: 'auth'})
 
   const [carteraSeleccionada, setCarteraSeleccionada] = useState(null)
   const [openModal, setOpenModal] = useState(false)
-const{cancelarDeuda}=useGestionCartera()
+const{cancelarDeuda, eliminarFactura}=useGestionCartera()
   const { registros, pagination, isLoading, error, total_cartera, total_vencido} = useListaCartera(useDebounce(filtros, 500))
   
   if (isLoading) {
@@ -242,9 +242,7 @@ const{cancelarDeuda}=useGestionCartera()
                 <th className="px-3 py-3 text-right font-semibold">RteICA</th>
                 <th className="px-3 py-3 text-right font-semibold">Total</th>
                 <th className="px-3 py-3 text-left font-semibold">Obs.</th>
-             {puedeGestionar && (
-  <th className="px-3 py-3 text-center font-semibold">Acción</th>
-)}
+                <th className="px-3 py-3 text-center font-semibold">Acciones</th>
               </tr>
             </thead>
 
@@ -363,48 +361,78 @@ const{cancelarDeuda}=useGestionCartera()
                         </span>
                       </td>
 
-{puedeGestionar && (
-  <td className="px-3 py-2.5">
-    <div className="flex items-center justify-center gap-2">
+<td className="px-3 py-2.5">
+  <div className="flex items-center justify-center gap-2">
 
-      {reg.estado === "pendiente" && (
-        <>
-          {/* Abonar */}
-          <button
-            onClick={() => abrirModalAbono(reg)}
-            className="flex items-center gap-1 px-2.5 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-md text-xs font-medium transition-all"
-            title="Registrar abono parcial"
-          >
-            <DollarSign size={14} />
-            <span className="hidden sm:inline">Abonar</span>
-          </button>
+    {/* BOTONES SOLO PARA GESTIÓN */}
+    {puedeGestionar && (
+      <>
+        {reg.estado === "pendiente" && (
+          <>
+            {/* Abonar */}
+            <button
+              onClick={() => abrirModalAbono(reg)}
+              className="flex items-center gap-1 px-2.5 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-md text-xs font-medium transition-all"
+              title="Registrar abono parcial"
+            >
+              <DollarSign size={14} />
+              <span className="hidden sm:inline">Abonar</span>
+            </button>
 
-          {/* Pagar total */}
-          <button
-            onClick={() => cancelarDeuda(reg.id)}
-            className="flex items-center gap-1 px-2.5 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-md text-xs font-medium transition-all"
-            title="Pagar deuda completa"
-          >
-            <CheckCircle size={14} />
-            <span className="hidden sm:inline">Pagar</span>
-          </button>
-        </>
-      )}
+            {/* Pagar total */}
+            <button
+              onClick={() => cancelarDeuda(reg.id)}
+              className="flex items-center gap-1 px-2.5 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-md text-xs font-medium transition-all"
+              title="Pagar deuda completa"
+            >
+              <CheckCircle size={14} />
+              <span className="hidden sm:inline">Pagar</span>
+            </button>
 
-      {/* Editar */}
-      <Link to={`/auth/crm/editar-cartera/${reg.id}`}>
-        <button
-          className="flex items-center gap-1 px-2.5 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md text-xs font-medium transition-all"
-          title="Editar registro"
-        >
-          <Pencil size={14} />
-          <span className="hidden sm:inline">Editar</span>
-        </button>
-      </Link>
+               <Link to={`/auth/crm/editar-cartera/${reg.id}`}>
+      <button
+        className="flex items-center gap-1 px-2.5 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md text-xs font-medium transition-all"
+        title="Editar registro"
+      >
+        <Pencil size={14} />
+        <span className="hidden sm:inline">Editar</span>
+      </button>
+    </Link>
+          </>
+        )}
+      </>
+    )}
 
-    </div>
-  </td>
-)}                 </tr>
+    {/* ✅ ESTE YA LO VE TODO EL MUNDO */}
+    <Link to={`/auth/crm/gestion-cartera/${reg.id}`}>
+      <button
+        className="flex items-center gap-1 px-2.5 py-1.5 bg-yellow-500 hover:bg-yellow-600 text-white rounded-md text-xs font-medium transition-all"
+        title="Gestionar registro"
+      >
+        <Briefcase size={14} />
+        <span className="hidden sm:inline">Gestionar</span>
+      </button>
+    </Link>
+
+    {/* Editar (si quieres también puedes dejarlo libre o con validación) */}
+ 
+
+    {/* Eliminar (solo roles específicos) */}
+    {[1, 2].includes(user?.role_id) && (
+      <button
+        onClick={() => eliminarFactura(reg.id)}
+        className="flex items-center gap-1 px-2.5 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-md text-xs font-medium transition-all"
+        title="Eliminar registro"
+      >
+        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+        </svg>
+      </button>
+    )}
+
+  </div>
+</td>              </tr>
                   )
                 })
               )}

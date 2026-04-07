@@ -60,7 +60,7 @@ export default function FormOrdenesProveedores() {
   const orden = response.data; // 👈 aquí obtienes la orden
       toast.success(response.data.message);
       
-      console.log(response.data);
+    //  console.log(response.data);
       // Asegúrate de que el backend devuelva el ID correcto
       navigate(`/auth/crm/ordenes-proveedor-preview/${orden.id}`);
 

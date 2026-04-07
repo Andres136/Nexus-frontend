@@ -201,6 +201,35 @@ const handleNumberChange = (index, e) => {
   }
 }
 
+// Eliminar un registro de cartera
+const eliminarFactura = async (carteraId) => {
+
+  const confirm = await Swal.fire({
+    title: "¿Eliminar registro?",
+    text: "Esta acción no se puede deshacer",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Sí, eliminar",
+    cancelButtonText: "No"
+  })
+
+  if (!confirm.isConfirmed) return
+
+  try {
+    setLoading(true)
+
+    const response = await carteraApi.eliminar(carteraId)
+
+    Swal.fire("Eliminado", response.data.message, "success")
+    queryClient.invalidateQueries(["carteraClientes"]);
+  } catch (error) {
+    console.log("Error al eliminar registro:", error)
+    showToast("error", "Error al eliminar el registro")
+  } finally {
+    setLoading(false)
+  }
+}
+
   return {
     registros,
     porcentajes,
@@ -216,5 +245,7 @@ const handleNumberChange = (index, e) => {
     empresas,
     cancelarDeuda,
     handleNumberChange,
+    eliminarFactura
+
   }
 }

@@ -106,6 +106,7 @@ import DashboardResiduos from "../components/hseq/DashboardResiduos";
 import GestionNovedadesCalidad from "../views/calidad/GestionNovedadesCalidad";
 import DashboardSemestral from "../components/calidad/DashboardSemestral";
 import DashboardProductividaIndividual from "../views/vsm/DashboardProductividaIndividual";
+import GestionarFacturaCartera from "../views/crm/GestionarFacturaCartera";
 
 
 export default function Router() {
@@ -471,6 +472,15 @@ export default function Router() {
             element={
               <DynamicProtectedRoute permission="/auth/crm/editar-cartera/:id">
                 <UpdateCartera modo="editar" />
+              </DynamicProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/auth/crm/gestion-cartera/:id"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/gestion-cartera/:id">
+                <GestionarFacturaCartera/>
               </DynamicProtectedRoute>
             }
           />

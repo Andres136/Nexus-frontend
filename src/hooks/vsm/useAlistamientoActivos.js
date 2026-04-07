@@ -9,7 +9,7 @@ export function useAlistamientosActivos() {
     queryKey: ["alistamientos-activos", filters], // 🔥 clave con filtros
     queryFn: async () => {
       const res = await otAlistamientoService.alistamientoActivoPorOT(filters);
-      console.log("ReactQuery data:", res.data);
+     // console.log("ReactQuery data:", res.data);
       return res.data;
     },
     refetchInterval: 2000, // 🔥 reemplaza setInterval

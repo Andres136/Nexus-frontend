@@ -2,7 +2,7 @@ import { useState, useMemo } from "react"
 import { useGetProductividadIndividual } from "../../hooks/vsm/UseGetProductividaIndividual"
 import { useSedes } from "../../hooks/useSedes"
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell, LabelList
 } from "recharts"
 
 const estadoColors = {
@@ -21,14 +21,13 @@ export default function DashboardProductividaIndividual() {
   const { sedes } = useSedes()
   const { data = [], isLoading } = useGetProductividadIndividual(filters)
 
-const handleChange = (e) => {
-  const value = e.target.value === "" ? null : e.target.value;
-
-  setFilters({
-    ...filters,
-    [e.target.name]: value
-  });
-};
+  const handleChange = (e) => {
+    const value = e.target.value === "" ? null : e.target.value;
+    setFilters({
+      ...filters,
+      [e.target.name]: value
+    });
+  };
 
   // KPIs
   const totalProduccion = useMemo(() => data.reduce((acc, i) => acc + i.produccion_total, 0), [data])
@@ -42,6 +41,25 @@ const handleChange = (e) => {
     if (estado === "NORMAL") return "#eab308"
     return "#ef4444"
   }
+
+  // Tooltip personalizado para eficiencia
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white p-2 rounded shadow text-xs">
+          <p className="font-semibold">{label}</p>
+          {payload.map((entry, idx) => (
+            <p key={idx} style={{ color: entry.color }}>
+              {entry.name === "eficiencia_porcentaje"
+                ? `Eficiencia: ${entry.value}%`
+                : `${entry.name}: ${entry.value}`}
+            </p>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -82,11 +100,20 @@ const handleChange = (e) => {
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="nombre" />
             <YAxis />
-            <Tooltip />
-            <Bar dataKey="eficiencia_porcentaje">
+            <Tooltip content={<CustomTooltip />} />
+            <Bar dataKey="eficiencia_porcentaje" barSize={18}>
               {data.map((entry, idx) => (
                 <Cell key={entry.usuario_id} fill={getBarColor(entry.estado)} />
               ))}
+              <LabelList
+                dataKey="eficiencia_porcentaje"
+                position="top"
+                content={({ x, y, value }) => (
+                  <text x={x} y={y} dy={-4} fontSize={12} textAnchor="middle" fill="#333">
+                    {value}%
+                  </text>
+                )}
+              />
             </Bar>
           </BarChart>
         </ResponsiveContainer>
@@ -101,7 +128,7 @@ const handleChange = (e) => {
             <XAxis dataKey="nombre" />
             <YAxis />
             <Tooltip />
-            <Bar dataKey="produccion_total">
+            <Bar dataKey="produccion_total" barSize={18}>
               {data.map((entry, idx) => (
                 <Cell key={entry.usuario_id} fill={getBarColor(entry.estado)} />
               ))}
