@@ -107,6 +107,8 @@ import GestionNovedadesCalidad from "../views/calidad/GestionNovedadesCalidad";
 import DashboardSemestral from "../components/calidad/DashboardSemestral";
 import DashboardProductividaIndividual from "../views/vsm/DashboardProductividaIndividual";
 import GestionarFacturaCartera from "../views/crm/GestionarFacturaCartera";
+import GetHistorialGestionFacturaCartera from "../views/crm/GetHistorialGestionFacturaCartera";
+import DashboardOperativo from "../views/calidad/DashboardOperativo";
 
 
 export default function Router() {
@@ -200,6 +202,13 @@ export default function Router() {
          <Route path="/auth/crm/vsm/productividad-individual"
           element={<DynamicProtectedRoute permission="/auth/crm/vsm/productividad-individual">
             <DashboardProductividaIndividual />
+          </DynamicProtectedRoute>}
+         />
+
+         <Route
+          path="/auth/crm/control-operativo/dashboard"
+          element={<DynamicProtectedRoute permission="/auth/crm/control-operativo/dashboard">
+            <DashboardOperativo />
           </DynamicProtectedRoute>}
          />
 
@@ -484,6 +493,16 @@ export default function Router() {
               </DynamicProtectedRoute>
             }
           />
+
+          <Route
+            path="/auth/crm/historial-gestion-factura"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/historial-gestion-factura">
+                <GetHistorialGestionFacturaCartera />
+              </DynamicProtectedRoute>
+            }
+          />
+          
            
           {/*  Fin Rutas para  gestion de cartera */}  
             {/*   Rutas para  HSEQ */} 

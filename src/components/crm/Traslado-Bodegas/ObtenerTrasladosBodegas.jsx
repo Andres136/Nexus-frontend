@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import {  useEffect, useState } from "react";
 import { useTrasladosBodega } from "../../../hooks/traslados-bodegas/useTrasladosBodegas";
+import { useDebounce } from "../../../hooks/useDebounce";
 import { 
   Search, 
   Filter, 
@@ -55,6 +56,8 @@ const ESTADOS_TRASLADO = {
 export default function ObtenerTrasladosBodegas() {
   const [showFilters, setShowFilters] = useState(false);
   const [searchInput, setSearchInput] = useState('');
+  const debouncedSearchInput = useDebounce(searchInput, 500);
+
 
   const {
     data,
@@ -70,22 +73,27 @@ export default function ObtenerTrasladosBodegas() {
 
 
   // Función para manejar la búsqueda
-  const handleSearch = (e) => {
-    const value = e.target.value;
-    setSearchInput(value);
-    setFilters(prev => ({ ...prev, search: value }));
-  };
-
+const handleSearch = (e) => {
+  setSearchInput(e.target.value);
+};
+useEffect(() => {
+  setFilters(prev => ({
+    ...prev,
+    search: debouncedSearchInput,
+    page: 1
+  }));
+}, [debouncedSearchInput]);
   // Función para resetear filtros
-  const resetFilters = () => {
-    setSearchInput('');
-    setFilters({
-      search: '',
-      order_by: 'created_at',
-      order: 'desc',
-      per_page: 15
-    });
-  };
+const resetFilters = () => {
+  setSearchInput('');
+  setFilters({
+    page: 1,
+    per_page: 15,
+    search: '',
+    order_by: 'created_at',
+    order: 'desc'
+  });
+};
 
   // Componente Badge para estados
   const EstadoBadge = ({ estado }) => {

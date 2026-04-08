@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useDebounce } from "../../hooks/useDebounce";
 import { useOrdenesFaltantes } from "../../hooks/useOrdenesFaltantes";
 import {
   Loader2,
@@ -7,7 +8,6 @@ import {
   Search,
   ChevronDown,
   ChevronUp,
-  Eye,
   Building,
   User,
   CheckCircle,
@@ -17,13 +17,14 @@ import {
 
 export default function OrdenesFaltantes() {
   const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearchTerm = useDebounce(searchTerm, 400);
   const [filterEstado, setFilterEstado] = useState("all");
   const [expandedOrders, setExpandedOrders] = useState(new Set());
   const [sortBy, setSortBy] = useState("faltantes_desc");
   const [page, setPage] = useState(1);
 
   const { ordenes, pagination, isLoading, error } =
-    useOrdenesFaltantes(page, searchTerm);
+    useOrdenesFaltantes(page, debouncedSearchTerm);
 
   const toggleOrder = (ordenId) => {
     const newExpanded = new Set(expandedOrders);

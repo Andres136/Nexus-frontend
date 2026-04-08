@@ -176,7 +176,7 @@ const getTrasladoById = async (id) => {
      EFFECT
   ========================== */
   useEffect(() => {
-    fetchTraslados(filters.page);
+    fetchTraslados();
   }, [filters]);
 
   return {

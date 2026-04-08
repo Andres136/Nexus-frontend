@@ -58,3 +58,26 @@ export  const hallazgosNovedadesService = {
   deleteHallazgo: (id) => apiClient.delete(`/api/hallazgos/${id}`),
   getEstadisticasSemestrales: () => apiClient.get("/api/indicador-semestral"),
 };
+
+export const gestionOperativaService = {
+  getGestiones: () => apiClient.get("/api/control-operativo"),
+
+  createGestion: (data) => apiClient.post("/api/control-operativo", data),
+
+  getGestionById: (id, filters = {}) => {
+
+    if (id !== null && id !== undefined) {
+      return apiClient.get(`/api/control-operativo/${id}`, {
+        params: filters
+      });
+    }
+
+    return apiClient.get(`/api/control-operativo`, {
+      params: filters
+    });
+  },
+
+  updateGestion: (id, data) => apiClient.put(`/api/control-operativo/${id}`, data),
+
+  deleteGestion: (id) => apiClient.delete(`/api/control-operativo/${id}`),
+};

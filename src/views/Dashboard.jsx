@@ -1,7 +1,7 @@
 import ApexChart from 'react-apexcharts';
 import { useDashboard } from '../hooks/useDashboard';
 import { useDashboardMonthly } from '../hooks/useDashboardMonthly';
-import { useEffect, useState } from 'react';
+import {  useState } from 'react';
 import clienteAxios from '../config/axios';
 
 import { Link } from 'react-router-dom';
@@ -85,16 +85,28 @@ const Dashboard = () => {
     <>
       <div className="grid grid-cols-1 w-full px-4">
         <div className="p-6 grid gap-6 col-span-1">
-          {/* Botón PDF y control de sonido */}
-          <div className="flex justify-between items-center mb-6">
-            <button
-              onClick={descargarpdf}
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
-            >
-              Descargar PDF
-            </button>
-        
-          </div>
+      
+       <div className="flex justify-between items-center mb-6">
+  <div className="flex gap-3">
+
+    <button
+      onClick={descargarpdf}
+      className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
+    >
+      Descargar PDF
+    </button>
+
+    <Link
+      to={"/auth/crm/control-operativo/dashboard"}
+      className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition"
+    >
+      Dashboard Operativo
+    </Link>
+
+  </div>
+</div>
+
+          
 
   
 
