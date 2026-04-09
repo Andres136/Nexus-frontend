@@ -75,10 +75,10 @@ const location = useLocation();
         fecha: new Date().toISOString().split("T")[0],
       };
 
-   //   console.log("Payload enviado:", payload);
+   // console.log("Payload enviado:", payload);
 
       const res = await vsmService.crearAlistamiento(payload);
-
+  
       toast(res.data.message || "Alistamiento iniciado con éxito");
       // Limpiar formulario
       setSelectedOT(null);

@@ -96,15 +96,15 @@ export default function GetHistorialGestionFacturaCartera() {
                       {item.soportes?.length > 0 ? (
                         <div className="flex flex-col gap-1">
                           {item.soportes.map((s) => (
-                            <a
-                              key={s.id}
-                              href={`http://127.0.0.1:8000/storage/${s.archivo}`}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-xs font-medium text-blue-600 hover:underline flex items-center gap-1"
-                            >
-                              📄 Ver archivo
-                            </a>
+                         <a
+  key={s.id}
+  href={`${import.meta.env.VITE_API_URL}/storage/${s.archivo}`}
+  target="_blank"
+  rel="noreferrer"
+  className="text-xs font-medium text-blue-600 hover:underline flex items-center gap-1"
+>
+  📄 Ver archivo
+</a>
                           ))}
                         </div>
                       ) : (

@@ -7,17 +7,27 @@ export const useGetDashboardOperativo = (id, filters = {}) => {
     queryKey: ["dashboardOperativo", id, JSON.stringify(filters)],
 
     queryFn: async () => {
-      console.log("Obteniendo datos:", { id, filters });
+      try {
+        console.log("Obteniendo datos:", { id, filters });
 
-      const response = await gestionOperativaService.getGestionById(id, filters);
+        const response = await gestionOperativaService.getGestionById(id, filters);
 
-      console.log("Respuesta API:", response.data);
+        return response.data;
 
-      return response.data;
+      } catch (error) {
+        console.error("Error en dashboard:", error);
+
+        // 🔥 IMPORTANTE: lanzar error para que React Query lo capture
+        throw error;
+      }
     },
 
-    enabled: true, // 🔥 importante
-    keepPreviousData: true
-  });
+    enabled: true,
+    keepPreviousData: true,
 
+    // 🔥 captura global
+    onError: (error) => {
+      console.error("Error React Query:", error);
+    }
+  });
 };

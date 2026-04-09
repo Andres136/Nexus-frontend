@@ -430,7 +430,7 @@ const{cancelarDeuda, eliminarFactura}=useGestionCartera()
  
 
     {/* Eliminar (solo roles específicos) */}
-    {[1, 2].includes(user?.role_id) && (
+    {[1, 2,4].includes(user?.role_id) && (
       <button
         onClick={() => eliminarFactura(reg.id)}
         className="flex items-center gap-1 px-2.5 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-md text-xs font-medium transition-all"
