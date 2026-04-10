@@ -43,7 +43,7 @@ export default function DetallesOrdenesCompra() {
   const [loading, setLoading] = useState(false);
   const [errores, setErrores] = useState({});
   const [forzarEntregaParcial, setForzarEntregaParcial] = useState(false);
-    const [searchTerm, setSearchTerm] = useState("");
+    const [searchTerm, setSearchTerm] = useState(" ");
 const [documentoVisto, setDocumentoVisto] = useState(false);
 
 

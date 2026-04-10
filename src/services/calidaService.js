@@ -60,22 +60,7 @@ export  const hallazgosNovedadesService = {
 };
 
 export const gestionOperativaService = {
-  getGestiones: () => apiClient.get("/api/control-operativo"),
-
-  createGestion: (data) => apiClient.post("/api/control-operativo", data),
-
-  getGestionById: (id, filters = {}) => {
-
-    if (id !== null && id !== undefined) {
-      return apiClient.get(`/api/control-operativo/${id}`, {
-        params: filters
-      });
-    }
-
-    return apiClient.get(`/api/control-operativo`, {
-      params: filters
-    });
-  },
+  getvsm:(params)=> apiClient.get("/api/vsm/ordenes", { params }),
 
   updateGestion: (id, data) => apiClient.put(`/api/control-operativo/${id}`, data),
 

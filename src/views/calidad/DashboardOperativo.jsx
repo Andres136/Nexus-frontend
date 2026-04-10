@@ -1,315 +1,191 @@
-import { useState, useMemo } from "react";
-import { useGetDashboardOperativo } from "../../hooks/calidad/useGetDasboardOperativo";
-import { useProducts } from "../../hooks/useProducts";
-import { useClientes } from "../../hooks/useClientes";
-import Select from "react-select";
+import { useState } from 'react';
+import { 
+  Package, ShoppingCart, ClipboardCheck, Truck, 
+  CheckCircle2, AlertCircle, Clock, ChevronDown, ChevronUp, Beaker 
+} from 'lucide-react';
+import { useGetDashboardOperativo } from '../../hooks/calidad/useGetDasboardOperativo';
+import {useSedes} from "../../hooks/useSedes";
+import Select from 'react'
 
-export default function DashboardOperativo() {
-  // --- ESTADOS Y LOGICA ---
-  const [filtros, setFiltros] = useState({ estado: "", pendientes: "", cliente_id: null });
-  const [searchTerm, setSearchTerm] = useState("");
-  const [productoId, setProductoId] = useState(null);
-  const [expandedId, setExpandedId] = useState(null); // Control de acordeón
+const VSMCard = ({ orden }) => {
+  const [showProducts, setShowProducts] = useState(false);
 
-  const { products, isLoading: isLoadingProducts } = useProducts({ search: searchTerm });
-  const { data, isLoading } = useGetDashboardOperativo(productoId, filtros);
-  const { clientesTodos } = useClientes();
-
-  // Memorizamos el cálculo de órdenes para optimizar si la lista es gigante
-  const ordenes = useMemo(() => {
-    return data?.ordenes?.sort((a, b) => b.faltante - a.faltante) || [];
-  }, [data]);
-
-  const totalOrdenes = ordenes.length;
-  const atrasadas = ordenes.filter(o => o.atrasado).length;
-  const enRuta = ordenes.filter(o => o.en_ruta).length;
-
-  const toggleOrden = (id) => {
-    setExpandedId(expandedId === id ? null : id);
+  const getStatusConfig = (estado) => {
+    const configs = {
+      'ENTREGADO': { color: 'bg-green-100 text-green-800', icon: CheckCircle2, label: 'Entregado' },
+      'EN_RUTA': { color: 'bg-blue-100 text-blue-800', icon: Truck, label: 'En Ruta' },
+      'LISTO_PARA_DESPACHO': { color: 'bg-indigo-100 text-indigo-800', icon: ClipboardCheck, label: 'Listo Despacho' },
+      'EN_ALISTAMIENTO': { color: 'bg-yellow-100 text-yellow-800', icon: Clock, label: 'Alistando' },
+      'REQUIERE_HOMOLOGACION': { color: 'bg-purple-100 text-purple-800', icon: Beaker, label: 'Homologar' },
+      'STOCK_INSUFICIENTE': { color: 'bg-orange-100 text-orange-800', icon: Package, label: 'Stock Parcial' },
+      'ESPERANDO_PROVEEDOR': { color: 'bg-pink-100 text-pink-800', icon: ShoppingCart, label: 'En Compra' },
+      'SIN_STOCK': { color: 'bg-red-100 text-red-800', icon: AlertCircle, label: 'Sin Existencias' },
+    };
+    return configs[estado] || { color: 'bg-gray-100 text-gray-800', icon: Package, label: estado };
   };
 
+  const getProductStatusColor = (estado) => {
+    switch (estado) {
+      case 'OK': return 'bg-green-500';
+      case 'HOMOLOGABLE': return 'bg-purple-500';
+      case 'SIN_STOCK': return 'bg-red-500';
+      default: return 'bg-gray-300';
+    }
+  };
+
+  const config = getStatusConfig(orden.estado_vsm);
+  const StatusIcon = config.icon;
+
   return (
-    <div className="p-4 bg-slate-50 min-h-screen font-sans text-slate-900">
-      <div className="max-w-[1600px] mx-auto">
-        
-        {/* --- HEADER COMPACTO --- */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-          <div>
-            <h2 className="text-2xl font-black text-slate-800 tracking-tight">Control Operativo</h2>
-            <p className="text-slate-500 text-xs font-medium uppercase tracking-widest">Trazabilidad de ordenes</p>
-          </div>
-          
-          <div className="flex gap-2">
-             <div className="bg-white px-4 py-2 rounded-lg shadow-sm border border-slate-200 flex flex-col items-center min-w-[80px]">
-                <span className="text-[10px] text-slate-400 font-bold uppercase">Total</span>
-                <span className="text-lg font-black">{totalOrdenes}</span>
-             </div>
-             <div className="bg-red-50 px-4 py-2 rounded-lg border border-red-100 flex flex-col items-center min-w-[80px]">
-                <span className="text-[10px] text-red-400 font-bold uppercase">Atraso</span>
-                <span className="text-lg font-black text-red-600">{atrasadas}</span>
-             </div>
-             <div className="bg-green-50 px-4 py-2 rounded-lg border border-green-100 flex flex-col items-center min-w-[80px]">
-                <span className="text-[10px] text-green-400 font-bold uppercase">Ruta</span>
-                <span className="text-lg font-black text-green-600">{enRuta}</span>
-             </div>
-          </div>
-        </div>
+    <div className={`bg-white border rounded-xl shadow-sm transition-all duration-200 ${showProducts ? 'ring-2 ring-blue-500' : 'hover:shadow-md'}`}>
+      <div className="p-4">
+        {/* Header */}
+        <div className="flex justify-between items-start mb-4">
+     <div>
+  <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2">
+    {orden.numero || `OC #${orden.orden_id}`}
+  </h3>
 
-        {/* --- BARRA DE FILTROS --- */}
-        <div className="bg-white p-3 rounded-xl shadow-sm border border-slate-200 mb-6 flex flex-wrap items-center gap-3">
-          <div className="flex flex-col gap-1">
-            <select 
-              className="text-xs font-bold border-none bg-slate-100 rounded-md p-2 outline-none focus:ring-2 ring-blue-500 cursor-pointer"
-              onChange={(e) => setFiltros(prev => ({ ...prev, estado: e.target.value }))}
-            >
-              <option value="">Todos los Estados</option>
-              <option value="EN_COMPRA">🛒 Compra</option>
-              <option value="EN_PRODUCCION">⚙️ Prod.</option>
-              <option value="ALISTAMIENTO_EN_PROCESO">📦 Alist.</option>
-              <option value="EN_RUTA">🚚 Ruta</option>
-            </select>
-          </div>
+  <p className="text-sm text-gray-500">
+    OT #{orden.orden_trabajo_id || 'N/A'}
+  </p>
 
-          <div className="flex flex-col gap-1">
-            <select 
-              className="text-xs font-bold border-none bg-slate-100 rounded-md p-2 outline-none focus:ring-2 ring-blue-500 cursor-pointer"
-              onChange={(e) => setFiltros(prev => ({ ...prev, pendientes: e.target.value }))}
-            >
-              <option value="">Todos</option>
-              <option value="1">Solo Pendientes</option>
-            </select>
-          </div>
-
-          <div className="h-8 w-[1px] bg-slate-200 hidden md:block mx-1" />
-
-          <div className="flex-1 min-w-[200px]">
-            <Select
-              styles={{ control: (b) => ({ ...b, backgroundColor: '#f1f5f9', border: 'none', fontSize: '12px', fontWeight: 'bold' }) }}
-              options={products.map((p) => ({ value: p.id, label: p.name }))}
-              onInputChange={(v) => setSearchTerm(v)}
-              onChange={(s) => setProductoId(s?.value || null)}
-              isLoading={isLoadingProducts}
-              isClearable
-              placeholder="Filtrar Producto..."
-            />
-          </div>
-
-          <div className="flex-1 min-w-[200px]">
-            <Select
-              styles={{ control: (b) => ({ ...b, backgroundColor: '#f1f5f9', border: 'none', fontSize: '12px', fontWeight: 'bold' }) }}
-              options={clientesTodos.map((c) => ({ value: c.id, label: c.nombre }))}
-              onChange={(s) => setFiltros(prev => ({ ...prev, cliente_id: s?.value || null }))}
-              isClearable
-              placeholder="Filtrar Cliente..."
-            />
-          </div>
-        </div>
-
-        {/* --- LISTADO DE ÓRDENES (GRID 2 COLUMNAS) --- */}
-        {isLoading ? (
-          <div className="flex flex-col justify-center items-center p-20 text-slate-400">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500 mb-4"></div>
-            <p className="font-bold uppercase text-xs tracking-widest">Sincronizando datos...</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {ordenes.map((orden) => {
-              const isExpanded = expandedId === orden.orden_compra_id;
-              
-              return (
-                <div 
-                  key={orden.orden_compra_id} 
-                  className={`bg-white rounded-xl border transition-all duration-200 ${
-                    isExpanded 
-                    ? 'lg:col-span-2 shadow-lg border-blue-400 ring-1 ring-blue-100' 
-                    : 'shadow-sm border-slate-200 hover:border-slate-300'
-                  }`}
-                >
-                  {/* CABECERA DE CARD (CLICKABLE) */}
-                  <div 
-                    onClick={() => toggleOrden(orden.orden_compra_id)}
-                    className="p-3 cursor-pointer flex items-center justify-between gap-4 select-none"
-                  >
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className={`w-1.5 h-10 rounded-full shrink-0 ${orden.atrasado ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]' : 'bg-green-500'}`} />
-                      <div className="min-w-0">
-                        <h4 className="font-bold text-sm text-slate-800 truncate uppercase tracking-tight">
-                          {orden.cliente}
-                        </h4>
-                        <div className="flex gap-2 items-center mt-0.5">
-                          <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
-                            OC-{orden.numero_orden ?? orden.orden_compra_id}
-                          </span>
-                          {orden.orden_trabajo_id && (
-                            <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
-                              OT-{orden.orden_trabajo_id}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* KPI RÁPIDO VISTA CERRADA */}
-                    {!isExpanded && (
-                      <div className="hidden sm:flex items-center gap-6 shrink-0">
-                         <div className="text-center">
-                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Faltante</p>
-                            <p className="text-xs font-black text-red-500">{orden.faltante}</p>
-                         </div>
-                         <div className="w-16">
-                            <p className="text-[9px] font-bold text-slate-400 uppercase text-center mb-1">{orden.porcentaje_avance}%</p>
-                            <div className="w-full bg-slate-100 h-1.5 rounded-full">
-                               <div className="bg-green-500 h-full rounded-full" style={{ width: `${Math.min(orden.porcentaje_avance, 100)}%` }} />
-                            </div>
-                         </div>
-                      </div>
-                    )}
-
-                    <div className="flex items-center gap-3 shrink-0">
-                       <span className={`text-[9px] font-black px-2 py-1 rounded border uppercase ${
-                         orden.atrasado ? 'bg-red-50 text-red-600 border-red-100' : 'bg-slate-50 text-slate-500 border-slate-200'
-                       }`}>
-                          {orden.estado?.replace(/_/g, ' ')}
-                       </span>
-                       <span className="text-slate-300 text-xs">{isExpanded ? '▲' : '▼'}</span>
-                    </div>
-                  </div>
-
-                  {/* CONTENIDO EXPANDIDO (DETALLES) */}
-                  {isExpanded && (
-                    <div className="p-4 border-t border-slate-100 bg-slate-50/30 animate-in fade-in slide-in-from-top-2 duration-200">
-                      
-                      {/* STATS DE SEGUNDO NIVEL */}
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
-                         <div className="bg-white p-3 rounded-lg border border-slate-200">
-                            <p className="text-[9px] font-bold text-slate-400 uppercase mb-1">Stock Disponible</p>
-                            <p className="text-sm font-black text-slate-700">{orden.stock_disponible} <span className="text-[10px] font-normal text-slate-400 uppercase tracking-tighter">unidades</span></p>
-                         </div>
-                         {/* 🏬 STOCK POR BODEGA */}
-{orden.bodegas?.length > 0 && (
-  <div className="mb-5">
-    <p className="text-[10px] font-black text-slate-400 uppercase mb-2 tracking-widest flex items-center gap-2">
-      🏬 Stock por Bodega
-      <span className="h-[1px] bg-slate-200 flex-1"></span>
-    </p>
-
-    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-      {orden.bodegas.map((b, i) => (
-        <div
-          key={i}
-          className="bg-white p-2 rounded border border-slate-200 text-xs flex justify-between items-center shadow-sm"
-        >
-          <span className="font-bold text-slate-600">{b.bodega}</span>
-
-          <span
-            className={`font-black ${
-              b.stock > 0 ? "text-green-600" : "text-red-400"
-            }`}
-          >
-            {b.stock}
+  <p className="text-xs text-gray-500 uppercase font-semibold tracking-wider">
+    {orden.cliente}
+  </p>
+</div>
+          <span className={`flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold uppercase ${config.color}`}>
+            <StatusIcon size={12} />
+            {config.label}
           </span>
         </div>
-      ))}
+
+        {/* 🔹 NUEVO: SEMÁFORO DE PRODUCTOS (CONTROL VISUAL RÁPIDO) */}
+        <div className="flex gap-1 mb-5 h-1.5 w-full rounded-full overflow-hidden bg-gray-100">
+          {orden.productos.map((prod, idx) => (
+            <div 
+              key={idx} 
+              className={`h-full flex-1 ${getProductStatusColor(prod.estado)}`}
+              title={`Producto: ${prod.producto} - ${prod.estado}`}
+            />
+          ))}
+        </div>
+
+        {/* VSM Flow Visualizer */}
+        <div className="relative flex justify-between items-center mb-6 px-4">
+          <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gray-100 -translate-y-1/2 z-0"></div>
+          
+          <div className={`z-10 p-2 rounded-full border-2 bg-white ${orden.inventario.estado === 'STOCK_OK' ? 'border-green-500 text-green-600' : 'border-gray-200 text-gray-300'}`}>
+            <Package size={18} />
+          </div>
+          <div className={`z-10 p-2 rounded-full border-2 bg-white ${orden.alistamiento.estado === 'ALISTADO' ? 'border-green-500 text-green-600' : (orden.alistamiento.estado === 'EN_ALISTAMIENTO' ? 'border-yellow-500 text-yellow-600' : 'border-gray-200 text-gray-300')}`}>
+            <ClipboardCheck size={18} />
+          </div>
+          <div className={`z-10 p-2 rounded-full border-2 bg-white ${orden.despacho.estado === 'ENTREGADO' ? 'border-green-500 text-green-600' : (orden.despacho.estado === 'EN_RUTA' ? 'border-blue-500 text-blue-600' : 'border-gray-200 text-gray-300')}`}>
+            <Truck size={18} />
+          </div>
+        </div>
+
+        {/* Botón de Control de Producto */}
+        <button 
+          onClick={() => setShowProducts(!showProducts)}
+          className="w-full py-2 mb-3 flex items-center justify-center gap-2 text-xs font-bold text-gray-500 hover:bg-gray-50 rounded-lg border border-dashed border-gray-300 transition-colors"
+        >
+          {showProducts ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          {showProducts ? "OCULTAR PRODUCTOS" : `VER ${orden.productos.length} PRODUCTOS`}
+        </button>
+
+        {/* Metadatos Rápidos */}
+        <div className="grid grid-cols-3 gap-2 text-center border-t pt-3">
+          <div>
+            <p className="text-[10px] text-gray-400 font-bold uppercase">Req.</p>
+            <p className="text-sm font-bold text-gray-700">{orden.total_requerido}kg</p>
+          </div>
+          <div>
+            <p className="text-[10px] text-gray-400 font-bold uppercase">Stock</p>
+            <p className={`text-sm font-bold ${orden.inventario.stock_disponible < orden.total_requerido ? 'text-red-500' : 'text-green-600'}`}>
+              {orden.inventario.stock_disponible}
+            </p>
+          </div>
+          <div>
+            <p className="text-[10px] text-gray-400 font-bold uppercase">Alis.</p>
+            <p className="text-sm font-bold text-blue-600">{orden.alistamiento.total_alistado}kg</p>
+          </div>
+        </div>
+      </div>
+
+      {/* 🔹 NUEVO: PANEL DE CONTROL DE PRODUCTOS (DETALLE TÉCNICO) */}
+      {showProducts && (
+        <div className="bg-gray-50 border-t rounded-b-xl overflow-hidden animate-in fade-in slide-in-from-top-1 duration-200">
+          <div className="max-h-60 overflow-y-auto">
+            <table className="w-full text-[11px]">
+              <thead className="bg-gray-100 text-gray-500 sticky top-0">
+                <tr>
+                  <th className="px-3 py-2 text-left">PRODUCTO</th>
+                  <th className="px-3 py-2 text-right">STOCK</th>
+                  <th className="px-3 py-2 text-center">ESTADO</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {orden.productos.map((prod, idx) => (
+                  <tr key={idx} className="hover:bg-white transition-colors">
+                    <td className="px-3 py-2 font-medium">
+                       {prod.producto || `ID: ${prod.producto_id}`}
+                       {prod.tiene_equivalente && <span className="ml-2 text-[9px] bg-purple-100 text-purple-700 px-1 rounded font-bold">EQ</span>}
+                    </td>
+                    <td className="px-3 py-2 text-right font-mono text-gray-600">
+                      {parseFloat(prod.stock).toFixed(1)} / {parseFloat(prod.requerido).toFixed(1)}
+                    </td>
+                    <td className="px-3 py-2 text-center">
+                      <div className={`w-2 h-2 rounded-full mx-auto ${getProductStatusColor(prod.estado)}`}></div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
-  </div>
-)}
-                         <div className="bg-white p-3 rounded-lg border border-slate-200">
-                            <p className="text-[9px] font-bold text-slate-400 uppercase mb-1">Compras Pendientes</p>
-                            <p className="text-sm font-black text-slate-700">{orden.compras_pendientes}</p>
-                         </div>
-                         <div className="bg-white p-3 rounded-lg border border-slate-200">
-                            <p className="text-[9px] font-bold text-slate-400 uppercase mb-1">Progreso Global</p>
-                            <p className="text-sm font-black text-green-600">{orden.porcentaje_avance}%</p>
-                         </div>
-                         <div className="bg-white p-3 rounded-lg border border-slate-200">
-                            <p className="text-[9px] font-bold text-slate-400 uppercase mb-1">Estado Entrega</p>
-                            <p className={`text-xs font-black uppercase ${orden.atrasado ? 'text-red-500' : 'text-green-600'}`}>
-                               {orden.atrasado ? '⚠ Retrasado' : '✓ En fecha'}
-                            </p>
-                         </div>
-                      </div>
+  );
+};
 
-                      {/* COMPRAS A PROVEEDOR (SI EXISTEN) */}
-                      {orden.compras?.length > 0 && (
-                        <div className="mb-5">
-                          <p className="text-[10px] font-black text-slate-400 uppercase mb-2 tracking-widest flex items-center gap-2">
-                            🛒 Compras a Proveedor
-                            <span className="h-[1px] bg-slate-200 flex-1"></span>
-                          </p>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                            {orden.compras.map((c, i) => (
-                              <div key={i} className="bg-white p-2 rounded border border-slate-200 text-[11px] flex justify-between items-center shadow-sm">
-                                <div>
-                                  <span className="font-bold text-slate-700">{c.proveedor}</span>
-                                  <p className="text-slate-400 text-[9px]">{new Date(c.fecha_oc).toLocaleDateString()}</p>
-                                </div>
-                                <div className="text-right">
-                                  <p className="text-slate-500">Pendiente: <span className="text-red-500 font-bold">{c.pendiente}</span></p>
-                                  <p className="text-[9px] text-slate-400 italic">Recibido {c.cantidad_entregada}/{c.cantidad_solicitada}</p>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
+// ... (Resto del DashboardOperativo se mantiene igual)
 
-                      {/* DESGLOSE DE PRODUCTOS (TABLA) */}
-                      <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase mb-2 tracking-widest flex items-center gap-2">
-                          📦 Desglose de Productos
-                          <span className="h-[1px] bg-slate-200 flex-1"></span>
-                        </p>
-                        <div className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
-                          <table className="w-full text-left text-xs">
-                            <thead className="bg-slate-50 text-slate-500 uppercase font-bold text-[9px]">
-                              <tr>
-                                <th className="p-2.5">Descripción del Producto</th>
-                                <th className="p-2.5">Cumplimiento</th>
-                                <th className="p-2.5 text-center">Cant.</th>
-                                <th className="p-2.5 text-right">Faltante</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100">
-                              {orden.productos.map(prod => (
-                                <tr key={prod.detalle_id} className="hover:bg-blue-50/30 transition-colors">
-                                  <td className="p-2.5 font-bold text-slate-700">{prod.nombre}</td>
-                                  <td className="p-2.5 w-32">
-                                    <div className="flex items-center gap-2">
-                                      <div className="w-full bg-slate-100 h-1.5 rounded-full">
-                                        <div 
-                                          className={`h-full rounded-full ${prod.porcentaje < 40 ? 'bg-red-400' : prod.porcentaje < 80 ? 'bg-yellow-400' : 'bg-green-500'}`} 
-                                          style={{ width: `${prod.porcentaje}%` }} 
-                                        />
-                                      </div>
-                                      <span className="text-[10px] font-bold text-slate-400 min-w-[25px]">{prod.porcentaje}%</span>
-                                    </div>
-                                  </td>
-                                  <td className="p-2.5 text-center font-bold text-slate-600">
-                                    {prod.cantidad_alistada} <span className="text-slate-300 font-normal">/</span> {prod.cantidad_pedida}
-                                  </td>
-                                  <td className="p-2.5 text-right font-black text-red-500 bg-red-50/20">
-                                    -{prod.faltante}
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
+export default function DashboardOperativo() {
+  // Supongamos que aquí vienen los datos de tu hook
 
-        {/* --- ESTADO VACÍO --- */}
-        {!isLoading && ordenes.length === 0 && (
-          <div className="text-center py-20 bg-white rounded-xl border border-dashed border-slate-300">
-            <p className="text-slate-400 font-medium">No se encontraron órdenes con los filtros aplicados.</p>
-          </div>
-        )}
+  const { sedes } = useSedes();
+  const [sedeId, setSedeId] = useState(null);
+  const { data, isLoading } = useGetDashboardOperativo({ sede_id: sedeId }); // Puedes pasar filtros si tu hook los soporta
+
+  if (isLoading) return <div className="p-10 text-center">Cargando flujo VSM...</div>;
+
+  return (
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <header className="mb-8">
+        <h1 className="text-2xl font-bold text-gray-800">Torre de Control VSM</h1>
+        <p className="text-gray-600">Monitoreo de flujo de valor en tiempo real</p>
+      </header>
+<div className="mb-4 max-w-xs">
+  <select
+    className="w-full border rounded-lg px-3 py-2 text-sm"
+    value={sedeId || ''}
+    onChange={(e) => setSedeId(e.target.value)}
+  >
+    <option value="">Todas las sedes</option>
+    {sedes?.map((sede) => (
+      <option key={sede.id} value={sede.id}>
+        {sede.nombre}
+      </option>
+    ))}
+  </select>
+</div>
+      {/* Grid de Órdenes */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {data?.map(orden => (
+          <VSMCard key={orden.orden_id} orden={orden} />
+        ))}
       </div>
     </div>
   );

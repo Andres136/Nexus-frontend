@@ -1,16 +1,17 @@
 import { gestionOperativaService } from "../../services/calidaService";
 import { useQuery } from "@tanstack/react-query";
 
-export const useGetDashboardOperativo = (id, filters = {}) => {
+export const useGetDashboardOperativo = ( filters = {}) => {
 
   return useQuery({
-    queryKey: ["dashboardOperativo", id, JSON.stringify(filters)],
+    queryKey: ["dashboardOperativo",  JSON.stringify(filters)],
 
     queryFn: async () => {
       try {
-        console.log("Obteniendo datos:", { id, filters });
+        console.log("Obteniendo datos:", {  filters });
 
-        const response = await gestionOperativaService.getGestionById(id, filters);
+        const response = await gestionOperativaService.getvsm(filters)
+        console.log("Datos recibidos:", response.data);
 
         return response.data;
 

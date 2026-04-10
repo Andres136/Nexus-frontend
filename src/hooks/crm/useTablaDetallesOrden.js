@@ -8,7 +8,7 @@ import { ProductContext } from "../../context/ProductContext";
 
 export const useTablaDetallesOrden = (detalles, orden) => {
 
-const [search, setSearch] = useState("");
+const [search, setSearch] = useState(" ");
   const { stockInfo, getStockWithSuggestions } = useContext(ProductContext);
 
   const { products, isLoading, isFetching, isEmpty } = useProducts({ search });
