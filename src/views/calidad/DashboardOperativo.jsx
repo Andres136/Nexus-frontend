@@ -157,9 +157,10 @@ export default function DashboardOperativo() {
 
   const { sedes } = useSedes();
   const [sedeId, setSedeId] = useState(null);
-  const { data, isLoading } = useGetDashboardOperativo({ sede_id: sedeId }); // Puedes pasar filtros si tu hook los soporta
+  const [estadoVsm, setEstadoVsm] = useState("");
+  const { data, isLoading } = useGetDashboardOperativo({ sede_id: sedeId , estado_vsm: estadoVsm }); // Puedes pasar filtros si tu hook los soporta
 
-  if (isLoading) return <div className="p-10 text-center">Cargando flujo VSM...</div>;
+  if (isLoading) return <div className="p-10 text-center"></div>;
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -167,19 +168,47 @@ export default function DashboardOperativo() {
         <h1 className="text-2xl font-bold text-gray-800">Torre de Control VSM</h1>
         <p className="text-gray-600">Monitoreo de flujo de valor en tiempo real</p>
       </header>
-<div className="mb-4 max-w-xs">
-  <select
-    className="w-full border rounded-lg px-3 py-2 text-sm"
-    value={sedeId || ''}
-    onChange={(e) => setSedeId(e.target.value)}
-  >
-    <option value="">Todas las sedes</option>
-    {sedes?.map((sede) => (
-      <option key={sede.id} value={sede.id}>
-        {sede.nombre}
-      </option>
-    ))}
-  </select>
+<div className="flex flex-wrap gap-4 mb-6">
+
+  {/* SEDE */}
+  <div className="flex flex-col w-48">
+    <label className="text-xs font-semibold text-gray-500 mb-1">
+      Sede
+    </label>
+    <select
+      className="border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+      value={sedeId || ''}
+      onChange={(e) => setSedeId(e.target.value)}
+    >
+      <option value="">Todas</option>
+      {sedes?.map((sede) => (
+        <option key={sede.id} value={sede.id}>
+          {sede.nombre}
+        </option>
+      ))}
+    </select>
+  </div>
+
+  {/* ESTADO */}
+  <div className="flex flex-col w-56">
+    <label className="text-xs font-semibold text-gray-500 mb-1">
+      Estado VSM
+    </label>
+    <select
+      className="border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+      value={estadoVsm}
+      onChange={(e) => setEstadoVsm(e.target.value)}
+    >
+      <option value="">Todos</option>
+      <option value="SIN_STOCK">Sin stock</option>
+      <option value="ESPERANDO_PROVEEDOR">En compra</option>
+      <option value="EN_ALISTAMIENTO">Alistando</option>
+      <option value="LISTO_PARA_DESPACHO">Listo despacho</option>
+      <option value="EN_RUTA">En ruta</option>
+      <option value="ENTREGADO">Entregado</option>
+    </select>
+  </div>
+
 </div>
       {/* Grid de Órdenes */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

@@ -11,7 +11,7 @@ export const useGetDashboardOperativo = ( filters = {}) => {
         console.log("Obteniendo datos:", {  filters });
 
         const response = await gestionOperativaService.getvsm(filters)
-        console.log("Datos recibidos:", response.data);
+      //  console.log("Datos recibidos:", response.data);
 
         return response.data;
 

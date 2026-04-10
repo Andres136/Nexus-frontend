@@ -46,7 +46,7 @@ export default function DetallesOrdenesCompra() {
     const [searchTerm, setSearchTerm] = useState(" ");
 const [documentoVisto, setDocumentoVisto] = useState(false);
 
-
+console.log("ordenesCompra desde detalles:", ordenesCompra);
       const { products, isLoading,isEmpty, isFetching } = useProducts({search: searchTerm});
 
 
@@ -116,12 +116,7 @@ const tieneDocumentoCliente = Boolean(ordenSeleccionada?.cliente_documento);
 
   // 5. Enviar datos al backend
   const handleGenerarOrdenTrabajo = async () => {
-    console.log("Datos a enviar:", {
-      sede_id:Number(sedeId),
-      observaciones,
-      forzar_entrega_parcial: forzarEntregaParcial,
-      detalles
-    });
+  
     if (!ordenSeleccionada) {
       toast.error("No se encontró la orden de compra");
       return;
@@ -206,7 +201,7 @@ const tieneDocumentoCliente = Boolean(ordenSeleccionada?.cliente_documento);
             Authorization: `Bearer ${token}`,
           },
         });
-        console.log("Sedes obtenidas:", response.data);
+ //       console.log("Sedes obtenidas:", response.data);
         setSedes(response.data);
       } catch (error) {
         toast.error("Error al cargar las sedes", error);
@@ -353,6 +348,7 @@ const tieneDocumentoCliente = Boolean(ordenSeleccionada?.cliente_documento);
                   <th className="border border-gray-300 px-2 py-1">Acciones</th>
                   <th className="border border-gray-300 px-2 py-1">Item</th>
                   <th className="border border-gray-300 px-2 py-1">Producto</th>
+                  <th className="border border-gray-300 px-2 py-1">Referencia</th>
                  <th className="border border-gray-300 px-2 py-1">Ancho cm</th>
                  <th className="border border-gray-300 px-2 py-1">Largo cm</th>  
                   <th className="border border-gray-300 px-2 py-1">Calibre</th>
@@ -409,9 +405,17 @@ const tieneDocumentoCliente = Boolean(ordenSeleccionada?.cliente_documento);
         })()
       : null
   }
-  onChange={(selectedOption) =>
-    handleChangeDetalle(index, "product_id", selectedOption ? selectedOption.value : null)
-  }
+ onChange={(selectedOption) => {
+  const newDetalles = [...detalles];
+
+  newDetalles[index].product_id = selectedOption?.value || null;
+
+  // 🔥 AQUÍ LLENAS LA REFERENCIA AUTOMÁTICAMENTE
+  newDetalles[index].referencia = selectedOption?.name || "";
+  newDetalles[index].descripcion = selectedOption?.name || "";
+
+  setDetalles(newDetalles);
+}}
   onInputChange={(inputValue) => setSearchTerm(inputValue)}
   placeholder="Buscar producto por código o nombre..."
   noOptionsMessage={() =>
@@ -443,7 +447,16 @@ const tieneDocumentoCliente = Boolean(ordenSeleccionada?.cliente_documento);
   </div>
 )}
                     </td>
-              
+                    <td className="border border-gray-300 px-2 py-1">
+                      <input
+                        type="text"
+                        value={detalle.referencia || detalle.product?.name || ""}
+                        onChange={(e) =>
+                          handleChangeDetalle(index, "referencia", e.target.value)
+                        }
+                        className="w-full border border-gray-300 rounded px-1"
+                      />
+                    </td>
                     {/* Ancho */}
                     <td className="border border-gray-300 px-2 py-1">
                       <input
