@@ -1,6 +1,6 @@
 import axios from "axios";
 import clienteAxios from "../config/axios";
-import { create, get, update } from "lodash";
+
 
 const apiClient = axios.create({
   baseURL: clienteAxios.defaults.baseURL,

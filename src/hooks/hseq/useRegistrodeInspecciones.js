@@ -57,11 +57,23 @@ export const useRegistrodeInspecciones = () => {
         }
     }
     
+    //Eliminar inspección
+    const handleDelete = async (id) => {
+        try {
+            await InspeccionesHseqService.deleteInspeccion(id)
+            showToast('success', 'Inspección eliminada exitosamente')
+            queryClient.invalidateQueries(["inspecciones"])
+        } catch (err) {
+            console.error("Error al eliminar la inspección:", err)
+            showToast("error", "Hubo un problema al eliminar la inspección");
+        }
+    }
     return{
         formData,
         error,
         loading,
         handleChange,
-        handleSubmit
+        handleSubmit,
+        handleDelete
     }
 }

@@ -7,6 +7,8 @@ import { useGetTipoInspecciones } from "../../hooks/hseq/useGetTipoInspecciones"
 import { mapInspeccionesToEvents } from "./adapters/inspecciones.adapter";
 import EjecutarInspeccion from "./EjecutarInspeccion";
 import Select from "react-select";
+import Swal from "sweetalert2";
+import { InspeccionesHseqService } from "../../services/hseqService";
 
 export default function CalendarioInspecciones() {
 
@@ -20,6 +22,7 @@ export default function CalendarioInspecciones() {
     handleSubmit,
     loading,
     error,
+
   } = useRegistrodeInspecciones();
 
   const { data } = useGetInspecciones();
@@ -47,7 +50,34 @@ export default function CalendarioInspecciones() {
     setModalView("execute");
     setModalOpen(true);
   };
+const handleDelete = async () => {
+  const result = await Swal.fire({
+    title: "¿Eliminar inspección?",
+    text: "Esta acción no se puede deshacer",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Sí, eliminar",
+    cancelButtonText: "Cancelar",
+  });
 
+  if (result.isConfirmed) {
+    try {
+      // 🔥 IMPORTANTE (por tu adapter)
+      const realId = selectedInspeccion.id.replace("insp-", "");
+
+      await InspeccionesHseqService.deleteInspeccion(realId);
+
+      Swal.fire("Eliminado", "La inspección fue eliminada", "success");
+
+      setModalOpen(false);
+
+      // 🔁 recargar datos
+      window.location.reload(); // rápido (luego lo optimizamos)
+    } catch (error) {
+      Swal.fire("Error", "No se pudo eliminar", "error");
+    }
+  }
+};
   return (
     <div>
       <MantenimientoCalendar
@@ -156,6 +186,12 @@ export default function CalendarioInspecciones() {
               <p className="text-sm mb-4">
                 👤 {selectedInspeccion.usuario}
               </p>
+              <button
+  className="w-full bg-red-600 text-white py-2 rounded mb-2"
+  onClick={handleDelete}
+>
+  Eliminar inspección
+</button>
 
               
 

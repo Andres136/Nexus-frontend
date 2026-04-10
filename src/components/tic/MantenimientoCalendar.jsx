@@ -169,6 +169,8 @@ export default function MantenimientoCalendar({
                     >
                       {badge.label}
                     </span>
+
+                    
                   </div>
                 </div>
               );
@@ -186,6 +188,7 @@ export default function MantenimientoCalendar({
                 id: info.event.id,
                 start: info.event.startStr,
                 ...info.event.extendedProps,
+
               })
             }
             headerToolbar={{
