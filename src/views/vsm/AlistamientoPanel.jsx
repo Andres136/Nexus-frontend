@@ -191,7 +191,7 @@ const location = useLocation();
   </div>
 </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-6">
+      <div className="container mx-auto px-4 py-6">
         
         {/* ✅ Formulario compacto */}
         <div className="bg-white rounded-xl shadow-sm border mb-6">
