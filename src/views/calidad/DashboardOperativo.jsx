@@ -183,7 +183,7 @@ const events = data?.map((orden) => {
 
   return {
     id: orden.orden_id,
-    title: `OC #${orden.orden_id} / OT #${orden.orden_trabajo_id || 'N/A'} - ${orden.sede}`,
+    title: `OC #${orden.orden_id} / OT #${orden.orden_trabajo_id || 'N/A'} - ${orden.sede} - ${orden.cliente}`,
     start: orden.fecha_entrega,
     allDay: true,
 
