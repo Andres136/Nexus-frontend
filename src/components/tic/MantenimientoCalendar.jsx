@@ -111,21 +111,24 @@ export default function MantenimientoCalendar({
         ) : (
           <FullCalendar
             eventContent={(arg) => {
-              const { usuario, sede, tipo, asignado_a, estado } = arg.event.extendedProps;
+              const { usuario, sede, tipo, asignado_a, estado, vencido } = arg.event.extendedProps;
               const bgColor = getEstadoColor(estado);
               const badge = getEstadoBadge(estado);
-                const getBgClass = (estado) => {
-    const bg = {
-      pendiente: "bg-amber-50",
-      en_proceso: "bg-blue-50",
-      completado: "bg-emerald-50",
-    };
-    return bg[estado] || "bg-gray-50";
+const getBgClass = (estado, vencido) => {
+  if (vencido) return "bg-red-100 border-red-500";
+
+  const bg = {
+    pendiente: "bg-amber-50 border-amber-400",
+    en_proceso: "bg-blue-50 border-blue-400",
+    completado: "bg-emerald-50 border-green-500",
   };
+
+  return bg[estado] || "bg-gray-50 border-gray-300";
+};
 
               return (
                 <div
-                  className={`group p-2.5 rounded-lg shadow-sm border-l-4 ${getBgClass(estado)}
+                  className={`group p-2.5 rounded-lg shadow-sm border-l-4 ${getBgClass(estado, vencido)}
                     hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 cursor-pointer`}
                   style={{ borderLeftColor: bgColor }}
                 >

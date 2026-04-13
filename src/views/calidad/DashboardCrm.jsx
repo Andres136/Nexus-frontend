@@ -18,14 +18,18 @@ export default function DashboardCrm() {
 
   const year = new Date().getFullYear()
   const { kpis, loading } = useDashboardKpis(year)
- const cartera = kpis?.series_cartera || []
+const cartera = kpis?.cartera || []
  console.log("KPI DATA:", kpis)
   if (loading) return <NexusLoader text="Cargando dashboard..." />
 
   const series = kpis?.series_mensual || []
+  
   const totales = kpis?.totales || {}
 const mesActual = new Date().getMonth() + 1
 const mesData = series.find(m => m.month === mesActual) || {}
+
+
+const carteraMes = cartera.find(m => m.month === mesActual) || {}
   const money = (n) => `$${Number(n || 0).toLocaleString()}`
   const pct = (n) => `${Number(n || 0).toFixed(2)}%`
 
@@ -45,11 +49,11 @@ const kpisCards = [
   { label: "Ticket Promedio", value: money(totales.ticket_promedio) },
   {
   label: "Días post gestión",
-  value: `${cartera.promedio_dias_post_gestion || 0} días`
+  value: `${carteraMes.promedio_dias_post_gestion || 0} días`
 },
 {
   label: "Casos gestionados",
-  value: cartera.total_casos || 0
+  value: carteraMes.total_casos || 0
 }
 ]
   /* Ticket promedio por mes */
@@ -333,36 +337,25 @@ const kpisCards = [
   <h3 className="font-semibold text-gray-700 mb-4">
     Tiempo de recuperación de cartera (días)
   </h3>
+<ResponsiveContainer width="100%" height={300}>
+  <LineChart data={cartera}>
+    <CartesianGrid strokeDasharray="3 3" />
+    <XAxis dataKey="label" />
+    <YAxis domain={[0, 'auto']} />
+    <Tooltip formatter={(v) => `${v} días`} />
 
-  <ResponsiveContainer width="100%" height={300}>
-  {cartera.some(m => m.total_casos > 0) ? (
-
-    <LineChart data={cartera}>
-      <CartesianGrid strokeDasharray="3 3" />
-      <XAxis dataKey="label" />
-      <YAxis domain={[0, 'auto']} />
-      <Tooltip formatter={(v) => `${v} días`} />
-
-      <Line
-        type="monotone"
-        dataKey="promedio_dias_post_gestion"
-        stroke="#ef4444"
-        strokeWidth={3}
-        dot={{ r: 4 }}
-      />
-    </LineChart>
-
-  ) : (
-
-    <div className="flex items-center justify-center h-full text-gray-400">
-      Sin datos de gestión
-    </div>
-
-  )}
+    <Line
+      type="monotone"
+      dataKey="promedio_dias_post_gestion"
+      stroke="#ef4444"
+      strokeWidth={3}
+      dot={{ r: 4 }}
+    />
+  </LineChart>
 </ResponsiveContainer>
 </div>
 
-      {/* RANKING VENDEDORES */}
+      {/* RANKING VENDEDORES 
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
 
@@ -397,7 +390,7 @@ const kpisCards = [
 
         ))}
 
-      </div>
+      </div>*/}
 
     </div>
   )

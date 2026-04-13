@@ -129,6 +129,7 @@ setUsuariosFiltro(response.data.usuarios_filtro || []);
     await obtenerAsignaciones();
 
   } catch (err) {
+    console.error("Error al desactivar la asignación:", err);
     showToast("error", "Error al desactivar la asignación");
   } finally {
     setLoading(false);

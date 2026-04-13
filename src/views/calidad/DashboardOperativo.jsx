@@ -5,7 +5,8 @@ import {
 } from 'lucide-react';
 import { useGetDashboardOperativo } from '../../hooks/calidad/useGetDasboardOperativo';
 import {useSedes} from "../../hooks/useSedes";
-import Select from 'react'
+import MantenimientoCalendar from '../../components/tic/MantenimientoCalendar';
+
 
 const VSMCard = ({ orden }) => {
   const [showProducts, setShowProducts] = useState(false);
@@ -158,10 +159,28 @@ export default function DashboardOperativo() {
   const { sedes } = useSedes();
   const [sedeId, setSedeId] = useState(null);
   const [estadoVsm, setEstadoVsm] = useState("");
+  const [ordenSeleccionada, setOrdenSeleccionada] = useState(null);
   const { data, isLoading } = useGetDashboardOperativo({ sede_id: sedeId , estado_vsm: estadoVsm }); // Puedes pasar filtros si tu hook los soporta
+//console.log("Datos del Dashboard Operativo:", data);
+  if (isLoading) return <div className="p-10 text-center">Cargando...</div>;
+const events = data?.map((orden) => {
+  const hoy = new Date();
+  const fechaEntrega = new Date(orden.fecha_entrega);
 
-  if (isLoading) return <div className="p-10 text-center"></div>;
+  const vencido = fechaEntrega < hoy && orden.estado_vsm !== 'ENTREGADO';
 
+  return {
+    id: orden.orden_id,
+    title: `OC #${orden.orden_id} / OT #${orden.orden_trabajo_id || 'N/A'} - ${orden.cliente}`,
+    start: orden.fecha_entrega,
+    allDay: true,
+
+    extendedProps: {
+      ...orden,
+      vencido // 🔥 guardamos si está vencido
+    }
+  };
+});
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <header className="mb-8">
@@ -210,12 +229,59 @@ export default function DashboardOperativo() {
   </div>
 
 </div>
-      {/* Grid de Órdenes */}
+      {/* Grid de Órdenes 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {data?.map(orden => (
           <VSMCard key={orden.orden_id} orden={orden} />
         ))}
-      </div>
+      </div>*/}
+
+<MantenimientoCalendar
+  events={events}
+  eventClassNames={(arg) => {
+  const { vencido, estado_vsm } = arg.event.extendedProps;
+
+  if (vencido) return ['bg-red-500', 'text-white'];
+  if (estado_vsm === 'ENTREGADO') return ['bg-green-500', 'text-white'];
+  if (estado_vsm === 'EN_RUTA') return ['bg-blue-500', 'text-white'];
+
+  return ['bg-yellow-400'];
+}}
+  onEventClick={(event) => {
+    console.log("Evento clickeado:", event);
+    setOrdenSeleccionada(event); // <--- aquí el cambio
+
+  
+  }}
+
+      title="Dashboard Operativo"
+        subtitle="Monitoreo en tiempo real de órdenes de trabajo y su flujo de valor"
+
+/>
+{ordenSeleccionada && (
+  <div className="fixed inset-0 z-50 flex">
+    
+    {/* overlay */}
+    <div
+      className="flex-1 bg-black/40"
+      onClick={() => setOrdenSeleccionada(null)}
+    />
+
+    {/* drawer */}
+    <div className="w-[500px] bg-white h-full shadow-xl overflow-y-auto p-4">
+      
+      <button
+        onClick={() => setOrdenSeleccionada(null)}
+        className="mb-4 text-gray-500"
+      >
+        ✕ Cerrar
+      </button>
+
+      <VSMCard orden={ordenSeleccionada} />
+    </div>
+
+  </div>
+)}
     </div>
   );
 }
