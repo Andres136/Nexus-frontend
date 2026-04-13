@@ -123,7 +123,7 @@ const VSMCard = ({ orden }) => {
               <thead className="bg-gray-100 text-gray-500 sticky top-0">
                 <tr>
                   <th className="px-3 py-2 text-left">PRODUCTO</th>
-                  <th className="px-3 py-2 text-right">STOCK</th>
+                  <th className="px-3 py-2 text-right">ENTREGA</th>
                   <th className="px-3 py-2 text-center">ESTADO</th>
                 </tr>
               </thead>
@@ -134,9 +134,21 @@ const VSMCard = ({ orden }) => {
                        {prod.producto || `ID: ${prod.producto_id}`}
                        {prod.tiene_equivalente && <span className="ml-2 text-[9px] bg-purple-100 text-purple-700 px-1 rounded font-bold">EQ</span>}
                     </td>
-                    <td className="px-3 py-2 text-right font-mono text-gray-600">
-                      {parseFloat(prod.stock).toFixed(1)} / {parseFloat(prod.requerido).toFixed(1)}
-                    </td>
+                 <td className="px-3 py-2 text-right font-mono">
+  <span className="text-green-600 font-bold">
+    {parseFloat(prod.entregado).toFixed(1)}
+  </span>
+  {" / "}
+  <span className="text-gray-700">
+    {parseFloat(prod.requerido).toFixed(1)}
+  </span>
+
+  <div className={`text-[10px] font-bold ${
+    prod.faltante > 0 ? 'text-red-500' : 'text-green-600'
+  }`}>
+    Faltante: {parseFloat(prod.faltante).toFixed(1)}
+  </div>
+</td>
                     <td className="px-3 py-2 text-center">
                       <div className={`w-2 h-2 rounded-full mx-auto ${getProductStatusColor(prod.estado)}`}></div>
                     </td>
@@ -161,7 +173,7 @@ export default function DashboardOperativo() {
   const [estadoVsm, setEstadoVsm] = useState("");
   const [ordenSeleccionada, setOrdenSeleccionada] = useState(null);
   const { data, isLoading } = useGetDashboardOperativo({ sede_id: sedeId , estado_vsm: estadoVsm }); // Puedes pasar filtros si tu hook los soporta
-//console.log("Datos del Dashboard Operativo:", data);
+console.log("Datos del Dashboard Operativo:", data);
   if (isLoading) return <div className="p-10 text-center">Cargando...</div>;
 const events = data?.map((orden) => {
   const hoy = new Date();
