@@ -57,6 +57,68 @@ const [sedeSeleccionada, setSedeSeleccionada] = useState("");
     }
   };
 
+  const handlePausaSede = async () => {
+    
+  const { value: razon } = await Swal.fire({
+    title: "Pausar TODA la sede",
+    text: "Esto pausará TODAS las órdenes activas",
+    input: "text",
+    inputPlaceholder: "Motivo de la pausa...",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Sí, pausar todo",
+    confirmButtonColor: "#dc2626",
+    inputValidator: (value) => !value && "Debes escribir un motivo."
+  });
+
+  if (!razon) return;
+
+  try {
+     const response = await vsmProduccionService.postPausarProduccion({
+      razon
+      // ❌ NO mandes sede_id (ya lo definimos backend)
+    });
+  
+    toast.success(response.data.message);
+
+    refresh(sedeSeleccionada ? { sede_id: sedeSeleccionada } : {});
+
+  } catch (e) {
+    const msg =
+      e?.response?.data?.message ||
+      "Error al pausar la sede";
+
+    toast.error(msg);
+  }
+};
+
+const handleReanudarSede = async () => {
+
+  const res = await Swal.fire({
+    title: "Reanudar TODA la sede",
+    text: "Se reactivarán todas las órdenes pausadas",
+    icon: "question",
+    showCancelButton: true,
+    confirmButtonText: "Sí, reanudar",
+    confirmButtonColor: "#16a34a"
+  });
+
+  if (!res.isConfirmed) return;
+
+  try {
+    const response = await vsmProduccionService.postReanudarProduccion();
+
+    toast.success(response.data.message);
+
+    // 🔥 IMPORTANTE
+    setSedeSeleccionada("");
+    refresh();
+
+  } catch (e) {
+    toast.error(e?.response?.data?.message || "Error al reanudar");
+  }
+};
+
   if (loading) return (
     <div className="flex flex-col items-center justify-center p-12 gap-3">
       <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
@@ -78,7 +140,19 @@ const [sedeSeleccionada, setSedeSeleccionada] = useState("");
       {alistamientos.length}
     </span>
   </div>
+<button
+  onClick={handlePausaSede}
+  className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-700"
+>
+  ⛔ Pausar toda la sede
+</button>
 
+<button
+  onClick={handleReanudarSede}
+  className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-green-700"
+>
+  ▶️ Reanudar toda la sede
+</button>
   {/* 🔥 SELECT SEDE */}
   <div className="flex items-center gap-2">
     <select
@@ -166,7 +240,7 @@ function AlistamientoCard({ alist, onUpdate, onPausa, onReanudar, onFinalizar })
             <h3 className="font-black text-gray-900 text-lg leading-tight">#{alist.orden_trabajo_id}</h3>
             <p className="text-xs text-gray-500 truncate w-40">{alist.cliente?.nombre}</p>
           </div>
-          <div className={`px-2 py-1 rounded-md text-[10px] font-bold border ${
+          <div className={`px-2 py-1 rounded-md   text-[10px] font-bold border ${
             alist.estado === 'PAUSADO' ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-green-100 text-green-700 border-green-200'
           }`}>
             {alist.estado}

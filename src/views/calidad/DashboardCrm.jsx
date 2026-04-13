@@ -18,6 +18,7 @@ export default function DashboardCrm() {
 
   const year = new Date().getFullYear()
   const { kpis, loading } = useDashboardKpis(year)
+ const cartera = kpis?.series_cartera || []
  console.log("KPI DATA:", kpis)
   if (loading) return <NexusLoader text="Cargando dashboard..." />
 
@@ -41,7 +42,15 @@ const kpisCards = [
   { label: "Conversión Clientes", value: pct(mesData.conversion_clientes_pct) },
   { label: "Fidelización", value: pct(mesData.fidelizacion_clientes_pct) },
 
-  { label: "Ticket Promedio", value: money(totales.ticket_promedio) }
+  { label: "Ticket Promedio", value: money(totales.ticket_promedio) },
+  {
+  label: "Días post gestión",
+  value: `${cartera.promedio_dias_post_gestion || 0} días`
+},
+{
+  label: "Casos gestionados",
+  value: cartera.total_casos || 0
+}
 ]
   /* Ticket promedio por mes */
 
@@ -318,6 +327,40 @@ const kpisCards = [
         </ResponsiveContainer>
 
       </div>
+
+      <div className="bg-white rounded-xl shadow-sm border p-6">
+
+  <h3 className="font-semibold text-gray-700 mb-4">
+    Tiempo de recuperación de cartera (días)
+  </h3>
+
+  <ResponsiveContainer width="100%" height={300}>
+  {cartera.some(m => m.total_casos > 0) ? (
+
+    <LineChart data={cartera}>
+      <CartesianGrid strokeDasharray="3 3" />
+      <XAxis dataKey="label" />
+      <YAxis domain={[0, 'auto']} />
+      <Tooltip formatter={(v) => `${v} días`} />
+
+      <Line
+        type="monotone"
+        dataKey="promedio_dias_post_gestion"
+        stroke="#ef4444"
+        strokeWidth={3}
+        dot={{ r: 4 }}
+      />
+    </LineChart>
+
+  ) : (
+
+    <div className="flex items-center justify-center h-full text-gray-400">
+      Sin datos de gestión
+    </div>
+
+  )}
+</ResponsiveContainer>
+</div>
 
       {/* RANKING VENDEDORES */}
 

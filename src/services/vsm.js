@@ -119,5 +119,9 @@ registerProduccion: (data) =>
   apiClient.post('/api/alistamiento/produccion', data),
 getRendimiento: (params) =>
   apiClient.get('/api/kpi-productividad', { params }),
+postPausarProduccion: (data) =>
+  apiClient.post('/api/pausar-ordenes-sedes', data),
 
+postReanudarProduccion: () =>
+  apiClient.post('/api/reanudar-ordenes-sedes'),
 }
