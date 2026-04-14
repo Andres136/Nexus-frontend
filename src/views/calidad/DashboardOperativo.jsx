@@ -3,6 +3,7 @@ import {
   Package, ShoppingCart, ClipboardCheck, Truck, 
   CheckCircle2, AlertCircle, Clock, ChevronDown, ChevronUp, Beaker 
 } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useGetDashboardOperativo } from '../../hooks/calidad/useGetDasboardOperativo';
 import {useSedes} from "../../hooks/useSedes";
 import MantenimientoCalendar from '../../components/tic/MantenimientoCalendar';
@@ -14,7 +15,7 @@ import Select from 'react-select';
 
 const VSMCard = ({ orden }) => {
   const [showProducts, setShowProducts] = useState(false);
-
+const queryClient = useQueryClient();
   const getStatusConfig = (estado) => {
     const configs = {
       'ENTREGADO': { color: 'bg-green-100 text-green-800', icon: CheckCircle2, label: 'Entregado' },
@@ -41,7 +42,7 @@ const marcarDocumentoRevisado = async () => {
   try {
    const response = await RevisarOtApi.revisar(orden.orden_trabajo_id);
    showToast('success',response.data.message );
-
+    queryClient.invalidateQueries(['dashboardOperativo']); // Refresca el dashboard
     // 🔥 actualización visual inmediata
     orden.documento_revisado_at = new Date();
 
@@ -209,6 +210,7 @@ export default function DashboardOperativo() {
   const [ordenSeleccionada, setOrdenSeleccionada] = useState(null);
   const { data, isLoading } = useGetDashboardOperativo({ sede_id: sedeId , estado_vsm: estadoVsm, cliente: clienteId, revisada: revisada }); // Puedes pasar filtros si tu hook los soporta
   const {clientesTodos} = useClientes();
+  
 //console.log("Datos del Dashboard Operativo:", data);
   if (isLoading) return <div className="p-10 text-center">Cargando...</div>;
 const events = data?.map((orden) => {
