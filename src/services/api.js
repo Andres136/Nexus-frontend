@@ -410,6 +410,10 @@ export  const GestionarFacturaApi = {
 delete: (id) => apiClient.delete(`/api/gestion-facturas-cartera/${id}`),
 }
 
+export  const RevisarOtApi = {
+  revisar: (id) => apiClient.post(`/api/orden-trabajo/${id}/revisar`),
+
+};
 
 
 export default apiClient;

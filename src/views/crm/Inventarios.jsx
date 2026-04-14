@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { FiSearch, FiFilter, FiDownload, FiRefreshCw, FiPackage, FiTrendingUp, FiTrendingDown, FiAlertTriangle, FiPlus, FiAlertCircle, FiArrowRight, FiEdit2, FiEdit3 } from 'react-icons/fi';
+import { FiSearch,  FiDownload, FiRefreshCw, FiPackage, FiTrendingUp, FiTrendingDown, FiAlertTriangle, FiPlus, FiAlertCircle, FiArrowRight, FiEdit2, FiEdit3 } from 'react-icons/fi';
 import { BsBoxSeam, BsGraphUp, BsExclamationTriangle, BsFileEarmarkExcel } from 'react-icons/bs';
 import { Link } from 'react-router-dom';
 import { inventariosApi, productsApi } from '../../services/api';
@@ -33,8 +33,6 @@ const [selectedCategoria, setSelectedCategoria] = useState('');
 
 
 
-
-
   
   const [pagination, setPagination] = useState({
     current_page: 1, 
@@ -52,6 +50,7 @@ const [selectedCategoria, setSelectedCategoria] = useState('');
   });
 
   const { empresas } = useEmpresas();
+
   useEffect(() => {
     const timeout = setTimeout(() => {
 
@@ -61,7 +60,7 @@ const [selectedCategoria, setSelectedCategoria] = useState('');
 
       cargarInventarios(1); // Siempre volver a página 1 cuando cambien filtros
       setCurrentPage(1);
-    }, 600); // Debounce de 600ms
+    }, 1000); // Debounce de 1000ms
 
     return () => clearTimeout(timeout);
   }, [searchTerm, selectedBodega, selectedSede, selectedEmpresa, selectedCategoria]);

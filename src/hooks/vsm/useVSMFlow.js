@@ -32,7 +32,7 @@ export default function useVSMFlow() {
       setLoading(false);
 
     } catch (error) {
-      console.error("Error cargando flujo VSM", error);
+      console.log("Error cargando flujo VSM", error);
     }
   };
 

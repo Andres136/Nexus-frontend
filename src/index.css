@@ -421,3 +421,6 @@
   background: transparent !important;
   border: none !important;
 }
+.revisado {
+  box-shadow: 0 0 0 3px #166534 !important; /* verde fuerte */
+}

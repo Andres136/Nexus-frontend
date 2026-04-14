@@ -6,6 +6,10 @@ import {
 import { useGetDashboardOperativo } from '../../hooks/calidad/useGetDasboardOperativo';
 import {useSedes} from "../../hooks/useSedes";
 import MantenimientoCalendar from '../../components/tic/MantenimientoCalendar';
+import  {RevisarOtApi} from "../../services/api";
+import { showToast } from '../../helpers/utils/showToast';
+import { useClientes } from '../../hooks/useClientes';
+import Select from 'react-select';
 
 
 const VSMCard = ({ orden }) => {
@@ -33,7 +37,18 @@ const VSMCard = ({ orden }) => {
       default: return 'bg-gray-300';
     }
   };
+const marcarDocumentoRevisado = async () => {
+  try {
+   const response = await RevisarOtApi.revisar(orden.orden_trabajo_id);
+   showToast('success',response.data.message );
 
+    // 🔥 actualización visual inmediata
+    orden.documento_revisado_at = new Date();
+
+  } catch (error) {
+    console.error("Error revisando documento", error);
+  }
+};
   const config = getStatusConfig(orden.estado_vsm);
   const StatusIcon = config.icon;
 
@@ -42,6 +57,22 @@ const VSMCard = ({ orden }) => {
       <div className="p-4">
         {/* Header */}
         <div className="flex justify-between items-start mb-4">
+<div className="mb-3">
+  <button
+    onClick={marcarDocumentoRevisado}
+    className={`px-3 py-1 text-xs font-bold rounded-lg transition
+      ${
+        orden.revisada
+          ? 'bg-green-100 text-green-700'
+          : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
+      }`}
+  >
+    {orden.revisada 
+      ? '✔ Documento Revisado' 
+      : 'Revisar Documento'}
+  </button>
+</div>
+          
      <div>
   <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2">
     {orden.numero || `OC #${orden.orden_id}`}
@@ -159,6 +190,8 @@ const VSMCard = ({ orden }) => {
           </div>
         </div>
       )}
+
+      
     </div>
   );
 };
@@ -170,10 +203,13 @@ export default function DashboardOperativo() {
 
   const { sedes } = useSedes();
   const [sedeId, setSedeId] = useState(null);
+  const [clienteId, setClienteId] = useState(null);
   const [estadoVsm, setEstadoVsm] = useState("");
+  const [revisada, setRevisada] = useState(null);
   const [ordenSeleccionada, setOrdenSeleccionada] = useState(null);
-  const { data, isLoading } = useGetDashboardOperativo({ sede_id: sedeId , estado_vsm: estadoVsm }); // Puedes pasar filtros si tu hook los soporta
-console.log("Datos del Dashboard Operativo:", data);
+  const { data, isLoading } = useGetDashboardOperativo({ sede_id: sedeId , estado_vsm: estadoVsm, cliente: clienteId, revisada: revisada }); // Puedes pasar filtros si tu hook los soporta
+  const {clientesTodos} = useClientes();
+//console.log("Datos del Dashboard Operativo:", data);
   if (isLoading) return <div className="p-10 text-center">Cargando...</div>;
 const events = data?.map((orden) => {
   const hoy = new Date();
@@ -183,13 +219,14 @@ const events = data?.map((orden) => {
 
   return {
     id: orden.orden_id,
-    title: `OC #${orden.orden_id} / OT #${orden.orden_trabajo_id || 'N/A'} - ${orden.sede} - ${orden.cliente}`,
+      title: `${orden.revisada ? "✔️ " : ""}OC #${orden.orden_id} / OT #${orden.orden_trabajo_id || 'N/A'} - ${orden.sede} - ${orden.cliente}`,
     start: orden.fecha_entrega,
     allDay: true,
 
     extendedProps: {
       ...orden,
-      vencido // 🔥 guardamos si está vencido
+      revisada: orden.revisada, // para control visual de revisión
+      vencido // 
     }
   };
 });
@@ -201,6 +238,40 @@ const events = data?.map((orden) => {
       </header>
 <div className="flex flex-wrap gap-4 mb-6">
 
+
+  {/* CLIENTE */}
+  <div className="flex flex-col w-56">
+    <label className="text-xs font-semibold text-gray-500 mb-1">
+      Cliente
+    </label>
+    <Select
+      options={clientesTodos?.map(cliente => ({ value: cliente.id, label: cliente.nombre }))}
+    value={
+  clientesTodos
+    ?.map(cliente => ({ value: cliente.id, label: cliente.nombre }))
+    .find(option => option.value === clienteId) || null
+}
+      onChange={(selected) => setClienteId(selected?.value || null)}
+      className="text-sm"
+    />
+  </div>
+
+<div className="flex flex-col w-40">
+  <label className="text-xs font-semibold text-gray-500 mb-1">
+    Revisión
+  </label>
+  <select
+    className="border rounded-lg px-3 py-2 text-sm"
+    value={revisada ?? ''}
+    onChange={(e) => setRevisada(
+      e.target.value === '' ? null : e.target.value === 'true'
+    )}
+  >
+    <option value="">Todas</option>
+    <option value="true">Revisadas</option>
+    <option value="false">No revisadas</option>
+  </select>
+</div>
   {/* SEDE */}
   <div className="flex flex-col w-48">
     <label className="text-xs font-semibold text-gray-500 mb-1">
@@ -250,14 +321,21 @@ const events = data?.map((orden) => {
 
 <MantenimientoCalendar
   events={events}
-  eventClassNames={(arg) => {
-  const { vencido, estado_vsm } = arg.event.extendedProps;
+eventClassNames={(arg) => {
+  const { vencido, estado_vsm, revisada } = arg.event.extendedProps;
 
-  if (vencido) return ['bg-red-500', 'text-white'];
-  if (estado_vsm === 'ENTREGADO') return ['bg-green-500', 'text-white'];
-  if (estado_vsm === 'EN_RUTA') return ['bg-blue-500', 'text-white'];
+  let classes = [];
 
-  return ['bg-yellow-400'];
+  //  colores normales
+  if (vencido) classes.push('bg-red-500', 'text-white');
+  else if (estado_vsm === 'ENTREGADO') classes.push('bg-green-500', 'text-white');
+  else if (estado_vsm === 'EN_RUTA') classes.push('bg-blue-500', 'text-white');
+  else classes.push('bg-yellow-400');
+
+  //  CLASE PERSONALIZADA
+  if (revisada) classes.push('revisado'); // Agrega clase para órdenes revisadas
+
+  return classes;
 }}
   onEventClick={(event) => {
     console.log("Evento clickeado:", event);
