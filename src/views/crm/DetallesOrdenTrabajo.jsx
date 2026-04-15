@@ -148,7 +148,7 @@ export default function DetallesOrdenTrabajo() {
       <div>
         <p className="text-xs font-medium text-gray-500">Cliente</p>
         <p className="text-sm font-semibold text-gray-900">
-          {orden.cliente?.nombre || "No asignado"}
+          {orden.orden_compra?.cliente?.nombre || "No asignado"}
         </p>
       </div>
     </div>

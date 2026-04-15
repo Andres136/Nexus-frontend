@@ -211,7 +211,7 @@ export default function ObtenerOrdenesTrabajo() {
 
                     {/* Cliente */}
                     <td className="px-3 sm:px-4 py-3 sm:py-4">
-                      <div className="font-medium text-gray-900">{orden.cliente.nombre}</div>
+                      <div className="font-medium text-gray-900">{orden.orden_compra?.cliente?.nombre || "Sin cliente"}</div>
                     </td>
 
                     {/* Fecha Entrega */}
