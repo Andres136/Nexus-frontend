@@ -61,6 +61,8 @@ export const vsmService = {
   finalizarAlistamiento: (id) =>
     apiClient.post(`/api/vsm-alistamientos/${id}/finalizar`),   
 
+  
+
     // Obtener historial de un alistamiento
     obtenerHistorial: (id) =>
     apiClient.get(`/api/alistamientos/${id}/historial`), 
@@ -74,6 +76,12 @@ export const vsmService = {
   reanudarUsuario: (alistamientoId, usuarioId) =>
     apiClient.post(
       `/api/alistamientos/${alistamientoId}/usuarios/${usuarioId}/reanudar`
+    ),
+
+    //eliminar usuario de alistamiento
+    eliminarUsuario: (alistamientoId, usuarioId) =>
+    apiClient.delete(
+      `/api/alistamientos/${alistamientoId}/usuarios/${usuarioId}`
     ),
 
     usuariosDisponibles: (alistamientoId) =>

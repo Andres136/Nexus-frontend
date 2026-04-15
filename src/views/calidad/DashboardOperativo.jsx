@@ -10,6 +10,7 @@ import MantenimientoCalendar from '../../components/tic/MantenimientoCalendar';
 import  {RevisarOtApi} from "../../services/api";
 import { showToast } from '../../helpers/utils/showToast';
 import { useClientes } from '../../hooks/useClientes';
+import  NexusLoader from '../../components/NexusLoader';
 import Select from 'react-select';
 
 
@@ -32,7 +33,7 @@ const queryClient = useQueryClient();
 
   const getProductStatusColor = (estado) => {
     switch (estado) {
-      case 'OK': return 'bg-green-500';
+      case 'OK': return 'bg-green-500';            
       case 'HOMOLOGABLE': return 'bg-purple-500';
       case 'SIN_STOCK': return 'bg-red-500';
       default: return 'bg-gray-300';
@@ -69,8 +70,8 @@ const marcarDocumentoRevisado = async () => {
       }`}
   >
     {orden.revisada 
-      ? '✔ Documento Revisado' 
-      : 'Revisar Documento'}
+      ? '✔ OT Revisada' 
+      : 'Marcar como Revisada'}
   </button>
 </div>
           
@@ -212,7 +213,7 @@ export default function DashboardOperativo() {
   const {clientesTodos} = useClientes();
   
 //console.log("Datos del Dashboard Operativo:", data);
-  if (isLoading) return <div className="p-10 text-center">Cargando...</div>;
+  if (isLoading) return <div className="p-10 text-center"><NexusLoader /></div>;
 const events = data?.map((orden) => {
   const hoy = new Date();
   const fechaEntrega = new Date(orden.fecha_entrega);

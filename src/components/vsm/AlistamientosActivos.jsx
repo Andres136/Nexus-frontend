@@ -5,7 +5,8 @@ import { toast } from "react-toastify";
 import { useAlistamientos } from "../../hooks/vsm/useAlistamiento";
 import { 
   Clock,  Package,Play, Pause, 
-  Square, Timer,  Plus, ChevronDown, ChevronUp, CheckCircle2 
+  Square, Timer,  Plus, ChevronDown, ChevronUp, CheckCircle2, 
+  Trash2
 } from "lucide-react";
 import Swal from "sweetalert2";
 import { useState } from "react";
@@ -313,6 +314,8 @@ function AlistamientoCard({ alist, onUpdate, onPausa, onReanudar, onFinalizar })
         <button onClick={() => onFinalizar(alist.id)} className="flex flex-col items-center py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors">
           <Square size={14} /><span className="text-[9px] font-bold mt-1 text-white">FINALIZAR</span>
         </button>
+
+        
       </div>
     </div>
   );
@@ -322,6 +325,10 @@ function UsuarioRow({ usuario, alistId, onUpdate, isExpanded, onToggle }) {
   const toggleEstado = async (e) => {
     e.stopPropagation(); // Evitar que abra el panel de producción al hacer clic en el botón
     try {
+
+
+
+  
       if (usuario.estado === "PAUSADO") {
         const res = await Swal.fire({
           title: "Reanudar usuario",
@@ -350,6 +357,30 @@ const formatUserTime = (seg) => {
   const s = safe % 60;
   return `${h}h ${m}m ${s}s`;
 };
+
+
+    const eliminarUsuario = async (e) => {
+  e.stopPropagation();
+
+  const res = await Swal.fire({
+    title: "Eliminar usuario",
+    text: `¿Eliminar a ${usuario.name}?`,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Sí, eliminar",
+    confirmButtonColor: "#dc2626"
+  });
+
+  if (!res.isConfirmed) return;
+
+  try {
+    await vsmService.eliminarUsuario(alistId, usuario.id);
+    toast.success("Usuario eliminado");
+    onUpdate();
+  } catch (e) {
+    toast.error("Error al eliminar");
+  }
+};
   return (
     <div 
       onClick={onToggle}
@@ -373,6 +404,14 @@ const formatUserTime = (seg) => {
           {usuario.estado === 'PAUSADO' ? <FaPlay size={10} /> : <FaPause size={10} />}
         </button>
         {isExpanded ? <ChevronUp size={16} className="text-gray-300" /> : <ChevronDown size={16} className="text-gray-300" />}
+
+
+        <button 
+  onClick={eliminarUsuario}
+  className="p-2 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors"
+>
+  <Trash2 size={10} />
+</button>
       </div>
     </div>
   );
