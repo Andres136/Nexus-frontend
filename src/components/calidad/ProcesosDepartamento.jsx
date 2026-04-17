@@ -11,6 +11,7 @@ function ProcesosDepartamento() {
   // Obtenemos el departamentoId desde la URL
   const [procesoEditando, setProcesoEditando] = useState(null);
   const [nuevoNombreProceso, setNuevoNombreProceso] = useState('');
+  const [nuevaObsevaciones, setNuevaObservaciones] = useState('');
 
   const { departamentoId } = useParams();
   
@@ -116,7 +117,7 @@ function ProcesosDepartamento() {
     try {
       await clienteAxios.put(
         `/api/documentos/${docId}`,
-        { nombre: newDocName },
+        { nombre: newDocName, observaciones: nuevaObsevaciones },
         { headers: { Authorization: `Bearer ${token}` }}
       );
       toast.success('Nombre de documento actualizado');
@@ -189,6 +190,7 @@ function ProcesosDepartamento() {
     try {
       await clienteAxios.put(`/api/procesos/${procesoEditando.id}`, {
         nombre: nuevoNombreProceso,
+
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -392,6 +394,13 @@ function ProcesosDepartamento() {
                               onChange={e => setNewDocName(e.target.value)}
                               className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                             />
+                            <textarea
+                              value={nuevaObsevaciones}
+                              onChange={e => setNuevaObservaciones(e.target.value)}
+                              className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                              placeholder="Observaciones..."
+                            />
+
                             <div className="flex gap-2">
                               <button
                                 onClick={() => guardarNombreDocumento(doc.id)}
@@ -427,6 +436,7 @@ function ProcesosDepartamento() {
                                         onClick={() => {
                                           setEditingDocId(doc.id);
                                           setNewDocName(doc.nombre);
+                                          setNuevaObservaciones(doc.observaciones || '');
                                         }}
                                         className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
                                       >

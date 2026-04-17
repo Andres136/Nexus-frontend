@@ -57,8 +57,8 @@ export default function Navbar() {
     {name: "KPIS", to: "dashboard/indicadores", icon: Building2, alwaysVisible: true },
     { name: "Indicadores", to: "indicadores", icon: BarChart2, allowedRoles: [1,2], onlyIfResponsable: true },
     {
-      name: "",
-      icon: Settings,
+      name: "Home",
+      icon: Home,
       alwaysVisible: true,
       hasSubmenu: true,
       submenu: [
@@ -70,6 +70,8 @@ export default function Navbar() {
         {name: "TIC", to: "/auth/tic", icon: Monitor, allowedRoles: [1, 2] },
         {name: "Cartera", to: "/auth/crm/cartera-clientes", icon: Wallet, alwaysVisible: true },
         {name: "HSEQ", to: "/auth/crm/hseq/inspecciones", icon: ShieldCheck, alwaysVisible: true },
+        {name: "Contabilidad", to: "/auth/produccion", icon: Wallet, alwaysVisible: true },
+      //  {name: "Sistemas", to: "/auth/sistemas", icon: Cpu, allowedRoles: [1, 2] },
       ],
     },
   ];
