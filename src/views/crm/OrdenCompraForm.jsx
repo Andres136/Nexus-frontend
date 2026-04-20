@@ -223,8 +223,8 @@ detallesNormalizados.forEach((detalle, i) => {
 
 
   return (
-    <div className="container mx-auto p-3 bg-white">
-
+    <div className="grid grid-cols-1 mx-auto p-3 bg-white">
+  
       {/* ✅ Modal compacto */}
       {mostrarModalObservaciones && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">

@@ -39,7 +39,7 @@ apiClient.interceptors.response.use(
 );
 
 export const calidadService = {
-  getNovedades: () => apiClient.get("/api/novedades"),
+  getNovedades: (params) => apiClient.get("/api/novedades", { params }),
   // Otras funciones relacionadas con calidad pueden ser agregadas aquí
   getNovedadesById: (id) => apiClient.get(`/api/novedades/${id}`),
   updateNovedad: (id, formData) => apiClient.post(`/api/novedades/${id}`, formData,{

@@ -19,7 +19,7 @@ export default function DashboardProcesosAnuales() {
   const [anio, setAnio] = useState(new Date().getFullYear());
   const [departamentosFiltro, setDepartamentosFiltro] = useState([]);
   const { data, loading } = useEstadisticasDashboardProcesos(anio);
-// console.log("Datos del dashboard:", data);
+ console.log("Datos del dashboard:", data);
   if (loading) return <div className="text-center py-10"><NexusLoader text="Cargando datos del dashboard" /></div>;
   if (!data) return <div>No hay datos disponibles</div>;
 
@@ -110,6 +110,7 @@ export default function DashboardProcesosAnuales() {
             cumplimiento: m.cumplimiento,
             estabilidad: m.estabilidad,
               rendimiento: m.rendimiento || 0, 
+                eficiencia: m.eficiencia_tiempo || 0, 
             registros: m.total_registros,
             novedades: m.novedades,
           }));
@@ -175,6 +176,15 @@ export default function DashboardProcesosAnuales() {
   stroke="#f59e0b"
   strokeWidth={2}
   name="Rendimiento Tareas %"
+  dot={{ r: 4 }}
+/>
+
+<Line
+  type="monotone"
+  dataKey="eficiencia"
+  stroke="#ef4444"
+  strokeWidth={2}
+  name="Eficiencia Tiempo %"
   dot={{ r: 4 }}
 />
                     </LineChart>
