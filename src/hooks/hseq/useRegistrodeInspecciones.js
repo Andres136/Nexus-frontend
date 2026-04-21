@@ -68,6 +68,8 @@ export const useRegistrodeInspecciones = () => {
             showToast("error", "Hubo un problema al eliminar la inspección");
         }
     }
+
+    
     return{
         formData,
         error,

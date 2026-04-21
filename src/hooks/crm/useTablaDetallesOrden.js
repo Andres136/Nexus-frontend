@@ -299,7 +299,7 @@ const enviarInstruccionesAlistamiento = async () => {
       items: instrucciones
     };
 
-    console.log("📦 Payload alistamiento:", payload);
+   // console.log("📦 Payload alistamiento:", payload);
 
     // 🔹 Enviar a backend
     const res = await productsApi.postInstruccionesAlistamiento(payload);
@@ -349,6 +349,7 @@ const enviarInstruccionesAlistamiento = async () => {
 
       // 🔹 Construir el payload con todos los productos visibles
       const items = detalles.map((detalle) => ({
+        detalle_id: detalle.id,
         orden_trabajo_id: orden.id,
         orden_compra_id: detalle.orden_compra_id,
         producto_id: detalle.product_id,
@@ -372,7 +373,7 @@ const enviarInstruccionesAlistamiento = async () => {
           })
         ),
       }));
-      console.log("🔥 PAYLOAD DESCUENTO:", JSON.stringify(items, null, 2));
+   //   console.log("🔥 PAYLOAD DESCUENTO:", JSON.stringify(items, null, 2));
 
       // 🔹 Llamar tu endpoint Laravel
       const res = await productsApi.postDescontarStockMasivo({ items });

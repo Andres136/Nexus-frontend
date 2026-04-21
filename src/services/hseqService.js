@@ -64,6 +64,7 @@ export const InspeccionesHseqService = {
     createInspeccion: (data) => apiClient.post("/api/inspecciones-hseq", data),
     updateInspeccion: (id, data) => apiClient.put(`/api/inspecciones-hseq/${id}`, data),
     deleteInspeccion: (id) => apiClient.delete(`/api/inspecciones-hseq/${id}`),
+    getInspeccionesFinalizadas: () => apiClient.get("/api/hseq-dashboard/inspecciones/finalizadas"),
 }
 export const RespuestasInspeccionesService = {
     getRespuestasInspeccion: () => apiClient.get("/api/respuestas-inspecciones"),
@@ -77,6 +78,11 @@ export const HallazgosInspeccionesService = {
     updateHallazgoInspeccion: (id, data) => apiClient.put(`/api/hallazgos-inspecciones/${id}`, data),
     deleteHallazgoInspeccion: (id) => apiClient.delete(`/api/hallazgos-inspecciones/${id}`),
     getEstadisticasHseq: (params) => apiClient.get("/api/hseq-dashboard", { params }),
+getInformePdf: (params) =>
+  apiClient.get('/api/hseq-descargar-hallazgos-pdf', {
+    params: params, //  importante
+    responseType: 'blob'
+  }),
 }
 
 

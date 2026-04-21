@@ -109,6 +109,7 @@ import DashboardProductividaIndividual from "../views/vsm/DashboardProductividaI
 import GestionarFacturaCartera from "../views/crm/GestionarFacturaCartera";
 import GetHistorialGestionFacturaCartera from "../views/crm/GetHistorialGestionFacturaCartera";
 import DashboardOperativo from "../views/calidad/DashboardOperativo";
+import Contabilidad from "../views/contabilidad/Contabilidad";
 
 
 export default function Router() {
@@ -669,6 +670,17 @@ export default function Router() {
             element={<DynamicProtectedRoute permission="/auth/crm/crear-productos">
               <CrearProductos />
             </DynamicProtectedRoute>}
+          />
+
+
+          {/* Rutas para Contabilidad */}
+            <Route
+            path="/auth/crm/contabilidad"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/contabilidad">
+                <Contabilidad />
+              </DynamicProtectedRoute>
+            }
           />
           <Route
             path="/auth/crm/actualizar-producto/:id"

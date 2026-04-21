@@ -37,3 +37,42 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+export  const formasPagoService = {
+  getFormasPago: () => apiClient.get("/api/formas-pago"),
+  createFormaPago: (data) => apiClient.post("/api/formas-pago", data),
+  getFormaPagoById: (id) => apiClient.get(`/api/formas-pago/${id}`),
+  updateFormaPago: (id, data) => apiClient.put(`/api/formas-pago/${id}`, data),
+  deleteFormaPago: (id) => apiClient.delete(`/api/formas-pago/${id}`),
+};
+
+export const impuestosService = {
+  getImpuestos: () => apiClient.get("/api/impuestos"),
+  createImpuesto: (data) => apiClient.post("/api/impuestos", data),
+  getImpuestoById: (id) => apiClient.get(`/api/impuestos/${id}`),
+  updateImpuesto: (id, data) => apiClient.put(`/api/impuestos/${id}`, data),
+  deleteImpuesto: (id) => apiClient.delete(`/api/impuestos/${id}`),
+};
+export const cuentasContablesService = {
+  getCuentasContables: () => apiClient.get("/api/cuentas-contables"),
+  createCuentaContable: (data) => apiClient.post("/api/cuentas-contables", data),
+  getCuentaContableById: (id) => apiClient.get(`/api/cuentas-contables/${id}`),
+  updateCuentaContable: (id, data) => apiClient.put(`/api/cuentas-contables/${id}`, data),
+  deleteCuentaContable: (id) => apiClient.delete(`/api/cuentas-contables/${id}`),
+};
+ export const facturasService = {
+  getFacturas: (params) => apiClient.get("/api/facturas-compras", { params }),
+  createFactura: (data) => apiClient.post("/api/facturas-compras", data),
+  getFacturaById: (id) => apiClient.get(`/api/facturas-compras/${id}`),
+  updateFactura: (id, data) => apiClient.put(`/api/facturas-compras/${id}`, data),
+  deleteFactura: (id) => apiClient.delete(`/api/facturas-compras/${id}`),
+};
+
+export const costeosService = {
+  getCosteos: (params) => apiClient.get("/api/costeos", { params }),
+  createCosteo: (data) => apiClient.post("/api/costeos", data),
+  getCosteoById: (id) => apiClient.get(`/api/costeos/${id}`),
+  updateCosteo: (id, data) => apiClient.put(`/api/costeos/${id}`, data),
+  deleteCosteo: (id) => apiClient.delete(`/api/costeos/${id}`),
+};
+
