@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { calidadService } from "../../services/calidaService";
 import { showToast } from "../../helpers/utils/showToast";
+import Swal from "sweetalert2";
 
 
 
@@ -39,13 +40,13 @@ export const useNovedades = () => {
   // 🔹 LISTAR
   // ===============================
   const obtenerNovedades = async (customFilters = filters) => {
-    console.log("Obteniendo novedades con filtros:", customFilters);
+    //console.log("Obteniendo novedades con filtros:", customFilters);
     setLoading(true);
     setError(null);
 
     try {
       const response = await calidadService.getNovedades(customFilters);
-    console.log("Respuesta de novedades:", response.data);
+   // console.log("Respuesta de novedades:", response.data);
       setNovedades(response.data.data);
 
       setPagination({
@@ -119,6 +120,54 @@ const actualizarNovedad = async (id, data) => {
   }
 };
 
+// ===============================
+  // 🔹 ELIMINAR
+
+
+const eliminarNovedad = async (id) => {
+  const result = await Swal.fire({
+    title: '¿Eliminar novedad?',
+    text: 'Esta acción no se puede deshacer',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#d33',
+    cancelButtonColor: '#6b7280',
+    confirmButtonText: 'Sí, eliminar',
+    cancelButtonText: 'Cancelar'
+  });
+
+  if (!result.isConfirmed) return;
+
+  setLoading(true);
+
+  try {
+    const response = await calidadService.deleteNovedad(id);
+
+    await Swal.fire({
+      icon: 'success',
+      title: 'Eliminado',
+      text: response.data.message || 'Novedad eliminada correctamente',
+      timer: 2000,
+      showConfirmButton: false
+    });
+
+    await obtenerNovedades();
+    return response.data;
+
+  } catch (err) {
+console.log(err);
+    await Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: err.response?.data?.error || 'No se pudo eliminar la novedad.'
+    });
+
+    return null;
+
+  } finally {
+    setLoading(false);
+  }
+};
   // ===============================
   // 🔹 EFECTO INICIAL
   // ===============================
@@ -142,6 +191,7 @@ useEffect(() => {
     obtenerNovedades,
     obtenerNovedadById,
     actualizarNovedad,
-    novedadSeleccionada
+    novedadSeleccionada,
+    eliminarNovedad,
   };
 };

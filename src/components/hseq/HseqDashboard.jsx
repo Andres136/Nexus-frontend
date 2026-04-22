@@ -26,7 +26,7 @@ export default function HseqDashboard() {
   const [appliedFilters, setAppliedFilters] = useState(initialFilters)
   const{ inspeccionesFinalizadas}=useGetInspeccionesFinalizadas()
             
-console.log("Inspecciones finalizadas en el dashboard:", inspeccionesFinalizadas);
+//console.log("Inspecciones finalizadas en el dashboard:", inspeccionesFinalizadas);
   const { data, isLoading, isFetching } = useHseqDashboard(appliedFilters)
   const { sedes = [] } = useSedes()
 

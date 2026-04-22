@@ -47,6 +47,8 @@ export const calidadService = {
       "Content-Type": "multipart/form-data",
     },
   }),
+
+  deleteNovedad: (id) => apiClient.delete(`/api/novedades/${id}`),
   
 };
 

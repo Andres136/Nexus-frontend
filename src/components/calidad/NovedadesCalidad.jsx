@@ -3,7 +3,7 @@ import { useNovedades } from "../../hooks/calidad/useNovedades";
 import NexusLoader from "../NexusLoader";
 
 
-import { Edit2 } from "lucide-react";
+import { Edit2, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 export default function Novedades() {
  
@@ -16,6 +16,7 @@ export default function Novedades() {
     filters,
     setFilters,
     pagination,
+    eliminarNovedad,
   
 
  } = useNovedades();
@@ -161,14 +162,25 @@ export default function Novedades() {
     <span className="text-xs text-gray-400">Sin archivo</span>
   )}
 </td>
-                  <td className="px-4 py-3">
-                    <Link
-                      to={`/auth/gestion-calidad/${novedad.id}`}
-                      className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-blue-700"
-                    >
-                      <Edit2 size={16} />
-                    </Link>
-                  </td>
+                <td className="px-4 py-3">
+  <div className="flex items-center gap-2">
+    
+    <Link
+      to={`/auth/gestion-calidad/${novedad.id}`}
+      className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-blue-700"
+    >
+      <Edit2 size={16} />
+    </Link>
+
+    <button
+      onClick={() => eliminarNovedad(novedad.id)}
+      className="inline-flex items-center justify-center rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-red-700"
+    >
+      <Trash2 size={16} />
+    </button>
+
+  </div>
+</td>
 
 
                 </tr>
