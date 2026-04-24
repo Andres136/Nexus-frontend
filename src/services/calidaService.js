@@ -67,4 +67,7 @@ export const gestionOperativaService = {
   updateGestion: (id, data) => apiClient.put(`/api/control-operativo/${id}`, data),
 
   deleteGestion: (id) => apiClient.delete(`/api/control-operativo/${id}`),
+ createHistorialOrdenes(data) {
+  return apiClient.post('/api/ordenes-compras-historial', data);
+}
 };
