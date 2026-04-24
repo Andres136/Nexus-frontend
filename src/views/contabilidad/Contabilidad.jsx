@@ -1,14 +1,15 @@
 
 
 
-import ObtenerPuck from './ObtenerPuck'
+import FacturaCompras from '../../components/contabilidad/FacturaCompras'
+
 
 export default function Contabilidad() {
   return (
   <>
   
 
-<ObtenerPuck />
+<FacturaCompras />
   
   </>
 

@@ -212,6 +212,12 @@ getAlistamientosByOT: (id) =>
 };
 
 
+//Api para api/proveedores-all
+export const proveedoresApi = {
+  getAll: () => apiClient.get("/api/proveedores-all"),
+  
+};
+
 //Ordenes de compra a proveedores API
 export const ordenesCompraProveedoresApi = {
   //Peticion al pdf al crear la orden de compra

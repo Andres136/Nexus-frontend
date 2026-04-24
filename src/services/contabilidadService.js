@@ -61,11 +61,11 @@ export const cuentasContablesService = {
   deleteCuentaContable: (id) => apiClient.delete(`/api/cuentas-contables/${id}`),
 };
  export const facturasService = {
-  getFacturas: (params) => apiClient.get("/api/facturas-compras", { params }),
-  createFactura: (data) => apiClient.post("/api/facturas-compras", data),
-  getFacturaById: (id) => apiClient.get(`/api/facturas-compras/${id}`),
-  updateFactura: (id, data) => apiClient.put(`/api/facturas-compras/${id}`, data),
-  deleteFactura: (id) => apiClient.delete(`/api/facturas-compras/${id}`),
+  getFacturas: (params) => apiClient.get("/api/facturas-compra", { params }),
+  createFactura: (data) => apiClient.post("/api/facturas-compra", data),
+  getFacturaById: (id) => apiClient.get(`/api/facturas-compra/${id}`),
+  updateFactura: (id, data) => apiClient.put(`/api/facturas-compra/${id}`, data),
+  deleteFactura: (id) => apiClient.delete(`/api/facturas-compra/${id}`),
 };
 
 export const costeosService = {

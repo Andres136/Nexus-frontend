@@ -27,8 +27,10 @@ export default function DividirOcProveedor() {
       });
 
       const proveedoresRes = await clienteAxios.get(`/api/proveedores-all`, {
+  
         headers: { Authorization: `Bearer ${token}` }
       });
+    //  console.log("Respuesta proveedores:", proveedoresRes.data); // 👈 Agrega este log para verificar la respuesta
 
       const datos = ordenRes.data.orden || ordenRes.data;
       setOrden(datos);
