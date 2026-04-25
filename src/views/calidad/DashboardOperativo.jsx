@@ -11,12 +11,14 @@ import  {RevisarOtApi} from "../../services/api";
 import { showToast } from '../../helpers/utils/showToast';
 import { useClientes } from '../../hooks/useClientes';
 import  NexusLoader from '../../components/NexusLoader';
+import { useRegisterOcComprasHistorial } from '../../hooks/crm/useRegisterOcComprasHistorial';
 import Select from 'react-select';
 
 
-const VSMCard = ({ orden }) => {
+const VSMCard = ({ orden, formData, handleChange, handleSubmit  }) => {
   const [showProducts, setShowProducts] = useState(false);
 const queryClient = useQueryClient();
+
   const getStatusConfig = (estado) => {
     const configs = {
       'ENTREGADO': { color: 'bg-green-100 text-green-800', icon: CheckCircle2, label: 'Entregado' },
@@ -192,7 +194,74 @@ const marcarDocumentoRevisado = async () => {
           </div>
         </div>
       )}
+{/* 🔥 FORMULARIO DE REPROGRAMACIÓN */}
+<div className="border-t p-4 space-y-3">
+  <h4 className="text-sm font-bold text-gray-600">
+    Reprogramar fecha
+  </h4>
 
+  <input
+    type="date"
+    name="fecha_nueva"
+    value={formData.fecha_nueva}
+    onChange={handleChange}
+    className="w-full border rounded-lg px-3 py-2 text-sm"
+  />
+
+  <textarea
+    name="observacion"
+    value={formData.observacion}
+    onChange={handleChange}
+    placeholder="Motivo de reprogramación..."
+    className="w-full border rounded-lg px-3 py-2 text-sm"
+  />
+
+  <button
+    onClick={handleSubmit}
+    className="w-full bg-blue-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-blue-700"
+  >
+    Guardar cambios
+  </button>
+</div>
+
+{orden.historial && orden.historial.length > 0 && (
+  <div className="border-t mt-4 pt-4">
+    <h4 className="text-sm font-bold text-gray-600 mb-3">
+      Historial de cambios
+    </h4>
+
+    <div className="space-y-3 max-h-40 overflow-y-auto pr-2">
+      {orden.historial.map((h, index) => (
+        <div key={index} className="flex items-start gap-3">
+
+          {/* 🔵 Punto timeline */}
+          <div className="w-2 h-2 mt-2 rounded-full bg-purple-500"></div>
+
+          {/* 📦 Contenido */}
+          <div className="flex-1 bg-gray-50 rounded-lg px-3 py-2 text-xs shadow-sm">
+
+            {/* 📅 Fecha cambio */}
+            <p className="text-[10px] text-gray-400">
+              {new Date(h.fecha_cambio).toLocaleDateString()}
+            </p>
+
+            {/* 🔄 Cambio */}
+            <p className="font-semibold text-gray-700">
+              {h.fecha_anterior} → {h.fecha_nueva}
+            </p>
+
+            {/* 💬 Observación */}
+            {h.observacion && (
+              <p className="text-gray-500 italic">
+                "{h.observacion}"
+              </p>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
       
     </div>
   );
@@ -210,7 +279,17 @@ export default function DashboardOperativo() {
   const [revisada, setRevisada] = useState(null);
   const [ordenSeleccionada, setOrdenSeleccionada] = useState(null);
   const { data, isLoading } = useGetDashboardOperativo({ sede_id: sedeId , estado_vsm: estadoVsm, cliente: clienteId, revisada: revisada }); // Puedes pasar filtros si tu hook los soporta
+  console.log("Datos del Dashboard Operativo:", data);
   const {clientesTodos} = useClientes();
+const {
+
+  setOrden,
+  formData,
+  handleChange,
+  handleSubmit
+} = useRegisterOcComprasHistorial();
+
+
   
 //console.log("Datos del Dashboard Operativo:", data);
   if (isLoading) return <div className="p-10 text-center"><NexusLoader /></div>;
@@ -342,7 +421,10 @@ eventClassNames={(arg) => {
 }}
   onEventClick={(event) => {
     console.log("Evento clickeado:", event);
-    setOrdenSeleccionada(event); // <--- aquí el cambio
+
+  setOrdenSeleccionada(event);
+  setOrden(event);
+    
 
   
   }}
@@ -370,7 +452,12 @@ eventClassNames={(arg) => {
         ✕ Cerrar
       </button>
 
-      <VSMCard orden={ordenSeleccionada} />
+    <VSMCard 
+  orden={ordenSeleccionada}
+  formData={formData}
+  handleChange={handleChange}
+  handleSubmit={handleSubmit}
+/>
     </div>
 
   </div>

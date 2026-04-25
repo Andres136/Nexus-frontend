@@ -37,7 +37,7 @@ export const useRegisterHallazgoNovedad = () => {
 
         try {
             const response = await hallazgosNovedadesService.createHallazgo(data);
-            console.log("Respuesta al crear hallazgo:", response.data);
+          //  console.log("Respuesta al crear hallazgo:", response.data);
             showToast('success', response.data.message || "Hallazgo registrado exitosamente.");
             setFormData({
                 novedad_id: null,
@@ -49,7 +49,7 @@ export const useRegisterHallazgoNovedad = () => {
                 estado: "ABIERTA",
                 observaciones: "",
             });
-            console.log("Datos a enviar:", formData);
+          //  console.log("Datos a enviar:", formData);
             queryClient.invalidateQueries(["hallazgos", data.novedad_id]);
         } catch (err) {
             console.log("Error al registrar hallazgo:", err);
