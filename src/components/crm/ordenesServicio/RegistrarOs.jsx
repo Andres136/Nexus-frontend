@@ -3,8 +3,13 @@ import { useEntregasProveedores } from "../../../hooks/useEntregasProveedores";
 import { useEmpresas } from "../../../hooks/useEmpresas";
 import Select from "react-select";
 import DetallesOs from "./DetallesOs";
+import { useParams } from "react-router-dom";
+import { useOrdenesOsBydi } from "../../../hooks/crm/useOrdenesOsBydi";
+import { useEffect } from "react";
+import { useOrdenServicioDetalle } from "../../../hooks/crm/useOrdenServicioDetalle";
 
 export default function RegistrarOs() {
+
   const {
     formData,
     setFormData,
@@ -14,11 +19,50 @@ export default function RegistrarOs() {
     obtenerProductosPorId,
     productosbyId,
       pdfUrl,    
+    
      
   } = useOrdenesOs();
   const { proveedoresAll } = useEntregasProveedores();
   const { empresas } = useEmpresas();
+  const {id}=useParams()
+  const isEdit = !!id;
+  const {handleGuardar}=useOrdenServicioDetalle()
 
+const { orden, loading: loadingOrden } = useOrdenesOsBydi(id)
+
+useEffect(() => {
+  if (orden && isEdit) {
+    const detallesNormalizados = (orden.detalles || []).map(det => {
+  const oc = det.orden_compra_detalle || {};
+
+  return {
+    id: det.orden_compra_detalle_id,
+    orden_compra_detalle_id: det.orden_compra_detalle_id,
+    cantidad: det.cantidad,
+
+    // 🔥 AQUÍ ESTÁ TODO
+    _info: {
+      numero_orden: oc.code || "N/A",
+      producto_nombre: oc.descripcion || "Sin producto",
+      producto_descripcion: oc.descripcion || "",
+   observaciones: oc.observaciones || []
+    }
+  };
+});
+
+    setFormData({
+      id: orden.id,
+      empresa_id: orden.empresa_id,
+      proveedor_id: orden.proveedor_id,
+      fecha: orden.fecha,
+      estado: orden.estado,
+      observaciones: orden.observaciones || '',
+      detalles: detallesNormalizados
+    });
+  }
+}, [orden]);
+console.log("FormData en render:", formData)
+console.log("ORDEN COMPLETA:", orden);
   const selectStyles = {
     control: (base) => ({
       ...base,
@@ -28,14 +72,23 @@ export default function RegistrarOs() {
     }),
   };
 
+const handleSumitForm = async (e) => {
+  e.preventDefault();
+if(isEdit){
+  await handleGuardar() 
+}else{
+  await handleSubmit(e)
+}
+}
+  
   return (
     <div className="w-full px-4 py-4">
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSumitForm}>
         {/* Encabezado compacto */}
         <div className="bg-white rounded-lg shadow-sm border p-4 mb-4">
-          <h1 className="text-lg font-semibold text-gray-800 mb-3">
-            Registrar Orden de Servicio
-          </h1>
+       <h1>
+  {isEdit ? "Editar Orden de Servicio" : "Registrar Orden de Servicio"}
+</h1>
 
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
             {/* Empresa */}
@@ -43,21 +96,29 @@ export default function RegistrarOs() {
               <label className="text-xs font-medium text-gray-600 mb-1 block">
                 Empresa
               </label>
-              <Select
-                placeholder="Seleccionar..."
-                styles={selectStyles}
-                options={empresas.map((empresa) => ({
-                  value: empresa.id,
-                  label: empresa.nombre,
-                }))}
-                onChange={(selectedOption) =>
-                  setFormData({
-                    ...formData,
-                    empresa_id: selectedOption?.value ?? null,
-                  })
-                }
-                isClearable
-              />
+          <Select
+  placeholder="Seleccionar..."
+  styles={selectStyles}
+  options={empresas.map((empresa) => ({
+    value: empresa.id,
+    label: empresa.nombre,
+  }))}
+
+  value={
+    empresas
+      .map(e => ({ value: e.id, label: e.nombre }))
+      .find(opt => opt.value === formData.empresa_id) || null
+  }
+
+  onChange={(selectedOption) =>
+    setFormData({
+      ...formData,
+      empresa_id: selectedOption?.value ?? null,
+    })
+  }
+
+  isClearable
+/>
               {error?.empresa && (
                 <span className="text-red-500 text-xs">{error.empresa[0]}</span>
               )}
@@ -71,10 +132,14 @@ export default function RegistrarOs() {
               <Select
                 placeholder="Seleccionar..."
                 styles={selectStyles}
-                options={proveedoresAll.map((proveedor) => ({
-                  value: proveedor.id,
-                  label: proveedor.nombre,
+                options={proveedoresAll.map((prov) => ({
+                  value: prov.id,
+                  label: prov.nombre,
                 }))}
+                value={proveedoresAll
+                  .map(p => ({ value: p.id, label: p.nombre }))
+                  .find(opt => opt.value === formData.proveedor_id) || null
+                }
                 onChange={(selectedOption) =>
                   setFormData({
                     ...formData,
@@ -132,6 +197,7 @@ export default function RegistrarOs() {
            productosbyId={productosbyId}
             formData={formData} 
             setFormData={setFormData}
+        
        
              />
         </div>
@@ -163,7 +229,10 @@ export default function RegistrarOs() {
         />
       </svg>
     )}
-    {loading ? "Registrando..." : "Registrar Orden"}
+{loading
+  ? (isEdit ? "Actualizando..." : "Registrando...")
+  : (isEdit ? "Actualizar Orden" : "Registrar Orden")
+}
   </button>
 
   {/* Botón Descargar PDF */}

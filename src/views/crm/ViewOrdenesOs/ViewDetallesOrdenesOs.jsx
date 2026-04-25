@@ -7,8 +7,9 @@ import {
 } from "react-icons/fi"
 import NexusLoader from "../../../components/NexusLoader"
 
-import { useOrdenServicioDetalle } from "../../../hooks/crm/useDetalleServicioDetalle"
+
 import { useNavigate } from "react-router-dom"
+import { useOrdenServicioDetalle } from "../../../hooks/crm/useOrdenServicioDetalle"
 
 const selectStyles = {
   control: (base, state) => ({
@@ -44,7 +45,8 @@ orden,
     handleGuardar,
     setDetallesEditados,
     proveedoresAll,
-    procesos
+    procesos,
+    agregarItem
   }=useOrdenServicioDetalle()
 
   if (loading) {
@@ -291,6 +293,8 @@ orden,
               })}
             </tbody>
           </table>
+
+          
         </div>
       </div>
     </div>
