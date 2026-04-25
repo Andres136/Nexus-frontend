@@ -26,7 +26,7 @@ export default function RegistrarOs() {
   const { empresas } = useEmpresas();
   const {id}=useParams()
   const isEdit = !!id;
-  const {handleGuardar}=useOrdenServicioDetalle()
+  const {handleGuardar, handleChange, detallesEditados, pdfUrl: pdfUrlUpdate}=useOrdenServicioDetalle(formData, setFormData)
 
 const { orden, loading: loadingOrden } = useOrdenesOsBydi(id)
 
@@ -61,8 +61,7 @@ useEffect(() => {
     });
   }
 }, [orden]);
-console.log("FormData en render:", formData)
-console.log("ORDEN COMPLETA:", orden);
+
   const selectStyles = {
     control: (base) => ({
       ...base,
@@ -197,6 +196,9 @@ if(isEdit){
            productosbyId={productosbyId}
             formData={formData} 
             setFormData={setFormData}
+            handleChange={handleChange}
+            detallesEditados={detallesEditados}
+          
         
        
              />
@@ -236,16 +238,16 @@ if(isEdit){
   </button>
 
   {/* Botón Descargar PDF */}
-  {pdfUrl && (
-    <a
-      href={pdfUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="bg-red-600 hover:bg-red-700 text-white font-medium px-6 py-2 rounded transition-colors duration-200 flex items-center gap-2"
-    >
-       Descargar PDF
-    </a>
-  )}
+{(pdfUrlUpdate || pdfUrl) && (
+  <a
+    href={pdfUrlUpdate || pdfUrl}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded"
+  >
+    Descargar PDF
+  </a>
+)}
 
 </div>
       </form>
