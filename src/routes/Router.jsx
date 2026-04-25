@@ -451,7 +451,7 @@ export default function Router() {
             path="/auth/crm/ordenes-servicio-proveedor/:id"
             element={
               <DynamicProtectedRoute permission="/auth/crm/ordenes-servicio-proveedor/:id">
-               <ViewDetallesOrdenesOs />
+               <RegistrarOs />
               </DynamicProtectedRoute>
             }
           />

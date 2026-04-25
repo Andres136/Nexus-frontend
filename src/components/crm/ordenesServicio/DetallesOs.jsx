@@ -10,6 +10,7 @@ export default function DetallesOs({
   formData,
   setFormData,
 
+
 }) {
   const [search, setSearch] = useState("");
   const { products, isLoading, isFetching, isEmpty } = useProducts({ search });
@@ -106,7 +107,7 @@ export default function DetallesOs({
                         <div className="max-h-16 overflow-y-auto space-y-1">
                           {item.observaciones.map((obs) => (
                             <div key={obs.id} className="bg-yellow-50 border border-yellow-200 rounded px-1.5 py-1 text-[10px]">
-                              <span className="font-medium text-yellow-800">{obs.proceso?.nombre}:</span>
+                              <span className="font-medium text-yellow-800">{obs.proceso?.nombre || "Sin proceso"}:</span>
                               <span className="text-gray-600 ml-1">{obs.observacion}</span>
                               <span className={`ml-1 px-1 rounded text-[9px] ${
                                 obs.estado === 'pendiente' ? 'bg-orange-100 text-orange-600' : 'bg-green-100 text-green-600'
@@ -185,7 +186,7 @@ export default function DetallesOs({
               </thead>
               <tbody className="divide-y divide-green-200">
                 {formData.detalles.map((detalle) => (
-                  <tr key={detalle.orden_compra_detalle_id} className="bg-white">
+                  <tr key={detalle.id} className="bg-white">
                     <td className="px-3 py-2 text-gray-700 text-xs">
                       #{detalle._info?.numero_orden || detalle.orden_compra_detalle_id}
                     </td>
@@ -233,14 +234,26 @@ export default function DetallesOs({
   )}
 </td>
                     <td className="px-3 py-2 text-center">
-                      <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-medium">
-                        {detalle.cantidad}
-                      </span>
+                      <input
+                        type="number"
+                        min="1"
+                        value={detalle.cantidad}
+                        onChange={(e) => {
+                          const nuevaCantidad = e.target.value;
+                          setFormData(prev => ({
+                            ...prev,
+                            detalles: prev.detalles.map(d =>
+                              d.id === detalle.id ? { ...d, cantidad: nuevaCantidad } : d
+                            )
+                          }));
+                        }}
+                        className="w-full border border-gray-300 rounded px-1 py-1 text-xs text-center focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
                     </td>
                     <td className="px-3 py-2 text-center">
                       <button
                         type="button"
-                        onClick={() => eliminarDetalle(detalle.orden_compra_detalle_id)}
+                        onClick={() => eliminarDetalle(detalle.id)}
                         className="text-red-500 hover:text-red-700 text-xs font-medium"
                       >
                         Eliminar

@@ -51,6 +51,8 @@ export const useRegisterHallazgoNovedad = () => {
             });
           //  console.log("Datos a enviar:", formData);
             queryClient.invalidateQueries(["hallazgos", data.novedad_id]);
+
+        return response.data; // 🔥 ESTA LÍNEA ES LA CLAVE
         } catch (err) {
             console.log("Error al registrar hallazgo:", err);
 

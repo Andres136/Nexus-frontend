@@ -6,7 +6,8 @@ import  { showToast } from "../../helpers/utils/showToast"
 export const useOrdenesOs = () => {
 
     const [formData, setFormData] = useState({
-     empresa: '',
+      id: null,
+     empresa_id: null,
      fecha: '',
      estado: '',
      proveedor_id: null,
@@ -19,33 +20,52 @@ export const useOrdenesOs = () => {
     const [productosbyId, setProductosbyId] = useState([]);
     const [pdfUrl, setPdfUrl] = useState(null);
 
+const limpiarDetalles = (detalles) => {
+  return detalles.map(det => ({
+    id: det.id || null,
+    orden_compra_detalle_id: det.orden_compra_detalle_id,
+    cantidad: det.cantidad,
+    // agrega aquí solo lo que tu backend necesita
+  }));
+};
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-  const handleSubmit = async (e) => {
-    console.log("Datos del formulario al enviar:", formData);
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
+  setLoading(true);
+  setError(null);
 
-    try {
-      // Aquí iría la lógica para enviar el formulario, por ejemplo:
-       const response = await ordenesServicioApi.create(formData);
-       showToast("success", response.data.message || "Orden de servicio creada exitosamente");
-     setPdfUrl(response.data.pdf_url || null);
-      // Si quieres actualizar la lista de órdenes después de crear una nueva:
-      setObtenerOrdenes(prev => [...prev, response.data.data]);
-    } catch (error) {
-        console.error("Error al enviar el formulario:", error);
-      console.error("Error al crear la orden:", error);
-      if(error.response?.status === 422){
-        setError(error.response.data.errors || {});
-      }else{
-        console.error("Error inesperado:", error);
-      }
-    } finally {
-      setLoading(false);
-    } 
+  try {
+    const payload = {
+      empresa_id: formData.empresa_id,
+      proveedor_id: formData.proveedor_id,
+      fecha: formData.fecha,
+      estado: formData.estado,
+      observaciones: formData.observaciones,
+
+      detalles: limpiarDetalles(formData.detalles)
+    };
+
+    const response = await ordenesServicioApi.create(payload);
+
+    showToast("success", response.data.message || "Orden creada");
+
+    setPdfUrl(response.data.pdf_url || null);
+    setObtenerOrdenes(prev => [...prev, response.data.data]);
+
+    return response.data;
+
+  } catch (error) {
+    if (error.response?.status === 422) {
+      setError(error.response.data.errors || {});
+    } else {
+      showToast("error", "Error al crear la orden");
+    }
+    return null;
+
+  } finally {
+    setLoading(false);
   }
-//Obtener  productos por id en detalles cantidades
+};
 
 const obtenerProductosPorId = async (id) => {
     try {
@@ -72,7 +92,8 @@ const obtenerProductosPorId = async (id) => {
         productosbyId,
         obtenerProductosPorId,
         pdfUrl,
-        setPdfUrl
+        setPdfUrl,
+   
    
     }
 }

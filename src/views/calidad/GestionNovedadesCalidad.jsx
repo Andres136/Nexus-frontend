@@ -35,6 +35,7 @@ export default function GestionNovedadesCalidad() {
     handleSubmit: handleSubmitHallazgo,
     handleUpdate: handleUpdateHallazgo,
     error: errorHallazgo,
+    loading: loadingHallazgo
   } = useRegisterHallazgoNovedad();
 
   const [hallazgosEdit, setHallazgosEdit] = useState([]);
@@ -395,9 +396,21 @@ export default function GestionNovedadesCalidad() {
             </div>
 
             <div className="flex justify-end">
-              <button className="bg-blue-700 hover:bg-blue-800 text-white font-black py-3 px-10 rounded-lg shadow-xl shadow-blue-200 transition-all active:scale-95 text-sm uppercase tracking-widest">
-                Crear Hallazgo
-              </button>
+      <button
+  disabled={loadingHallazgo}
+  className={`bg-blue-700 text-white font-black py-3 px-10 rounded-lg shadow-xl shadow-blue-200 transition-all text-sm uppercase tracking-widest flex items-center justify-center gap-2
+    ${loadingHallazgo ? "opacity-60 cursor-not-allowed" : "hover:bg-blue-800 active:scale-95"}
+  `}
+>
+  {loadingHallazgo ? (
+    <>
+      <span className="animate-spin border-2 border-white border-t-transparent rounded-full w-4 h-4" />
+      Guardando...
+    </>
+  ) : (
+    "Crear Hallazgo"
+  )}
+</button>
             </div>
           </form>
         </section>

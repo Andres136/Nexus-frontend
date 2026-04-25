@@ -7,7 +7,7 @@ export const useOrdenesOsBydi = (id) => {
     const obtenerOrdenesById = async () => {
 
         const response = await ordenesServicioApi.getShow(id)
-  // console.log("🚀  response:", response);
+  console.log("🚀  response:", response);
         return response.data.data
     }
 
