@@ -7,6 +7,7 @@ export const useRegisterFacturaCompras = () => {
   const [factura, setFactura] = useState({
     factura: {
       proveedor_id: null,
+      empresa_id: null,
       estado_id: null,
       numero_factura: "",
       fecha_emision: "",
@@ -24,45 +25,57 @@ export const useRegisterFacturaCompras = () => {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [pdfUrl, setPdfUrl] = useState(null);
+  
 
   // 🔹 manejar inputs de factura
-  const handleFacturaChange = (e) => {
-    const { name, value } = e.target;
+const handleFacturaChange = (e) => {
+  const { name, value } = e.target;
 
+  // 🔥 CASO ESPECIAL: IMPUESTOS (ARRAY)
+  if (name === "impuestos") {
     setFactura((prev) => ({
       ...prev,
-      factura: {
-        ...prev.factura,
-        [name]: value,
-      },
+      impuestos: value,
     }));
-  };
+    return;
+  }
+
+  // 🔹 NORMAL (FACTURA)
+  setFactura((prev) => ({
+    ...prev,
+    factura: {
+      ...prev.factura,
+      [name]: value,
+    },
+  }));
+};
 
   // 🔹 agregar detalle
-  const addDetalle = () => {
-    setFactura((prev) => ({
-      ...prev,
-      detalles: [
-        ...prev.detalles,
-        {
-          producto_id: null,
-          cantidad: 1,
-          precio_unitario: 0,
-        },
-      ],
-    }));
-  };
-
+const addDetalle = () => {
+  setFactura((prev) => ({
+    ...prev,
+    detalles: [
+      ...prev.detalles,
+      {
+        producto_id: null,
+        puck_id: null,        // 🔥 obligatorio en tu backend
+        cantidad: 1,
+        precio_unitario: 0,
+        impuestos: [],        // 🔥 impuestos por ítem
+      },
+    ],
+  }));
+};
   // 🔹 actualizar detalle
-  const updateDetalle = (index, field, value) => {
-    const nuevos = [...factura.detalles];
-    nuevos[index][field] = value;
-
-    setFactura((prev) => ({
-      ...prev,
-      detalles: nuevos,
-    }));
-  };
+ const updateDetalle = (index, field, value) => {
+  setFactura((prev) => {
+    const nuevos = prev.detalles.map((d, i) =>
+      i === index ? { ...d, [field]: value } : d
+    );
+    return { ...prev, detalles: nuevos };
+  });
+};
 
   // 🔹 eliminar detalle
   const removeDetalle = (index) => {
@@ -76,6 +89,7 @@ export const useRegisterFacturaCompras = () => {
 
 
   const handleSubmitFactura = async (e) => {
+    console.log("Enviando factura:", factura); // 👉 Para depuración
     e.preventDefault();
     try {
       setLoading(true);
@@ -89,10 +103,13 @@ export const useRegisterFacturaCompras = () => {
     };
 
     const  response = await  facturasService.createFactura(payload);
+    setPdfUrl(response.data.data.pdf_url); // 👉 Guardar URL del PDF para mostrarlo después
+    console.log("Respuesta del servidor:", response); // 👉 Para depuración
     showToast("success", response.data.message || "Factura registrada exitosamente");
     setFactura({
       factura: {
         proveedor_id: null,
+        empresa_id: null,
         estado_id: null,
         numero_factura: "",
         fecha_emision: "",
@@ -125,6 +142,7 @@ export const useRegisterFacturaCompras = () => {
   return {
     factura,
     setFactura,
+    pdfUrl,
     handleFacturaChange,
     addDetalle,
     updateDetalle,

@@ -1,8 +1,10 @@
-import { useState } from "react";
+
 import Select from "react-select"
 import { useProducts } from "../../hooks/useProducts";
-import { label } from "yet-another-react-lightbox";
-export default function DetallesFacturaCompras({ detalles, addDetalle, updateDetalle, removeDetalle, bodegasAll }) {
+import { useGetPuck } from "../../hooks/contabilidad/useGetPuck";
+export default function DetallesFacturaCompras({ detalles, addDetalle, updateDetalle, removeDetalle, bodegasAll, error, impuestos }) {
+  console.log("🚀 ~ file: DetallesFacturaCompras.jsx:5 ~ DetallesFacturaCompras ~ impuestos:", impuestos)
+  const { pucks } = useGetPuck();
   const { products } = useProducts({ search: "" });
  const selectStyles = {
     menuPortal: (base) => ({ ...base, zIndex: 9999 }),
@@ -25,9 +27,12 @@ export default function DetallesFacturaCompras({ detalles, addDetalle, updateDet
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-gray-100 text-[11px] uppercase text-gray-600 border-b">
-              <th className="px-3 py-2 w-1/3">Producto / Servicio</th>
-              <th className="px-3 py-2 w-32">Cantidad</th>
-              <th className="px-3 py-2">Bodega Destino</th>
+              <th className="px-3 py-2 w-32">Puc </th>
+              <th className="px-3 py-2 w-56">Producto </th>
+              <th className="px-3 py-2 w-48">Impuestos </th>
+              <th className="px-3 py-2 w-24">Cantidad</th>
+              {/*   <th className="px-3 py-2">Bodega Destino</th>*/}
+            
               <th className="px-3 py-2 w-40">Precio Unitario</th>
               <th className="px-3 py-2 w-10 text-center">Acción</th>
             </tr>
@@ -35,6 +40,24 @@ export default function DetallesFacturaCompras({ detalles, addDetalle, updateDet
           <tbody className="divide-y divide-gray-100">
             {detalles.map((det, index) => (
               <tr key={index} className="hover:bg-blue-50/30 transition-colors">
+                  <td className="px-2 py-2">
+                    <Select
+                      placeholder="Puc..."
+                      className="text-xs"
+                      menuPortalTarget={document.body}
+                      menuPosition="fixed"
+                      styles={selectStyles}
+                      options={pucks?.map(p => ({ value: p.id, label: `${p.numero} - ${p.nombre}` }))}
+                      value={pucks?.map(p => ({ value: p.id, label: `${p.numero} - ${p.nombre}` })).find(o => o.value === det.puck_id) || null}
+                      onChange={(s) => updateDetalle(index, "puck_id", s?.value || null)}
+                    />
+                    {error?.[`detalles.${index}.puck_id`] && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {error[`detalles.${index}.puck_id`]}
+                      </p>
+                    )}
+                  </td>
+
                 <td className="px-2 py-2">
                    <Select
                     placeholder="Buscar producto..."
@@ -43,10 +66,56 @@ export default function DetallesFacturaCompras({ detalles, addDetalle, updateDet
                     menuPosition="fixed"
                     styles={selectStyles}
                     options={products?.map(p => ({ value: p.id, label: `${p.name} - ${p.description || ''}` }))}
-                    value={products?.map(p => ({ value: p.id, label: p.name })).find(o => o.value === det.producto_id) || null}
+                    value={products?.map(p => ({ value: p.id, label: `${p.name} - ${p.description || ''}` })).find(o => o.value === det.producto_id) || null}
                     onChange={(s) => updateDetalle(index, "producto_id", s?.value || null)}
                   />
+                  {error?.[`detalles.${index}.producto_id`] && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {error[`detalles.${index}.producto_id`]}
+                    </p>
+                  )}
                 </td>
+                <td className="px-2 py-2">
+  <Select
+    isMulti
+    placeholder="Impuestos..."
+    className="text-xs"
+    menuPortalTarget={document.body}
+    menuPosition="fixed"
+    styles={selectStyles}
+    options={impuestos?.map(i => ({
+      value: i.id,
+      label: `${i.nombre} (${i.porcentaje}%)`
+    }))}
+
+    value={det.impuestos?.map(i => {
+      const imp = impuestos.find(x => x.id === i.impuesto_id);
+      return imp
+        ? { value: imp.id, label: `${imp.nombre} (${imp.porcentaje}%)` }
+        : null;
+    }).filter(Boolean) || []}
+
+    onChange={(selected) =>
+      updateDetalle(
+        index,
+        "impuestos",
+        selected ? selected.map(s => ({ impuesto_id: s.value })) : []
+      )
+    }
+  />
+
+  {error?.[`detalles.${index}.impuestos`] && (
+    <p className="text-red-500 text-xs mt-1">
+      {error[`detalles.${index}.impuestos`]}
+    </p>
+  )}
+
+  {error?.[`detalles.${index}.impuestos`]?.length > 0 && (
+    <p className="text-red-500 text-xs mt-1">
+      {error[`detalles.${index}.impuestos`].join(", ")}
+    </p>
+  )}
+</td>
                 <td className="px-2 py-2">
                   <input
                     type="number"
@@ -54,7 +123,14 @@ export default function DetallesFacturaCompras({ detalles, addDetalle, updateDet
                     value={det.cantidad}
                     onChange={(e) => updateDetalle(index, "cantidad", e.target.value)}
                   />
+                  {error?.[`detalles.${index}.cantidad`] && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {error[`detalles.${index}.cantidad`]}
+                    </p>
+                  )}
                 </td>
+
+                {/* <td className="px-2 py-2">
                 <td className="px-2 py-2">
                  <Select
                     placeholder="Bodega..."
@@ -66,7 +142,12 @@ export default function DetallesFacturaCompras({ detalles, addDetalle, updateDet
                     value={bodegasAll?.map(b => ({ value: b.id, label: `${b.nombre} - ${b.sede?.nombre || "Sin sede"}` })).find(o => o.value === det.bodega_id) || null}
                     onChange={(s) => updateDetalle(index, "bodega_id", s?.value || null)}
                   />
-                </td>
+                  {error?.[`detalles.${index}.bodega_id`] && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {error[`detalles.${index}.bodega_id`]}
+                    </p>
+                  )}
+                </td>*/}
                 <td className="px-2 py-2">
                   <div className="relative">
                     <span className="absolute left-2 top-1.5 text-gray-400 text-xs">$</span>
@@ -76,6 +157,11 @@ export default function DetallesFacturaCompras({ detalles, addDetalle, updateDet
                       value={det.precio_unitario}
                       onChange={(e) => updateDetalle(index, "precio_unitario", e.target.value)}
                     />
+                    {error?.[`detalles.${index}.precio_unitario`] && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {error[`detalles.${index}.precio_unitario`]}
+                      </p>
+                    )}
                   </div>
                 </td>
                 <td className="px-2 py-2 text-center">
