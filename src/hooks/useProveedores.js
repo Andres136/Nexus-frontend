@@ -24,7 +24,7 @@ export function useProveedores (){
   }
 
 
-  const obtenerOrdenes = async (page = 1, search = "",week="") => {
+  const obtenerOrdenes = async (page = 1, search = "", fechaInicio = "", fechaFin = "") => {
     const token = localStorage.getItem("token");
     setLoading(true);
     try {
@@ -33,7 +33,8 @@ export function useProveedores (){
         params: {
           page,
           search, // 👈 Envía el término
-          week
+      fecha_inicio: fechaInicio,
+  fecha_fin: fechaFin
         },
       });
      // console.log(response.data.ordenes);

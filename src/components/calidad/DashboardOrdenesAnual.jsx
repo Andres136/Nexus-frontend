@@ -18,6 +18,7 @@ export default function DashboardOrdenesAnual() {
       setLoading(true);
       try {
         const res = await ordenesCompraProveedoresApi.estadisticasOrdenes({ anio });
+
         setData(res.data.resumen_mensual || []);
       } catch (error) {
         console.error("Error al cargar estadísticas:", error);

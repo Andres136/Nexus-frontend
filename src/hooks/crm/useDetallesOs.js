@@ -17,14 +17,7 @@ export default function useDetallesOs(formData, setFormData) {
       return;
     }
 
-    if (Number(cantidad) > item.cantidad_faltante) {
-      Swal.fire({
-        icon: "error",
-        title: "Cantidad inválida",
-        text: "La cantidad no puede ser mayor al faltante.",
-      });
-      return;
-    }
+
 
     const existe = formData.detalles.some(
       d => d.orden_compra_detalle_id === item.detalle_id

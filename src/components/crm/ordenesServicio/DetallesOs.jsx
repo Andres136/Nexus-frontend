@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useProducts } from "../../../hooks/useProducts";
 import Select from "react-select";
-import Swal from "sweetalert2";
+
 import useDetallesOs from "../../../hooks/crm/useDetallesOs";
 
 export default function DetallesOs({
@@ -9,6 +9,8 @@ export default function DetallesOs({
   obtenerProductosPorId,
   formData,
   setFormData,
+    handleChange,
+    detallesEditados
 
 
 }) {
@@ -236,17 +238,17 @@ export default function DetallesOs({
                     <td className="px-3 py-2 text-center">
                       <input
                         type="number"
-                        min="1"
-                        value={detalle.cantidad}
-                        onChange={(e) => {
-                          const nuevaCantidad = e.target.value;
-                          setFormData(prev => ({
-                            ...prev,
-                            detalles: prev.detalles.map(d =>
-                              d.id === detalle.id ? { ...d, cantidad: nuevaCantidad } : d
-                            )
-                          }));
-                        }}
+                       value={
+  detallesEditados[detalle.orden_compra_detalle_id]?.cantidad 
+  ?? detalle.cantidad
+}
+                   onChange={(e) =>
+  handleChange(
+    detalle.orden_compra_detalle_id, // 🔥 clave correcta
+    "cantidad",
+    e.target.value
+  )
+}
                         className="w-full border border-gray-300 rounded px-1 py-1 text-xs text-center focus:outline-none focus:ring-1 focus:ring-blue-500"
                       />
                     </td>

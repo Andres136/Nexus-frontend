@@ -11,7 +11,8 @@ export default function ObtenerOrdenesProveedores() {
 
 
 const { user } = useAuth({middleware: 'auth'});
-const [weekFilter, setWeekFilter] = useState("");
+const [fechaInicio, setFechaInicio] = useState("");
+const [fechaFin, setFechaFin] = useState("");
 
 //console.log(user);
 const isAdmin = user?.role_id === 1;
@@ -33,10 +34,10 @@ const isAdministrativo = [4, 5, 6,].includes(user?.role_id);
 
   const handleBuscar = () => {
     setPagina(1);
-    obtenerOrdenes(1, searchTerm, weekFilter);
+    obtenerOrdenes(1, searchTerm, fechaInicio, fechaFin);
   };
 useEffect(() => {
-  obtenerOrdenes(pagina, searchTerm, weekFilter);
+  obtenerOrdenes(pagina, searchTerm, fechaInicio, fechaFin);
 }, [pagina]);
   //Formatear fecha
 const formatearFecha = (fecha) => {
@@ -70,12 +71,19 @@ const formatearFecha = (fecha) => {
   />
 
   {/* 🔍 Filtro por semana */}
-  <input
-    type="week"
-    value={weekFilter}
-    onChange={(e) => setWeekFilter(e.target.value)}
-    className="border p-2 rounded"
-  />
+ <input
+  type="date"
+  value={fechaInicio}
+  onChange={(e) => setFechaInicio(e.target.value)}
+  className="border p-2 rounded"
+/>
+
+<input
+  type="date"
+  value={fechaFin}
+  onChange={(e) => setFechaFin(e.target.value)}
+  className="border p-2 rounded"
+/>
 
   <button
     onClick={handleBuscar}
