@@ -70,4 +70,13 @@ export const gestionOperativaService = {
  createHistorialOrdenes(data) {
   return apiClient.post('/api/ordenes-compras-historial', data);
 }
+
+};
+
+export const seguimentoHallazgosService = {
+  getSeguimientos: () => apiClient.get("/api/seguimiento-hallazgos"),
+  createSeguimiento: (data) => apiClient.post("/api/seguimiento-hallazgos", data),
+  getSeguimientoById: (id) => apiClient.get(`/api/seguimiento-hallazgos/${id}`),
+  updateSeguimiento: (id, data) => apiClient.put(`/api/seguimiento-hallazgos/${id}`, data),
+  deleteSeguimiento: (id) => apiClient.delete(`/api/seguimiento-hallazgos/${id}`),
 };

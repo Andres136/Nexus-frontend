@@ -4,6 +4,9 @@ import Select from "react-select";
 import { useNovedades } from "../../hooks/calidad/useNovedades";
 import { useAuth } from "../../hooks/useAuth";
 import { useRegisterHallazgoNovedad } from "../../hooks/calidad/useRegisterHallazgoNovedad";
+// 🔥 PASO 1: IMPORTA EL COMPONENTE
+
+
 
 import {
   FileText,
@@ -16,10 +19,12 @@ import {
   Paperclip,
   MessageSquare
 } from "lucide-react";
+import { SeguimientoHallazgo } from "./SeguimientoHallazgo";
 
 export default function GestionNovedadesCalidad() {
   const { id } = useParams();
   const { usuarios, obtenerUsuariosAll } = useAuth({ middleware: "auth" });
+  
 
   const {
     loading,
@@ -271,7 +276,7 @@ export default function GestionNovedadesCalidad() {
                     <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-blue-600">
                       <FileText size={16} />
                     </div>
-                    <span className="font-bold text-slate-700">Hallazgo <span className="text-slate-400">#{h.id}</span></span>
+                    <span className="font-bold text-slate-700">Hallazgo </span>
                   </div>
                   <span className={`text-[10px] uppercase tracking-widest font-black px-3 py-1 rounded-full ${
                     h.estado === "CERRADA" ? "bg-emerald-100 text-emerald-700" : h.estado === "EN_PROCESO" ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700"
@@ -308,7 +313,7 @@ export default function GestionNovedadesCalidad() {
                     />
                   </div>
                 </div>
-
+<SeguimientoHallazgo hallazgoId={h.id} />
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end bg-slate-50 p-4 rounded-lg">
                   <div>
                     <label className={labelClass}>Responsable</label>
