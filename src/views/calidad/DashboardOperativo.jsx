@@ -278,7 +278,14 @@ export default function DashboardOperativo() {
   const [estadoVsm, setEstadoVsm] = useState("");
   const [revisada, setRevisada] = useState(null);
   const [ordenSeleccionada, setOrdenSeleccionada] = useState(null);
-  const { data, isLoading } = useGetDashboardOperativo({ sede_id: sedeId , estado_vsm: estadoVsm, cliente: clienteId, revisada: revisada }); // Puedes pasar filtros si tu hook los soporta
+const [searchInput, setSearchInput] = useState("");
+const [search, setSearch] = useState("");
+  const { data, isLoading } = useGetDashboardOperativo({ sede_id: sedeId , 
+    estado_vsm: estadoVsm,
+     cliente: clienteId, 
+     revisada: revisada,
+      search: search
+    }); // Puedes pasar filtros si tu hook los soporta
   console.log("Datos del Dashboard Operativo:", data);
   const {clientesTodos} = useClientes();
 const {
@@ -312,6 +319,8 @@ const events = data?.map((orden) => {
     }
   };
 });
+
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <header className="mb-8">
@@ -392,7 +401,23 @@ const events = data?.map((orden) => {
       <option value="ENTREGADO">Entregado</option>
     </select>
   </div>
-
+<div className="flex flex-col w-48">
+  <label className="text-xs font-semibold text-gray-500 mb-1">
+    Buscar OT
+  </label>
+<input
+  type="text"
+  placeholder="Buscar por OT..."
+  value={searchInput}
+  onChange={(e) => setSearchInput(e.target.value)}
+  onKeyDown={(e) => {
+    if (e.key === 'Enter') {
+      setSearch(searchInput.trim());
+    }
+  }}
+  className="border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+/>
+</div>
 </div>
       {/* Grid de Órdenes 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

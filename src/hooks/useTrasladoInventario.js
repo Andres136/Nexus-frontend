@@ -222,69 +222,83 @@ const removeDetalle = (index) => {
   // SUBMIT
   // ============================
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+// ============================
+// SUBMIT
+// ============================
 
-    setIsLoading(true);
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    try {
-      const payload = {
-        ...formData,
-        detalles: formData.detalles.map((d, i) => ({
-          ...d,
-          item: i + 1,
-        })),
-      };
+  setIsLoading(true);
 
-      const result = await envioInternoOc(payload);
+  try {
+    const payload = {
+      ...formData,
+      detalles: formData.detalles.map((d, i) => ({
+        ...d,
+        item: i + 1,
+      })),
+    };
 
-      showToast(
-        "success",
-        result?.message ||
-          "Traslado de inventario enviado con éxito."
-      );
+    const result = await envioInternoOc(payload);
 
-      queryClient.invalidateQueries(["trasladosInventario"]);
+    showToast(
+      "success",
+      result?.message ||
+        "Traslado de inventario enviado con éxito."
+    );
 
-      resetForm();
+    queryClient.invalidateQueries(["trasladosInventario"]);
 
-      return {
-        success: true,
-        data: result,
-      };
-    } catch (error) {
-      console.error(
-        "❌ Error al enviar traslado de inventario:",
-        error
-      );
+    resetForm();
 
-      // Errores backend Laravel
-      if (error.response?.status === 422) {
-        const backendErrors = error.response.data.errors || {};
+    return {
+      success: true,
+      data: result,
+    };
+  } catch (error) {
+    console.error(
+      "❌ Error al enviar traslado de inventario:",
+      error
+    );
 
-        setErrors(backendErrors);
+    // ============================
+    // ERROR EXACTO BACKEND
+    // ============================
 
-        const firstError =
-          Object.values(backendErrors)[0]?.[0] ||
-          "Hay errores en el formulario.";
+    const backendErrors = error.response?.data?.errors || {};
+    const backendMessage =
+      error.response?.data?.error ||
+      error.response?.data?.message ||
+      "No se pudo procesar el traslado.";
 
-        showToast("error", firstError);
-      } else {
-        showToast(
-          "error",
-          error.response?.data?.message ||
-            "No se pudo procesar el traslado."
-        );
-      }
+    // Si Laravel devuelve errores por campo
+    if (Object.keys(backendErrors).length > 0) {
+      setErrors(backendErrors);
 
-      return {
-        success: false,
-        error,
-      };
-    } finally {
-      setIsLoading(false);
+      const firstError =
+        Object.values(backendErrors)[0]?.[0] ||
+        backendMessage;
+
+      showToast("error", firstError);
+    } else {
+      // Si devuelve mensaje general como tu caso actual
+      showToast("error", backendMessage);
+
+      // Opcional: marcar error general visible en UI
+      setErrors({
+        general: backendMessage,
+      });
     }
-  };
+
+    return {
+      success: false,
+      error,
+    };
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return {
     formData,
