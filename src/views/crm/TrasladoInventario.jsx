@@ -265,7 +265,7 @@ export default function TrasladoInventario() {
                   <tbody className="divide-y divide-gray-200">
                     {formData.detalles.map((detalle, i) => (
                       <DetalleTraslado
-                        key={i}
+                        key={detalle.temp_id || i} // Usar temp_id para clave única
                         detalle={detalle}
                         index={i}
                         sedeOrigenId={formData.sede_origen_id}
