@@ -236,20 +236,7 @@ export default function FacturaCompras() {
               )}
             </div>
 
-            <div>
-              <label className={labelClass}>Vencimiento</label>
-              <input
-                type="date"
-                name="fecha_vencimiento"
-                className={`${inputClass} ${esCredito ? "bg-slate-100 text-slate-500" : ""}`}
-                value={factura.factura.fecha_vencimiento}
-                onChange={handleFacturaChange}
-                disabled={esCredito}
-              />
-              {getError("factura.fecha_vencimiento") && (
-                <p className="text-red-500 text-xs mt-1">{getError("factura.fecha_vencimiento")}</p>
-              )}
-            </div>
+        
 
             <div>
               <label className={labelClass}>Forma de Pago</label>
@@ -287,6 +274,21 @@ export default function FacturaCompras() {
                 />
               </div>
             )}
+
+               <div>
+              <label className={labelClass}>Vencimiento</label>
+              <input
+                type="date"
+                name="fecha_vencimiento"
+                className={`${inputClass} ${esCredito ? "bg-slate-100 text-slate-500" : ""}`}
+                value={factura.factura.fecha_vencimiento}
+                onChange={handleFacturaChange}
+                disabled={esCredito}
+              />
+              {getError("factura.fecha_vencimiento") && (
+                <p className="text-red-500 text-xs mt-1">{getError("factura.fecha_vencimiento")}</p>
+              )}
+            </div>
 
             <div className="sm:col-span-2 xl:col-span-2">
               <label className={labelClass}>Impuesto General</label>
