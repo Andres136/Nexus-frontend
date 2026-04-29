@@ -34,13 +34,14 @@ export const useTrasladoInventario = () => {
   // MANEJO DE ERRORES
   // ============================
 
-  const clearFieldError = (fieldPath) => {
-    if (!errors[fieldPath]) return;
+const clearFieldError = (fieldPath) => {
+  if (!errors || !errors[fieldPath]) return;
 
-    const updatedErrors = { ...errors };
-    delete updatedErrors[fieldPath];
-    setErrors(updatedErrors);
-  };
+  const updatedErrors = { ...errors };
+  delete updatedErrors[fieldPath];
+
+  setErrors(updatedErrors);
+};
 
   const setFieldError = (fieldPath, message) => {
     setErrors((prev) => ({
