@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { inventariosApi, productsApi } from "../../services/api";
 import { useProducts } from "../../hooks/useProducts";
 import Select from "react-select";
+import { useStock } from "../../hooks/crm/useStock";
 
 export default function DetalleTraslado({
   detalle,
@@ -22,7 +23,11 @@ export default function DetalleTraslado({
   const { products, isLoading, isFetching, isEmpty } = useProducts({ search });
   const [bodegasDisponibles, setBodegasDisponibles] = useState([]);
   const [ocCargadas, setOcCargadas] = useState([]); // Para evitar recargas innecesarias de OC
-
+const {
+  data: stockData,
+  isLoading: stockLoading,
+  error: stockError,
+} = useStock(detalle.product_id, sedeOrigenId);
   // ========= TODA LA LÓGICA ORIGINAL SIN CAMBIOS =========
   const cargarOC = async (value = "") => {
     try {
@@ -78,32 +83,26 @@ useEffect(() => {
     }
   }, [detalle.orden_compra_id, ocproveedores]);
 
-  const fetchDirectStock = async (productId) => {
-    try {
-      const params = {};
-      if (sedeOrigenId) {
-        params.sede_id = sedeOrigenId;
-      }
-      const res = await productsApi.getStock(productId, params);
-      return res?.data?.stock || null;
-    } catch (err) {
-      console.error("❌ Error obteniendo stock:", err);
-      return null;
-    }
-  };
 
-  useEffect(() => {
-    if (!detalle.product_id) return;
-    const load = async () => {
-      const stock = await fetchDirectStock(detalle.product_id);
-      if (!stock) return;
-      const total = stock.stock_total ?? 0;
-      const bodegas = stock.resumen_por_bodega ?? [];
-      setBodegasDisponibles(bodegas);
-      handleChange({ target: { name: "stock_total", value: total }}, index);
-    };
-    load();
-  }, [detalle.product_id]);
+
+useEffect(() => {
+  if (!stockData) return;
+
+  const total = stockData.stock_total ?? 0;
+  const bodegas = stockData.resumen_por_bodega ?? [];
+
+  setBodegasDisponibles(bodegas);
+
+  handleChange(
+    {
+      target: {
+        name: "stock_total",
+        value: total,
+      },
+    },
+    index
+  );
+}, [stockData]);
 
   const handleOcChange = (selectedOption) => {
     const syntheticEvent = {

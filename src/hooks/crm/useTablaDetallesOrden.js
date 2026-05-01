@@ -4,6 +4,7 @@ import { productsApi } from "../../services/api";
 import { showToast } from "../../helpers/utils/showToast";
 import Swal from "sweetalert2";
 import { ProductContext } from "../../context/ProductContext";
+import { useQueryClient } from "@tanstack/react-query";
 
 
 export const useTablaDetallesOrden = (detalles, orden) => {
@@ -26,10 +27,13 @@ const [productCache, setProductCache] = useState({});
   const [configuracionesDescuento, setConfiguracionesDescuento] = useState({});
   const [alistamientos, setAlistamientos] = useState([]);
   const sedeId = orden?.orden_compra?.sede?.id;
+
 //console.log("DEttalles orden:", orden);
 
   // AGREGAR: Estados para cache y tracking
   const [stockCache, setStockCache] = useState({});
+
+  const queryClient = useQueryClient();
   // Estado local para alternar modo
 
   // useEffect para calcular automáticamente la cantidad total
@@ -381,7 +385,7 @@ const enviarInstruccionesAlistamiento = async () => {
       if (res?.data?.success) {
         const pdfs = res.data.pdfs || [];
         showToast("success", "Descuento masivo completado correctamente ");
-
+        queryClient.invalidateQueries(["stock", orden.id]); // 🔹 Refrescar stock para la orden
         // 🔹 Si solo hay un PDF, abrirlo directamente
         if (pdfs.length === 1) {
           window.open(pdfs[0].pdf, "_blank");
