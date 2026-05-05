@@ -1,10 +1,7 @@
-import { useState } from "react";
-import { useAuth } from "../../hooks/useAuth";
-import { indicadoresApi } from "../../services/api";
-import { toast } from "react-toastify";
+
 import ObtenerIndicadores from "../../components/calidad/ObtenerIndicadores";
 import { Link } from "react-router-dom";
-// ✅ Iconos modernos
+
 import { 
   BarChart3,
   Plus,
@@ -17,119 +14,43 @@ import {
   FileText,
   Settings
 } from "lucide-react";
+import { useIndicadores } from "../../hooks/calidad/useIndicadores";
+import { useObtenerIndicadores } from "../../hooks/calidad/useObtenerIndicadores";
 
 export default function Indicadores() {
-  // ...existing logic (sin cambios)...
-  const [errors, setErrors] = useState({});
-  const [editId, setEditId] = useState(null);
-  const [indicadores, setIndicadores] = useState([]);
-  const [formData, setFormData] = useState({
-    nombre: "",
-    formula: "",
-    meta: "",
-    frecuencia: "",
-    descripcion: "",
-    tipo_meta: "",
-  });
+const {
+  formData,
+  errors,
+  editId,
+  indicadores,
+  setIndicadores,
+  paginacion,
+  handleEdit,
+  handleChange,
+  handleSubmit,
+  handleCancelEdit,
+  fetchIndicadores,
+  err,
+} = useIndicadores();
 
-  const [paginacion, setPaginacion] = useState({
-    last_page: 1,
-    current_page: 1,
-    total: 0,
-    per_page: 10,
-  }); 
+const {
+  pagina,
+  setPagina,
+  departamentos,
+  departamentoId,
+  setDepartamentoId,
+  puedeEditar,
+  handleDelete,
+  search,
+  setSearch,
+  handleSearchKeyDown
+} = useObtenerIndicadores({
+  fetchIndicadores,
+  indicadores,
+  setIndicadores,
+  paginacion,
 
-  // ...todas las funciones existentes sin cambios...
-  const handleEdit = (indicador) => {
-    setEditId(indicador.id);
-    setFormData({
-      nombre: indicador.nombre,
-      formula: indicador.formula,
-      meta: indicador.meta,
-      frecuencia: indicador.frecuencia,
-      descripcion: indicador.descripcion,
-      tipo_meta: indicador.tipo_meta
-    });
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(s => ({ ...s, [name]: value }));
-    if (errors[name]) {
-      setErrors(s => ({ ...s, [name]: undefined }));
-    }
-  };
-
-  const fetchIndicadores = async (depId = "", page = 1) => {
-    const res = await indicadoresApi.getIndicadoresDepartamento({ departamento_id: depId, page });
-    setIndicadores(res.data.data || []);
-    setPaginacion({
-      last_page: res.data.last_page,
-      current_page: res.data.current_page,
-      total: res.data.total,
-      per_page: res.data.per_page,
-    });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      setErrors({});
-      let response;
-      if (editId) {
-        response = await indicadoresApi.update(editId, formData);
-        setIndicadores(prev =>
-          prev.map(ind => ind.id === editId ? { ...ind, ...formData } : ind)
-        );
-        toast.success(response?.data?.message ?? "Indicador actualizado", {
-          className: "bg-blue-400 text-white font-bold",
-          progressClassName: "bg-blue-300"
-        });
-        setEditId(null);
-      } else {
-        response = await indicadoresApi.create(formData);
-        toast.success(response?.data?.message ?? "Indicador creado", {
-          className: "bg-green-100 text-green-800 border border-green-300 font-medium rounded-md",
-          progressClassName: "bg-green-400"
-        });
-      }
-      setFormData({
-        nombre: "",
-        formula: "",
-        meta: "",
-        frecuencia: "",
-        descripcion: "",
-        tipo_meta: ""
-      });
-      await fetchIndicadores();
-    } catch (err) {
-      const { response } = err || {};
-      if (response?.status === 422 && response.data?.errors) {
-        setErrors(response.data.errors);
-        toast.error("Revisa los campos del formulario");
-      } else if (response?.status === 403) {
-        toast.error(response.data?.message ?? "No autorizado");
-      } else {
-        toast.error("Error al crear el indicador");
-      }
-    }
-  };
-
-  const handleCancelEdit = () => {
-    setEditId(null);
-    setFormData({
-      nombre: "",
-      formula: "",
-      meta: "",
-      frecuencia: "",
-      descripcion: "",
-      tipo_meta: "",
-    });
-    setErrors({});
-  };
-
-  const err = (k) => errors?.[k]?.[0];
-
+});
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
       <div className="max-w-screen-2xl mx-auto p-4 sm:p-6 lg:p-8">
@@ -477,8 +398,15 @@ export default function Indicadores() {
                   puedeEditar={true}
                   fetchIndicadores={fetchIndicadores}
                   paginacion={paginacion}
-                  pagina={paginacion.current_page}
-                  setPagina={(p) => fetchIndicadores("", p)}
+                  pagina={pagina}
+                  setPagina={setPagina}
+                  departamentos={departamentos}
+                  departamentoId={departamentoId}
+                  setDepartamentoId={setDepartamentoId}
+                  handleDelete={handleDelete}
+                  search={search}
+                  setSearch={setSearch}
+                  handleSearchKeyDown={handleSearchKeyDown}
                 />
               </div>
             </div>
