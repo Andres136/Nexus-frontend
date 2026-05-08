@@ -22,10 +22,12 @@ export default function Asignaciones() {
 
   const [mostrarModal, setMostrarModal] = useState(false);
   const [busqueda, setBusqueda] = useState('');
+   const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     obtenerAsignaciones();
   }, []);
+  console.log(asignaciones);
 
   const handleFiltrar = (campo, valor) => {
     setFilters({ ...filters, [campo]: valor });
@@ -146,8 +148,10 @@ export default function Asignaciones() {
                     <th className="px-4 py-3 text-left font-semibold text-gray-700">Sede</th>
                     <th className="px-4 py-3 text-left font-semibold text-gray-700">Asignación</th>
                     <th className="px-4 py-3 text-left font-semibold text-gray-700">Devolución</th>
-                    <th className="px-4 py-3 text-center font-semibold text-gray-700">Estado</th>
-                    <th className="px-4 py-3 text-center font-semibold text-gray-700">Acción</th>
+            <th className="px-4 py-3 text-center font-semibold text-gray-700">Acta Asignación</th>
+<th className="px-4 py-3 text-center font-semibold text-gray-700">Acta Devolución</th>
+<th className="px-4 py-3 text-center font-semibold text-gray-700">Estado</th>
+<th className="px-4 py-3 text-center font-semibold text-gray-700">Acción</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -161,6 +165,42 @@ export default function Asignaciones() {
                       <td className="px-4 py-3 text-gray-600">{asignacion.sede?.nombre}</td>
                       <td className="px-4 py-3 text-gray-600">{new Date(asignacion.created_at).toLocaleDateString()}</td>
                       <td className="px-4 py-3 text-gray-600">{asignacion.fecha_devolucion ? new Date(asignacion.fecha_devolucion).toLocaleDateString() : "-"}</td>
+                                            {/* COLUMNAS PDF */}
+<td className="px-4 py-3 text-center">
+  {asignacion.acta_asignacion_url ? (
+    <a
+      href={asignacion.acta_asignacion_url.startsWith('http')
+        ? asignacion.acta_asignacion_url
+        : `${API_URL}${asignacion.acta_asignacion_url}`
+      }
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded"
+    >
+      📄 Ver PDF
+    </a>
+  ) : (
+    <span className="text-gray-400">-</span>
+  )}
+</td>
+
+<td className="px-4 py-3 text-center">
+  {asignacion.acta_devolucion_url ? (
+    <a
+      href={asignacion.acta_devolucion_url.startsWith('http')
+        ? asignacion.acta_devolucion_url
+        : `${API_URL}${asignacion.acta_devolucion_url}`
+      }
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-green-600 hover:text-green-800 hover:bg-green-50 rounded"
+    >
+      📄 Ver PDF
+    </a>
+  ) : (
+    <span className="text-gray-400">-</span>
+  )}
+</td>
                       <td className="px-4 py-3 text-center">
                         <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${asignacion.activo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                           {asignacion.activo ? 'Activo' : 'Inactivo'}
@@ -175,6 +215,8 @@ export default function Asignaciones() {
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </td>
+
+
                     </tr>
                   ))}
                 </tbody>
