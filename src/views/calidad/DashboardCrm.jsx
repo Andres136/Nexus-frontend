@@ -90,6 +90,14 @@ const kpisCards = [
     }
 
   }
+  // Fusionar cartera en series por mes — agrega esto antes del return
+const seriesConCartera = series.map((s) => {
+  const c = cartera.find((c) => c.month === s.month) || {};
+  return {
+    ...s,
+    cartera_pct_gestion: c.cartera_pct_gestion ?? 0,
+  };
+});
 
   const ranking = Array.from(rankingMap.values())
     .sort((a, b) => b.ventas - a.ventas)
@@ -289,6 +297,16 @@ const kpisCards = [
         stroke="#6366f1"
         name="Fidelización"
         strokeWidth={3}
+      />
+            {/* ✅ Nueva línea */}
+      <Line
+        type="monotone"
+        dataKey="cartera_pct_gestion"
+        stroke="#ef4444"
+        name="Gestión Cartera"
+        strokeWidth={3}
+        strokeDasharray="5 5"
+        dot={{ r: 4 }}
       />
 
     </LineChart>

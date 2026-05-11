@@ -421,5 +421,10 @@ export  const RevisarOtApi = {
 
 };
 
+export const dashboardComercialApi = {
+  getEstadisticasComerciales: (params = {}) =>
+    apiClient.get("/api/estadisticas-comerciales", { params }),
+};
+
 
 export default apiClient;
