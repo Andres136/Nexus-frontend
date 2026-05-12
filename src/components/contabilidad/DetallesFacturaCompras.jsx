@@ -3,7 +3,7 @@ import Select from "react-select"
 import { useProducts } from "../../hooks/useProducts";
 import { useGetPuck } from "../../hooks/contabilidad/useGetPuck";
 export default function DetallesFacturaCompras({ detalles, addDetalle, updateDetalle, removeDetalle, bodegasAll, error, impuestos }) {
-  console.log("🚀 ~ file: DetallesFacturaCompras.jsx:5 ~ DetallesFacturaCompras ~ impuestos:", impuestos)
+ // console.log("🚀 ~ file: DetallesFacturaCompras.jsx:5 ~ DetallesFacturaCompras ~ impuestos:", impuestos)
   const { pucks } = useGetPuck();
   const { products } = useProducts({ search: "" });
  const selectStyles = {

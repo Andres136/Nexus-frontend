@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
+import PropTypes from "prop-types";
+import { useParams } from "react-router-dom";
 import { useSedes } from "../../hooks/useSedes";
 import { useGetFormasPago } from "../../hooks/contabilidad/useGetFormasPago";
 import { useGetImpuesto } from "../../hooks/contabilidad/useGetImpuesto";
@@ -8,7 +10,12 @@ import Select from "react-select";
 import DetallesFacturaCompras from "./DetallesFacturaCompras";
 import { useGetAllProveedores } from "../../hooks/crm/useGetAllProveedores";
 
-export default function FacturaCompras() {
+FacturaCompras.propTypes = {
+  modo: PropTypes.oneOf(["creacion", "edicion"]),
+};
+
+export default function FacturaCompras({ modo = "creacion" }) {
+  const { id } = useParams();
   const { proveedores } = useGetAllProveedores();
   const { sedes, bodegasAll } = useSedes();
   const { empresas } = useEmpresas();
@@ -18,19 +25,17 @@ export default function FacturaCompras() {
   const {
     factura,
     pdfUrl,
+    diasCredito,
+    setDiasCredito,
     handleFacturaChange,
     addDetalle,
     updateDetalle,
     removeDetalle,
     handleSubmitFactura,
     error,
-  } = useRegisterFacturaCompras();
+  } = useRegisterFacturaCompras({ id: id ? Number(id) : null, modo });
 
-  const [diasCredito, setDiasCredito] = useState("");
-
-  const getError = (field) => {
-    return error?.[field]?.[0] || null;
-  };
+  const getError = (field) => error?.[field]?.[0] || null;
 
   const inputClass =
     "w-full h-9 px-3 text-sm border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-none transition";
@@ -47,7 +52,7 @@ export default function FacturaCompras() {
   const esCredito = useMemo(() => {
     const nombre = (formaPagoSeleccionada?.nombre || "")
       .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[̀-ͯ]/g, "")
       .toLowerCase();
     return nombre.includes("credito");
   }, [formaPagoSeleccionada]);
@@ -82,58 +87,62 @@ export default function FacturaCompras() {
   ]);
 
   const resumen = useMemo(() => {
-  // 🔹 subtotal base
-  const subtotal = factura.detalles.reduce((acc, d) => {
-    return acc + Number(d.cantidad) * Number(d.precio_unitario);
-  }, 0);
+    const subtotal = factura.detalles.reduce(
+      (acc, d) => acc + Number(d.cantidad) * Number(d.precio_unitario),
+      0
+    );
 
-  let totalImpuestos = 0;
+    let totalImpuestos = 0;
+    const impuestosDetalleMap = {};
 
-  // 🔥 1. IMPUESTOS POR DETALLE
-  const impuestosDetalle = factura.detalles.flatMap((det) => {
-    const base = Number(det.cantidad) * Number(det.precio_unitario);
+    factura.detalles.forEach((det) => {
+      const base = Number(det.cantidad) * Number(det.precio_unitario);
+      (det.impuestos || []).forEach((i) => {
+        const imp = impuestos.find((x) => x.id === i.impuesto_id);
+        const porcentaje = Number(imp?.porcentaje || 0);
+        const monto = base * (porcentaje / 100);
+        totalImpuestos += monto;
+        if (impuestosDetalleMap[i.impuesto_id]) {
+          impuestosDetalleMap[i.impuesto_id].monto += monto;
+        } else {
+          impuestosDetalleMap[i.impuesto_id] = { nombre: imp?.nombre, porcentaje, monto };
+        }
+      });
+    });
 
-    return (det.impuestos || []).map((i) => {
+    const impuestosDetalle = Object.values(impuestosDetalleMap);
+
+    const impuestosGenerales = factura.impuestos.map((i) => {
       const imp = impuestos.find((x) => x.id === i.impuesto_id);
       const porcentaje = Number(imp?.porcentaje || 0);
-      const monto = base * (porcentaje / 100);
-
+      const monto = subtotal * (porcentaje / 100);
       totalImpuestos += monto;
-
-      return {
-        nombre: imp?.nombre,
-        porcentaje,
-        monto,
-      };
+      return { nombre: imp?.nombre, porcentaje, monto };
     });
-  });
 
-  // 🔥 2. IMPUESTO GENERAL
-  const impuestosGenerales = factura.impuestos.map((i) => {
-    const imp = impuestos.find((x) => x.id === i.impuesto_id);
-    const porcentaje = Number(imp?.porcentaje || 0);
-    const monto = subtotal * (porcentaje / 100);
+    return { subtotal, impuestosDetalle, impuestosGenerales, totalImpuestos, total: subtotal + totalImpuestos };
+  }, [factura.detalles, factura.impuestos, impuestos]);
 
-    totalImpuestos += monto;
-
-    return {
-      nombre: imp?.nombre,
-      porcentaje,
-      monto,
-    };
-  });
-
-  // 🔹 TOTAL FINAL
-  const total = subtotal + totalImpuestos;
-
-  return {
-    subtotal,
-    impuestosDetalle,
-    impuestosGenerales,
-    totalImpuestos,
-    total,
+  // Helpers para el valor controlado de react-select
+  const selectValue = (list, currentId, labelKey = "nombre") => {
+    if (!currentId || !list?.length) return null;
+    const item = list.find((x) => Number(x.id) === Number(currentId));
+    return item ? { value: item.id, label: item[labelKey] } : null;
   };
-}, [factura.detalles, factura.impuestos, impuestos]);
+
+  const impuestosGeneralesValue = useMemo(() => {
+    if (!factura.impuestos?.length || !impuestos?.length) return [];
+    return factura.impuestos.map((i) => {
+      const imp = impuestos.find((x) => x.id === i.impuesto_id);
+      return imp
+        ? { value: imp.id, label: `${imp.nombre} (${Number(imp.porcentaje).toFixed(2)}%)`, porcentaje: imp.porcentaje }
+        : null;
+    }).filter(Boolean);
+  }, [factura.impuestos, impuestos]);
+
+  const esEdicion = modo === "edicion";
+// EL PROBLEMA YA NO ES LA DATA.
+// EL PROBLEMA ESTÁ EN react-select VALUE MATCHING.
 
   return (
     <div className="min-h-screen bg-slate-100 p-3 md:p-6">
@@ -141,10 +150,12 @@ export default function FacturaCompras() {
         <header className="flex flex-col md:flex-row md:items-end md:justify-between gap-2">
           <div>
             <h1 className="text-lg md:text-xl font-semibold text-slate-800 leading-tight">
-              Nueva Factura de Compra
+              {esEdicion ? "Editar Factura de Compra" : "Nueva Factura de Compra"}
             </h1>
             <p className="text-xs text-slate-500">
-              Registra la factura y controla vencimiento e impuestos en una sola vista
+              {esEdicion
+                ? "Modifica los datos de la factura existente"
+                : "Registra la factura y controla vencimiento e impuestos en una sola vista"}
             </p>
           </div>
         </header>
@@ -156,14 +167,10 @@ export default function FacturaCompras() {
               <Select
                 classNamePrefix="nexus-select"
                 className="text-sm"
-                options={proveedores?.map((p) => ({
-                  value: p.id,
-                  label: p.nombre,
-                }))}
+                options={proveedores?.map((p) => ({ value: p.id, label: p.nombre }))}
+                value={selectValue(proveedores, factura.factura.proveedor_id)}
                 onChange={(s) =>
-                  handleFacturaChange({
-                    target: { name: "proveedor_id", value: s?.value ?? null },
-                  })
+                  handleFacturaChange({ target: { name: "proveedor_id", value: s?.value ?? null } })
                 }
               />
               {getError("factura.proveedor_id") && (
@@ -171,17 +178,15 @@ export default function FacturaCompras() {
               )}
             </div>
 
-
             <div>
               <label className={labelClass}>Empresa</label>
               <Select
                 classNamePrefix="nexus-select"
                 className="text-sm"
                 options={empresas?.map((e) => ({ value: e.id, label: e.nombre }))}
+                value={selectValue(empresas, factura.factura.empresa_id)}
                 onChange={(s) =>
-                  handleFacturaChange({
-                    target: { name: "empresa_id", value: s?.value ?? null },
-                  })
+                  handleFacturaChange({ target: { name: "empresa_id", value: s?.value ?? null } })
                 }
               />
               {getError("factura.empresa_id") && (
@@ -195,10 +200,9 @@ export default function FacturaCompras() {
                 classNamePrefix="nexus-select"
                 className="text-sm"
                 options={sedes?.map((s) => ({ value: s.id, label: s.nombre }))}
+                value={selectValue(sedes, factura.factura.sede_id)}
                 onChange={(s) =>
-                  handleFacturaChange({
-                    target: { name: "sede_id", value: s?.value ?? null },
-                  })
+                  handleFacturaChange({ target: { name: "sede_id", value: s?.value ?? null } })
                 }
               />
               {getError("factura.sede_id") && (
@@ -236,21 +240,15 @@ export default function FacturaCompras() {
               )}
             </div>
 
-        
-
             <div>
               <label className={labelClass}>Forma de Pago</label>
               <Select
                 classNamePrefix="nexus-select"
                 className="text-sm"
-                options={formasPago?.map((fp) => ({
-                  value: fp.id,
-                  label: fp.nombre,
-                }))}
+                options={formasPago?.map((fp) => ({ value: fp.id, label: fp.nombre }))}
+                value={selectValue(formasPago, factura.factura.forma_pago_id)}
                 onChange={(s) => {
-                  handleFacturaChange({
-                    target: { name: "forma_pago_id", value: s?.value ?? null },
-                  });
+                  handleFacturaChange({ target: { name: "forma_pago_id", value: s?.value ?? null } });
                   if (!s) setDiasCredito("");
                 }}
               />
@@ -275,7 +273,7 @@ export default function FacturaCompras() {
               </div>
             )}
 
-               <div>
+            <div>
               <label className={labelClass}>Vencimiento</label>
               <input
                 type="date"
@@ -300,18 +298,12 @@ export default function FacturaCompras() {
                   label: `${i.nombre} (${Number(i.porcentaje).toFixed(2)}%)`,
                   porcentaje: i.porcentaje,
                 }))}
+                value={impuestosGeneralesValue}
                 onChange={(selected) => {
-                  const nuevosImpuestos = selected
-                    ? selected.map((s) => ({
-                        impuesto_id: s.value,
-                        monto: 0,
-                      }))
-                    : [];
-
                   handleFacturaChange({
                     target: {
                       name: "impuestos",
-                      value: nuevosImpuestos,
+                      value: selected ? selected.map((s) => ({ impuesto_id: s.value, monto: 0 })) : [],
                     },
                   });
                 }}
@@ -342,22 +334,20 @@ export default function FacturaCompras() {
                 <span className="font-medium">${resumen.subtotal.toFixed(2)}</span>
               </div>
 
-            
-{/* 🔥 Impuestos por producto */}
-{resumen.impuestosDetalle.map((imp, index) => (
-  <div key={`det-${index}`} className="flex justify-between text-sm text-slate-300">
-    <span>{imp.nombre} ({imp.porcentaje}%)</span>
-    <span>${imp.monto.toFixed(2)}</span>
-  </div>
-))}
+              {resumen.impuestosDetalle.map((imp, index) => (
+                <div key={`det-${index}`} className="flex justify-between text-sm text-slate-300">
+                  <span>{imp.nombre} ({imp.porcentaje}%)</span>
+                  <span>${imp.monto.toFixed(2)}</span>
+                </div>
+              ))}
 
-{/* 🔥 Impuestos generales */}
-{resumen.impuestosGenerales.map((imp, index) => (
-  <div key={`gen-${index}`} className="flex justify-between text-sm text-slate-400">
-    <span>{imp.nombre} ({imp.porcentaje}%)</span>
-    <span>${imp.monto.toFixed(2)}</span>
-  </div>
-))}
+              {resumen.impuestosGenerales.map((imp, index) => (
+                <div key={`gen-${index}`} className="flex justify-between text-sm text-slate-400">
+                  <span>{imp.nombre} ({imp.porcentaje}%)</span>
+                  <span>${imp.monto.toFixed(2)}</span>
+                </div>
+              ))}
+
               <div className="flex justify-between text-base border-t border-slate-700 pt-2 font-semibold text-white">
                 <span>Total</span>
                 <span>${resumen.total.toFixed(2)}</span>
@@ -383,9 +373,10 @@ export default function FacturaCompras() {
             onClick={handleSubmitFactura}
             className="h-10 px-5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow-sm transition"
           >
-            Guardar Factura
+            {esEdicion ? "Actualizar Factura" : "Guardar Factura"}
           </button>
         </div>
+
         {pdfUrl && (
           <div className="mt-4">
             <a

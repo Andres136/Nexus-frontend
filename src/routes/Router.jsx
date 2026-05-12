@@ -111,6 +111,7 @@ import GetHistorialGestionFacturaCartera from "../views/crm/GetHistorialGestionF
 import DashboardOperativo from "../views/calidad/DashboardOperativo";
 import Contabilidad from "../views/contabilidad/Contabilidad";
 import CreateImpuestos from "../components/contabilidad/CreateImpuestos";
+import PageCreateFacturas from "../views/contabilidad/PageCreateFacturas";
 
 
 export default function Router() {
@@ -683,6 +684,27 @@ export default function Router() {
               </DynamicProtectedRoute>
             }
           />
+          
+          <Route
+            path="/auth/crm/crear-factura"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/crear-factura">
+                <PageCreateFacturas />
+              </DynamicProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/auth/crm/editar-factura/:id"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/editar-factura/:id">
+                <PageCreateFacturas modo="edicion" />
+              </DynamicProtectedRoute>
+            }
+          />
+
+
+
 
           <Route
             path="/auth/crm/impuestos"

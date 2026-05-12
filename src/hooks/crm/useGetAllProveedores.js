@@ -4,7 +4,7 @@ import { proveedoresApi } from "../../services/api";
 export const useGetAllProveedores = () => {
     const fetchProveedores = async () => {
         const response = await proveedoresApi.getAll();
-        console.log("Proveedores obtenidos:", response.data.data); // 👈 Agrega este log para verificar la respuesta
+    //    console.log("Proveedores obtenidos:", response.data.data); // 👈 Agrega este log para verificar la respuesta
         return response.data.proveedores;
     };
 
