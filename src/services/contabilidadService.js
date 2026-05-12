@@ -66,6 +66,7 @@ export const cuentasContablesService = {
   getFacturaById: (id) => apiClient.get(`/api/facturas-compra/${id}`),
   updateFactura: (id, data) => apiClient.put(`/api/facturas-compra/${id}`, data),
   deleteFactura: (id) => apiClient.delete(`/api/facturas-compra/${id}`),
+ 
 };
 
 export const costeosService = {
@@ -74,5 +75,15 @@ export const costeosService = {
   getCosteoById: (id) => apiClient.get(`/api/costeos/${id}`),
   updateCosteo: (id, data) => apiClient.put(`/api/costeos/${id}`, data),
   deleteCosteo: (id) => apiClient.delete(`/api/costeos/${id}`),
+  
 };
 
+export const abonosFacturaCompraService = {
+  getAbonos: (params) => apiClient.get("/api/pago-factura-compra", { params }),
+  
+  createAbono: (facturaId, data) =>
+    apiClient.post(`/api/facturas-compras/${facturaId}/pagos`, data),
+  getAbonoById: (id) => apiClient.get(`/api/pago-factura-compra/${id}`),
+  updateAbono: (id, data) => apiClient.put(`/api/pago-factura-compra/${id}`, data),
+  deleteAbono: (id) => apiClient.delete(`/api/pago-factura-compra/${id}`),
+};
