@@ -20,6 +20,7 @@ import {
   MessageSquare
 } from "lucide-react";
 import { SeguimientoHallazgo } from "./SeguimientoHallazgo";
+import { SoportesHallazgo } from "./SoportesHallazgo";
 
 export default function GestionNovedadesCalidad() {
   const { id } = useParams();
@@ -54,6 +55,7 @@ export default function GestionNovedadesCalidad() {
     soporte: null,
     fuentes: "",
     causa: "",
+    tipo_accion: "",
   });
 
   useEffect(() => {
@@ -71,7 +73,8 @@ export default function GestionNovedadesCalidad() {
         responsable_id: novedadSeleccionada.responsable_id || null,
         soporte: null,
         fuentes: novedadSeleccionada.fuentes || "",
-        causa: novedadSeleccionada.causa || ""
+        causa: novedadSeleccionada.causa || "",
+        tipo_accion: novedadSeleccionada.tipo_accion || ""
       });
 
       if (novedadSeleccionada.hallazgos) {
@@ -215,6 +218,16 @@ export default function GestionNovedadesCalidad() {
               </div>
 
               <div>
+                <label className={labelClass}>Tipo de Acción</label>
+                <select name="tipo_accion" value={form.tipo_accion} onChange={handleChangeNovedad} className={inputClass}>
+                  <option value="">Seleccionar...</option>
+                  <option value="Preventiva">Preventiva</option>
+                  <option value="Correctiva">Correctiva</option>
+                  <option value="Mejora">Mejora</option>
+                </select>
+              </div>
+
+              <div>
                 <label className={labelClass}>Fuente de la Novedad</label>
                 <Select
                   options={opcionesFuentes}
@@ -237,7 +250,7 @@ export default function GestionNovedadesCalidad() {
                 <input type="date" name="fecha_terminado" value={form.fecha_terminado} onChange={handleChangeNovedad} className={inputClass} />
               </div>
               <div>
-                <label className={labelClass}><Paperclip size={14} /> Soporte Técnico</label>
+                <label className={labelClass}><Paperclip size={14} /> Formato plan de Accion</label>
                 <input type="file" name="soporte" onChange={handleChangeNovedad} className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer" />
               </div>
             </div>
@@ -256,6 +269,13 @@ export default function GestionNovedadesCalidad() {
             <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Hallazgos Vinculados</h2>
             <span className="bg-slate-200 text-slate-700 text-xs font-bold px-3 py-1 rounded-full">{hallazgosEdit.length} Registros</span>
           </div>
+
+          {errorHallazgo?.general && (
+            <div className="flex items-start gap-3 bg-red-50 border border-red-300 text-red-700 rounded-xl px-4 py-3 mb-4 text-sm font-medium">
+              <AlertCircle size={18} className="shrink-0 mt-0.5" />
+              <span>{errorHallazgo.general[0]}</span>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 gap-6">
             {hallazgosEdit.length === 0 && (
@@ -314,6 +334,7 @@ export default function GestionNovedadesCalidad() {
                   </div>
                 </div>
 <SeguimientoHallazgo hallazgoId={h.id} />
+<SoportesHallazgo hallazgoId={h.id} />
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end bg-slate-50 p-4 rounded-lg">
                   <div>
                     <label className={labelClass}>Responsable</label>

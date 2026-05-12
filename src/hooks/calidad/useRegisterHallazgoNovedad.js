@@ -13,6 +13,7 @@ export const useRegisterHallazgoNovedad = () => {
         fecha_cierre: "",
         fecha_revision: "",
         estado: "ABIERTA",
+        tipo_accion: "",
         observaciones: "",
 
     });
@@ -70,29 +71,64 @@ export const useRegisterHallazgoNovedad = () => {
             setLoading(false);
         }
     };
-
 const handleUpdate = async (id, data) => {
     console.log("ID para actualización:", id);
+
     setLoading(true);
     setError(null);
 
     try {
         const response = await hallazgosNovedadesService.updateHallazgo(id, data);
 
-        showToast("success", response.data.message || "Actualizado");
+        showToast(
+            "success",
+            response.data.message || "Actualizado correctamente"
+        );
+
         return response.data;
 
     } catch (err) {
+
+        // =====================================================
+        // 🔹 VALIDACIÓN 422
+        // =====================================================
         if (err.response?.status === 422) {
-            setError(err.response.data.errors);
-        } else {
-            showToast("error", "Error al actualizar");
+
+            const errores = err.response.data.errors;
+            setError(errores);
+
+            const primerError = Object.values(errores)
+                .flat()
+                .join(" | ");
+
+            showToast(
+                "error",
+                primerError || "Errores de validación"
+            );
+
         }
+
+        // =====================================================
+        // 🔹 ERROR GENERAL / EXCEPCIÓN BACKEND
+        // =====================================================
+        else {
+
+            const mensaje =
+                err.response?.data?.message ||
+                err.message ||
+                "Error al actualizar";
+
+            setError({ general: [mensaje] });
+            showToast("error", mensaje);
+        }
+
         return null;
+
     } finally {
         setLoading(false);
     }
 };
+
 
 
     return {

@@ -1,5 +1,6 @@
 import axios from "axios";
 import clienteAxios from "../config/axios";
+import { get } from "lodash";
 
 const apiClient = axios.create({
   baseURL: clienteAxios.defaults.baseURL,
@@ -79,4 +80,18 @@ export const seguimentoHallazgosService = {
   getSeguimientoById: (id) => apiClient.get(`/api/seguimiento-hallazgos/${id}`),
   updateSeguimiento: (id, data) => apiClient.put(`/api/seguimiento-hallazgos/${id}`, data),
   deleteSeguimiento: (id) => apiClient.delete(`/api/seguimiento-hallazgos/${id}`),
+};
+
+export const soporteTareasService = {
+  getTareas: () => apiClient.get("/api/soporte-tareas"),
+  createTarea: (data) => apiClient.post("/api/soporte-tareas", data,{
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  }),
+  getTareaById: (id) => apiClient.get(`/api/soporte-tareas/${id}`),
+  updateTarea: (id, data) => apiClient.put(`/api/soporte-tareas/${id}`, data),
+  deleteTarea: (id) => apiClient.delete(`/api/soporte-tareas/${id}`),
+  getSoportesByTareaId: (tareaId) => apiClient.get(`/api/soporte-tarea/${tareaId}`),
+  getSoportesByHallazgoId: (hallazgoId) => apiClient.get(`/api/soporte-tareas/hallazgo/${hallazgoId}`),
 };
