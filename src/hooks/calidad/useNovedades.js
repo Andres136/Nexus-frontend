@@ -14,6 +14,7 @@ export const useNovedades = () => {
     estado: "ABIERTA",
     fecha_revision: null,
     fecha_terminado: null,
+    tipo_accion: "",
     soporte: null,
     responsable_id: null,
   });
@@ -94,6 +95,7 @@ const actualizarNovedad = async (id, data) => {
   formData.append('fecha_terminado', data.fecha_terminado || '');
   formData.append('responsable_id', data.responsable_id || '');
   formData.append('fuentes', data.fuentes || '');
+  formData.append('tipo_accion', data.tipo_accion || '');
   formData.append('causa', data.causa || '');
 
   if (data.soporte instanceof File) {
@@ -101,6 +103,7 @@ const actualizarNovedad = async (id, data) => {
   }
 
   setLoading(true);
+  setError(null);
 
   try {
     const response = await calidadService.updateNovedad(id, formData);
@@ -112,8 +115,9 @@ const actualizarNovedad = async (id, data) => {
     return response.data;
 
   } catch (err) {
-    console.log(err);
-    showToast('error', 'No se pudo actualizar la novedad.');
+    const mensaje = err.response?.data?.message || "No se pudo actualizar la novedad.";
+    setError(mensaje);
+    showToast("error", mensaje);
     return null;
   } finally {
     setLoading(false);

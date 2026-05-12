@@ -1,12 +1,14 @@
 import { useEffect, useState, useMemo } from "react";
+import PropTypes from "prop-types";
 import clienteAxios from "../../config/axios";
 import { toast } from "react-toastify";
 import { useAuth } from "../../hooks/useAuth";
-import { 
+import {
   ChevronDown, ChevronUp, Calendar, User, Edit3, X, Save,
   Clock, PlayCircle, AlertCircle, Search
 } from "lucide-react";
 import { BsListTask } from "react-icons/bs";
+import { SoportesTarea } from "./SoportesTarea";
 
 export default function Tareas() {
 
@@ -251,6 +253,7 @@ export default function Tareas() {
   */
 
   const TarjetaKanban = ({ tarea, borderAccent }) => {
+    TarjetaKanban.propTypes = { tarea: PropTypes.object.isRequired, borderAccent: PropTypes.string };
     const fechaLimite = tarea.fecha_fin ? new Date(tarea.fecha_fin) : null;
     const expandida = tareasExpandidas.has(tarea.id);
     const vencida = esVencida(tarea);
@@ -322,6 +325,8 @@ export default function Tareas() {
             <p className="text-sm text-gray-600 mt-3 leading-relaxed">
               {tarea.descripcion || "Sin descripción"}
             </p>
+
+            <SoportesTarea tareaId={tarea.id} />
 
             {tarea.estado_id !== 2 && (
               <button
