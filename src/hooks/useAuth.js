@@ -177,6 +177,7 @@ const loadPermissions = async () => {
       const { data } = await clienteAxios.get('/api/usuarios/all', {
         headers: { Authorization: `Bearer ${token}` },
       });
+     
    setUsuarios(data);
     } catch (err) {
       console.error(err);

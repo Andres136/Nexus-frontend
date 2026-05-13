@@ -71,7 +71,8 @@ export default function Navbar() {
         {name: "Cartera", to: "/auth/crm/cartera-clientes", icon: Wallet, alwaysVisible: true },
         {name: "HSEQ", to: "/auth/crm/hseq/inspecciones", icon: ShieldCheck, alwaysVisible: true },
         {name: "Contabilidad", to: "/auth/crm/contabilidad", icon: Wallet, alwaysVisible: true },
-      //  {name: "Sistemas", to: "/auth/sistemas", icon: Cpu, allowedRoles: [1, 2] },
+        {name: "Nomina", to: "/auth/crm/nomina", icon: Wallet, alwaysVisible: true },
+      
       ],
     },
   ];

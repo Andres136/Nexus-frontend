@@ -88,7 +88,7 @@ import Asignaciones from "../views/tic/Asignaciones";
 import NovedadesCalidad from "../components/calidad/NovedadesCalidad";
 import MantenimientoEquiposTic from "../components/tic/MantenimientoEquiposTic";
 import ViewOrdenesOs from "../views/crm/ViewOrdenesOs/ViewOrdenesOs";
-import ViewDetallesOrdenesOs from "../views/crm/ViewOrdenesOs/ViewDetallesOrdenesOs";
+
 import RegistrarOs from "../components/crm/ordenesServicio/RegistrarOs";
 import GestionCartera from "../views/crm/GestionCartera";
 import ObtenerGestionCartera from "../components/crm/ObtenerGestionCartera";
@@ -110,6 +110,7 @@ import GestionarFacturaCartera from "../views/crm/GestionarFacturaCartera";
 import GetHistorialGestionFacturaCartera from "../views/crm/GetHistorialGestionFacturaCartera";
 import DashboardOperativo from "../views/calidad/DashboardOperativo";
 import Contabilidad from "../views/contabilidad/Contabilidad";
+import NominaLayout from "../layouts/NominaLayout";
 
 
 export default function Router() {
@@ -596,7 +597,18 @@ export default function Router() {
             }
           />
 
+   {/* 🔹 Rutas para Nomina */}
+           <Route
+            path="/auth/crm/nomina"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/nomina">
+                <NominaLayout />
+              </DynamicProtectedRoute>
+            }
+          />
+       
 
+      {/* 🔹Fin de  Rutas para Nomina */}
 
            {/*   Fin Rutas para  HSEQ */} 
 
@@ -732,8 +744,11 @@ export default function Router() {
             }
           />
         </Route>
+
+        
       </Route>
 
+   
       {/* 🔹 Rutas para Administradores (AdminLayout) */}
       <Route element={<ProtectedRoute allowedRoles={[1]} />}>
         <Route path="/admin" element={<AdminLayout />}>
