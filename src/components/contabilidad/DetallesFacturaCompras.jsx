@@ -27,6 +27,7 @@ export default function DetallesFacturaCompras({ detalles, addDetalle, updateDet
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-gray-100 text-[11px] uppercase text-gray-600 border-b">
+              <th className="px-3 py-2 w-20">Item</th>
               <th className="px-3 py-2 w-32">Puc </th>
               <th className="px-3 py-2 w-56">Producto </th>
               <th className="px-3 py-2 w-48">Impuestos </th>
@@ -40,6 +41,9 @@ export default function DetallesFacturaCompras({ detalles, addDetalle, updateDet
           <tbody className="divide-y divide-gray-100">
             {detalles.map((det, index) => (
               <tr key={index} className="hover:bg-blue-50/30 transition-colors">
+                <td className="px-2 py-2">
+                  {index + 1}
+                </td>
                   <td className="px-2 py-2">
                     <Select
                       placeholder="Puc..."

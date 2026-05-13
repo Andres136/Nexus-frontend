@@ -1,10 +1,7 @@
 import { useState } from "react";
-import PropTypes from "prop-types";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useGetFacturasCompras } from "../../hooks/contabilidad/useGetFacturasCompras";
-import { useGetFormasPago } from "../../hooks/contabilidad/useGetFormasPago";
-import { useRegisterAbonoFacturaCompra } from "../../hooks/contabilidad/useRegisterAbonoFacturaCompra";
-import { useGetRegistroPagoFacturanteById } from "../../hooks/contabilidad/useGetRegistroPagoFacturaById";
+import ModalAbonos from "../../components/contabilidad/ModalAbonos";
 import {
   FileText,
   Receipt,
@@ -14,193 +11,23 @@ import {
   ChevronLeft,
   ChevronRight,
   AlertCircle,
-  X,
   Pencil,
   Banknote,
   Trash2,
 } from "lucide-react";
+import { useRegisterFacturaCompras } from "../../hooks/contabilidad/useRegisterFacturaCompras";
 
 const contabilidadLinks = [
-  { to: "/auth/crm/contabilidad",           label: "Facturas Compras",  icon: FileText  },
-  { to: "/auth/crm/catalogo-contabilidad",  label: "Catálogo Contable", icon: Receipt   },
-  { to: "/auth/crm/obtener-pagos-factura-compra",          label: "Obtener Pagos",     icon: FileText  },
-  { to: "/auth/crm/formas-pago",            label: "Formas de Pago",    icon: CreditCard},
-  { to: "/auth/crm/puc",                    label: "PUC",               icon: BookOpen  },
-  { to: "/auth/crm/reportes",               label: "Reportes",          icon: Search    },
+ 
+  { to: "/auth/crm/contabilidad",                    label: "Facturas Compras",  icon: FileText   },
+   { to: "/auth/crm/crear-factura", label: "Crear Factura", icon: BookOpen   },
+  { to: "/auth/crm/catalogo-contabilidad",           label: "Catálogo Contable", icon: Receipt    },
+  { to: "/auth/crm/obtener-pagos-factura-compra",    label: "Obtener Pagos",     icon: FileText   },
+  { to: "/auth/crm/costeo",                     label: "Costeo",    icon: CreditCard },
+
 ];
 
-// ─── Modal de abonos (componente separado para resetear hooks al abrir) ────────
-function ModalAbonos({ facturaId, onClose }) {
-  const { formasPago } = useGetFormasPago();
-  const { formData, error, isLoading, handleChange, handleSubmit } =
-    useRegisterAbonoFacturaCompra(facturaId);
-  const { data: abonos, isLoading: loadingAbonos } =
-    useGetRegistroPagoFacturanteById(facturaId);
-
-  const abonosList = Array.isArray(abonos) ? abonos : abonos ? [abonos] : [];
-
-  const inputBase =
-    "w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors";
-  const inputNormal = `${inputBase} border-gray-300`;
-  const inputError  = `${inputBase} border-red-400 bg-red-50`;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm"
-        onClick={onClose}
-      />
-
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between px-3 py-3 border-b border-gray-100">
-          <h2 className="text-base font-bold text-gray-800">
-            Registrar Abono — Factura <span className="text-blue-600">#{facturaId}</span>
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg p-1 transition-colors"
-          >
-            <X size={18} />
-          </button>
-        </div>
-
-        <div className="overflow-y-auto flex-1">
-          {/* ── Formulario ── */}
-          <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
-
-            {/* Error general */}
-            {error?.general && (
-              <div className="bg-red-50 border-l-4 border-red-500 p-3 rounded-r-lg flex items-start gap-2">
-                <AlertCircle size={16} className="text-red-500 shrink-0 mt-0.5" />
-                <div className="text-red-700 text-xs font-medium">
-                  {error.general.map((msg, i) => (
-                    <p key={i}>{msg}</p>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Forma de pago */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Forma de pago <span className="text-red-500">*</span>
-              </label>
-              <select
-                name="forma_pago_id"
-                value={formData.forma_pago_id}
-                onChange={handleChange}
-                className={error?.forma_pago_id ? inputError : inputNormal}
-              >
-                <option value="">Selecciona una forma de pago</option>
-                {formasPago?.map((f) => (
-                  <option key={f.id} value={f.id}>{f.nombre}</option>
-                ))}
-              </select>
-              {error?.forma_pago_id && (
-                <p className="text-xs text-red-500 mt-1">{error.forma_pago_id[0]}</p>
-              )}
-            </div>
-
-            {/* Monto */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Monto <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="number"
-                name="monto"
-                value={formData.monto}
-                onChange={handleChange}
-                placeholder="0.00"
-                min="0"
-                step="0.01"
-                className={error?.monto ? inputError : inputNormal}
-              />
-              {error?.monto && (
-                <p className="text-xs text-red-500 mt-1">{error.monto[0]}</p>
-              )}
-            </div>
-
-            {/* Fecha de pago */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Fecha de pago <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="date"
-                name="fecha_pago"
-                value={formData.fecha_pago}
-                onChange={handleChange}
-                className={error?.fecha_pago ? inputError : inputNormal}
-              />
-              {error?.fecha_pago && (
-                <p className="text-xs text-red-500 mt-1">{error.fecha_pago[0]}</p>
-              )}
-            </div>
-
-            {/* Observaciones */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Observaciones
-              </label>
-              <textarea
-                name="observaciones"
-                value={formData.observaciones}
-                onChange={handleChange}
-                rows={2}
-                placeholder="Opcional..."
-                className={`${error?.observaciones ? inputError : inputNormal} resize-none`}
-              />
-              {error?.observaciones && (
-                <p className="text-xs text-red-500 mt-1">{error.observaciones[0]}</p>
-              )}
-            </div>
-
-            {/* Botones */}
-            <div className="flex gap-3 pt-1">
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                disabled={isLoading}
-                className={`flex-[2] px-4 py-2 text-sm font-semibold text-white rounded-lg transition-all ${
-                  isLoading
-                    ? "bg-blue-300 cursor-not-allowed"
-                    : "bg-blue-600 hover:bg-blue-700 active:scale-[0.98]"
-                }`}
-              >
-                {isLoading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
-                    Guardando...
-                  </span>
-                ) : "Registrar Abono"}
-              </button>
-            </div>
-          </form>
-
-      
-        </div>
-      </div>
-    </div>
-  );
-}
-
-ModalAbonos.propTypes = {
-  facturaId: PropTypes.number.isRequired,
-  onClose: PropTypes.func.isRequired,
-};
-
+// placeholder — eliminado el componente local, ahora viene de ModalAbonos importado
 // ─── Vista principal ───────────────────────────────────────────────────────────
 export default function ObtenerFacturas() {
   const navigate = useNavigate();
@@ -208,11 +35,14 @@ export default function ObtenerFacturas() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFacturaId, setSelectedFacturaId] = useState(null);
 
-  const { facturas, pagination, error, isLoading } = useGetFacturasCompras(page, searchTerm);
+  const { facturas, pagination, error, isLoading,resumen } = useGetFacturasCompras(page, searchTerm);
+  const { anularFactura } = useRegisterFacturaCompras();
 
   return (
     <>
       <div className="p-6 max-w-7xl mx-auto">
+        <div className="grid grid-cols-1">
+         
 
         {/* ── Sub-navegación ───────────────────────────────────────────────── */}
         <div className="mb-6 border-b border-gray-200">
@@ -269,6 +99,83 @@ export default function ObtenerFacturas() {
           </div>
         )}
 
+
+{resumen && (
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+    
+    <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-4">
+      <p className="text-xs text-gray-500 uppercase font-semibold">
+        Facturas
+      </p>
+      <p className="text-2xl font-bold text-gray-900 mt-1">
+        {resumen.total_facturas || 0}
+      </p>
+    </div>
+
+    <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-4">
+      <p className="text-xs text-gray-500 uppercase font-semibold">
+        Subtotal
+      </p>
+      <p className="text-xl font-bold text-gray-900 mt-1">
+        {Number(resumen.total_subtotal || 0).toLocaleString(
+          "es-CO",
+          {
+            style: "currency",
+            currency: "COP",
+            minimumFractionDigits: 0,
+          }
+        )}
+      </p>
+    </div>
+
+    <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-4">
+      <p className="text-xs text-gray-500 uppercase font-semibold">
+        Total General
+      </p>
+      <p className="text-xl font-bold text-green-600 mt-1">
+        {Number(resumen.total_general || 0).toLocaleString(
+          "es-CO",
+          {
+            style: "currency",
+            currency: "COP",
+            minimumFractionDigits: 0,
+          }
+        )}
+      </p>
+    </div>
+
+    <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-4">
+      <p className="text-xs text-gray-500 uppercase font-semibold">
+        Saldo Pendiente
+      </p>
+      <p className="text-xl font-bold text-red-600 mt-1">
+        {Number(
+          resumen.total_saldo_pendiente || 0
+        ).toLocaleString("es-CO", {
+          style: "currency",
+          currency: "COP",
+          minimumFractionDigits: 0,
+        })}
+      </p>
+    </div>
+
+    <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-4">
+      <p className="text-xs text-gray-500 uppercase font-semibold">
+        Total Pagado
+      </p>
+      <p className="text-xl font-bold text-blue-600 mt-1">
+        {Number(resumen.total_pagado || 0).toLocaleString(
+          "es-CO",
+          {
+            style: "currency",
+            currency: "COP",
+            minimumFractionDigits: 0,
+          }
+        )}
+      </p>
+    </div>
+  </div>
+)}
         {/* ── Tabla ────────────────────────────────────────────────────────── */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="overflow-x-auto">
@@ -343,6 +250,7 @@ export default function ObtenerFacturas() {
                             <Banknote size={15} />
                           </button>
                           <button
+                            onClick={() => anularFactura(factura.id)}
                             title="Eliminar"
                             className="p-1.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
                           >
@@ -382,7 +290,7 @@ export default function ObtenerFacturas() {
               </div>
             </div>
           )}
-        </div>
+        </div> </div>
       </div>
 
       {/* ── Modal Abonos ─────────────────────────────────────────────────────── */}

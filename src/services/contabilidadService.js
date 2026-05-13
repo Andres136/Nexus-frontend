@@ -75,7 +75,7 @@ export const costeosService = {
   getCosteoById: (id) => apiClient.get(`/api/costeos/${id}`),
   updateCosteo: (id, data) => apiClient.put(`/api/costeos/${id}`, data),
   deleteCosteo: (id) => apiClient.delete(`/api/costeos/${id}`),
-  
+   exportExcel: (params) => apiClient.get("/api/costeos/export", { params, responseType: "blob" }),
 };
 
 export const abonosFacturaCompraService = {
@@ -86,4 +86,5 @@ export const abonosFacturaCompraService = {
   getAbonoById: (id) => apiClient.get(`/api/pago-factura-compra/${id}`),
   updateAbono: (id, data) => apiClient.put(`/api/pago-factura-compra/${id}`, data),
   deleteAbono: (id) => apiClient.delete(`/api/pago-factura-compra/${id}`),
+ 
 };

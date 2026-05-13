@@ -81,7 +81,7 @@ const response = await abonosFacturaCompraService.createAbono(
       setError(null);
       try {
         const response = await abonosFacturaCompraService.updateAbono(id, data);
-        showToast("success", response.data.message || "Abono actualizado exitosamente");
+        showToast("success", response.data.message );
         queryClient.invalidateQueries(["registro-pago-factura", facturaId]);
       } catch (err) {
         console.error("Error al actualizar el abono:", err);
@@ -97,6 +97,8 @@ const response = await abonosFacturaCompraService.createAbono(
         setIsLoading(false);
       }
     }
+
+    
 
     return{
         formData,

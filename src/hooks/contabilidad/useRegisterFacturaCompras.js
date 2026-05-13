@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { showToast } from "../../helpers/utils/showToast";
 import { facturasService } from "../../services/contabilidadService";
 import { useGetByIdFacturas } from "../calidad/useGetByIdFacturas";
+import Swal from "sweetalert2";
 
 const ESTADO_INICIAL = {
   factura: {
@@ -161,6 +162,87 @@ export const useRegisterFacturaCompras = ({ id = null, modo = "creacion" } = {})
     }
   };
 
+
+  //Anular factura: con Swal para confirmar, luego llamada a servicio y manejo de respuesta
+
+
+const anularFactura = async (facturaId) => {
+    const result = await Swal.fire({
+        title: "¿Anular factura?",
+        text: "Esta acción cambiará el estado de la factura y no podrá revertirse fácilmente.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#6b7280",
+        confirmButtonText: "Sí, anular",
+        cancelButtonText: "Cancelar",
+        reverseButtons: true,
+        focusCancel: true,
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+        setLoading(true);
+        setError(null);
+
+        Swal.fire({
+            title: "Anulando factura...",
+            text: "Por favor espera",
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            showConfirmButton: false,
+            didOpen: () => {
+                Swal.showLoading();
+            },
+        });
+
+        const response = await facturasService.deleteFactura(facturaId);
+
+        Swal.fire({
+            title: "Factura anulada",
+            text:
+                response.data.message ||
+                "La factura fue anulada exitosamente.",
+            icon: "success",
+            confirmButtonColor: "#2563eb",
+        });
+
+        showToast(
+            "success",
+            response.data.message ||
+                "Factura anulada exitosamente"
+        );
+
+        // Opcional:
+        // navigate("/auth/crm/contabilidad");
+        // refetch();
+
+    } catch (err) {
+        console.error(err);
+
+        const backendMessage =
+            err.response?.data?.message ||
+            err.response?.data?.error ||
+            "Ocurrió un error al anular la factura.";
+
+        setError({
+            general: [backendMessage],
+        });
+
+        Swal.fire({
+            title: "Error",
+            text: backendMessage,
+            icon: "error",
+            confirmButtonColor: "#d33",
+        });
+
+        showToast("error", backendMessage);
+
+    } finally {
+        setLoading(false);
+    }
+};
   return {
     factura,
     setFactura,
@@ -174,5 +256,6 @@ export const useRegisterFacturaCompras = ({ id = null, modo = "creacion" } = {})
     handleSubmitFactura,
     loading: loading || isLoadingFactura,
     error,
+    anularFactura,
   };
 };

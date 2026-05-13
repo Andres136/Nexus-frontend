@@ -114,6 +114,7 @@ import CreateImpuestos from "../components/contabilidad/CreateImpuestos";
 import PageCreateFacturas from "../views/contabilidad/PageCreateFacturas";
 import CatalogoContable from "../views/contabilidad/CatalogoContable";
 import PageObtenerPagos from "../views/contabilidad/PageObtenerPagos";
+import PageCosteos from "../views/contabilidad/PageCosteos";
 
 
 export default function Router() {
@@ -696,6 +697,15 @@ export default function Router() {
             }
           />
 
+          <Route
+            path="/auth/crm/costeo"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/costeo">
+                <PageCosteos />
+              </DynamicProtectedRoute>
+            }
+          />
+
           <Route 
           path="/auth/crm/catalogo-contabilidad"
           element={
@@ -724,7 +734,7 @@ export default function Router() {
           />
 
 
-
+        
           <Route
             path="/auth/crm/impuestos"
             element={
