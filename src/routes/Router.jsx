@@ -110,6 +110,12 @@ import GestionarFacturaCartera from "../views/crm/GestionarFacturaCartera";
 import GetHistorialGestionFacturaCartera from "../views/crm/GetHistorialGestionFacturaCartera";
 import DashboardOperativo from "../views/calidad/DashboardOperativo";
 import Contabilidad from "../views/contabilidad/Contabilidad";
+import NominaLayout from "../layouts/NominaLayout";
+import PageCreateFacturas from "../views/contabilidad/PageCreateFacturas";
+import PageCosteos from "../views/contabilidad/PageCosteos";
+import CatalogoContable from "../views/contabilidad/CatalogoContable";
+import PageObtenerPagos from "../views/contabilidad/PageObtenerPagos";
+import CreateImpuestos from "../components/contabilidad/CreateImpuestos";
 
 
 export default function Router() {
@@ -716,7 +722,7 @@ export default function Router() {
           path="/auth/crm/catalogo-contabilidad"
           element={
             <DynamicProtectedRoute permission="/auth/crm/catalogo-contabilidad">
-              <CatalogoContable />
+              <CatalogoContable/>
             </DynamicProtectedRoute>
           }
           />
