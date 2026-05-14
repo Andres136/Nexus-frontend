@@ -77,6 +77,86 @@ export const seguridadSocialService = {
 };
 
 
+export const tipoRegistroService = {
+  getTipoRegistros(params = {}) {
+    return apiClient.get("api/nomina/tipo-registros", { params });
+  },
+  getTipoRegistroByUuid(uuid) {
+    return apiClient.get(`api/nomina/tipo-registros/${uuid}`);
+  },
+  createTipoRegistro(data) {
+    return apiClient.post("api/nomina/tipo-registros", data);
+  },
+  updateTipoRegistro(uuid, data) {
+    return apiClient.put(`api/nomina/tipo-registros/${uuid}`, data);
+  },
+  deleteTipoRegistro(uuid) {
+    return apiClient.delete(`api/nomina/tipo-registros/${uuid}`);
+  },
+};
+
+export const valorService = {
+  getValores(params = {}) {
+    return apiClient.get("api/nomina/valores", { params });
+  },
+  getValorByUuid(uuid) {
+    return apiClient.get(`api/nomina/valores/${uuid}`);
+  },
+  createValor(data) {
+    return apiClient.post("api/nomina/valores", data);
+  },
+  updateValor(uuid, data) {
+    return apiClient.put(`api/nomina/valores/${uuid}`, data);
+  },
+  deleteValor(uuid) {
+    return apiClient.delete(`api/nomina/valores/${uuid}`);
+  },
+};
+
+export const incapacidadService = {
+  getIncapacidades(params = {}) {
+    return apiClient.get("api/nomina/incapacidades", { params });
+  },
+  getIncapacidadByUuid(uuid) {
+    return apiClient.get(`api/nomina/incapacidades/${uuid}`);
+  },
+  createIncapacidad(formData) {
+    return apiClient.post("api/nomina/incapacidades", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+  updateIncapacidad(uuid, formData) {
+    formData.append("_method", "PUT");
+    return apiClient.post(`api/nomina/incapacidades/${uuid}`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+  revisarIncapacidad(uuid) {
+    return apiClient.patch(`api/nomina/incapacidades/${uuid}/revisar`);
+  },
+  deleteIncapacidad(uuid) {
+    return apiClient.delete(`api/nomina/incapacidades/${uuid}`);
+  },
+};
+
+export const jornadaLaboralService = {
+  getJornadas(params = {}) {
+    return apiClient.get("api/nomina/jornada-laborals", { params });
+  },
+  getJornadaByUuid(uuid) {
+    return apiClient.get(`api/nomina/jornada-laborals/${uuid}`);
+  },
+  createJornada(data) {
+    return apiClient.post("api/nomina/jornada-laborals", data);
+  },
+  updateJornada(uuid, data) {
+    return apiClient.put(`api/nomina/jornada-laborals/${uuid}`, data);
+  },
+  deleteJornada(uuid) {
+    return apiClient.delete(`api/nomina/jornada-laborals/${uuid}`);
+  },
+};
+
 export const descuentoService = {
   getDescuentos(params = {}) {
     return apiClient.get("api/nomina/descuentos", { params });
