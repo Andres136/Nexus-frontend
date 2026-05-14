@@ -185,7 +185,7 @@ export const contratacionService = {
   getContratoById(id) {
     return apiClient.get(`api/nomina/contratacion/${id}`);
   },
-    createContrato(data) {
+  createContrato(data) {
     return apiClient.post("api/nomina/contratacion", data);
   },
   updateContrato(id, data) {
@@ -193,5 +193,23 @@ export const contratacionService = {
   },
   deleteContrato(id) {
     return apiClient.delete(`api/nomina/contratacion/${id}`);
+  },
+};
+
+export const nominaService = {
+  getNominas(params = {}) {
+    return apiClient.get("api/nomina/nominas", { params });
+  },
+  getNominaByUuid(uuid) {
+    return apiClient.get(`api/nomina/nominas/${uuid}`);
+  },
+  getSummary(params = {}) {
+    return apiClient.get("api/nomina/nominas/resumen", { params });
+  },
+  liquidar(data) {
+    return apiClient.post("api/nomina/nominas/liquidar", data);
+  },
+  deleteNomina(uuid) {
+    return apiClient.delete(`api/nomina/nominas/${uuid}`);
   },
 };
