@@ -5,7 +5,7 @@ export const useGetFormasPago = () => {
 
   const fetchFormasPago = async () => {
     const response = await formasPagoService.getFormasPago();
-    console.log("Formas de pago obtenidas:", response.data);
+   // console.log("Formas de pago obtenidas:", response.data);
     return response.data.data;
   };
 

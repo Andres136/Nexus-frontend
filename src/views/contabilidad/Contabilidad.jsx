@@ -1,13 +1,13 @@
 
-import CreatFormasPago from '../../components/contabilidad/CreatFormasPago'
-import ObtenerFormasPago from './ObtenerFormasPago'
+
+import ObtenerFacturas from './ObtenerFacturas'
+
 
 export default function Contabilidad() {
   return (
   <>
   
-
- <ObtenerFormasPago/>
+<ObtenerFacturas />
   
   </>
 

@@ -424,3 +424,35 @@
 .revisado {
   box-shadow: 0 0 0 3px #166534 !important; /* verde fuerte */
 }
+
+.nexus-select__control {
+  min-height: 36px !important;
+  border-radius: 0.5rem !important;
+  border-color: rgb(203 213 225) !important;
+  box-shadow: none !important;
+  transition: all 0.15s ease !important;
+}
+.nexus-select__control:hover {
+  border-color: rgb(148 163 184) !important;
+}
+.nexus-select__control--is-focused {
+  border-color: rgb(59 130 246) !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+}
+.nexus-select__value-container {
+  padding: 0 10px !important;
+}
+.nexus-select__placeholder {
+  color: rgb(148 163 184) !important;
+  font-size: 0.875rem !important;
+}
+.nexus-select__menu {
+  border-radius: 0.75rem !important;
+  overflow: hidden !important;
+}
+.nexus-select__option--is-focused {
+  background: rgb(241 245 249) !important;
+}
+.nexus-select__option--is-selected {
+  background: rgb(37 99 235) !important;
+}
