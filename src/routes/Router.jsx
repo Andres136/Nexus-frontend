@@ -110,7 +110,6 @@ import GestionarFacturaCartera from "../views/crm/GestionarFacturaCartera";
 import GetHistorialGestionFacturaCartera from "../views/crm/GetHistorialGestionFacturaCartera";
 import DashboardOperativo from "../views/calidad/DashboardOperativo";
 import Contabilidad from "../views/contabilidad/Contabilidad";
-import NominaLayout from "../layouts/NominaLayout";
 
 
 export default function Router() {
@@ -691,6 +690,62 @@ export default function Router() {
             element={
               <DynamicProtectedRoute permission="/auth/crm/contabilidad">
                 <Contabilidad />
+              </DynamicProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/auth/crm/crear-factura"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/crear-factura">
+                <PageCreateFacturas />
+              </DynamicProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/auth/crm/costeo"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/costeo">
+                <PageCosteos />
+              </DynamicProtectedRoute>
+            }
+          />
+
+          <Route 
+          path="/auth/crm/catalogo-contabilidad"
+          element={
+            <DynamicProtectedRoute permission="/auth/crm/catalogo-contabilidad">
+              <CatalogoContable />
+            </DynamicProtectedRoute>
+          }
+          />
+
+          <Route
+            path="/auth/crm/editar-factura/:id"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/editar-factura/:id">
+                <PageCreateFacturas modo="edicion" />
+              </DynamicProtectedRoute>
+            }
+          />
+
+       <Route
+            path="/auth/crm/obtener-pagos-factura-compra"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/obtener-pagos-factura-compra">
+                <PageObtenerPagos />
+              </DynamicProtectedRoute>
+            }
+          />
+
+
+        
+          <Route
+            path="/auth/crm/impuestos"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/impuestos">
+                <CreateImpuestos />
               </DynamicProtectedRoute>
             }
           />
