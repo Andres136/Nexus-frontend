@@ -1,17 +1,13 @@
 import PropTypes from "prop-types";
-import { useEffect, useState } from "react";
 import Select from "react-select";
 import { useGetTipoContrato } from "../../hooks/nomina/useGetTipoContrato";
 import { useEmpresas } from "../../hooks/useEmpresas";
 import { useGetSeguridadSocial } from "../../hooks/nomina/useGetSeguridadSocial";
 import { useGetRegisterContratacion } from "../../hooks/nomina/useGetRegisterContratacion";
-import { usersApi } from "../../services/api";
-import { showToast } from "../../helpers/utils/showToast";
-import { useAuth } from "../../hooks/useAuth";
+import { useGetEmpleados } from "../../hooks/nomina/useGetEmpleados";
 
 export default function RegisterContrato({ uuid = null, onClose }) {
-  const [users, setUsers] = useState([]);
-  const {obtenerUsuariosAll,usuarios} = useAuth({middleware: "auth"});
+  const { empleados: users } = useGetEmpleados();
 
   const { formData, handleChange, handleSubmit, fieldErrors, loading, isLoadingData } =
     useGetRegisterContratacion({ uuid, onSuccess: onClose });
@@ -25,18 +21,6 @@ export default function RegisterContrato({ uuid = null, onClose }) {
   const empresasLista = Array.isArray(empresas) ? empresas : [];
 
   const isEdit = !!uuid;
-
-  useEffect(() => {
-    obtenerUsuariosAll();
-  }, []);
-  console.log("Usuarios para selección:", usuarios); // Debug log
-  
-  useEffect(() => {
-    usersApi
-      .getUsers()
-      .then((res) => setUsers(res.data.map((u) => ({ value: u.id, label: u.name }))))
-      .catch(() => showToast("error", "Error al cargar empleados"));
-  }, []);
 
   const handleSelectChange = (name) => (option) => {
     handleChange({ target: { name, value: option ? option.value : "" } });

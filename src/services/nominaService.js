@@ -77,7 +77,28 @@ export const seguridadSocialService = {
 };
 
 
+export const descuentoService = {
+  getDescuentos(params = {}) {
+    return apiClient.get("api/nomina/descuentos", { params });
+  },
+  getDescuentoByUuid(uuid) {
+    return apiClient.get(`api/nomina/descuentos/${uuid}`);
+  },
+  createDescuento(data) {
+    return apiClient.post("api/nomina/descuentos", data);
+  },
+  updateDescuento(uuid, data) {
+    return apiClient.put(`api/nomina/descuentos/${uuid}`, data);
+  },
+  deleteDescuento(uuid) {
+    return apiClient.delete(`api/nomina/descuentos/${uuid}`);
+  },
+};
+
 export const contratacionService = {
+  getEmpleados() {
+    return apiClient.get("api/nomina/contratacion/empleados");
+  },
   getContratos() {
     return apiClient.get("api/nomina/contratacion");
   },
