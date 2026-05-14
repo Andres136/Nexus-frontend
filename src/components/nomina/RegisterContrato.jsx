@@ -202,17 +202,20 @@ export default function RegisterContrato({ uuid = null, onClose }) {
             )}
           </div>
           <div className="flex items-center gap-2 pt-6">
+            <label htmlFor="no_salarial" className="block text-sm font-medium text-gray-700">
+           No salarial
+            </label>
             <input
-              type="checkbox"
+              type="number"
               id="no_salarial"
               name="no_salarial"
-              checked={!!formData.no_salarial}
+              value={formData.no_salarial}
               onChange={handleChange}
-              className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+              min="0"
+              placeholder="0 para no, 1 para sí"
+              className={inputClass("no_salarial")}
             />
-            <label htmlFor="no_salarial" className="text-sm font-medium text-gray-700">
-              Componente no salarial
-            </label>
+         
           </div>
         </div>
 
@@ -260,7 +263,7 @@ export default function RegisterContrato({ uuid = null, onClose }) {
               { name: "eps_id", label: "EPS" },
               { name: "arl_id", label: "ARL" },
               { name: "fondo_pensiones_id", label: "Fondo de pensiones" },
-              { name: "caja_pensiones_id", label: "Caja de compensación" },
+              { name: "caja_penciones_id", label: "Caja de compensación" },
             ].map(({ name, label }) => (
               <div key={name}>
                 <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-1">

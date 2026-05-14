@@ -7,8 +7,9 @@ const EMPTY_FORM = {
   id_contrato: "",
   users_id: "",
   empresa_id: "",
-  no_salarial: false,
+  no_salarial: 0,
   base_salario: "",
+ 
   auxilio_transporte: "",
   pago_frecuencia: "",
   inicio_contratacion: "",
@@ -17,7 +18,7 @@ const EMPTY_FORM = {
   eps_id: "",
   arl_id: "",
   fondo_pensiones_id: "",
-  caja_pensiones_id: "",
+  caja_penciones_id: "",
 };
 
 const useGetContratacionById = (uuid) => {
@@ -88,6 +89,7 @@ export const useGetRegisterContratacion = ({ uuid = null, onSuccess } = {}) => {
       if (!uuid) setFormData(EMPTY_FORM);
       onSuccess?.();
     } catch (err) {
+      console.error("Error al guardar la contratación:", err);
       const data = err.response?.data;
       if (data?.errors) setFieldErrors(data.errors);
       showToast("error", data?.message || "Ocurrió un error");
