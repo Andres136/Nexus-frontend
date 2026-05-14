@@ -170,15 +170,14 @@ export default function DashboardProcesosAnuales() {
             
             // LOGICA INTACTA
             const chartData = dep.meses.map(m => ({
-              mes: m.nombre_mes.substring(0, 3).toUpperCase(), // Acortamos el mes visualmente para la gráfica
+              mes: m.nombre_mes.substring(0, 3).toUpperCase(),
               cumplimiento: m.cumplimiento,
-              estabilidad: m.estabilidad,
-              rendimiento: m.rendimiento || 0, 
-              eficiencia: m.eficiencia_tiempo || 0, 
+              noConformidades: m.no_conformidades,
+              rendimiento: m.rendimiento || 0,
+              eficiencia: m.eficiencia_tiempo || 0,
               registros: m.total_registros,
               novedades: m.novedades,
             }));
-
             return (
               <div
                 key={dep.departamento_id}
@@ -237,8 +236,8 @@ export default function DashboardProcesosAnuales() {
                           />
                           <Legend wrapperStyle={{ paddingTop: '20px' }} iconType="circle" />
 
-                          <Line type="monotone" dataKey="cumplimiento" stroke="#10b981" strokeWidth={3} name="Cumplimiento %" dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
-                          <Line type="monotone" dataKey="estabilidad" stroke="#3b82f6" strokeWidth={3} name="Estabilidad %" dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                          <Line type="monotone" dataKey="cumplimiento" stroke="#10b981" strokeWidth={3} name="Indicadores %" dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                          <Line type="monotone" dataKey="noConformidades" stroke="#3b82f6" strokeWidth={3} name="No Conformidades %" dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
                           <Line type="monotone" dataKey="rendimiento" stroke="#f59e0b" strokeWidth={3} name="Rendimiento Tareas %" dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
                           <Line type="monotone" dataKey="eficiencia" stroke="#8b5cf6" strokeWidth={3} name="Eficiencia Tiempo %" dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
                         </LineChart>
