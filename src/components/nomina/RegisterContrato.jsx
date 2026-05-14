@@ -1,17 +1,47 @@
 import PropTypes from "prop-types";
 import Select from "react-select";
+import { Loader2 } from "lucide-react";
 import { useGetTipoContrato } from "../../hooks/nomina/useGetTipoContrato";
 import { useEmpresas } from "../../hooks/useEmpresas";
 import { useGetSeguridadSocial } from "../../hooks/nomina/useGetSeguridadSocial";
 import { useGetRegisterContratacion } from "../../hooks/nomina/useGetRegisterContratacion";
 import { useGetEmpleados } from "../../hooks/nomina/useGetEmpleados";
 
+const selectStyles = (hasError) => ({
+  control: (base, state) => ({
+    ...base,
+    minHeight: "34px",
+    height: "34px",
+    fontSize: "0.8125rem",
+    borderColor: hasError ? "#f87171" : state.isFocused ? "#6366f1" : "#d1d5db",
+    boxShadow: state.isFocused ? "0 0 0 2px rgba(99,102,241,0.25)" : "none",
+    backgroundColor: hasError ? "#fef2f2" : "white",
+    "&:hover": { borderColor: "#6366f1" },
+  }),
+  valueContainer: (base) => ({ ...base, padding: "0 10px" }),
+  indicatorsContainer: (base) => ({ ...base, height: "34px" }),
+  option: (base, state) => ({
+    ...base,
+    fontSize: "0.8125rem",
+    backgroundColor: state.isSelected ? "#6366f1" : state.isFocused ? "#eef2ff" : "white",
+    color: state.isSelected ? "white" : "#374151",
+  }),
+  menu: (base) => ({ ...base, zIndex: 50 }),
+});
+
+function SectionTitle({ children }) {
+  return (
+    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest pb-1 border-b border-gray-100">
+      {children}
+    </p>
+  );
+}
+SectionTitle.propTypes = { children: PropTypes.node };
+
 export default function RegisterContrato({ uuid = null, onClose }) {
   const { empleados: users } = useGetEmpleados();
-
   const { formData, handleChange, handleSubmit, fieldErrors, loading, isLoadingData } =
     useGetRegisterContratacion({ uuid, onSuccess: onClose });
-
   const { tipoContratos } = useGetTipoContrato();
   const { empresas } = useEmpresas();
   const { seguridadSociales } = useGetSeguridadSocial();
@@ -19,27 +49,33 @@ export default function RegisterContrato({ uuid = null, onClose }) {
   const tipoContratoLista = tipoContratos?.data ?? [];
   const seguridadSocialLista = seguridadSociales?.data?.data ?? [];
   const empresasLista = Array.isArray(empresas) ? empresas : [];
-
   const isEdit = !!uuid;
 
-  const handleSelectChange = (name) => (option) => {
+  const handleSelectChange = (name) => (option) =>
     handleChange({ target: { name, value: option ? option.value : "" } });
-  };
 
   const inputClass = (field) =>
-    `block w-full h-10 px-3 rounded-md border shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
-      fieldErrors[field] ? "border-red-400 bg-red-50" : "border-gray-300"
+    `block w-full h-[34px] px-2.5 rounded-md border text-[0.8125rem] focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
+      fieldErrors[field] ? "border-red-400 bg-red-50" : "border-gray-300 bg-white"
     }`;
+
+  const label = (text, required) => (
+    <label className="block text-xs font-medium text-gray-600 mb-1">
+      {text}{required && <span className="text-red-500 ml-0.5">*</span>}
+    </label>
+  );
+
+  const err = (field) =>
+    fieldErrors[field] && (
+      <p className="mt-0.5 text-[10px] text-red-500">{fieldErrors[field][0]}</p>
+    );
 
   if (isEdit && isLoadingData) {
     return (
-      <div className="space-y-5 animate-pulse">
-        <div className="h-5 bg-gray-200 rounded w-48" />
-        {[...Array(7)].map((_, i) => (
-          <div key={i}>
-            <div className="h-4 bg-gray-200 rounded w-24 mb-2" />
-            <div className="h-10 bg-gray-200 rounded" />
-          </div>
+      <div className="space-y-3 animate-pulse p-1">
+        <div className="h-4 bg-gray-200 rounded w-40" />
+        {[...Array(6)].map((_, i) => (
+          <div key={i} className="h-8 bg-gray-200 rounded" />
         ))}
       </div>
     );
@@ -47,241 +83,133 @@ export default function RegisterContrato({ uuid = null, onClose }) {
 
   return (
     <div>
-      <div className="mb-6">
-        <h2 className="text-lg font-semibold text-gray-800">
+      {/* Header */}
+      <div className="mb-4">
+        <h2 className="text-base font-semibold text-gray-800">
           {isEdit ? "Editar Contratación" : "Nueva Contratación"}
         </h2>
-        <p className="text-sm text-gray-500 mt-1">
-          {isEdit
-            ? "Modifica los datos de la contratación."
-            : "Complete los campos para registrar una nueva contratación."}
+        <p className="text-xs text-gray-400 mt-0.5">
+          {isEdit ? "Modifica los datos del contrato." : "Completa los campos para registrar el contrato."}
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} noValidate className="space-y-5">
-        {/* Empleado */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Empleado <span className="text-red-500">*</span>
-          </label>
-          <Select
-            options={users}
-            value={users.find((u) => u.value === Number(formData.users_id)) ?? null}
-            onChange={handleSelectChange("users_id")}
-            placeholder="Seleccione un empleado..."
-            noOptionsMessage={() => "Sin resultados"}
-          />
-          {fieldErrors.users_id && (
-            <p className="mt-1 text-xs text-red-500">{fieldErrors.users_id[0]}</p>
-          )}
-        </div>
+      <form onSubmit={handleSubmit} noValidate className="space-y-4">
 
-        {/* Empresa */}
-        <div>
-          <label htmlFor="empresa_id" className="block text-sm font-medium text-gray-700 mb-1">
-            Empresa <span className="text-red-500">*</span>
-          </label>
-          <select
-            id="empresa_id"
-            name="empresa_id"
-            value={formData.empresa_id}
-            onChange={handleChange}
-            className={inputClass("empresa_id")}
-          >
-            <option value="">Seleccione una empresa</option>
-            {empresasLista.map((e) => (
-              <option key={e.id} value={e.id}>
-                {e.nombre}
-              </option>
-            ))}
-          </select>
-          {fieldErrors.empresa_id && (
-            <p className="mt-1 text-xs text-red-500">{fieldErrors.empresa_id[0]}</p>
-          )}
-        </div>
+        {/* — General — */}
+        <div className="space-y-3">
+          <SectionTitle>General</SectionTitle>
 
-        {/* Tipo de contrato */}
-        <div>
-          <label htmlFor="id_contrato" className="block text-sm font-medium text-gray-700 mb-1">
-            Tipo de contrato <span className="text-red-500">*</span>
-          </label>
-          <select
-            id="id_contrato"
-            name="id_contrato"
-            value={formData.id_contrato}
-            onChange={handleChange}
-            className={inputClass("id_contrato")}
-          >
-            <option value="">Seleccione un tipo</option>
-            {tipoContratoLista.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.nombre}
-              </option>
-            ))}
-          </select>
-          {fieldErrors.id_contrato && (
-            <p className="mt-1 text-xs text-red-500">{fieldErrors.id_contrato[0]}</p>
-          )}
-        </div>
-
-        {/* Salario y auxilio */}
-        <div className="grid grid-cols-2 gap-4">
+          {/* Empleado */}
           <div>
-            <label htmlFor="base_salario" className="block text-sm font-medium text-gray-700 mb-1">
-              Salario base <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="number"
-              id="base_salario"
-              name="base_salario"
-              value={formData.base_salario}
-              onChange={handleChange}
-              min="0"
-              placeholder="Ej: 1300000"
-              className={inputClass("base_salario")}
+            {label("Empleado", true)}
+            <Select
+              options={users}
+              value={users.find((u) => u.value === Number(formData.users_id)) ?? null}
+              onChange={handleSelectChange("users_id")}
+              placeholder="Buscar empleado..."
+              noOptionsMessage={() => "Sin resultados"}
+              styles={selectStyles(!!fieldErrors.users_id)}
             />
-            {fieldErrors.base_salario && (
-              <p className="mt-1 text-xs text-red-500">{fieldErrors.base_salario[0]}</p>
-            )}
+            {err("users_id")}
           </div>
-          <div>
-            <label htmlFor="auxilio_transporte" className="block text-sm font-medium text-gray-700 mb-1">
-              Auxilio de transporte
-            </label>
-            <input
-              type="number"
-              id="auxilio_transporte"
-              name="auxilio_transporte"
-              value={formData.auxilio_transporte}
-              onChange={handleChange}
-              min="0"
-              placeholder="Ej: 162000"
-              className={inputClass("auxilio_transporte")}
-            />
-            {fieldErrors.auxilio_transporte && (
-              <p className="mt-1 text-xs text-red-500">{fieldErrors.auxilio_transporte[0]}</p>
-            )}
+
+          {/* Empresa + Tipo contrato */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              {label("Empresa", true)}
+              <select name="empresa_id" value={formData.empresa_id} onChange={handleChange} className={inputClass("empresa_id")}>
+                <option value="">Seleccionar...</option>
+                {empresasLista.map((e) => <option key={e.id} value={e.id}>{e.nombre}</option>)}
+              </select>
+              {err("empresa_id")}
+            </div>
+            <div>
+              {label("Tipo de contrato", true)}
+              <select name="id_contrato" value={formData.id_contrato} onChange={handleChange} className={inputClass("id_contrato")}>
+                <option value="">Seleccionar...</option>
+                {tipoContratoLista.map((t) => <option key={t.id} value={t.id}>{t.nombre}</option>)}
+              </select>
+              {err("id_contrato")}
+            </div>
           </div>
         </div>
 
-        {/* Frecuencia de pago y componente no salarial */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="pago_frecuencia" className="block text-sm font-medium text-gray-700 mb-1">
-              Frecuencia de pago <span className="text-red-500">*</span>
-            </label>
-            <select
-              id="pago_frecuencia"
-              name="pago_frecuencia"
-              value={formData.pago_frecuencia}
-              onChange={handleChange}
-              className={inputClass("pago_frecuencia")}
-            >
-              <option value="">Seleccione</option>
-              <option value="15">Quincenal</option>
-              <option value="30">Mensual</option>
-            </select>
-            {fieldErrors.pago_frecuencia && (
-              <p className="mt-1 text-xs text-red-500">{fieldErrors.pago_frecuencia[0]}</p>
-            )}
+        {/* — Condiciones económicas — */}
+        <div className="space-y-3">
+          <SectionTitle>Condiciones económicas</SectionTitle>
+
+          {/* Salario + Auxilio + Comp. no salarial */}
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              {label("Salario base", true)}
+              <input type="number" name="base_salario" value={formData.base_salario} onChange={handleChange} min="0" placeholder="1300000" className={inputClass("base_salario")} />
+              {err("base_salario")}
+            </div>
+            <div>
+              {label("Auxilio transporte")}
+              <input type="number" name="auxilio_transporte" value={formData.auxilio_transporte} onChange={handleChange} min="0" placeholder="162000" className={inputClass("auxilio_transporte")} />
+              {err("auxilio_transporte")}
+            </div>
+            <div>
+              {label("Comp. no salarial")}
+              <input type="number" name="no_salarial" value={formData.no_salarial} onChange={handleChange} min="0" placeholder="0" className={inputClass("no_salarial")} />
+              {err("no_salarial")}
+            </div>
           </div>
-          <div className="flex items-center gap-2 pt-6">
-            <label htmlFor="no_salarial" className="block text-sm font-medium text-gray-700">
-           No salarial
-            </label>
-            <input
-              type="number"
-              id="no_salarial"
-              name="no_salarial"
-              value={formData.no_salarial}
-              onChange={handleChange}
-              min="0"
-              placeholder="0 para no, 1 para sí"
-              className={inputClass("no_salarial")}
-            />
-         
+
+          {/* Frecuencia + Fechas */}
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              {label("Frecuencia de pago", true)}
+              <select name="pago_frecuencia" value={formData.pago_frecuencia} onChange={handleChange} className={inputClass("pago_frecuencia")}>
+                <option value="">Seleccionar...</option>
+                <option value="15">Quincenal</option>
+                <option value="30">Mensual</option>
+              </select>
+              {err("pago_frecuencia")}
+            </div>
+            <div>
+              {label("Inicio contrato", true)}
+              <input type="date" name="inicio_contratacion" value={formData.inicio_contratacion} onChange={handleChange} className={inputClass("inicio_contratacion")} />
+              {err("inicio_contratacion")}
+            </div>
+            <div>
+              {label("Fin contrato")}
+              <input type="date" name="fin_contrato" value={formData.fin_contrato} onChange={handleChange} className={inputClass("fin_contrato")} />
+              {err("fin_contrato")}
+            </div>
           </div>
         </div>
 
-        {/* Fechas */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="inicio_contratacion" className="block text-sm font-medium text-gray-700 mb-1">
-              Inicio contratación <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="date"
-              id="inicio_contratacion"
-              name="inicio_contratacion"
-              value={formData.inicio_contratacion}
-              onChange={handleChange}
-              className={inputClass("inicio_contratacion")}
-            />
-            {fieldErrors.inicio_contratacion && (
-              <p className="mt-1 text-xs text-red-500">{fieldErrors.inicio_contratacion[0]}</p>
-            )}
-          </div>
-          <div>
-            <label htmlFor="fin_contrato" className="block text-sm font-medium text-gray-700 mb-1">
-              Fin de contrato
-            </label>
-            <input
-              type="date"
-              id="fin_contrato"
-              name="fin_contrato"
-              value={formData.fin_contrato}
-              onChange={handleChange}
-              className={inputClass("fin_contrato")}
-            />
-            {fieldErrors.fin_contrato && (
-              <p className="mt-1 text-xs text-red-500">{fieldErrors.fin_contrato[0]}</p>
-            )}
-          </div>
-        </div>
-
-        {/* Seguridad Social */}
-        <div>
-          <p className="text-sm font-semibold text-gray-700 mb-3">Seguridad Social</p>
-          <div className="grid grid-cols-2 gap-4">
+        {/* — Seguridad social — */}
+        <div className="space-y-3">
+          <SectionTitle>Seguridad Social</SectionTitle>
+          <div className="grid grid-cols-2 gap-3">
             {[
               { name: "eps_id", label: "EPS" },
               { name: "arl_id", label: "ARL" },
               { name: "fondo_pensiones_id", label: "Fondo de pensiones" },
               { name: "caja_penciones_id", label: "Caja de compensación" },
-            ].map(({ name, label }) => (
+            ].map(({ name, label: lbl }) => (
               <div key={name}>
-                <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-1">
-                  {label} <span className="text-red-500">*</span>
-                </label>
-                <select
-                  id={name}
-                  name={name}
-                  value={formData[name]}
-                  onChange={handleChange}
-                  className={inputClass(name)}
-                >
-                  <option value="">Seleccione {label}</option>
-                  {seguridadSocialLista.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.nombre}
-                    </option>
-                  ))}
+                {label(lbl, true)}
+                <select name={name} value={formData[name]} onChange={handleChange} className={inputClass(name)}>
+                  <option value="">Seleccionar {lbl}...</option>
+                  {seguridadSocialLista.map((s) => <option key={s.id} value={s.id}>{s.nombre}</option>)}
                 </select>
-                {fieldErrors[name] && (
-                  <p className="mt-1 text-xs text-red-500">{fieldErrors[name][0]}</p>
-                )}
+                {err(name)}
               </div>
             ))}
           </div>
         </div>
 
         {/* Botones */}
-        <div className="flex justify-end gap-3 pt-2">
+        <div className="flex justify-end gap-2 pt-1">
           {onClose && (
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+              className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
             >
               Cancelar
             </button>
@@ -289,37 +217,11 @@ export default function RegisterContrato({ uuid = null, onClose }) {
           <button
             type="submit"
             disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
           >
             {loading ? (
-              <>
-                <svg
-                  className="animate-spin h-4 w-4"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8v8z"
-                  />
-                </svg>
-                Guardando...
-              </>
-            ) : isEdit ? (
-              "Actualizar"
-            ) : (
-              "Guardar"
-            )}
+              <><Loader2 className="h-3.5 w-3.5 animate-spin" />{isEdit ? "Actualizando..." : "Guardando..."}</>
+            ) : isEdit ? "Actualizar" : "Guardar"}
           </button>
         </div>
       </form>

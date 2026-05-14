@@ -179,8 +179,8 @@ export const contratacionService = {
   getEmpleados() {
     return apiClient.get("api/nomina/contratacion/empleados");
   },
-  getContratos() {
-    return apiClient.get("api/nomina/contratacion");
+  getContratos(params = {}) {
+    return apiClient.get("api/nomina/contratacion", { params });
   },
   getContratoById(id) {
     return apiClient.get(`api/nomina/contratacion/${id}`);

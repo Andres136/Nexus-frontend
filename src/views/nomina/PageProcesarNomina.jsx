@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
 import { useGetNominas } from "../../hooks/nomina/useGetNominas";
 import { useGetNominaSummary } from "../../hooks/nomina/useGetNominaSummary";
-import ModalLiquidarNomina from "../../components/nomina/ModalLiquidarNomina";
 
 const MESES = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -117,7 +116,6 @@ export default function PageProcesarNomina() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [perPage] = useState(10);
-  const [modalOpen, setModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("resumen");
 
   const periodoInicio = useMemo(
@@ -190,15 +188,6 @@ export default function PageProcesarNomina() {
             </svg>
           </div>
 
-          <button
-            onClick={() => setModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-            </svg>
-            Procesar nómina
-          </button>
         </div>
       </div>
 
@@ -414,23 +403,6 @@ export default function PageProcesarNomina() {
         )}
       </div>
 
-      {/* Modal liquidar */}
-      {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setModalOpen(false)} />
-          <div className="relative bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-8 animate-slide-in">
-            <button
-              onClick={() => setModalOpen(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-            <ModalLiquidarNomina onClose={() => setModalOpen(false)} />
-          </div>
-        </div>
-      )}
     </div>
   );
 }
