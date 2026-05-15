@@ -23,6 +23,7 @@ import {
   ShieldCheck,
   Wallet,
   Settings,
+  PackageX,
 
 } from "lucide-react";
 
@@ -71,7 +72,7 @@ export default function Navbar() {
         {name: "Cartera", to: "/auth/crm/cartera-clientes", icon: Wallet, alwaysVisible: true },
         {name: "HSEQ", to: "/auth/crm/hseq/inspecciones", icon: ShieldCheck, alwaysVisible: true },
         {name: "Contabilidad", to: "/auth/crm/contabilidad", icon: Wallet, alwaysVisible: true },
-        {name: "Producto no conforme", to: "/auth/crm/producto-no-conforme", icon: Cpu, alwaysVisible: true },
+        {name: "Producto no conforme", to: "/auth/crm/producto-no-conforme", icon: PackageX, alwaysVisible: true },
       ],
     },
   ];
