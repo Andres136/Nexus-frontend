@@ -18,7 +18,7 @@ const TIPOS_FALLA = [
 
 export default function RegisterProductoNoConforme({ onClose }) {
   const { formData, loading, error, handleChange, handleSubmit } = useRegisterProductoNoConforme();
-  const { clientes } = useClientes();
+  const { clientesTodos: clientes } = useClientes();
   const { products, isLoading, isEmpty } = useProducts({ search: " " });
   const { ordenes } = useMisOrdenesCompra();
 
