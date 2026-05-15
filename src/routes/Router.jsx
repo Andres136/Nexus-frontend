@@ -115,6 +115,7 @@ import PageCreateFacturas from "../views/contabilidad/PageCreateFacturas";
 import CatalogoContable from "../views/contabilidad/CatalogoContable";
 import PageObtenerPagos from "../views/contabilidad/PageObtenerPagos";
 import PageCosteos from "../views/contabilidad/PageCosteos";
+import RegisterProductoNoConforme from "../components/calidad/RegisterProductoNoConforme";
 
 
 export default function Router() {
@@ -605,7 +606,14 @@ export default function Router() {
 
            {/*   Fin Rutas para  HSEQ */} 
 
-
+          <Route
+            path="/auth/crm/producto-no-conforme"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/producto-no-conforme">
+                <RegisterProductoNoConforme />
+              </DynamicProtectedRoute>
+            }
+          />
 
           <Route
             path="proveedores-ordenes-compra"
