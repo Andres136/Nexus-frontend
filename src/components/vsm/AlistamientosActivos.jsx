@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import Swal from "sweetalert2";
 import { useState } from "react";
+import Select from "react-select";
 import {useSedes} from "../../hooks/useSedes";
 
 export default function AlistamientosActivos() {
@@ -193,6 +194,11 @@ const handleReanudarSede = async () => {
 
 function AlistamientoCard({ alist, onUpdate, onPausa, onReanudar, onFinalizar }) {
   const [activeUserPanel, setActiveUserPanel] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [usuariosDisp, setUsuariosDisp] = useState([]);
+  const [usuarioSel, setUsuarioSel] = useState("");
+  const [loadingUsuarios, setLoadingUsuarios] = useState(false);
+  const [guardando, setGuardando] = useState(false);
 
  const formatTime = (seg) => {
   const safe = Math.max(0, Math.floor(Number(seg) || 0));
@@ -204,31 +210,35 @@ function AlistamientoCard({ alist, onUpdate, onPausa, onReanudar, onFinalizar })
 
 
 
-  const onAgregarUsuario = async (alistId) => {
+  const abrirModalUsuarios = async () => {
+    setLoadingUsuarios(true);
+    setModalOpen(true);
+    setUsuarioSel("");
     try {
-      const response = await vsmService.usuariosDisponibles(alistId);
-      const options = {};
-      response.data.forEach(user => options[user.id] = user.name);
+      const response = await vsmService.usuariosDisponibles(alist.id);
+      setUsuariosDisp(response.data);
+      if (response.data.length === 0) toast.info("No hay usuarios disponibles");
+    } catch {
+      toast.error("Error al cargar usuarios");
+      setModalOpen(false);
+    } finally {
+      setLoadingUsuarios(false);
+    }
+  };
 
-      if (Object.keys(options).length === 0) {
-        return toast.info("No hay usuarios disponibles");
-      }
-
-      const { value: userId } = await Swal.fire({
-        title: "Agregar operario",
-        input: "select",
-        inputOptions: options,
-        inputPlaceholder: "Selecciona un usuario",
-        showCancelButton: true,
-        confirmButtonColor: "#2563eb"
-      });
-
-      if (userId) {
-        await vsmService.agregarUsuario(alistId, { usuario_id: userId });
-        toast.success("Usuario agregado");
-        onUpdate();
-      }
-    } catch (e) { toast.error("Error al cargar usuarios"); }
+  const handleConfirmarUsuario = async () => {
+    if (!usuarioSel) return toast.warning("Selecciona un usuario");
+    setGuardando(true);
+    try {
+      await vsmService.agregarUsuario(alist.id, { usuario_id: usuarioSel });
+      toast.success("Usuario agregado");
+      setModalOpen(false);
+      onUpdate();
+    } catch {
+      toast.error("Error al agregar usuario");
+    } finally {
+      setGuardando(false);
+    }
   };
 
   return (
@@ -273,7 +283,7 @@ function AlistamientoCard({ alist, onUpdate, onPausa, onReanudar, onFinalizar })
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <h4 className="text-[10px] font-bold uppercase text-gray-400">Personal & Producción</h4>
-            <button onClick={() => onAgregarUsuario(alist.id)} className="text-blue-600 hover:text-blue-800 text-[10px] font-bold flex items-center gap-1">
+            <button onClick={abrirModalUsuarios} className="text-blue-600 hover:text-blue-800 text-[10px] font-bold flex items-center gap-1">
               <Plus className="w-3 h-3" /> AGREGAR
             </button>
           </div>
@@ -315,8 +325,107 @@ function AlistamientoCard({ alist, onUpdate, onPausa, onReanudar, onFinalizar })
           <Square size={14} /><span className="text-[9px] font-bold mt-1 text-white">FINALIZAR</span>
         </button>
 
-        
       </div>
+
+      {/* MODAL AGREGAR USUARIO */}
+      {modalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm mx-4 p-6 space-y-4">
+            <h3 className="text-lg font-black text-gray-800">Agregar operario</h3>
+            <p className="text-xs text-gray-400">Orden #{alist.orden_trabajo_id}</p>
+
+            {loadingUsuarios ? (
+              <div className="flex justify-center py-4">
+                <div className="w-6 h-6 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : (
+          <Select
+  options={usuariosDisp.map(u => ({
+    value: u.id,
+    label: u.name
+  }))}
+
+  placeholder="Selecciona un operario"
+
+  value={
+    usuariosDisp
+      .map(u => ({
+        value: u.id,
+        label: u.name
+      }))
+      .find(option => option.value == usuarioSel) || null
+  }
+
+  onChange={(selectedOption) => {
+    setUsuarioSel(selectedOption?.value || "");
+  }}
+
+  isSearchable
+  isClearable
+
+  className="text-sm"
+
+  styles={{
+    control: (base, state) => ({
+      ...base,
+      minHeight: 45,
+      borderRadius: 12,
+      borderColor: state.isFocused
+        ? "#3b82f6"
+        : "#d1d5db",
+      boxShadow: state.isFocused
+        ? "0 0 0 2px rgba(59,130,246,0.2)"
+        : "none",
+
+      "&:hover": {
+        borderColor: "#3b82f6"
+      }
+    }),
+
+    menu: (base) => ({
+      ...base,
+      borderRadius: 12,
+      overflow: "hidden",
+      zIndex: 9999
+    }),
+
+    option: (base, state) => ({
+      ...base,
+      backgroundColor: state.isSelected
+        ? "#2563eb"
+        : state.isFocused
+        ? "#eff6ff"
+        : "#fff",
+
+      color: state.isSelected
+        ? "#fff"
+        : "#111827",
+
+      cursor: "pointer",
+      fontSize: 14
+    }),
+  }}
+/>
+            )}
+
+            <div className="flex gap-3 pt-1">
+              <button
+                onClick={() => setModalOpen(false)}
+                className="flex-1 py-2 rounded-lg border border-gray-300 text-sm font-bold text-gray-600 hover:bg-gray-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleConfirmarUsuario}
+                disabled={guardando || !usuarioSel}
+                className="flex-1 py-2 rounded-lg bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 disabled:opacity-50"
+              >
+                {guardando ? "Guardando..." : "Agregar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -456,7 +565,7 @@ function ProductionForm({ usuario, detalles, alistId, onUpdate }) {
           <div key={d.id} className="bg-white border rounded-lg p-2 shadow-sm">
             <div className="flex justify-between items-center mb-2">
               <span className="text-[11px] font-bold text-gray-700 truncate w-32">{d.product}</span>
-              <span className="text-[10px] font-bold text-red-500">Pend: {d.faltante}</span>
+          
             </div>
             <div className="flex gap-1">
               <input 

@@ -5,6 +5,7 @@ import clienteAxios from "../config/axios";
 import { toast } from "react-toastify";    
 import useSWR from "swr";
 import { showToast } from "../helpers/utils/showToast";
+import { clienteService, gestionClienteService } from "../services/clienteSevice";
 
 
 //fetcher para SWR
@@ -80,11 +81,7 @@ async function registrarCliente(e) {
     };
 
     try {
-        const response = await clienteAxios.post("/api/clientes", cliente, {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        });
+        const response = await clienteService.createCliente(cliente);
 
         showToast('success', response.data.message);
         const clienteNuevo = response.data.cliente;
@@ -116,44 +113,35 @@ async function registrarCliente(e) {
 
 // Obtener los clientes de la API
 const obtenerClientes = async (page = 1, search = "") => {
-    const token = localStorage.getItem("token");
-    // 🛑 Si user no está listo, esperar antes de hacer la petición
-  if (!user || !user.role_id) {
-    console.log("Usuario no disponible aún, esperando...");
-    return
-      }
-          const esAdmin = user.role_id === 1 || user.role_id === 7 || user.role_id === 4;
-    try {
-       const url = esAdmin
-         ? `/api/clientes?page=${page}&search=${search}`
-         : `/api/clientes-registro-user?page=${page}&search=${search}`;
 
-      const response = await clienteAxios.get(url, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
 
-   
-      setPaginaActual(response.data.current_page);
-      setTotalPaginas(response.data.last_page);
-     //Actualizar la cache de SWR
-     mutate();
-      
+
+  try {
+
+    const response = await  clienteService.getClientes(page, search);
     
-    } catch (error) {
-      console.error("Error al obtener los clientes:", error);
-    }
-  };
+  console.log(response.data);
+    setPaginaActual(response.data.current_page);
+    setTotalPaginas(response.data.last_page);
+
+    // Si tienes estado clientes
+    // setClientes(response.data.data);
+
+  } catch (error) {
+
+    console.error("Error al obtener los clientes:", error);
+
+  }
+};
 
   //Traer los clientes de la API
 
   const obtenerTodosClientes = async () => {
-    const token = localStorage.getItem("token");
+
     try {
-      const response = await clienteAxios.get(`/api/clientes-todos?search=${busqueda}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await clienteService.obtenerClientesAll(busqueda);
         setClientesTodos(response.data.data || response.data);
-  
+       
 
     } catch (error) {
       console.error("Error al obtener los clientes:", error);
@@ -178,14 +166,10 @@ useEffect(() => {
 
 //Actualizar cliente
 const actualizarCliente = async (id, clienteActualizado) => {
-    const token = localStorage.getItem('token');
+
 
     try {
-        const response = await clienteAxios.put(`/api/clientes/${id}`, clienteActualizado, {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        });
+        const response = await clienteService.updateCliente(id, clienteActualizado)
 
         toast.success(response.data.message);
         console.log(response.data);
@@ -203,22 +187,17 @@ const actualizarCliente = async (id, clienteActualizado) => {
 };
 //Eliminar cliente
 
-async function eliminarCliente(id){
+async function cambiarEstadoCliente(id){
 
-    console.log('id del cliente', id);
-    const token = localStorage.getItem('token');
+    
     try {
-        const response = await clienteAxios.delete(`/api/clientes/${id}`, {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        });
+        const response = await clienteService.cambiarEstado(id) // Cambia el estado a 2 para marcarlo como eliminado
         toast.success(response.data.message);
         console.log(response.data);
         // Actualizar el estado de clientes usando mutate de SWR
         mutate();
     } catch (error) {
-        console.error('Error al eliminar el cliente:', error);
+        console.error('Error al cambiar el estado del cliente:', error);
     }
 }
 
@@ -226,13 +205,9 @@ async function eliminarCliente(id){
 //Registrar gestion a cliente
 async function registrarGestionCliente(clienteId, gestion){
     
-    const token = localStorage.getItem('token');
+
     try {
-        const response = await clienteAxios.post(`/api/clientes/${clienteId}/seguimientos`, gestion, {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        });
+        const response = await gestionClienteService.registrarGestion(clienteId, gestion);
         toast.success(response.data.message);
         console.log(response.data);
         // Actualizar el estado de clientes usando mutate de SWR
@@ -252,14 +227,11 @@ async function registrarGestionCliente(clienteId, gestion){
 //Consultar Historial de cliente por ID
 async function consultarHistorialCliente(clienteId){
 
-    const token = localStorage.getItem('token');
+
     try {
-        const response = await clienteAxios.get(`/api/clientes/${clienteId}`, {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        });
-       
+        const response = await gestionClienteService.consultarHistorial(clienteId);
+       console.log(response.data);
+
         setHistorialCliente(response.data);
       
         return response.data;
@@ -290,7 +262,7 @@ async function consultarHistorialCliente(clienteId){
         obtenerClientes,
         obtenerTodosClientes,
         actualizarCliente,
-        eliminarCliente,
+        cambiarEstadoCliente,
         registrarGestionCliente,
         consultarHistorialCliente,
         

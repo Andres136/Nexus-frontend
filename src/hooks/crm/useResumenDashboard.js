@@ -26,7 +26,7 @@ export default function useResumenDashboard({
       const { data } =
         await dashboardComercialApi.getEstadisticasComerciales(params);
 
-      console.log("Datos obtenidos para el dashboard:", data);
+
 
   return data.map((item) => ({
   ...item,
