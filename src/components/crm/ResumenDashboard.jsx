@@ -143,6 +143,21 @@ export default function ResumenDashboard() {
         <h2 style={{ fontSize: 26, fontWeight: 700, color: "#0f172a", margin: 0 }}>
           Comparativo por Usuario
         </h2>
+        {/* NUEVO */}
+  <div style={{
+    marginTop: 10,
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 8,
+    background: "#eef2ff",
+    color: "#4338ca",
+    padding: "6px 14px",
+    borderRadius: 20,
+    fontSize: 12,
+    fontWeight: 700,
+  }}>
+    📊 Trimestre: {chartData?.[0]?.trimestre || "N/A"}
+  </div>
       </div>
 
       {/* ── Selector de mes ── */}
