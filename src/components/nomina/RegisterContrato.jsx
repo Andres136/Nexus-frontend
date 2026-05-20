@@ -113,6 +113,26 @@ export default function RegisterContrato({ uuid = null, onClose }) {
             {err("users_id")}
           </div>
 
+          {/* Tipo documento + Número documento */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              {label("Tipo de documento", true)}
+              <select name="tipo_documento" value={formData.tipo_documento} onChange={handleChange} className={inputClass("tipo_documento")}>
+                <option value="CC">CC — Cédula de ciudadanía</option>
+                <option value="CE">CE — Cédula de extranjería</option>
+                <option value="TI">TI — Tarjeta de identidad</option>
+                <option value="PA">PA — Pasaporte</option>
+                <option value="NIT">NIT</option>
+              </select>
+              {err("tipo_documento")}
+            </div>
+            <div>
+              {label("Número de documento", true)}
+              <input type="text" name="numero_documento" value={formData.numero_documento} onChange={handleChange} placeholder="Ej: 1234567890" className={inputClass("numero_documento")} />
+              {err("numero_documento")}
+            </div>
+          </div>
+
           {/* Empresa + Tipo contrato */}
           <div className="grid grid-cols-2 gap-3">
             <div>

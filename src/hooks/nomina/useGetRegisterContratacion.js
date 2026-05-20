@@ -7,9 +7,10 @@ const EMPTY_FORM = {
   id_contrato: "",
   users_id: "",
   empresa_id: "",
+  tipo_documento: "CC",
+  numero_documento: "",
   no_salarial: 0,
   base_salario: "",
- 
   auxilio_transporte: "",
   pago_frecuencia: "",
   inicio_contratacion: "",
@@ -44,15 +45,18 @@ export const useGetRegisterContratacion = ({ uuid = null, onSuccess } = {}) => {
   useEffect(() => {
     if (contratacion?.data) {
       const {
-        id_contrato, users_id, empresa_id, no_salarial, base_salario,
-        auxilio_transporte, pago_frecuencia, inicio_contratacion,
-        fin_contrato, status, eps_id, arl_id, fondo_pensiones_id, caja_pensiones_id,
+        id_contrato, users_id, empresa_id, tipo_documento, numero_documento,
+        no_salarial, base_salario, auxilio_transporte, pago_frecuencia,
+        inicio_contratacion, fin_contrato, status, eps_id, arl_id,
+        fondo_pensiones_id, caja_penciones_id,
       } = contratacion.data;
       setFormData({
         id_contrato: id_contrato ?? "",
         users_id: users_id ?? "",
         empresa_id: empresa_id ?? "",
-        no_salarial: no_salarial ?? false,
+        tipo_documento: tipo_documento ?? "CC",
+        numero_documento: numero_documento ?? "",
+        no_salarial: no_salarial ?? 0,
         base_salario: base_salario ?? "",
         auxilio_transporte: auxilio_transporte ?? "",
         pago_frecuencia: pago_frecuencia ?? "",
@@ -62,7 +66,7 @@ export const useGetRegisterContratacion = ({ uuid = null, onSuccess } = {}) => {
         eps_id: eps_id ?? "",
         arl_id: arl_id ?? "",
         fondo_pensiones_id: fondo_pensiones_id ?? "",
-        caja_pensiones_id: caja_pensiones_id ?? "",
+        caja_penciones_id: caja_penciones_id ?? "",
       });
     } else if (!uuid) {
       setFormData(EMPTY_FORM);
