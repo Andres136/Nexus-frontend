@@ -213,3 +213,86 @@ export const nominaService = {
     return apiClient.delete(`api/nomina/nominas/${uuid}`);
   },
 };
+
+export const kioskoDeviceService = {
+  getKioscos(params = {}) {
+    return apiClient.get("api/nomina/kiosko-devices", { params });
+  },
+  getKioscoByUuid(uuid) {
+    return apiClient.get(`api/nomina/kiosko-devices/${uuid}`);
+  },
+  createKiosco(data) {
+    return apiClient.post("api/nomina/kiosko-devices", data);
+  },
+  updateKiosco(uuid, data) {
+    return apiClient.put(`api/nomina/kiosko-devices/${uuid}`, data);
+  },
+  deleteKiosco(uuid) {
+    return apiClient.delete(`api/nomina/kiosko-devices/${uuid}`);
+  },
+};
+
+export const workSessionService = {
+  getWorkSessions(params = {}) {
+    return apiClient.get("api/nomina/work-sessions", { params });
+  },
+};
+
+export const permisoService = {
+  getPermisos(params = {}) {
+    return apiClient.get("api/nomina/permisos", { params });
+  },
+  aprobar(uuid, data = {}) {
+    return apiClient.patch(`api/nomina/permisos/${uuid}/aprobar`, data);
+  },
+  rechazar(uuid, data = {}) {
+    return apiClient.patch(`api/nomina/permisos/${uuid}/rechazar`, data);
+  },
+};
+
+export const vacacionService = {
+  getVacaciones(params = {}) {
+    return apiClient.get("api/nomina/vacaciones", { params });
+  },
+  aprobar(uuid, data = {}) {
+    return apiClient.patch(`api/nomina/vacaciones/${uuid}/aprobar`, data);
+  },
+  rechazar(uuid, data = {}) {
+    return apiClient.patch(`api/nomina/vacaciones/${uuid}/rechazar`, data);
+  },
+};
+
+export const horaExtraService = {
+  getHorasExtras(params = {}) {
+    return apiClient.get("api/nomina/horas-extras", { params });
+  },
+  aprobar(uuid, data = {}) {
+    return apiClient.patch(`api/nomina/horas-extras/${uuid}/aprobar`, data);
+  },
+  rechazar(uuid, data = {}) {
+    return apiClient.patch(`api/nomina/horas-extras/${uuid}/rechazar`, data);
+  },
+};
+
+export const fotoFacialService = {
+  getFotos(params = {}) {
+    return apiClient.get("api/nomina/users-face-photos", { params });
+  },
+  getFotoByUuid(uuid) {
+    return apiClient.get(`api/nomina/users-face-photos/${uuid}`);
+  },
+  createFoto(formData) {
+    return apiClient.post("api/nomina/users-face-photos", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+  updateFoto(uuid, formData) {
+    formData.append("_method", "PUT");
+    return apiClient.post(`api/nomina/users-face-photos/${uuid}`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+  deleteFoto(uuid) {
+    return apiClient.delete(`api/nomina/users-face-photos/${uuid}`);
+  },
+};

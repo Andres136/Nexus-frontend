@@ -15,6 +15,10 @@ import {
   ClipboardList,
   Coins,
   ScanFace,
+  CalendarCheck,
+  AlarmClock,
+  Palmtree,
+  Monitor,
 } from "lucide-react";
 
 import PageProcesarNomina from "../views/nomina/PageProcesarNomina";
@@ -26,6 +30,12 @@ import PageJornadaLaboral from "../views/nomina/PageJornadaLaboral";
 import PageIncapacidades from "../views/nomina/PageIncapacidades";
 import PageValores from "../views/nomina/PageValores";
 import PageTipoRegistros from "../views/nomina/PageTipoRegistros";
+import PageWorkSessions from "../views/nomina/PageWorkSessions";
+import PageKioscos from "../views/nomina/PageKioscos";
+import PagePermisos from "../views/nomina/PagePermisos";
+import PageVacaciones from "../views/nomina/PageVacaciones";
+import PageHorasExtras from "../views/nomina/PageHorasExtras";
+import PageReconocimientoFacial from "../views/nomina/PageReconocimientoFacial";
 
 function Placeholder({ label, description }) {
   Placeholder.propTypes = { label: PropTypes.string, description: PropTypes.string };
@@ -82,6 +92,31 @@ const NAV_ITEMS = [
     ],
   },
   {
+    id: "solicitudes",
+    label: "Solicitudes",
+    icon: CalendarCheck,
+    tabs: [
+      {
+        id: "permisos",
+        label: "Permisos",
+        icon: AlarmClock,
+        component: <PagePermisos />,
+      },
+      {
+        id: "vacaciones",
+        label: "Vacaciones",
+        icon: Palmtree,
+        component: <PageVacaciones />,
+      },
+      {
+        id: "horas-extras",
+        label: "Horas Extras",
+        icon: Timer,
+        component: <PageHorasExtras />,
+      },
+    ],
+  },
+  {
     id: "desprendibles",
     label: "Desprendibles",
     icon: FileText,
@@ -117,10 +152,22 @@ const NAV_ITEMS = [
         component: <PageTipoRegistros />,
       },
       {
+        id: "kioscos",
+        label: "Kioscos",
+        icon: Monitor,
+        component: <PageKioscos />,
+      },
+      {
+        id: "work-sessions",
+        label: "Registro de Asistencia",
+        icon: ClipboardList,
+        component: <PageWorkSessions />,
+      },
+      {
         id: "reconocimiento",
         label: "Reconocimiento Facial",
         icon: ScanFace,
-        component: <Placeholder label="Reconocimiento Facial" description="Gestión de fotos faciales para el kiosko de asistencia." />,
+        component: <PageReconocimientoFacial />,
       },
     ],
   },
