@@ -132,3 +132,11 @@ export const productoNoConformeService = {
     estado,
   }),
 };
+
+export const tareaService = {
+  getTareas: (params) => apiClient.get("/api/tareas", { params }),
+  avanzarEstado: (id, data) => apiClient.patch(`/api/tareas/estado/${id}`, data),
+  actualizarTarea: (id, data) => apiClient.put(`/api/tareas/update/${id}`, data),
+  getHistorial: (id) => apiClient.get(`/api/tareas/${id}/historial`),
+  agregarNota: (id, nota) => apiClient.post(`/api/tareas/${id}/notas`, { nota }),
+};

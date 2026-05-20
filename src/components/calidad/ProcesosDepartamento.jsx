@@ -216,8 +216,11 @@ function ProcesosDepartamento() {
   const docsFiltrados = documentacion.filter(doc =>
     doc.nombre.toLowerCase().includes(inputValue.toLowerCase())
   );
-   // ✅ Determinar si el usuario tiene panel de administración
-  const tienePermisos = departamentoActual && (user?.role_id === 1 || user?.role_id === 2);
+   const esAdmin   = [1, 2].includes(user?.role_id);
+  const puedeTareas = [1, 2, 4, 5].includes(user?.role_id);
+
+  // ✅ Determinar si el usuario tiene panel de administración
+  const tienePermisos = departamentoActual && puedeTareas;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50">
@@ -517,13 +520,13 @@ function ProcesosDepartamento() {
           </div>
 
           {/* ✅ Panel de administración mejorado */}
-          {departamentoActual && (user?.role_id === 1 || user?.role_id === 2) && (
+          {departamentoActual && puedeTareas && (
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
               <div className="bg-gradient-to-r from-purple-50 to-pink-50 px-6 py-4 border-b border-gray-200">
                 <div className="flex items-center gap-2">
                   <Plus className="w-5 h-5 text-purple-600" />
                   <h2 className="text-lg font-semibold text-gray-900">
-                    Panel de Administración
+                    {esAdmin ? "Panel de Administración" : "Asignar Tareas"}
                   </h2>
                 </div>
                 <p className="text-sm text-gray-600 mt-1">
@@ -533,162 +536,128 @@ function ProcesosDepartamento() {
 
               <div className="p-6 space-y-4">
                 
-                {/* ✅ Acordeón: Registrar Carpeta */}
-                <div className="border border-gray-200 rounded-lg overflow-hidden">
-                  <button
-                    className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 text-left transition-colors"
-                    onClick={() => toggleAcordeon("procesos")}
-                  >
-                    <div className="flex items-center gap-3">
-                      <FolderOpen className="w-5 h-5 text-blue-600" />
-                      <span className="font-medium text-gray-900">Crear Nueva Carpeta</span>
-                    </div>
-                    <Plus className={`w-5 h-5 text-gray-400 transition-transform ${acordeonAbierto === "procesos" ? 'rotate-45' : ''}`} />
-                  </button>
-                  
-                  {acordeonAbierto === "procesos" && (
-                    <div className="p-4 bg-white border-t border-gray-200">
-                      <div className="space-y-4">
-                        <input
-                          type="text"
-                          ref={nuevoProcesoRef}
-                          placeholder="Nombre de la nueva carpeta"
-                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
-                            errorProceso.nombre ? "border-red-300 bg-red-50" : "border-gray-300"
-                          }`}
-                        />
-                        {errorProceso.nombre && (
-                          <div className="flex items-center gap-2 text-red-600 text-sm bg-red-50 p-3 rounded-lg">
-                            <AlertCircle className="w-4 h-4" />
-                            <span>{errorProceso.nombre[0]}</span>
-                          </div>
-                        )}
-                        <button
-                          onClick={(e) => registrarProceso(e, departamentoActual)}
-                          className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-3 px-4 rounded-lg font-medium transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2"
-                        >
-                          <Plus className="w-4 h-4" />
-                          Crear Carpeta
-                        </button>
+                {/* ✅ Acordeón: Registrar Carpeta — solo admin */}
+                {esAdmin && (
+                  <div className="border border-gray-200 rounded-lg overflow-hidden">
+                    <button
+                      className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 text-left transition-colors"
+                      onClick={() => toggleAcordeon("procesos")}
+                    >
+                      <div className="flex items-center gap-3">
+                        <FolderOpen className="w-5 h-5 text-blue-600" />
+                        <span className="font-medium text-gray-900">Crear Nueva Carpeta</span>
                       </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* ✅ Acordeón: Subir Documentación */}
-                <div className="border border-gray-200 rounded-lg overflow-hidden">
-                  <button
-                    className={`w-full flex items-center justify-between p-4 text-left transition-colors ${
-                      procesoActual 
-                        ? 'bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100' 
-                        : 'bg-gray-100 cursor-not-allowed'
-                    }`}
-                    onClick={() => procesoActual && toggleAcordeon("documentacion")}
-                    disabled={!procesoActual}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Upload className={`w-5 h-5 ${procesoActual ? 'text-green-600' : 'text-gray-400'}`} />
-                      <div>
-                        <span className={`font-medium ${procesoActual ? 'text-gray-900' : 'text-gray-500'}`}>
-                          Subir Documento
-                        </span>
-                        {procesoActual && (
-                          <p className="text-xs text-gray-600">a {procesoActual.nombre}</p>
-                        )}
-                      </div>
-                    </div>
-                    <Plus className={`w-5 h-5 text-gray-400 transition-transform ${acordeonAbierto === "documentacion" ? 'rotate-45' : ''}`} />
-                  </button>
-                  
-                  {acordeonAbierto === "documentacion" && procesoActual && (
-                    <div className="p-4 bg-white border-t border-gray-200">
-                      <div className="space-y-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Nombre del documento
-                          </label>
+                      <Plus className={`w-5 h-5 text-gray-400 transition-transform ${acordeonAbierto === "procesos" ? 'rotate-45' : ''}`} />
+                    </button>
+                    {acordeonAbierto === "procesos" && (
+                      <div className="p-4 bg-white border-t border-gray-200">
+                        <div className="space-y-4">
                           <input
                             type="text"
-                            ref={nuevaDocumentacionNombreRef}
-                            placeholder="Ej: Manual de procedimientos"
-                            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all ${
-                              erroresDocumentacion.nombre ? "border-red-300 bg-red-50" : "border-gray-300"
+                            ref={nuevoProcesoRef}
+                            placeholder="Nombre de la nueva carpeta"
+                            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                              errorProceso.nombre ? "border-red-300 bg-red-50" : "border-gray-300"
                             }`}
                           />
-                          {erroresDocumentacion.nombre && (
-                            <div className="flex items-center gap-2 text-red-600 text-sm mt-2">
+                          {errorProceso.nombre && (
+                            <div className="flex items-center gap-2 text-red-600 text-sm bg-red-50 p-3 rounded-lg">
                               <AlertCircle className="w-4 h-4" />
-                              <span>{erroresDocumentacion.nombre[0]}</span>
+                              <span>{errorProceso.nombre[0]}</span>
                             </div>
                           )}
+                          <button
+                            onClick={(e) => registrarProceso(e, departamentoActual)}
+                            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-3 px-4 rounded-lg font-medium transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2"
+                          >
+                            <Plus className="w-4 h-4" />
+                            Crear Carpeta
+                          </button>
                         </div>
+                      </div>
+                    )}
+                  </div>
+                )}
 
+                {/* ✅ Acordeón: Subir Documentación — solo admin */}
+                {esAdmin && (
+                  <div className="border border-gray-200 rounded-lg overflow-hidden">
+                    <button
+                      className={`w-full flex items-center justify-between p-4 text-left transition-colors ${
+                        procesoActual
+                          ? 'bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100'
+                          : 'bg-gray-100 cursor-not-allowed'
+                      }`}
+                      onClick={() => procesoActual && toggleAcordeon("documentacion")}
+                      disabled={!procesoActual}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Upload className={`w-5 h-5 ${procesoActual ? 'text-green-600' : 'text-gray-400'}`} />
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Archivo
-                          </label>
-                          <input
-                            type="file"
-                            ref={nuevaDocumentacionArchivoRef}
-                            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all ${
-                              erroresDocumentacion.documento ? "border-red-300 bg-red-50" : "border-gray-300"
-                            }`}
-                          />
-                          {erroresDocumentacion.documento && (
-                            <div className="flex items-center gap-2 text-red-600 text-sm mt-2">
-                              <AlertCircle className="w-4 h-4" />
-                              <span>{erroresDocumentacion.documento[0]}</span>
-                            </div>
+                          <span className={`font-medium ${procesoActual ? 'text-gray-900' : 'text-gray-500'}`}>
+                            Subir Documento
+                          </span>
+                          {procesoActual && (
+                            <p className="text-xs text-gray-600">a {procesoActual.nombre}</p>
                           )}
                         </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      </div>
+                      <Plus className={`w-5 h-5 text-gray-400 transition-transform ${acordeonAbierto === "documentacion" ? 'rotate-45' : ''}`} />
+                    </button>
+                    {acordeonAbierto === "documentacion" && procesoActual && (
+                      <div className="p-4 bg-white border-t border-gray-200">
+                        <div className="space-y-4">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Versión
-                            </label>
-                            <input
-                              type="text"
-                              ref={nuevaDocumentacionVersionRef}
-                              placeholder="1.0"
-                              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all ${
-                                erroresDocumentacion.version ? "border-red-300 bg-red-50" : "border-gray-300"
-                              }`}
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Nombre del documento</label>
+                            <input type="text" ref={nuevaDocumentacionNombreRef} placeholder="Ej: Manual de procedimientos"
+                              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all ${erroresDocumentacion.nombre ? "border-red-300 bg-red-50" : "border-gray-300"}`}
                             />
-                            {erroresDocumentacion.version && (
+                            {erroresDocumentacion.nombre && (
                               <div className="flex items-center gap-2 text-red-600 text-sm mt-2">
-                                <AlertCircle className="w-4 h-4" />
-                                <span>{erroresDocumentacion.version[0]}</span>
+                                <AlertCircle className="w-4 h-4" /><span>{erroresDocumentacion.nombre[0]}</span>
                               </div>
                             )}
                           </div>
-
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Observaciones
-                            </label>
-                            <input
-                              type="text"
-                              ref={nuevaDocumentacionObservacionesRef}
-                              placeholder="Cambios realizados..."
-                              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all ${
-                                erroresDocumentacion.observaciones ? "border-red-300 bg-red-50" : "border-gray-300"
-                              }`}
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Archivo</label>
+                            <input type="file" ref={nuevaDocumentacionArchivoRef}
+                              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all ${erroresDocumentacion.documento ? "border-red-300 bg-red-50" : "border-gray-300"}`}
                             />
+                            {erroresDocumentacion.documento && (
+                              <div className="flex items-center gap-2 text-red-600 text-sm mt-2">
+                                <AlertCircle className="w-4 h-4" /><span>{erroresDocumentacion.documento[0]}</span>
+                              </div>
+                            )}
                           </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">Versión</label>
+                              <input type="text" ref={nuevaDocumentacionVersionRef} placeholder="1.0"
+                                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all ${erroresDocumentacion.version ? "border-red-300 bg-red-50" : "border-gray-300"}`}
+                              />
+                              {erroresDocumentacion.version && (
+                                <div className="flex items-center gap-2 text-red-600 text-sm mt-2">
+                                  <AlertCircle className="w-4 h-4" /><span>{erroresDocumentacion.version[0]}</span>
+                                </div>
+                              )}
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">Observaciones</label>
+                              <input type="text" ref={nuevaDocumentacionObservacionesRef} placeholder="Cambios realizados..."
+                                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all ${erroresDocumentacion.observaciones ? "border-red-300 bg-red-50" : "border-gray-300"}`}
+                              />
+                            </div>
+                          </div>
+                          <button onClick={registrarDocumentacion}
+                            className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-3 px-4 rounded-lg font-medium transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2"
+                          >
+                            <Upload className="w-4 h-4" />Subir Documento
+                          </button>
                         </div>
-
-                        <button
-                          onClick={registrarDocumentacion}
-                          className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-3 px-4 rounded-lg font-medium transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2"
-                        >
-                          <Upload className="w-4 h-4" />
-                          Subir Documento
-                        </button>
                       </div>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
+                )}
 
                 {/* ✅ Acordeón: Asignar Tarea */}
                 <div className="border border-gray-200 rounded-lg overflow-hidden">
@@ -800,48 +769,48 @@ function ProcesosDepartamento() {
                   )}
                 </div>
 
-                {/* ✅ Acordeón: Registrar Novedad */}
-                <div className="border border-gray-200 rounded-lg overflow-hidden">
-                  <button
-                    className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-red-50 to-pink-50 hover:from-red-100 hover:to-pink-100 text-left transition-colors"
-                    onClick={() => toggleAcordeon("errores")}
-                  >
-                    <div className="flex items-center gap-3">
-                      <AlertCircle className="w-5 h-5 text-red-600" />
-                      <span className="font-medium text-gray-900">Reportar Novedad</span>
-                    </div>
-                    <Plus className={`w-5 h-5 text-gray-400 transition-transform ${acordeonAbierto === "errores" ? 'rotate-45' : ''}`} />
-                  </button>
-                  
-                  {acordeonAbierto === "errores" && (
-                    <div className="p-4 bg-white border-t border-gray-200">
-                      <div className="space-y-4">
-                        <textarea
-                          ref={nuevErrorDescripcionRef}
-                          placeholder="Describe la novedad o incidencia encontrada..."
-                          rows={4}
-                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all resize-none ${
-                            error.descripcion ? "border-red-300 bg-red-50" : "border-gray-300"
-                          }`}
-                        />
-                        {error.descripcion && (
-                          <div className="flex items-center gap-2 text-red-600 text-sm">
-                            <AlertCircle className="w-4 h-4" />
-                            <span>{error.descripcion[0]}</span>
-                          </div>
-                        )}
-
-                        <button
-                          onClick={registrarError}
-                          className="w-full bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white py-3 px-4 rounded-lg font-medium transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2"
-                        >
-                          <AlertCircle className="w-4 h-4" />
-                          Reportar Novedad
-                        </button>
+                {/* ✅ Acordeón: Registrar Novedad — solo admin */}
+                {esAdmin && (
+                  <div className="border border-gray-200 rounded-lg overflow-hidden">
+                    <button
+                      className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-red-50 to-pink-50 hover:from-red-100 hover:to-pink-100 text-left transition-colors"
+                      onClick={() => toggleAcordeon("errores")}
+                    >
+                      <div className="flex items-center gap-3">
+                        <AlertCircle className="w-5 h-5 text-red-600" />
+                        <span className="font-medium text-gray-900">Reportar Novedad</span>
                       </div>
-                    </div>
-                  )}
-                </div>
+                      <Plus className={`w-5 h-5 text-gray-400 transition-transform ${acordeonAbierto === "errores" ? 'rotate-45' : ''}`} />
+                    </button>
+                    {acordeonAbierto === "errores" && (
+                      <div className="p-4 bg-white border-t border-gray-200">
+                        <div className="space-y-4">
+                          <textarea
+                            ref={nuevErrorDescripcionRef}
+                            placeholder="Describe la novedad o incidencia encontrada..."
+                            rows={4}
+                            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all resize-none ${
+                              error.descripcion ? "border-red-300 bg-red-50" : "border-gray-300"
+                            }`}
+                          />
+                          {error.descripcion && (
+                            <div className="flex items-center gap-2 text-red-600 text-sm">
+                              <AlertCircle className="w-4 h-4" />
+                              <span>{error.descripcion[0]}</span>
+                            </div>
+                          )}
+                          <button
+                            onClick={registrarError}
+                            className="w-full bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white py-3 px-4 rounded-lg font-medium transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2"
+                          >
+                            <AlertCircle className="w-4 h-4" />
+                            Reportar Novedad
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           )}
