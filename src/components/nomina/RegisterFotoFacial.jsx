@@ -18,16 +18,16 @@ function SectionTitle({ children }) {
 }
 SectionTitle.propTypes = { children: PropTypes.node };
 
-export default function RegisterFotoFacial({ uuid = null, onClose }) {
+export default function RegisterFotoFacial({ uuid = null, defaultUsersId = null, onClose }) {
   const queryClient = useQueryClient();
   const fileRef = useRef(null);
 
-  const [usersId, setUsersId]       = useState("");
-  const [file, setFile]             = useState(null);
-  const [preview, setPreview]       = useState(null);
+  const [usersId, setUsersId]           = useState(defaultUsersId ?? "");
+  const [file, setFile]                 = useState(null);
+  const [preview, setPreview]           = useState(null);
   const [currentPhoto, setCurrentPhoto] = useState(null);
   const [fieldErrors, setFieldErrors]   = useState({});
-  const [loading, setLoading]       = useState(false);
+  const [loading, setLoading]           = useState(false);
   const [loadingData, setLoadingData]   = useState(false);
 
   const { empleados, isLoading: loadingEmpleados } = useGetEmpleados();
@@ -35,7 +35,8 @@ export default function RegisterFotoFacial({ uuid = null, onClose }) {
 
   useEffect(() => {
     if (!uuid) {
-      setUsersId(""); setFile(null); setPreview(null);
+      setUsersId(defaultUsersId ?? "");
+      setFile(null); setPreview(null);
       setCurrentPhoto(null); setFieldErrors({});
       return;
     }
@@ -224,6 +225,7 @@ export default function RegisterFotoFacial({ uuid = null, onClose }) {
 }
 
 RegisterFotoFacial.propTypes = {
-  uuid: PropTypes.string,
-  onClose: PropTypes.func,
+  uuid:           PropTypes.string,
+  defaultUsersId: PropTypes.number,
+  onClose:        PropTypes.func,
 };

@@ -236,6 +236,18 @@ export const workSessionService = {
   getWorkSessions(params = {}) {
     return apiClient.get("api/nomina/work-sessions", { params });
   },
+  createSession(data) {
+    return apiClient.post("api/nomina/work-sessions", data);
+  },
+  updateSession(uuid, data) {
+    return apiClient.put(`api/nomina/work-sessions/${uuid}`, data);
+  },
+  getSessionHoy(userId) {
+    const today = new Date().toISOString().split("T")[0];
+    return apiClient.get("api/nomina/work-sessions", {
+      params: { user_id: userId, fecha: today, per_page: 1 },
+    });
+  },
 };
 
 export const permisoService = {
