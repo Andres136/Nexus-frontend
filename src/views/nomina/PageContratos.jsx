@@ -124,6 +124,8 @@ export default function PageContratos() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Empleado</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Documento</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cargo</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo contrato</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Empresa</th>
                 <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Salario base</th>
@@ -140,6 +142,13 @@ export default function PageContratos() {
                   <td className="px-4 py-3">
                     <p className="font-medium text-gray-800">{item.usuario?.name ?? "—"}</p>
                     <p className="text-xs text-gray-400">{item.usuario?.email ?? ""}</p>
+                  </td>
+                  <td className="px-4 py-3 text-gray-600">
+                    <p className="text-xs font-medium text-gray-500">{item.tipo_documento ?? "—"}</p>
+                    <p className="text-sm text-gray-800">{item.numero_documento ?? "—"}</p>
+                  </td>
+                  <td className="px-4 py-3 text-gray-600">
+                    {item.cargo ?? "—"}
                   </td>
                   <td className="px-4 py-3 text-gray-600">
                     {item.tipo_contrato?.nombre ?? item.tipoContrato?.nombre ?? "—"}

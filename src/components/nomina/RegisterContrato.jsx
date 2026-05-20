@@ -133,6 +133,13 @@ export default function RegisterContrato({ uuid = null, onClose }) {
             </div>
           </div>
 
+          {/* Cargo */}
+          <div>
+            {label("Cargo", true)}
+            <input type="text" name="cargo" value={formData.cargo} onChange={handleChange} placeholder="Ej: Desarrollador Senior" className={inputClass("cargo")} />
+            {err("cargo")}
+          </div>
+
           {/* Empresa + Tipo contrato */}
           <div className="grid grid-cols-2 gap-3">
             <div>

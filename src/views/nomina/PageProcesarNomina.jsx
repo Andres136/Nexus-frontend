@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useGetNominas } from "../../hooks/nomina/useGetNominas";
 import { useGetNominaSummary } from "../../hooks/nomina/useGetNominaSummary";
+import { useGetContrataciones } from "../../hooks/nomina/useGetContrataciones";
 
 const MESES = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -127,9 +128,14 @@ export default function PageProcesarNomina() {
     return `${anio}-${String(mes + 1).padStart(2, "0")}-${ultimo}`;
   }, [mes, anio]);
 
-  const params = useMemo(
+  const nominaParams = useMemo(
     () => ({ periodo_inicio: periodoInicio, periodo_fin: periodoFin, search: search || undefined, page, per_page: perPage }),
     [periodoInicio, periodoFin, search, page, perPage]
+  );
+
+  const contratacionParams = useMemo(
+    () => ({ search: search || undefined, page, per_page: perPage, status: 1 }),
+    [search, page, perPage]
   );
 
   const summaryParams = useMemo(
@@ -137,11 +143,12 @@ export default function PageProcesarNomina() {
     [periodoInicio, periodoFin]
   );
 
-  const { nominas, isLoading } = useGetNominas(params);
+  const { nominas } = useGetNominas(nominaParams);
+  const { contrataciones, isLoading } = useGetContrataciones(contratacionParams);
   const { summary, isLoading: loadingSummary } = useGetNominaSummary(summaryParams);
 
-  const lista = nominas?.data?.data ?? [];
-  const meta = nominas?.data ?? null;
+  const lista = contrataciones?.data?.data ?? [];
+  const meta  = contrataciones?.data ?? null;
 
   const handleMes = (e) => { setMes(Number(e.target.value)); setPage(1); };
   const handleAnio = (e) => { setAnio(Number(e.target.value)); setPage(1); };
@@ -341,10 +348,19 @@ export default function PageProcesarNomina() {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-50">
                   {lista.map((item) => {
-                    const nombre = item.empleado?.name ?? "—";
-                    const cargo = item.contratacion?.tipo_contrato?.nombre
-                      ?? item.contratacion?.tipoContrato?.nombre
-                      ?? "—";
+                    const nombre    = item.usuario?.name ?? "—";
+                    const cargo     = item.cargo ?? "—";
+                    const tipoDoc   = item.tipo_documento ?? "CC";
+                    const numDoc    = item.numero_documento ?? "";
+                    const devengado = Number(item.base_salario ?? 0) + Number(item.auxilio_transporte ?? 0);
+                    const base      = Number(item.base_salario ?? 0);
+                    const deducciones = Math.round(base * 0.08);
+                    const neto      = devengado - deducciones;
+
+                    // ¿ya tiene nómina liquidada en este período?
+                    const nominasLista = nominas?.data?.data ?? [];
+                    const nominaExiste = nominasLista.find((n) => n.user_id === item.users_id && n.liquidada);
+
                     return (
                       <tr key={item.uuid} className="hover:bg-gray-50 transition-colors">
                         <td className="px-4 py-3.5 text-gray-500 font-mono text-xs">
@@ -357,26 +373,30 @@ export default function PageProcesarNomina() {
                             </div>
                             <div>
                               <p className="font-medium text-gray-800 text-sm">{nombre}</p>
-                              <p className="text-xs text-gray-400">
-                                {item.empleado?.email ?? ""}
-                              </p>
+                              <p className="text-xs text-gray-400">{tipoDoc} {numDoc}</p>
                             </div>
                           </div>
                         </td>
                         <td className="px-4 py-3.5 text-gray-600">{cargo}</td>
                         <td className="px-4 py-3.5 text-right text-gray-700 font-medium">
-                          {formatCOP(item.total_devengado)}
+                          {nominaExiste ? formatCOP(nominaExiste.total_devengado) : formatCOP(devengado)}
                         </td>
                         <td className="px-4 py-3.5 text-right text-orange-600 font-medium">
-                          {formatCOP(item.total_deducciones)}
+                          {nominaExiste ? formatCOP(nominaExiste.total_deducciones) : formatCOP(deducciones)}
                         </td>
                         <td className="px-4 py-3.5 text-right text-green-600 font-semibold">
-                          {formatCOP(item.salario_neto)}
+                          {nominaExiste ? formatCOP(nominaExiste.salario_neto) : formatCOP(neto)}
                         </td>
                         <td className="px-4 py-3.5 text-center">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
-                            Pendiente
-                          </span>
+                          {nominaExiste ? (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                              Liquidado
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
+                              Pendiente
+                            </span>
+                          )}
                         </td>
                         <td className="px-4 py-3.5 text-right">
                           <button className="w-7 h-7 flex items-center justify-center rounded-md border border-gray-200 hover:bg-gray-100 transition-colors ml-auto text-gray-500">
