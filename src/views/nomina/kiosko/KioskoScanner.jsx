@@ -92,7 +92,7 @@ export default function KioskoScanner({
         const session  = sessions[0] ?? null;
 
         // Sesión abierta → ir a pantalla de acciones
-        if (session && !session.hola_salida) {
+        if (session && !session.hora_salida) {
           onReconocido(userId, session);
           return;
         }

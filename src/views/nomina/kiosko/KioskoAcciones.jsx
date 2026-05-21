@@ -64,7 +64,7 @@ export default function KioskoAcciones({ empleado, kioskoInfo, jornadaId, onDone
     }
   };
 
-  const marcarSalida  = () => ejecutar({ hola_salida: ahora() },                  `Salida registrada. ¡Hasta pronto, ${empleado.nombre}!`);
+  const marcarSalida  = () => ejecutar({ hora_salida: ahora() },                  `Salida registrada. ¡Hasta pronto, ${empleado.nombre}!`);
   const iniciarPausa  = () => ejecutar({ hora_salida_brake: ahora() },            `Pausa iniciada. Descansa, ${empleado.nombre}.`);
   const terminarPausa = () => ejecutar({ hora_ingreso_brake: ahora() },         `Pausa terminada. Bienvenido de vuelta, ${empleado.nombre}.`);
 

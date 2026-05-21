@@ -211,7 +211,7 @@ export default function PageWorkSessions() {
                       <td className="px-4 py-3.5 whitespace-nowrap">
                         <div className="flex items-center gap-1 text-red-500 font-medium">
                           <Clock className="h-3 w-3" />
-                          {fmtHora(item.hola_salida)}
+                          {fmtHora(item.hora_salida)}
                         </div>
                       </td>
 
