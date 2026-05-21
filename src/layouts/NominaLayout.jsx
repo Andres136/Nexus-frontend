@@ -19,6 +19,7 @@ import {
   AlarmClock,
   Palmtree,
   Monitor,
+  FileBadge,
 } from "lucide-react";
 
 import PageProcesarNomina from "../views/nomina/PageProcesarNomina";
@@ -36,6 +37,8 @@ import PagePermisos from "../views/nomina/PagePermisos";
 import PageVacaciones from "../views/nomina/PageVacaciones";
 import PageHorasExtras from "../views/nomina/PageHorasExtras";
 import PageReconocimientoFacial from "../views/nomina/PageReconocimientoFacial";
+import PageDesprendibles from "../views/nomina/PageDesprendibles";
+import PageCertificadoLaboral from "../views/nomina/PageCertificadoLaboral";
 
 function Placeholder({ label, description }) {
   Placeholder.propTypes = { label: PropTypes.string, description: PropTypes.string };
@@ -117,10 +120,23 @@ const NAV_ITEMS = [
     ],
   },
   {
-    id: "desprendibles",
-    label: "Desprendibles",
-    icon: FileText,
-    component: <Placeholder label="Desprendibles" description="Generación de desprendibles de pago por empleado." />,
+    id: "portal-empleado",
+    label: "Portal del Empleado",
+    icon: FileBadge,
+    tabs: [
+      {
+        id: "desprendibles",
+        label: "Desprendibles de Pago",
+        icon: FileText,
+        component: <PageDesprendibles />,
+      },
+      {
+        id: "certificado-laboral",
+        label: "Certificado Laboral",
+        icon: FileText,
+        component: <PageCertificadoLaboral />,
+      },
+    ],
   },
   {
     id: "incapacidades",
