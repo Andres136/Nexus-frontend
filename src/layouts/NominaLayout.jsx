@@ -20,6 +20,8 @@ import {
   Palmtree,
   Monitor,
   FileBadge,
+  AlertTriangle,
+  FileWarning,
 } from "lucide-react";
 
 import PageProcesarNomina from "../views/nomina/PageProcesarNomina";
@@ -39,6 +41,8 @@ import PageHorasExtras from "../views/nomina/PageHorasExtras";
 import PageReconocimientoFacial from "../views/nomina/PageReconocimientoFacial";
 import PageDesprendibles from "../views/nomina/PageDesprendibles";
 import PageCertificadoLaboral from "../views/nomina/PageCertificadoLaboral";
+import PageLlamadosAtencion from "../views/nomina/PageLlamadosAtencion";
+import PageDescargos from "../views/nomina/PageDescargos";
 
 function Placeholder({ label, description }) {
   Placeholder.propTypes = { label: PropTypes.string, description: PropTypes.string };
@@ -191,7 +195,20 @@ const NAV_ITEMS = [
     id: "reportes",
     label: "Reportes",
     icon: BarChart2,
-    component: <Placeholder label="Reportes" description="Informes y estadísticas de nómina." />,
+    tabs: [
+      {
+        id: "llamados",
+        label: "Llamados de Atención",
+        icon: AlertTriangle,
+        component: <PageLlamadosAtencion />,
+      },
+      {
+        id: "descargos",
+        label: "Descargos",
+        icon: FileWarning,
+        component: <PageDescargos />,
+      },
+    ],
   },
   {
     id: "configuracion",
