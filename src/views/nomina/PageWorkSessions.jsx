@@ -218,7 +218,7 @@ export default function PageWorkSessions() {
                       {/* Pausa salida / entrada */}
                       <td className="px-4 py-3.5 text-gray-500 whitespace-nowrap text-xs">
                         {item.hora_salida_brake
-                          ? `${fmtHora(item.hora_salida_brake)} – ${fmtHora(item.horara_ingreso_brake)}`
+                          ? `${fmtHora(item.hora_salida_brake)} – ${fmtHora(item.hora_ingreso_brake)}`
                           : "—"}
                       </td>
 

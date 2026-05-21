@@ -42,9 +42,12 @@ export default function KioskoAcciones({ empleado, kioskoInfo, jornadaId, onDone
   const [exitoMsg, setExitoMsg]   = useState("");
 
   const entrada  = parseTime(session?.hora_entrada);
-  const enPausa  = !!session?.hora_salida_brake && !session?.horara_ingreso_brake;
+  const enPausa  = !!session?.hora_salida_brake && !session?.hora_ingreso_brake;
 
-  const ahora = () => new Date().toISOString();
+  const ahora = () => {
+    const d = new Date();
+    return `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}:${String(d.getSeconds()).padStart(2,"0")}`;
+  };
 
   const ejecutar = async (payload, mensaje) => {
     setGuardando(true);
@@ -63,7 +66,7 @@ export default function KioskoAcciones({ empleado, kioskoInfo, jornadaId, onDone
 
   const marcarSalida  = () => ejecutar({ hola_salida: ahora() },                  `Salida registrada. ¡Hasta pronto, ${empleado.nombre}!`);
   const iniciarPausa  = () => ejecutar({ hora_salida_brake: ahora() },            `Pausa iniciada. Descansa, ${empleado.nombre}.`);
-  const terminarPausa = () => ejecutar({ horara_ingreso_brake: ahora() },         `Pausa terminada. Bienvenido de vuelta, ${empleado.nombre}.`);
+  const terminarPausa = () => ejecutar({ hora_ingreso_brake: ahora() },         `Pausa terminada. Bienvenido de vuelta, ${empleado.nombre}.`);
 
   return (
     <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-between py-8 px-4">

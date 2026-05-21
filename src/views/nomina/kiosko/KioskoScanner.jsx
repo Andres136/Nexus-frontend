@@ -96,12 +96,7 @@ export default function KioskoScanner({
           onReconocido(userId, session);
           return;
         }
-        // Jornada ya cerrada hoy
-        if (session && session.hola_salida) {
-          setExitoMsg(`${info.nombre}, tu jornada ya fue cerrada hoy.`);
-          setTimeout(resetear, 4000);
-          return;
-        }
+        // Jornada cerrada → permitir iniciar nueva (sesión nula para habilitar botón)
         // Sin sesión → registrar entrada automáticamente
         setChecking(false);
         setGuardando(true);
@@ -110,11 +105,14 @@ export default function KioskoScanner({
           const yy = ahora.getFullYear();
           const mm = String(ahora.getMonth() + 1).padStart(2, "0");
           const dd = String(ahora.getDate()).padStart(2, "0");
+          const hh = String(ahora.getHours()).padStart(2, "0");
+          const mi = String(ahora.getMinutes()).padStart(2, "0");
+          const ss = String(ahora.getSeconds()).padStart(2, "0");
           await workSessionService.createSession({
             user_id:            userId,
             kiosko_id:          kioskoInfo.id,
             registro_diario:    `${yy}-${mm}-${dd}`,
-            hora_entrada:       `${String(ahora.getHours()).padStart(2,"0")}:${String(ahora.getMinutes()).padStart(2,"0")}:${String(ahora.getSeconds()).padStart(2,"0")}`,
+            hora_entrada:       `${hh}:${mi}:${ss}`,
             horario_laboral_id: jornadaId,
           });
           const hora = hhmm(ahora);
