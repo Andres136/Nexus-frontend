@@ -50,7 +50,10 @@ export default function KioskoScanner({
 
   // ── Detección de rostros ────────────────────────────────────────────────────
   const detectar = useCallback(async () => {
-    if (!videoRef.current || !faceMatcher || cooldown.current || candidato) return;
+    if (!videoRef.current || !faceMatcher || cooldown.current || candidato) {
+      if (!faceMatcher) console.warn("[Kiosko] faceMatcher es null — no hay fotos faciales cargadas");
+      return;
+    }
     const video = videoRef.current;
     if (video.readyState < 2) return;
 
@@ -60,9 +63,10 @@ export default function KioskoScanner({
         .withFaceLandmarks()
         .withFaceDescriptor();
 
-      if (!det) return;
+      if (!det) { console.log("[Kiosko] No se detectó rostro"); return; }
 
       const match = faceMatcher.findBestMatch(det.descriptor);
+      console.log("[Kiosko] Match:", match.label, "distancia:", match.distance.toFixed(3));
       if (match.label === "unknown") return;
 
       cooldown.current = true;
