@@ -1,6 +1,7 @@
 import { useState } from "react";
 import PropTypes from "prop-types";
 import { workSessionService } from "../../../services/nominaService";
+import { hablar } from "../../../helpers/voz";
 
 const hhmm = (date) =>
   date.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" });
@@ -10,6 +11,11 @@ const minsToHM = (mins) => {
   const h = Math.floor(mins / 60);
   const m = mins % 60;
   return `${h} h ${m} min`;
+};
+
+const tiempoHHMMSS = () => {
+  const d = new Date();
+  return `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}:${String(d.getSeconds()).padStart(2,"0")}`;
 };
 
 function parseTime(str) {
@@ -23,6 +29,7 @@ function Boton({ onClick, disabled, color, children }) {
     rojo:    "bg-red-600 hover:bg-red-700 shadow-red-900/40",
     naranja: "bg-amber-500 hover:bg-amber-600 shadow-amber-900/40",
     verde:   "bg-green-600 hover:bg-green-700 shadow-green-900/40",
+    azul:    "bg-blue-600 hover:bg-blue-700 shadow-blue-900/40",
     gris:    "bg-gray-700 hover:bg-gray-600 text-gray-300",
   };
   return (
@@ -36,27 +43,40 @@ function Boton({ onClick, disabled, color, children }) {
   );
 }
 
-export default function KioskoAcciones({ empleado, kioskoInfo, jornadaId, onDone, onCancelar }) {
+Boton.propTypes = {
+  onClick: PropTypes.func,
+  disabled: PropTypes.bool,
+  color: PropTypes.string,
+  children: PropTypes.node,
+};
+
+// Mensajes de voz por acción
+const VOZ = {
+  salida:         (nombre) => `Registro exitoso. Hasta pronto, ${nombre}.`,
+  pausaSalida:    (nombre) => `Registro exitoso. Inicio de pausa registrado. Descansa, ${nombre}.`,
+  pausaEntrada:   (nombre) => `Registro exitoso. Fin de pausa. Bienvenido de vuelta, ${nombre}.`,
+  almuerzoSalida: (nombre) => `Registro exitoso. Salida a almuerzo registrada. Buen provecho, ${nombre}.`,
+  almuerzoEntrada:(nombre) => `Registro exitoso. Regreso de almuerzo registrado. Bienvenido, ${nombre}.`,
+};
+
+export default function KioskoAcciones({ empleado, kioskoInfo, onDone, onCancelar }) {
   const { session } = empleado;
   const [guardando, setGuardando] = useState(false);
   const [exitoMsg, setExitoMsg]   = useState("");
 
-  const entrada  = parseTime(session?.hora_entrada);
-  const enPausa  = !!session?.hora_salida_brake && !session?.hora_ingreso_brake;
+  const entrada       = parseTime(session?.hora_entrada);
+  const enPausa       = !!session?.hora_salida_brake  && !session?.hora_ingreso_brake;
+  const enAlmuerzo    = !!session?.hora_salida_almuerzo && !session?.hora_ingreso_almuerzo;
 
-  const ahora = () => {
-    const d = new Date();
-    return `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}:${String(d.getSeconds()).padStart(2,"0")}`;
-  };
-
-  const ejecutar = async (payload, mensaje) => {
+  const ejecutar = async (payload, textoVoz, mensajePantalla) => {
     setGuardando(true);
     try {
       await workSessionService.updateSession(session.uuid, payload);
-      const hora = hhmm(new Date());
-      setExitoMsg(mensaje);
-      setTimeout(() => onDone(empleado.nombre, hora), 2500);
+      hablar(textoVoz);
+      setExitoMsg(mensajePantalla);
+      setTimeout(() => onDone(empleado.nombre, hhmm(new Date())), 3000);
     } catch {
+      hablar("Error al registrar. Por favor intenta de nuevo.");
       setExitoMsg("Error al registrar. Intenta de nuevo.");
       setTimeout(onCancelar, 2500);
     } finally {
@@ -64,9 +84,31 @@ export default function KioskoAcciones({ empleado, kioskoInfo, jornadaId, onDone
     }
   };
 
-  const marcarSalida  = () => ejecutar({ hora_salida: ahora() },                  `Salida registrada. ¡Hasta pronto, ${empleado.nombre}!`);
-  const iniciarPausa  = () => ejecutar({ hora_salida_brake: ahora() },            `Pausa iniciada. Descansa, ${empleado.nombre}.`);
-  const terminarPausa = () => ejecutar({ hora_ingreso_brake: ahora() },         `Pausa terminada. Bienvenido de vuelta, ${empleado.nombre}.`);
+  const marcarSalida      = () => ejecutar(
+    { hora_salida: tiempoHHMMSS() },
+    VOZ.salida(empleado.nombre),
+    `¡Hasta pronto, ${empleado.nombre}! Salida registrada.`
+  );
+  const iniciarPausa      = () => ejecutar(
+    { hora_salida_brake: tiempoHHMMSS() },
+    VOZ.pausaSalida(empleado.nombre),
+    `Pausa iniciada. Descansa un momento, ${empleado.nombre}.`
+  );
+  const terminarPausa     = () => ejecutar(
+    { hora_ingreso_brake: tiempoHHMMSS() },
+    VOZ.pausaEntrada(empleado.nombre),
+    `¡Bienvenido de vuelta, ${empleado.nombre}!`
+  );
+  const iniciarAlmuerzo   = () => ejecutar(
+    { hora_salida_almuerzo: tiempoHHMMSS() },
+    VOZ.almuerzoSalida(empleado.nombre),
+    `Salida a almuerzo registrada. ¡Buen provecho, ${empleado.nombre}!`
+  );
+  const terminarAlmuerzo  = () => ejecutar(
+    { hora_ingreso_almuerzo: tiempoHHMMSS() },
+    VOZ.almuerzoEntrada(empleado.nombre),
+    `¡Bienvenido, ${empleado.nombre}! Regreso de almuerzo registrado.`
+  );
 
   return (
     <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-between py-8 px-4">
@@ -76,8 +118,8 @@ export default function KioskoAcciones({ empleado, kioskoInfo, jornadaId, onDone
         <p className="text-indigo-400 text-xs font-semibold uppercase tracking-widest mb-1">
           {kioskoInfo?.name ?? "Kiosko"}
         </p>
-        <h1 className="text-white text-2xl font-bold">Tablet · Salida y Pausas</h1>
-        <p className="text-gray-400 text-sm mt-1">Una sola interfaz para retiro o descanso</p>
+        <h1 className="text-white text-2xl font-bold">Tablet · Acciones</h1>
+        <p className="text-gray-400 text-sm mt-1">Selecciona tu marcación</p>
       </div>
 
       {/* Empleado */}
@@ -95,41 +137,57 @@ export default function KioskoAcciones({ empleado, kioskoInfo, jornadaId, onDone
         </div>
         <div className="text-center">
           <p className="text-white font-semibold text-lg">{empleado.nombre}</p>
-          {/* Estado actual */}
-          <div className="mt-2 bg-amber-900/30 border border-amber-500/30 rounded-xl px-4 py-2">
-            <p className="text-amber-400 text-xs font-medium">Estado actual</p>
-            <p className="text-amber-200 text-sm font-bold mt-0.5">
-              {enPausa
-                ? "En pausa"
-                : entrada
-                ? `En jornada desde ${hhmm(entrada)}`
-                : "Sesión activa"}
+          <div className="mt-2 bg-indigo-900/30 border border-indigo-500/30 rounded-xl px-4 py-2">
+            <p className="text-indigo-400 text-xs font-medium">Estado</p>
+            <p className="text-indigo-200 text-sm font-bold mt-0.5">
+              {enPausa    ? "En pausa"
+               : enAlmuerzo ? "En almuerzo"
+               : entrada  ? `En jornada desde ${hhmm(entrada)}`
+               : "Sesión activa"}
             </p>
           </div>
         </div>
       </div>
 
-      {/* Mensaje de éxito o botones */}
+      {/* Acciones o mensaje */}
       <div className="w-full max-w-xs flex flex-col gap-3">
         {exitoMsg ? (
-          <div className="bg-green-900/40 border border-green-500/30 rounded-xl px-5 py-4 text-center">
-            <p className="text-green-300 text-sm font-medium">{exitoMsg}</p>
+          <div className="bg-green-900/40 border border-green-500/30 rounded-xl px-5 py-5 text-center">
+            <p className="text-green-400 text-xs font-semibold uppercase tracking-widest mb-1">
+              Registro exitoso
+            </p>
+            <p className="text-green-200 text-sm font-medium">{exitoMsg}</p>
           </div>
         ) : (
           <>
-            <Boton onClick={marcarSalida} disabled={guardando} color="rojo">
-              {guardando ? "Registrando..." : "Marcar salida"}
-            </Boton>
-
-            {!enPausa && (
-              <Boton onClick={iniciarPausa} disabled={guardando} color="naranja">
-                Iniciar pausa
+            {/* Salida principal */}
+            {!enPausa && !enAlmuerzo && (
+              <Boton onClick={marcarSalida} disabled={guardando} color="rojo">
+                {guardando ? "Registrando..." : "Marcar salida"}
               </Boton>
             )}
 
+            {/* Pausa */}
+            {!enPausa && !enAlmuerzo && (
+              <Boton onClick={iniciarPausa} disabled={guardando} color="naranja">
+                Salida a pausa
+              </Boton>
+            )}
             {enPausa && (
               <Boton onClick={terminarPausa} disabled={guardando} color="verde">
-                Terminar pausa
+                Regreso de pausa
+              </Boton>
+            )}
+
+            {/* Almuerzo */}
+            {!enPausa && !enAlmuerzo && (
+              <Boton onClick={iniciarAlmuerzo} disabled={guardando} color="azul">
+                Salida a almuerzo
+              </Boton>
+            )}
+            {enAlmuerzo && (
+              <Boton onClick={terminarAlmuerzo} disabled={guardando} color="verde">
+                Regreso de almuerzo
               </Boton>
             )}
 
@@ -147,9 +205,7 @@ export default function KioskoAcciones({ empleado, kioskoInfo, jornadaId, onDone
           Trabajado: {minsToHM(session?.minutos_trabajados)}
         </p>
         {session?.minutos_pausa > 0 && (
-          <p className="text-gray-400 text-xs mt-0.5">
-            Pausa acumulada: {session.minutos_pausa} min
-          </p>
+          <p className="text-gray-400 text-xs mt-0.5">Pausa: {session.minutos_pausa} min</p>
         )}
       </div>
     </div>
@@ -164,7 +220,6 @@ KioskoAcciones.propTypes = {
     session:  PropTypes.object,
   }).isRequired,
   kioskoInfo: PropTypes.shape({ id: PropTypes.number, name: PropTypes.string }).isRequired,
-  jornadaId:  PropTypes.number.isRequired,
   onDone:     PropTypes.func.isRequired,
   onCancelar: PropTypes.func.isRequired,
 };

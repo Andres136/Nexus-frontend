@@ -2,16 +2,17 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import PropTypes from "prop-types";
 import * as faceapi from "face-api.js";
 import { workSessionService } from "../../../services/nominaService";
-import audioExito from "../../../assets/audios/Audio 1.m4a";
-import audioError from "../../../assets/audios/Audio 2.m4a";
-
-const playAudio = (src) => { new Audio(src).play().catch(() => {}); };
+import { hablar } from "../../../helpers/voz";
 
 const hhmm = (date) =>
   date.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" });
 
-// ─── Estados internos del scanner ─────────────────────────────────────────────
-// idle → detectando → reconocido → (entrada confirmada | redirige a acciones)
+const tiempoHHMMSS = (date) => {
+  const hh = String(date.getHours()).padStart(2, "0");
+  const mi = String(date.getMinutes()).padStart(2, "0");
+  const ss = String(date.getSeconds()).padStart(2, "0");
+  return `${hh}:${mi}:${ss}`;
+};
 
 export default function KioskoScanner({
   faceMatcher,
@@ -22,36 +23,36 @@ export default function KioskoScanner({
   onReconocido,
   onEntradaCompleta,
 }) {
-  const videoRef    = useRef(null);
-  const streamRef   = useRef(null);
-  const loopRef     = useRef(null);
-  const cooldown    = useRef(false);
-  const detecting   = useRef(false);
-  const detOptions  = useRef(new faceapi.SsdMobilenetv1Options({ minConfidence: 0.4 }));
+  const videoRef   = useRef(null);
+  const streamRef  = useRef(null);
+  const loopRef    = useRef(null);
+  const cooldown   = useRef(false);
+  const detecting  = useRef(false);
+  const detOptions = useRef(new faceapi.SsdMobilenetv1Options({ minConfidence: 0.4 }));
 
-  const [camError, setCamError]       = useState("");
-  const [candidato, setCandidato]     = useState(null); // { userId, nombre, photoUrl }
-  const [checkingSession, setChecking] = useState(false);
-  const [guardando, setGuardando]     = useState(false);
-  const [exitoMsg, setExitoMsg]       = useState("");
+  const [camError, setCamError]         = useState("");
+  const [candidato, setCandidato]       = useState(null);
+  const [checkingSession, setChecking]  = useState(false);
+  const [guardando, setGuardando]       = useState(false);
+  const [exitoMsg, setExitoMsg]         = useState("");
+  const [jornadaCerrada, setJornadaCerrada] = useState(false);
 
   const resetear = useCallback(() => {
     setCandidato(null);
     setChecking(false);
     setGuardando(false);
     setExitoMsg("");
+    setJornadaCerrada(false);
     setTimeout(() => { cooldown.current = false; }, 2000);
   }, []);
 
-  // ── Cámara ─────────────────────────────────────────────────────────────────
+  // ── Cámara ──────────────────────────────────────────────────────────────────
   useEffect(() => {
     navigator.mediaDevices
       .getUserMedia({ video: true })
       .then((stream) => {
         streamRef.current = stream;
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-        }
+        if (videoRef.current) videoRef.current.srcObject = stream;
       })
       .catch((err) => setCamError(err.name + ": " + err.message));
 
@@ -61,7 +62,7 @@ export default function KioskoScanner({
     };
   }, []);
 
-  // ── Detección de rostros ────────────────────────────────────────────────────
+  // ── Detección ───────────────────────────────────────────────────────────────
   const detectar = useCallback(async () => {
     if (!videoRef.current || !faceMatcher || cooldown.current || candidato || detecting.current) return;
     const video = videoRef.current;
@@ -84,51 +85,56 @@ export default function KioskoScanner({
       const info   = empleadosMap.get(userId) ?? { nombre: "Empleado", photoUrl: null };
       setCandidato({ userId, nombre: info.nombre, photoUrl: info.photoUrl });
 
-      // Consultar sesión de hoy
       setChecking(true);
       try {
-        const res = await workSessionService.getSessionHoy(userId);
+        const res      = await workSessionService.getSessionHoy(userId);
         const sessions = res.data?.data?.data ?? res.data?.data ?? [];
         const session  = sessions[0] ?? null;
 
-        // Sesión abierta → ir a pantalla de acciones
+        // Sesión abierta → pantalla de acciones (salida / pausa / almuerzo)
         if (session && !session.hora_salida) {
           onReconocido(userId, session);
           return;
         }
-        // Jornada cerrada → permitir iniciar nueva (sesión nula para habilitar botón)
-        // Sin sesión → registrar entrada automáticamente
+
+        // Jornada ya cerrada → una sola entrada/salida por día
+        if (session && session.hora_salida) {
+          setJornadaCerrada(true);
+          hablar(`${info.nombre}, tu jornada de hoy ya fue completada. Hasta mañana.`);
+          setExitoMsg(`Tu jornada de hoy ya finalizó, ${info.nombre}.`);
+          setTimeout(resetear, 4000);
+          return;
+        }
+
+        // Sin sesión → registrar entrada
         setChecking(false);
         setGuardando(true);
-        try {
-          const ahora = new Date();
-          const yy = ahora.getFullYear();
-          const mm = String(ahora.getMonth() + 1).padStart(2, "0");
-          const dd = String(ahora.getDate()).padStart(2, "0");
-          const hh = String(ahora.getHours()).padStart(2, "0");
-          const mi = String(ahora.getMinutes()).padStart(2, "0");
-          const ss = String(ahora.getSeconds()).padStart(2, "0");
-          await workSessionService.createSession({
-            user_id:            userId,
-            kiosko_id:          kioskoInfo.id,
-            registro_diario:    `${yy}-${mm}-${dd}`,
-            hora_entrada:       `${hh}:${mi}:${ss}`,
-            horario_laboral_id: jornadaId,
-          });
-          const hora = hhmm(ahora);
-          playAudio(audioExito);
-          setExitoMsg(`¡Bienvenido, ${info.nombre}! Entrada marcada a las ${hora}.`);
-          onEntradaCompleta(info.nombre, hora);
-          setTimeout(resetear, 3000);
-        } catch {
-          playAudio(audioError);
-          setExitoMsg("Error al registrar la entrada. Intenta de nuevo.");
-          setTimeout(resetear, 3000);
-        } finally {
-          setGuardando(false);
-        }
+        const ahora = new Date();
+        const yy = ahora.getFullYear();
+        const mm = String(ahora.getMonth() + 1).padStart(2, "0");
+        const dd = String(ahora.getDate()).padStart(2, "0");
+
+        await workSessionService.createSession({
+          user_id:            userId,
+          kiosko_id:          kioskoInfo.id,
+          registro_diario:    `${yy}-${mm}-${dd}`,
+          hora_entrada:       tiempoHHMMSS(ahora),
+          horario_laboral_id: jornadaId,
+        });
+
+        const hora = hhmm(ahora);
+        hablar(`Bienvenido, ${info.nombre}. Registro exitoso.`);
+        setExitoMsg(`¡Bienvenido, ${info.nombre}! Entrada marcada a las ${hora}.`);
+        onEntradaCompleta(info.nombre, hora);
+        setTimeout(resetear, 3500);
+
+      } catch {
+        hablar("Error al registrar. Por favor intenta de nuevo.");
+        setExitoMsg("Error al registrar la entrada. Intenta de nuevo.");
+        setTimeout(resetear, 3000);
       } finally {
         setChecking(false);
+        setGuardando(false);
       }
     } catch {
       // silencioso
@@ -142,7 +148,7 @@ export default function KioskoScanner({
     return () => clearInterval(loopRef.current);
   }, [detectar]);
 
-  // ── UI ─────────────────────────────────────────────────────────────────────
+  // ── UI ──────────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-between py-8 px-4">
 
@@ -156,14 +162,12 @@ export default function KioskoScanner({
         </h1>
         <p className="text-gray-400 text-sm mt-1">
           {candidato
-            ? checkingSession
-              ? "Verificando sesión..."
-              : "Reconocimiento completado"
+            ? checkingSession ? "Verificando sesión..." : "Reconocimiento completado"
             : "Reconocimiento facial · Acércate a la cámara"}
         </p>
       </div>
 
-      {/* Área de cámara */}
+      {/* Cámara */}
       <div className="relative w-64 h-64 rounded-2xl overflow-hidden border-2 border-indigo-600/40 shadow-2xl shadow-indigo-900/30 my-4">
         {camError ? (
           <div className="w-full h-full bg-gray-900 flex flex-col items-center justify-center gap-2 px-3">
@@ -174,22 +178,15 @@ export default function KioskoScanner({
           </div>
         ) : (
           <>
-            <video
-              ref={videoRef}
-              autoPlay muted playsInline
-              className="w-full h-full object-cover"
-            />
-            {/* Overlay cuando se reconoce */}
+            <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
+
             {candidato?.photoUrl && !exitoMsg && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/60">
-                <img
-                  src={candidato.photoUrl}
-                  alt={candidato.nombre}
-                  className="w-32 h-32 rounded-full object-cover border-4 border-indigo-400 shadow-lg"
-                />
+                <img src={candidato.photoUrl} alt={candidato.nombre}
+                  className="w-32 h-32 rounded-full object-cover border-4 border-indigo-400 shadow-lg" />
               </div>
             )}
-            {/* Marco de escaneo */}
+
             {!candidato && !exitoMsg && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div className="w-36 h-36 rounded-full border-2 border-indigo-400/50 animate-pulse" />
@@ -199,17 +196,28 @@ export default function KioskoScanner({
         )}
       </div>
 
-      {/* Mensaje de éxito */}
+      {/* Mensaje */}
       {exitoMsg && (
-        <div className="bg-green-900/40 border border-green-500/30 rounded-xl px-5 py-3 text-center max-w-xs">
-          <p className="text-green-300 text-sm font-medium">{exitoMsg}</p>
+        <div className={`rounded-xl px-5 py-4 text-center max-w-xs w-full border ${
+          jornadaCerrada
+            ? "bg-amber-900/40 border-amber-500/30"
+            : "bg-green-900/40 border-green-500/30"
+        }`}>
+          {!jornadaCerrada && (
+            <p className="text-green-400 text-xs font-semibold uppercase tracking-widest mb-1">
+              Registro exitoso
+            </p>
+          )}
+          <p className={`text-sm font-medium ${jornadaCerrada ? "text-amber-300" : "text-green-200"}`}>
+            {exitoMsg}
+          </p>
         </div>
       )}
 
-      {/* Botones de acción */}
+      {/* Botones */}
       <div className="w-full max-w-xs flex flex-col gap-3">
         {candidato && guardando && !exitoMsg && (
-          <div className="w-full py-4 rounded-2xl bg-blue-600/20 border border-blue-500/30 text-blue-300 text-center text-sm font-medium select-none animate-pulse">
+          <div className="w-full py-4 rounded-2xl bg-blue-600/20 border border-blue-500/30 text-blue-300 text-center text-sm font-medium animate-pulse">
             Registrando entrada...
           </div>
         )}
@@ -231,10 +239,8 @@ export default function KioskoScanner({
         )}
 
         {candidato && (
-          <button
-            onClick={resetear}
-            className="w-full py-2.5 rounded-xl bg-gray-800 text-gray-400 text-sm hover:bg-gray-700 transition-colors"
-          >
+          <button onClick={resetear}
+            className="w-full py-2.5 rounded-xl bg-gray-800 text-gray-400 text-sm hover:bg-gray-700 transition-colors">
             Cancelar
           </button>
         )}
@@ -254,11 +260,11 @@ export default function KioskoScanner({
 }
 
 KioskoScanner.propTypes = {
-  faceMatcher:      PropTypes.object,
-  empleadosMap:     PropTypes.instanceOf(Map).isRequired,
-  kioskoInfo:       PropTypes.shape({ id: PropTypes.number, name: PropTypes.string }).isRequired,
-  jornadaId:        PropTypes.number.isRequired,
-  ultimaMarca:      PropTypes.shape({ nombre: PropTypes.string, hora: PropTypes.string }),
-  onReconocido:     PropTypes.func.isRequired,
+  faceMatcher:       PropTypes.object,
+  empleadosMap:      PropTypes.instanceOf(Map).isRequired,
+  kioskoInfo:        PropTypes.shape({ id: PropTypes.number, name: PropTypes.string }).isRequired,
+  jornadaId:         PropTypes.number.isRequired,
+  ultimaMarca:       PropTypes.shape({ nombre: PropTypes.string, hora: PropTypes.string }),
+  onReconocido:      PropTypes.func.isRequired,
   onEntradaCompleta: PropTypes.func.isRequired,
 };
