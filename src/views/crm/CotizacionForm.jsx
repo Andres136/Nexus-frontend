@@ -1,450 +1,259 @@
-import { useEffect, useState } from "react";
-import useCotizacionItems from "../../hooks/useCotizacionItems";
-import { calcularValores } from "../../hooks/useCotizacionItems";
-import { toast } from "react-toastify";
-import clienteAxios from "../../config/axios";
+import PropTypes from "prop-types";
+import { Link, useParams } from "react-router-dom";
+import Select from "react-select";
+import { Trash2, Plus, Loader2 } from "lucide-react";
 import { useClientes } from "../../hooks/useClientes";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import Select  from "react-select";
+import { useAuth } from "../../hooks/useAuth";
+import useCotizacionForm from "../../hooks/crm/useCotizacionForm";
+import { formatCurrency } from "../../helpers";
 
-export default function CotizacionForm({modo}) {
-  const {id} = useParams();
+const inp = "border border-gray-300 px-1.5 py-0.5 rounded text-xs w-full focus:outline-none focus:ring-1 focus:ring-blue-400";
+const calcCls = "text-xs text-center text-gray-600 bg-gray-50";
+const errP = (msg) => msg ? <p className="text-xs text-red-500 mt-0.5">{msg}</p> : null;
+
+export default function CotizacionForm({ modo }) {
+  const { id } = useParams();
   const { clientesTodos } = useClientes();
-  const [detallesCargados, setDetallesCargados] = useState([]);
+  useAuth({ middleware: "auth" });
 
-
-  const [formData, setFormData] = useState({
-    cliente_id: "",
-    empresa: "setasplast",
-    observaciones:  `❖ El precio ofertado es para pago a treinta (30) días calendario.
-
-    ❖ Tiempo de Entrega: Quince (15) a veinte (20) días para el primer pedido, tres (03) a seis (06) días para los pedidos posteriores.
-    
-    ❖ Disponibilidad del Producto: Garantizamos la disponibilidad del producto.
-    
-    ❖ Las entregas en la ciudad de Bogotá las ofrecemos punto a punto. Para los municipios Girardot, Melgar, Ricaurte, Flandes, Viotá, Tocaima, Soacha, Funza, Madrid, Mosquera, Cali, Barranquilla, Soledad no tienen ningún recargo. Se realizan despachos a nivel nacional.
-    
-    ❖ Todos nuestros artículos tienen garantía por defectos de fabricación.
-    
-    ❖ Nuestros paquetes van rotulados con el nombre de la empresa, número de unidades del paquete, medida de la bolsa, color, calibre y código de barras.
-    
-    ❖ Para el caso de las bolsas marcadas es importante que el “Cirel” lo aporte el cliente. En caso de no tenerlos, se cotiza como valor adicional y los mismos son propiedad del cliente.
-    
-    ❖ Apoyando la mitigación del impacto ambiental, todos nuestros productos son fabricados a partir de materiales Biodegradables y 100% reciclables, certificados y respaldados con fichas técnicas.
-    
-   `,
-    
-    detalles: [],
-  });
-
-  const [errores, setErrores] = useState({});
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
-
-  const { rows, updateItem, addItem, removeItem, resetItems} = useCotizacionItems({
+  const {
+    formData,
+    setFormData,
+    rows,
     errores,
-    onChange: (detalles) => setFormData((prev) => ({ ...prev, detalles })),
-    initialRows: detallesCargados,
-    
-  });
+    erroresDetalles,
+    loading,
+    totalSubtotal,
+    totalIva,
+    totalGeneral,
+    updateItem,
+    addItem,
+    removeItem,
+    handleChange,
+    handleSubmit,
+  } = useCotizacionForm({ modo, id });
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: name === "cliente_id" ? (value ? parseInt(value) : null) : value,
-    });
+  const opcionesClientes = clientesTodos.map((c) => ({ value: c.id, label: c.nombre }));
 
-
-  };
-  useEffect(() => {
-    if (modo === "edicion" && id) {
-      const obtenerCotizacion = async () => {
-        try {
-          const token = localStorage.getItem("token");
-          const response = await clienteAxios.get(`/api/cotizaciones/${id}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-  
-          const datos = response.data;
-  
-          setFormData({
-              cliente_id: datos.cliente_id,
-              empresa: datos.empresa,
-              observaciones: datos.observaciones,
-              detalles: datos.detalles, // para enviar
-            });
-            setDetallesCargados(
-              datos.detalles.map((item, i) => {
-                const valoresCalculados = calcularValores(item);
-                return {
-                  ...item,
-                  ...valoresCalculados,
-                  _uuid: crypto.randomUUID(),
-                  itemNumber: i + 1,
-                };
-              })
-            );
-            
-            
-           
-          
-        } catch (error) {
-          toast.error("Error al cargar la cotización");
-        }
-      };
-  
-      obtenerCotizacion();
-    }
-  }, [modo, id]);
-  
-  const resetFormulario = () => {
-    setFormData({
-      cliente_id: "",
-      empresa: "setasplast",
-      observaciones: `❖ El precio ofertado es para pago a treinta (30) días calendario.
-  
-  ❖ Tiempo de Entrega: Quince (15) a veinte (20) días para el primer pedido, tres (03) a seis (06) días para los pedidos posteriores.
-  
-  ❖ Disponibilidad del Producto: Garantizamos la disponibilidad del producto.
-  
-  ❖ Las entregas en la ciudad de Bogotá las ofrecemos punto a punto. Para los municipios Girardot, Melgar, Ricaurte, Flandes, Viotá, Tocaima, Soacha, Funza, Madrid, Mosquera, Cali, Barranquilla, Soledad no tienen ningún recargo. Se realizan despachos a nivel nacional.
-  
-  ❖ Todos nuestros artículos tienen garantía por defectos de fabricación.
-  
-  ❖ Nuestros paquetes van rotulados con el nombre de la empresa, número de unidades del paquete, medida de la bolsa, color, calibre y código de barras.
-  
-  ❖ Para el caso de las bolsas marcadas es importante que el “cliché” lo aporte el cliente. En caso de no tenerlos, se cotiza como valor adicional y los mismos son propiedad del cliente.
-  
-  ❖ Apoyando la mitigación del impacto ambiental, todos nuestros productos son fabricados a partir de materiales Biodegradables y 100% reciclables, certificados y respaldados con fichas técnicas.
-  `,
-      detalles: [],
-    });
-    setDetallesCargados([]);
-    setErrores({});
-    resetItems();
-  };
-  
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-   // console.log("Enviando formData:", formData);  // <— verifica aquí
-    if (!formData.detalles.length) {
-      toast.error("Debe ingresar al menos un ítem");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const detallesLimpios = formData.detalles.map(({ _uuid, itemNumber, ...item }) => ({
-        ...item,
-        largo_cm: Number(item.largo_cm || 0),
-        ancho_cm: Number(item.ancho_cm || 0),
-        calibre: Number(item.calibre || 0),
-        cantidad: Number(item.cantidad || 0),
-        precio_total: Number(item.precio_total || 0),
-        valor_unitario: Number(item.valor_unitario || 0),
-        valor_paquete: Number(item.valor_paquete || 0),
-        valor_total: Number(item.valor_total || 0),
-        numero_bolsas: Number(item.numero_bolsas || 0),
-        cantidad_requerida_kg: Number(item.cantidad_requerida_kg || 0),
-      }));
-      
-      const token = localStorage.getItem("token");
-         const response = modo === "edicion"
-        ? await clienteAxios.put(`/api/cotizaciones/${id}`, {
-            ...formData,
-            detalles: detallesLimpios,
-          }, {
-            headers: { Authorization: `Bearer ${token}` },
-          })
-        : await clienteAxios.post("/api/cotizaciones", {
-            ...formData,
-            
-            detalles: detallesLimpios,
-          }, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-      const data = response.data;
-
-      toast.success(
-  modo === "edicion"
-    ? "Cotización actualizada correctamente"
-    : "Cotización creada correctamente"
-);
-
-// 👉 Redirigir
-navigate("/auth/crm/mis-cotizaciones");
-
-      //Limpiar formulario
-      resetFormulario();
-
-      const link = document.createElement("a");
-      link.href = `${import.meta.env.VITE_API_URL}/api/cotizaciones/${data.cotizacion.id}/pdf`;
-      link.setAttribute("download", `cotizacion_${data.cotizacion.id}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    } catch (error) {
-      console.error("Error al guardar la cotización:", error);
-      if (error.response?.data?.errors) {
-        console.log("Errores de validación:", error.response.data.errors);
-        setErrores(error.response.data.errors);
-        toast.error("Errores en el formulario, por favor revisa");
-      } else {
-        toast.error("Error al guardar la cotización");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const totalGeneral = rows.reduce((acc, item) => acc + item.valor_total, 0);
-  // 1) Mapea tus clientes a { value, label }
-  const opcionesClientes = clientesTodos.map(cliente => ({
-    value: cliente.id,
-    label: cliente.nombre,
-  }));
   return (
-    <div className="p-6 bg-white shadow rounded">
-<div className="grid grid-cols-2 items-center">
-<h1 className="text-2xl font-bold mb-4">
-  {modo === "edicion" ? "Editar Cotización" : "Crear Cotización"}
-</h1>
+    <div className="mx-auto p-3 bg-white">
 
-
-  <Link
-    to="/auth/crm/mis-cotizaciones"
-    className="justify-self-end inline-flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-3 py-1.5 rounded-lg shadow-sm transition duration-200"
-  >
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      className="w-4 h-4"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7h18M3 12h18M3 17h18" />
-    </svg>
-    Mis Cotizaciones
-  </Link>
-</div>
-
-      
-      {/* CLIENTE */}
-      <div>
-        <label className="block font-semibold">Cliente:</label>
-        <Select
-          options={opcionesClientes}
-          // 2) Busca la opción actual para mostrarla
-          value={opcionesClientes.find(o => o.value === formData.cliente_id)}
-          // 3) Cuando cambie, guarda el id
-          onChange={opt =>
-            setFormData(prev => ({
-              ...prev,
-              cliente_id: opt ? opt.value : "",
-            }))
-          }
-          isClearable
-          placeholder="Buscar o seleccionar cliente…"
-          className="mt-1"
-        />
-        {errores.cliente_id && (
-          <p className="text-red-600 text-sm">{errores.cliente_id}</p>
-        )}
-      </div>
-
-      {/* EMPRESA */}
-      <div>
-        <label className="block font-semibold">Empresa:</label>
-        <select
-          name="empresa"
-          value={formData.empresa}
-          onChange={handleChange}
-          className="border rounded w-full p-2"
-        >
-          <option value="setasplast">Setasplast</option>
-          <option value="global">Global</option>
-        </select>
-      </div>
-
-      <h2 className="text-xl font-bold mt-4 mb-2">Crear Cotización</h2>
-
-      <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-5 pb-4 border-b">
         <div>
-          <label className="block font-semibold">Observaciones:</label>
-          <textarea
-            name="observaciones"
-            value={formData.observaciones}
-            rows={10}
-            onChange={handleChange}
-            className="border rounded w-full p-2"
-          />
+          <h1 className="text-xl font-semibold text-gray-900">
+            {modo === "edicion" ? "Editar Cotización" : "Nueva Cotización"}
+          </h1>
+          <p className="text-xs text-gray-500 mt-0.5">
+            {modo === "edicion" ? "Modifica los datos de la cotización" : "Completa la información requerida"}
+          </p>
         </div>
-  <h3 className="font-bold mb-2">Detalles de la Cotización</h3>
-        <div className="mt-4 ">
-        <div className="grid grid-cols-1">
-          <table className="w-full border text-sm col-span-1">
-            <thead className="bg-gray-800 text-white">
-              <tr>
-                <th>🛠</th>
-                <th>#</th>
-                <th>Ancho</th>
-                <th>Largo</th>
-                <th>Calibre</th>
-                <th>Cliente Clb</th>
-                <th>Peso Bolsa</th>
-                <th># Bolsas</th>
-                <th>$/Kg</th>
-                <th>Descripción</th>
-                <th>Unitario</th>
-                <th>Cant.</th>
-                <th>Precio Paquete</th>
-                <th>Total (con IVA)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row._uuid}>
-                  <td>
-                    <button
-                      type="button"
-                      onClick={() => removeItem(row._uuid)}
-                      className="text-red-600"
-                    >
-                      🗑
-                    </button>
-                  </td>
-                  <td>{row.itemNumber}</td>
-                  <td>
-                    <input
-                      value={row.ancho_cm}
-                      onChange={(e) => updateItem(row._uuid, "ancho_cm", e.target.value)}
-                      className="border w-full"
-                    />
-                  </td>
-                  <td>
-                    <input
-                      value={row.largo_cm}
-                      onChange={(e) => updateItem(row._uuid, "largo_cm", e.target.value)}
-                      className="border w-full"
-                    />
-                  </td>
-                  <td>
-                    <input
-                      value={row.calibre}
-                      onChange={(e) => updateItem(row._uuid, "calibre", e.target.value)}
-                      className="border w-full"
-                    />
-                  </td>
+        <Link
+          to="/auth/crm/mis-cotizaciones"
+          className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+        >
+          ← Mis Cotizaciones
+        </Link>
+      </div>
 
-                  <td>
-                    <input
-                      value={row.cliente_clb}
-                      onChange={(e) => updateItem(row._uuid, "cliente_clb", e.target.value)}
-                      className="border w-full"
-                    />
-                  </td>
-                  <td className="text-center bg-gray-100">
-                  {Number(row.peso_bolsa || 0).toFixed(2)}
-                  </td>
-                  <td className="text-center bg-gray-100">
-                    {row.numero_bolsas}
-                  </td>
-                  <td>
-                    <input
-                      value={row.precio_total}
-                      onChange={(e) =>
-                        updateItem(row._uuid, "precio_total", Number(e.target.value || 0))
-                      }
-                      className="border w-full"
-                    />
-                  </td>
-                  <td>
-                    <input
-                      className="border w-full uppercase"
-                      type="text"
-                      value={row.descripcion}
-                      onChange={(e) =>
-                        updateItem(row._uuid, "descripcion", e.target.value)
-                      }
-                    />
-                  </td>
-                  <td>
-  <input
-    className={`border w-full text-right ${row.fueCalculadoUnitario ? "bg-gray-100" : ""}`}
-    value={row.valor_unitario}
-    type="number"
-    step="0.01"
-    min={0}
-    onChange={(e) =>
-      updateItem(row._uuid, "valor_unitario", e.target.value)
-    }
-    readOnly={row.fueCalculadoUnitario}
-/>
-</td>
+      <form onSubmit={handleSubmit} className="space-y-5">
 
-                  <td>
-                    <input
-                      type="number"
-                      value={row.cantidad}
-                      onChange={(e) => updateItem(row._uuid, "cantidad", e.target.value)}
-                      className="border w-full"
-                    />
-                  </td>
-                  <td className="text-indigo-700 text-right bg-gray-100">
-                    {row.valor_paquete.toLocaleString("es-CO", {
-                      style: "currency",
-                      currency: "COP",
-                      minimumFractionDigits: 2,
-                    })}
-                  </td>
-                  <td className="text-green-600 font-bold text-right bg-gray-100">
-                  ${Number(row.valor_total).toLocaleString("es-CO", {
-  style: "currency",
-  currency: "COP",
-  minimumFractionDigits: 2,
-})}
-                  </td>
+        {/* Datos generales */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Cliente</label>
+            <Select
+              options={opcionesClientes}
+              value={opcionesClientes.find((o) => o.value === formData.cliente_id) || null}
+              onChange={(opt) => setFormData((prev) => ({ ...prev, cliente_id: opt ? opt.value : "" }))}
+              isClearable
+              placeholder="Buscar o seleccionar cliente..."
+              className="text-sm"
+              styles={{
+                control: (base, state) => ({
+                  ...base,
+                  borderColor: errores.cliente_id ? "#dc2626" : state.isFocused ? "#3b82f6" : "#d1d5db",
+                  boxShadow: state.isFocused ? "0 0 0 2px rgba(59,130,246,0.2)" : "none",
+                  "&:hover": { borderColor: "#3b82f6" },
+                }),
+                dropdownIndicator: (b) => ({ ...b, padding: "4px" }),
+                valueContainer: (b) => ({ ...b, padding: "2px 8px" }),
+              }}
+            />
+            {errP(errores.cliente_id)}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Empresa</label>
+            <select
+              name="empresa"
+              value={formData.empresa}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="setasplast">Setasplast</option>
+              <option value="global">Global</option>
+            </select>
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Observaciones</label>
+            <textarea
+              name="observaciones"
+              value={formData.observaciones}
+              onChange={handleChange}
+              rows={8}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+            />
+          </div>
+        </div>
+
+        {/* Tabla de ítems */}
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-gray-700 border-b pb-1">Detalles de la Cotización</h3>
+
+          <div className="overflow-x-auto rounded-lg border border-gray-200">
+            <table className="min-w-full divide-y divide-gray-200 text-xs">
+              <thead className="bg-gray-700 text-white">
+                <tr>
+                  <th className="px-2 py-2 text-left w-8">#</th>
+                  <th className="px-2 py-2 w-6"></th>
+                  <th className="px-2 py-2 text-left">Ancho</th>
+                  <th className="px-2 py-2 text-left">Largo</th>
+                  <th className="px-2 py-2 text-left">Cal.</th>
+                  <th className="px-2 py-2 text-left">Clte Clb</th>
+                  <th className="px-2 py-2 text-center">Peso/B</th>
+                  <th className="px-2 py-2 text-center"># Bolsas</th>
+                  <th className="px-2 py-2 text-left">$/Kg</th>
+                  <th className="px-2 py-2 text-left min-w-[120px]">Descripción</th>
+                  <th className="px-2 py-2 text-left">P. Unit</th>
+                  <th className="px-2 py-2 text-left">Cant.</th>
+                  <th className="px-2 py-2 text-left w-14">IVA%</th>
+                  <th className="px-2 py-2 text-right">Subtotal</th>
+                  <th className="px-2 py-2 text-right">Total IVA</th>
                 </tr>
-              ))}
-            </tbody>
-            <tfoot className="bg-gray-100 font-semibold">
-              <tr>
-                <td colSpan={11} className="text-right pr-4">
-                  Total General:
-                </td>
-                <td className="text-green-700 text-right">
-                  {totalGeneral.toLocaleString("es-CO", {
-                    style: "currency",
-                    currency: "COP",
-                    minimumFractionDigits: 2,
-                  })}
-                </td>
-              </tr>
-            </tfoot>
-          </table></div>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-100">
+                {rows.map((row, idx) => {
+                  const e = erroresDetalles[idx] || {};
+                  const field = (name, value, extra = {}) => {
+                    const hasErr = !!e[name];
+                    return (
+                      <div>
+                        <input
+                          className={`${inp} ${hasErr ? "border-red-400 bg-red-50" : ""} ${extra.cls ?? ""}`}
+                          value={value}
+                          type={extra.type ?? "text"}
+                          step={extra.step}
+                          min={extra.min}
+                          max={extra.max}
+                          readOnly={extra.readOnly}
+                          onChange={(ev) => updateItem(row._uuid, name, ev.target.value)}
+                        />
+                        {hasErr && <span className="text-xs text-red-500 block mt-0.5">{e[name]}</span>}
+                      </div>
+                    );
+                  };
+                  return (
+                    <tr key={row._uuid} className="hover:bg-gray-50 align-top">
+                      <td className="px-2 py-1.5 text-gray-500">{row.itemNumber}</td>
+                      <td className="px-2 py-1.5">
+                        <button type="button" onClick={() => removeItem(row._uuid)}
+                          className="text-red-400 hover:text-red-600 hover:bg-red-50 p-0.5 rounded">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </td>
+                      <td className="px-2 py-1.5">{field("ancho_cm", row.ancho_cm)}</td>
+                      <td className="px-2 py-1.5">{field("largo_cm", row.largo_cm)}</td>
+                      <td className="px-2 py-1.5">{field("calibre", row.calibre)}</td>
+                      <td className="px-2 py-1.5">{field("cliente_clb", row.cliente_clb)}</td>
+                      <td className={`px-2 py-1.5 ${calcCls}`}>
+                        {Number(row.peso_bolsa || 0).toFixed(2)}
+                      </td>
+                      <td className={`px-2 py-1.5 ${calcCls}`}>
+                        <div>{row.numero_bolsas}</div>
+                        {e.numero_bolsas && <span className="text-xs text-red-500 block">{e.numero_bolsas}</span>}
+                      </td>
+                      <td className="px-2 py-1.5">
+                        {field("precio_total", row.precio_total, { type: "number" })}
+                      </td>
+                      <td className="px-2 py-1.5">
+                        {field("descripcion", row.descripcion, { cls: "uppercase" })}
+                      </td>
+                      <td className="px-2 py-1.5">
+                        {field("valor_unitario", row.valor_unitario, {
+                          type: "number", step: "0.01", min: 0,
+                          cls: `text-right ${row.fueCalculadoUnitario ? "bg-gray-100 text-gray-500" : ""}`,
+                          readOnly: row.fueCalculadoUnitario,
+                        })}
+                      </td>
+                      <td className="px-2 py-1.5">
+                        {field("cantidad", row.cantidad, { type: "number" })}
+                      </td>
+                      <td className="px-2 py-1.5">
+                        {field("iva_porcentaje", row.iva_porcentaje, { type: "number", min: 0, max: 100, step: "0.1" })}
+                      </td>
+                      <td className="px-2 py-1.5 text-right text-indigo-600 font-medium">
+                        {formatCurrency(row.valor_paquete)}
+                      </td>
+                      <td className="px-2 py-1.5 text-right text-green-600 font-semibold">
+                        {formatCurrency(row.valor_total)}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
 
           <button
-  type="button"
-  onClick={addItem}
-  className="mt-2 inline-flex items-center gap-2 bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition"
->
-  ➕ Agregar Ítem
-</button>
+            type="button"
+            onClick={addItem}
+            className="flex items-center gap-1.5 bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors text-sm"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Agregar Ítem
+          </button>
 
+          {/* Resumen totales */}
+          {rows.length > 0 && (
+            <div className="bg-gray-50 rounded-lg px-4 py-3 border border-gray-200 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+              <span className="text-xs text-gray-500">{rows.length} ítem{rows.length !== 1 ? "s" : ""}</span>
+              <div className="flex items-center gap-5 text-sm">
+                <span className="text-gray-600">
+                  Subtotal: <strong>{formatCurrency(totalSubtotal)}</strong>
+                </span>
+                <span className="text-gray-600">
+                  IVA: <strong>{formatCurrency(totalIva)}</strong>
+                </span>
+                <span className="text-base font-bold text-green-600">
+                  Total: {formatCurrency(totalGeneral)}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
 
-        <button
-  type="submit"
-  className="bg-green-600 text-white px-4 py-2 rounded"
-  disabled={loading}
->
-  {loading
-    ? modo === "edicion" ? "Actualizando..." : "Guardando..."
-    : modo === "edicion" ? "Actualizar Cotización" : "Guardar Cotización"}
-</button>
+        {/* Botón submit */}
+        <div className="flex justify-end pt-2 border-t">
+          <button
+            type="submit"
+            disabled={loading}
+            className="flex items-center gap-2 px-5 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-medium rounded-md transition-colors text-sm"
+          >
+            {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+            {loading
+              ? (modo === "edicion" ? "Actualizando..." : "Guardando...")
+              : (modo === "edicion" ? "Actualizar Cotización" : "Guardar Cotización")}
+          </button>
+        </div>
 
       </form>
     </div>
   );
 }
+
+CotizacionForm.propTypes = {
+  modo: PropTypes.string.isRequired,
+};
