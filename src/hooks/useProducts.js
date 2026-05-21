@@ -25,7 +25,8 @@ export const useProducts = ({
     queryKey: ["products", search],
     queryFn: async () => {
       const response = await productsApi.getAll({ search });
-      return response.data; // arreglo de productos
+      // El endpoint devuelve { message, data: [...] }
+      return response.data?.data ?? response.data ?? [];
     },
     enabled,
     staleTime,
