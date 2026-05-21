@@ -24,6 +24,7 @@ export default function OrdenCompraMultiItem({ onDetallesChange, errores = {}, v
   });
   const [searchTerm, setSearchTerm] = useState("");
   const { products, isLoading, isEmpty, isFetching } = useProducts({ search: searchTerm });
+  console.log("Productos para select:", products);
 
   const productOptions = products.map((p) => ({
     value: p.id,
@@ -34,15 +35,11 @@ export default function OrdenCompraMultiItem({ onDetallesChange, errores = {}, v
     <Select
       isLoading={isLoading || isFetching}
       options={productOptions}
-      value={
-        row.product_id && products.length > 0
-          ? (() => {
-              const p = products.find((p) => p.id === row.product_id);
-              return p ? { value: p.id, label: `${p.code || p.code_id || "Sin código"} - ${p.name || "Sin nombre"}` } : null;
-            })()
-          : null
-      }
-      onChange={(opt) => handleInputChange(row._uuid, "product_id", opt ? opt.value : "")}
+   value={row.product || null}
+      onChange={(opt) => {
+  handleInputChange(row._uuid, "product_id", opt ? opt.value : "");
+  handleInputChange(row._uuid, "product", opt || null);
+}}
       onInputChange={(v) => setSearchTerm(v)}
       placeholder="Buscar producto..."
       noOptionsMessage={() => isLoading ? "Cargando..." : isEmpty ? "Sin resultados" : "Escribe para buscar"}
