@@ -2,7 +2,7 @@
 const FACTOR_PULGADA = 0.393701;
 const FACTOR_CONSTANTE = 302;
 
-export function calcularCamposBolsa({ largo_cm, ancho_cm, calibre, cantidad, valor_unitario, precio_total }) {
+export function calcularCamposBolsa({ largo_cm, ancho_cm, calibre, cantidad, valor_unitario, precio_total, iva_porcentaje = 19 }) {
   const largo = parseFloat(largo_cm) || 0;
   const ancho = parseFloat(ancho_cm) || 0;
   const cal   = parseFloat(calibre) || 0;
@@ -37,7 +37,8 @@ export function calcularCamposBolsa({ largo_cm, ancho_cm, calibre, cantidad, val
 
   if (unitario > 0 && cant > 0) {
     valor_paquete = parseFloat((unitario * cant).toFixed(2));
-    valor_total = valor_paquete; // aquí decides si aplicas IVA u otros cálculos
+    const iva = parseFloat(iva_porcentaje) || 0;
+    valor_total = parseFloat((valor_paquete * (1 + iva / 100)).toFixed(2));
   }
 
   return { peso_bolsa, numero_bolsas, cantidad_requerida_kg, valor_paquete, valor_total, valor_unitario: unitario };

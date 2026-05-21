@@ -26,7 +26,7 @@ function createNewItem(n) {
     descripcion: "",
     observaciones: `${n}`,
     tipo_embalaje: 'unidad',
-    
+    iva_porcentaje: 19,
   };
 }
 
