@@ -2,6 +2,10 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import PropTypes from "prop-types";
 import * as faceapi from "face-api.js";
 import { workSessionService } from "../../../services/nominaService";
+import audioExito from "../../../assets/audios/Audio 1.m4a";
+import audioError from "../../../assets/audios/Audio 2.m4a";
+
+const playAudio = (src) => { new Audio(src).play().catch(() => {}); };
 
 const hhmm = (date) =>
   date.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" });
@@ -28,9 +32,16 @@ export default function KioskoScanner({
   const [camError, setCamError]       = useState("");
   const [candidato, setCandidato]     = useState(null); // { userId, nombre, photoUrl }
   const [checkingSession, setChecking] = useState(false);
-  const [sessionHoy, setSessionHoy]   = useState(null);
   const [guardando, setGuardando]     = useState(false);
   const [exitoMsg, setExitoMsg]       = useState("");
+
+  const resetear = useCallback(() => {
+    setCandidato(null);
+    setChecking(false);
+    setGuardando(false);
+    setExitoMsg("");
+    setTimeout(() => { cooldown.current = false; }, 2000);
+  }, []);
 
   // ── Cámara ─────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -79,17 +90,44 @@ export default function KioskoScanner({
         const res = await workSessionService.getSessionHoy(userId);
         const sessions = res.data?.data?.data ?? res.data?.data ?? [];
         const session  = sessions[0] ?? null;
-        setSessionHoy(session);
 
-        // Si ya tiene sesión abierta → ir a pantalla de acciones
+        // Sesión abierta → ir a pantalla de acciones
         if (session && !session.hola_salida) {
           onReconocido(userId, session);
           return;
         }
-        // Si ya cerró sesión hoy → mostrar mensaje
+        // Jornada ya cerrada hoy
         if (session && session.hola_salida) {
           setExitoMsg(`${info.nombre}, tu jornada ya fue cerrada hoy.`);
           setTimeout(resetear, 4000);
+          return;
+        }
+        // Sin sesión → registrar entrada automáticamente
+        setChecking(false);
+        setGuardando(true);
+        try {
+          const ahora = new Date();
+          const yy = ahora.getFullYear();
+          const mm = String(ahora.getMonth() + 1).padStart(2, "0");
+          const dd = String(ahora.getDate()).padStart(2, "0");
+          await workSessionService.createSession({
+            user_id:            userId,
+            kiosko_id:          kioskoInfo.id,
+            registro_diario:    `${yy}-${mm}-${dd}`,
+            hora_entrada:       `${String(ahora.getHours()).padStart(2,"0")}:${String(ahora.getMinutes()).padStart(2,"0")}:${String(ahora.getSeconds()).padStart(2,"0")}`,
+            horario_laboral_id: jornadaId,
+          });
+          const hora = hhmm(ahora);
+          playAudio(audioExito);
+          setExitoMsg(`¡Bienvenido, ${info.nombre}! Entrada marcada a las ${hora}.`);
+          onEntradaCompleta(info.nombre, hora);
+          setTimeout(resetear, 3000);
+        } catch {
+          playAudio(audioError);
+          setExitoMsg("Error al registrar la entrada. Intenta de nuevo.");
+          setTimeout(resetear, 3000);
+        } finally {
+          setGuardando(false);
         }
       } finally {
         setChecking(false);
@@ -99,47 +137,12 @@ export default function KioskoScanner({
     } finally {
       detecting.current = false;
     }
-  }, [faceMatcher, empleadosMap, candidato, onReconocido]);
+  }, [faceMatcher, empleadosMap, candidato, onReconocido, kioskoInfo, jornadaId, onEntradaCompleta, resetear]);
 
   useEffect(() => {
     loopRef.current = setInterval(detectar, 300);
     return () => clearInterval(loopRef.current);
   }, [detectar]);
-
-  // ── Marcar entrada ──────────────────────────────────────────────────────────
-  const marcarEntrada = async () => {
-    if (!candidato) return;
-    setGuardando(true);
-    try {
-      const ahora = new Date();
-      const yy  = ahora.getFullYear();
-      const mm  = String(ahora.getMonth() + 1).padStart(2, "0");
-      const dd  = String(ahora.getDate()).padStart(2, "0");
-      await workSessionService.createSession({
-        user_id:           candidato.userId,
-        kiosko_id:         kioskoInfo.id,
-        registro_diario:   `${yy}-${mm}-${dd}`,
-        hora_entrada:      ahora.toISOString(),
-        horario_laboral_id: jornadaId,
-      });
-      const hora = hhmm(ahora);
-      setExitoMsg(`¡Bienvenido, ${candidato.nombre}! Entrada marcada a las ${hora}.`);
-      onEntradaCompleta(candidato.nombre, hora);
-      setTimeout(resetear, 3000);
-    } catch {
-      setExitoMsg("Error al registrar la entrada. Intenta de nuevo.");
-      setTimeout(resetear, 3000);
-    } finally {
-      setGuardando(false);
-    }
-  };
-
-  const resetear = () => {
-    setCandidato(null);
-    setSessionHoy(null);
-    setExitoMsg("");
-    setTimeout(() => { cooldown.current = false; }, 2000);
-  };
 
   // ── UI ─────────────────────────────────────────────────────────────────────
   return (
@@ -207,14 +210,10 @@ export default function KioskoScanner({
 
       {/* Botones de acción */}
       <div className="w-full max-w-xs flex flex-col gap-3">
-        {candidato && !sessionHoy && !checkingSession && !exitoMsg && (
-          <button
-            onClick={marcarEntrada}
-            disabled={guardando}
-            className="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-lg font-bold disabled:opacity-60 transition-colors shadow-lg shadow-blue-900/40"
-          >
-            {guardando ? "Registrando..." : "Marcar entrada"}
-          </button>
+        {candidato && guardando && !exitoMsg && (
+          <div className="w-full py-4 rounded-2xl bg-blue-600/20 border border-blue-500/30 text-blue-300 text-center text-sm font-medium select-none animate-pulse">
+            Registrando entrada...
+          </div>
         )}
 
         {!candidato && !exitoMsg && (
