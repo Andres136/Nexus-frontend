@@ -17,6 +17,7 @@ export function useUpdateOrdenCompraProveedor(id) {
     empresa_id: null,
     observaciones: "",
     numero_orden: "",
+    fecha_entrega: "",
     sede_id: null,
     detalles: [],
   });
@@ -51,6 +52,7 @@ export function useUpdateOrdenCompraProveedor(id) {
             observaciones: orden.observaciones || "",
             numero_orden: orden.numero_orden,
             sede_id: orden.sede_id,
+            fecha_entrega: orden.fecha_entrega || "",
             detalles: [],
           });
 
@@ -63,6 +65,7 @@ export function useUpdateOrdenCompraProveedor(id) {
           observaciones: orden.observaciones || "",
           numero_orden: orden.numero_orden,
           sede_id: orden.sede_id,
+          fecha_entrega: orden.fecha_entrega || "",
           detalles: detalles.map((d, i) => ({
             id: d.id,
             item: i + 1,
@@ -96,15 +99,18 @@ export function useUpdateOrdenCompraProveedor(id) {
         proveedor_id: formData.proveedor_id,
         empresa_id: formData.empresa_id,
         observaciones: formData.observaciones,
+        fecha_entrega: formData.fecha_entrega,
         detalles: formData.detalles.map((d, i) => ({
-          item: i + 1,
+          id: d.id,
+          item: d.item || i + 1,
           descripcion: d.descripcion,
           cantidad_solicitada: d.cantidad_solicitada,
           code: d.code,
           producto_id: d.producto_id,
+    
         })),
       };
-
+  console.log("Payload a enviar:", payload);
       await clienteAxios.put(
         `/api/ordenes-compra-proveedor/${id}`,
         payload,
@@ -114,19 +120,19 @@ export function useUpdateOrdenCompraProveedor(id) {
       toast.success("Orden actualizada correctamente");
       navigate(`/auth/crm/ordenes-proveedor-preview/${id}`);
     } catch (error) {
+      console.error("Error al actualizar la orden:", error);
       const status = error.response?.status;
       const data = error.response?.data;
 
-      if (status === 422 && data?.message) {
-        toast.error(data.message);
-        setOrdenBloqueada(true);
-        setMensajeBloqueo(data.message);
-        return;
-      }
-
-      if (status === 422 && data?.errors) {
-        setErrores(data.errors);
-        toast.error("Corrija los errores del formulario");
+      if (status === 422) {
+        if (data?.errors) {
+          setErrores(data.errors);
+          toast.error("Corrija los errores del formulario");
+        } else if (data?.message) {
+          toast.error(data.message);
+          setOrdenBloqueada(true);
+          setMensajeBloqueo(data.message);
+        }
         return;
       }
 

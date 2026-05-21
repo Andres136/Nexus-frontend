@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 
 export default function DashboardOrdenesAnual() {
   const [data, setData] = useState([]);
+  const [resumenSedes, setResumenSedes] = useState([]);
   const [anio, setAnio] = useState(new Date().getFullYear());
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -18,8 +19,8 @@ export default function DashboardOrdenesAnual() {
       setLoading(true);
       try {
         const res = await ordenesCompraProveedoresApi.estadisticasOrdenes({ anio });
-
         setData(res.data.resumen_mensual || []);
+        setResumenSedes(res.data.resumen_por_sede || []);
       } catch (error) {
         console.error("Error al cargar estadísticas:", error);
       } finally {

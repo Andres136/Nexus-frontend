@@ -25,8 +25,7 @@ export default function UpdateOcProvedor() {
     cargando,
     guardando,
     errores,
-    ordenBloqueada,
-    mensajeBloqueo,
+  
     formData,
     setFormData,
     actualizarOrden
@@ -38,7 +37,7 @@ export default function UpdateOcProvedor() {
 
 
 
-  // ✅ Manejar cambios en inputs básicos
+  //  Manejar cambios en inputs básicos
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
@@ -46,7 +45,7 @@ export default function UpdateOcProvedor() {
     }));
   };
 
-  // ✅ Manejar cambios en detalles
+  //  Manejar cambios en detalles
 const handleDetalleChange = (index, field, value) => {
   const nuevosDetalles = [...formData.detalles];
   nuevosDetalles[index][field] =
@@ -58,7 +57,7 @@ const handleDetalleChange = (index, field, value) => {
   }));
 };
 
-  // ✅ Manejar selección de campo (name o description)
+  // Manejar selección de campo (name o description)
   const handleCampoSeleccionado = (index, campo) => {
     const nuevosDetalles = [...formData.detalles];
     const producto = products.find((p) => p.id === nuevosDetalles[index].producto_id);
@@ -74,13 +73,15 @@ const handleDetalleChange = (index, field, value) => {
     }));
   };
 
-  // ✅ Agregar nuevo item
+  //  Agregar nuevo item
   const agregarItem = () => {
     setFormData(prev => ({
       ...prev,
       detalles: [
         ...prev.detalles,
         {
+          temp_id: Date.now(), // ID temporal para React
+          id: null, // ID nulo para nuevos detalles
           item: prev.detalles.length + 1,
           descripcion: "",
           cantidad_solicitada: 0,
@@ -115,7 +116,7 @@ const fetchStockForProduct = async (productId) => {
     const nuevosDetalles = formData.detalles.filter((_, i) => i !== index);
     const detallesReordenados = nuevosDetalles.map((detalle, i) => ({
       ...detalle,
-      item: i + 1
+    item:detalle.item < formData.detalles[index].item ? detalle.item : i + 1 // Reordenar items
     }));
 
     setFormData(prev => ({
@@ -175,16 +176,7 @@ const fetchStockForProduct = async (productId) => {
           ← Volver
         </Link>
       </div>
-{ordenBloqueada && (
-  <div className="mb-6 border border-red-300 bg-red-50 p-4 rounded-lg">
-    <h3 className="font-semibold text-red-700">Orden bloqueada</h3>
-    <p className="text-sm text-red-600 mt-1">
-      {mensajeBloqueo}
-    </p>
 
- 
-  </div>
-)}
 
       {/* Formulario */}
       <div className="space-y-6">
@@ -236,6 +228,23 @@ const fetchStockForProduct = async (productId) => {
             )}
           </div>
 
+          <div>
+            <label className="block mb-2 text-sm font-medium text-gray-700">
+              Fecha de Entrega
+            </label>
+            <input
+              type="date"
+              value={formData.fecha_entrega}
+              onChange={(e) => handleInputChange('fecha_entrega', e.target.value)}
+              className={`w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                errores.fecha_entrega ? "border-red-500 bg-red-50" : "border-gray-300"
+              }`}
+            />
+            {errores.fecha_entrega && (
+              <p className="text-red-500 text-sm mt-1">{errores.fecha_entrega[0]}</p>
+            )}
+          </div>
+
           <div className="md:col-span-2">
             <label className="block mb-2 text-sm font-medium text-gray-700">
               Observaciones
@@ -273,7 +282,10 @@ const fetchStockForProduct = async (productId) => {
               </thead>
               <tbody>
                 {formData.detalles.map((detalle, index) => (
-                  <tr key={index} className="hover:bg-gray-50">
+                 <tr
+  key={detalle.id || detalle.temp_id || detalle.item}
+  className="hover:bg-gray-50"
+>
                     {/* Acciones */}
                     <td className="p-3 border text-center">
                       <button
@@ -421,16 +433,20 @@ const fetchStockForProduct = async (productId) => {
 
                     {/* Cantidad Solicitada */}
                     <td className="p-3 border">
-                      <input
-                        type="number"
-                        value={detalle.cantidad_solicitada || 0}
-                        onChange={(e) =>
-                          handleDetalleChange(index, "cantidad_solicitada", e.target.value)
-                        }
-                        min="1"
-                        step="1"
-                        className="w-full border rounded p-2 text-center"
-                      />
+                <input
+  type="number"
+  value={detalle.cantidad_solicitada || ""}
+  onChange={(e) =>
+    handleDetalleChange(index, "cantidad_solicitada", e.target.value)
+  }
+  min="0.01"
+  step="0.01"
+  className={`w-full rounded p-2 text-center border focus:outline-none focus:ring-2 ${
+    errores[`detalles.${index}.cantidad_solicitada`]
+      ? "border-red-500 bg-red-50 focus:ring-red-300"
+      : "border-gray-300 focus:ring-blue-300"
+  }`}
+/>
                       {errores[`detalles.${index}.cantidad_solicitada`] && (
                         <p className="text-red-500 text-xs mt-1">
                           {errores[`detalles.${index}.cantidad_solicitada`][0]}

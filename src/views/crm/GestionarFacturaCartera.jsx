@@ -37,6 +37,7 @@ export default function GestionarFacturaCartera() {
               <option value="EMAIL">📧 Email</option>
               <option value="VISITA">🤝 Visita</option>
               <option value="PROMESA_PAGO">💰 Promesa de pago</option>
+              <option value="WHATSAPP">💬 WhatsApp</option>
             </select>
             {errors.tipo && <p className="mt-1 text-red-500 text-xs italic">{errors.tipo[0]}</p>}
           </div>

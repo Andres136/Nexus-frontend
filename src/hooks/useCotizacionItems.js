@@ -11,22 +11,25 @@ function createItem(index) {
   return {
     _uuid: generateUUID(),
     item: index,
+    itemNumber: index,
     ancho_cm: "",
     largo_cm: "",
     calibre: "",
     peso_bolsa: 0,
     numero_bolsas: 0,
-    precio_total: "", // precio del kilo (opcional)
+    precio_total: "",
     valor_unitario: 0,
-    cantidad: "", // número de unidades
+    cantidad: "",
     valor_paquete: 0,
     valor_total: 0,
+    iva_porcentaje: 19,
     cliente_clb: "",
     cantidad_requerida_kg: "",
     descripcion: "",
-    observaciones: ""
+    observaciones: "",
   };
 }
+
 function calcularValores(item) {
   const ancho = parseFloat(item.ancho_cm) || 0;
   const largo = parseFloat(item.largo_cm) || 0;
@@ -34,8 +37,7 @@ function calcularValores(item) {
   let precioKilo = parseFloat(item.precio_total) || 0;
   const cantidad = parseFloat(item.cantidad) || 0;
   const manual_unitario = item.valor_unitario !== "" ? parseFloat(item.valor_unitario) : 0;
-
-  console.log("📏 Input inicial:", { ancho, largo, calibre, precioKilo, cantidad });
+  const iva = parseFloat(item.iva_porcentaje ?? 19) || 0;
 
   let peso_bolsa = 0;
   let numero_bolsas = 0;
@@ -50,52 +52,35 @@ function calcularValores(item) {
     if (largo < 100) largoIn = Math.ceil(largoIn);
 
     const resultado = anchoIn * largoIn * calibre * FACTOR_CONSTANTE;
-
-    console.log("📐 Conversión cm → pulgadas:", { anchoIn, largoIn });
-    console.log("📊 Resultado fórmula:", resultado);
-
     const rawPeso = resultado / 10000;
     peso_bolsa = Math.floor(rawPeso);
-
-    console.log("⚖️ Peso bolsa:", rawPeso, "→ redondeado:", peso_bolsa);
 
     if (peso_bolsa > 0) {
       const rawBags = 1000 / peso_bolsa;
       const enteroB = Math.floor(rawBags);
       const decimaB = rawBags - enteroB;
       numero_bolsas = decimaB >= 0.5 ? enteroB + 1 : enteroB;
-      console.log("📦 Número de bolsas:", rawBags, "→ redondeado:", numero_bolsas);
-    } else {
-      console.warn("⚠️ No se pudo calcular número de bolsas porque peso_bolsa es 0");
     }
-  } else {
-    console.warn("❌ No se puede calcular por valores incompletos", { ancho, largo, calibre });
   }
 
   let fueCalculadoUnitario = false;
 
   if (precioKilo > 0 && numero_bolsas > 0) {
-    const rawUnitario = precioKilo / numero_bolsas;
-    valor_unitario = Math.ceil(rawUnitario);
+    valor_unitario = Math.ceil(precioKilo / numero_bolsas);
     fueCalculadoUnitario = true;
-    console.log("💰 Unitario por precio/kilo:", rawUnitario, "→ redondeado:", valor_unitario);
   }
 
-if (!fueCalculadoUnitario && manual_unitario > 0) {
-  valor_unitario = parseFloat(manual_unitario.toFixed(2)); // ✅ conserva decimales
-  console.log("✍️ Unitario manual (sin redondeo):", valor_unitario);
-
-  if (numero_bolsas === 0) {
-    numero_bolsas = 1;
-    precioKilo = valor_unitario;
+  if (!fueCalculadoUnitario && manual_unitario > 0) {
+    valor_unitario = parseFloat(manual_unitario.toFixed(2));
+    if (numero_bolsas === 0) {
+      numero_bolsas = 1;
+      precioKilo = valor_unitario;
+    }
   }
-}
-
 
   if (valor_unitario > 0 && cantidad > 0) {
     valor_paquete = parseFloat((valor_unitario * cantidad).toFixed(2));
-    valor_total = parseFloat((valor_paquete * 1.19).toFixed(2));
-    console.log("📦 Paquete sin IVA:", valor_paquete, "→ con IVA:", valor_total);
+    valor_total = parseFloat((valor_paquete * (1 + iva / 100)).toFixed(2));
   }
 
   return {
@@ -105,21 +90,20 @@ if (!fueCalculadoUnitario && manual_unitario > 0) {
     valor_paquete,
     valor_total,
     precio_total: parseFloat(precioKilo.toFixed(2)),
-    fueCalculadoUnitario
+    fueCalculadoUnitario,
   };
 }
-
-
 
 export default function useCotizacionItems({ errores = {}, onChange, initialRows = [] }) {
   const [rows, setRows] = useState(initialRows.length ? initialRows : [createItem(1)]);
 
   useEffect(() => {
-    if (initialRows.length) {
-      setRows(initialRows);
-    }
+    if (initialRows.length) setRows(initialRows);
   }, [initialRows]);
- 
+
+  useEffect(() => {
+    onChange?.(rows);
+  }, [rows]);
 
   const updateItem = (_uuid, field, value) => {
     setRows((prev) =>
@@ -137,19 +121,16 @@ export default function useCotizacionItems({ errores = {}, onChange, initialRows
 
   const removeItem = (_uuid) => {
     setRows((prev) =>
-      prev.filter((item) => item._uuid !== _uuid).map((item, i) => ({ ...item, item: i + 1 }))
+      prev.filter((item) => item._uuid !== _uuid).map((item, i) => ({ ...item, item: i + 1, itemNumber: i + 1 }))
     );
   };
 
-  useEffect(() => {
-    onChange?.(rows);
-  }, [rows]);
-
   const resetItems = () => {
     setRows([]);
-    onChange([]);
+    onChange?.([]);
   };
 
-  return { rows, updateItem, addItem, removeItem,resetItems  };
+  return { rows, updateItem, addItem, removeItem, resetItems };
 }
-export {calcularValores}
+
+export { calcularValores };

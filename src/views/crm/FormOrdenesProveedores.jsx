@@ -22,6 +22,7 @@ export default function FormOrdenesProveedores() {
     empresa_id: "",
     observaciones: "",
     bodega_id: "",
+    fecha_entrega: "",
     detalles: [],
   });
 
@@ -71,6 +72,7 @@ export default function FormOrdenesProveedores() {
         numero_orden: "",
         observaciones: "",
         bodega_id: "",
+        fecha_entrega: "",
         detalles: [],
       });
       setErrores({});
@@ -223,6 +225,25 @@ export default function FormOrdenesProveedores() {
 )}
    </div>
 
+        <div>
+          <label className="block mb-2 text-sm font-medium text-gray-700">
+            Fecha de entrega
+          </label>
+          <input
+            type="date"
+            name="fecha_entrega"
+            value={formData.fecha_entrega}
+            onChange={(e) =>
+              setFormData({ ...formData, fecha_entrega: e.target.value })
+            }
+            className={`w-full border rounded px-3 py-2 mt-1 focus:ring-2 focus:ring-blue-500 ${
+              errores && errores.fecha_entrega ? "border-red-500" : ""
+            }`}
+          />
+          {errores?.fecha_entrega && (
+            <p className="text-red-500 text-sm mt-1">{errores.fecha_entrega[0]}</p>
+          )}
+        </div>
 
         <div className="col-span-2">
           <label className="block mb-2 text-sm font-medium text-gray-700">
@@ -243,6 +264,7 @@ export default function FormOrdenesProveedores() {
             <p className="text-red-500 text-sm mt-1">{errores.observaciones[0]}</p>
           )}
         </div>
+
       </div>
       
       <DetallesOrdenCompraProveedores

@@ -95,3 +95,48 @@ export const soporteTareasService = {
   getSoportesByTareaId: (tareaId) => apiClient.get(`/api/soporte-tarea/${tareaId}`),
   getSoportesByHallazgoId: (hallazgoId) => apiClient.get(`/api/soporte-tareas/hallazgo/${hallazgoId}`),
 };
+export const analisisProductoNoConformeService = {
+  // Obtener análisis por producto no conforme
+  getByProductoNoConformeId: (productoNoConformeId) =>
+    apiClient.get(`/api/analisis-producto-no-conforme/producto/${productoNoConformeId}`),
+
+  // Obtener análisis por ID
+  getById: (id) =>
+    apiClient.get(`/api/analisis-producto-no-conforme/${id}`),
+
+  // Crear análisis
+  create: (data) =>
+    apiClient.post(`/api/analisis-producto-no-conforme`, data,{
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }),
+
+  // Actualizar análisis
+  update: (id, data) =>
+    apiClient.put(`/api/analisis-producto-no-conforme/${id}`, data),
+
+  // Cambiar estado
+  cambiarEstado: (id, estado) =>
+    apiClient.patch(`/api/analisis-producto-no-conforme/${id}/estado`, {
+      estado,
+    }),
+};
+export const productoNoConformeService = {
+  createProductoNoConforme: (data) => apiClient.post("/api/productos-no-conformes", data),
+  getProductoNoConformeById: (id) => apiClient.get(`/api/productos-no-conforme/${id}`),
+  updateProductoNoConforme: (id, data) => apiClient.put(`/api/producto-no-conforme/${id}`, data),
+  deleteProductoNoConforme: (id) => apiClient.delete(`/api/producto-no-conforme/${id}`),
+  estadisticasProductoNoConforme: (data) => apiClient.get("/api/productos-no-conformes/estadisticas", { params: data }  ),
+  cambiarEstado: (id, estado) => apiClient.patch(`/api/productos-no-conforme/${id}/estado`, {
+    estado,
+  }),
+};
+
+export const tareaService = {
+  getTareas: (params) => apiClient.get("/api/tareas", { params }),
+  avanzarEstado: (id, data) => apiClient.patch(`/api/tareas/estado/${id}`, data),
+  actualizarTarea: (id, data) => apiClient.put(`/api/tareas/update/${id}`, data),
+  getHistorial: (id) => apiClient.get(`/api/tareas/${id}/historial`),
+  agregarNota: (id, nota) => apiClient.post(`/api/tareas/${id}/notas`, { nota }),
+};

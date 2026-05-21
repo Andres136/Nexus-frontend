@@ -1,8 +1,8 @@
 Options +FollowSymLinks
 RewriteEngine On
-RewriteBase /app
+
 
 # Excluir archivos estáticos como CSS, JS, imágenes, etc., de la redirección
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)$ index.html [L]
+RewriteRule ^(.*)$ index.html [L]   
