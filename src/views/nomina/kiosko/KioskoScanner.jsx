@@ -111,11 +111,14 @@ export default function KioskoScanner({
     setGuardando(true);
     try {
       const ahora = new Date();
+      const yy  = ahora.getFullYear();
+      const mm  = String(ahora.getMonth() + 1).padStart(2, "0");
+      const dd  = String(ahora.getDate()).padStart(2, "0");
       await workSessionService.createSession({
         user_id:           candidato.userId,
         kiosko_id:         kioskoInfo.id,
-        registro_diario:   ahora.toISOString().split("T")[0],
-        hora_entrada:      ahora.toTimeString().slice(0, 8),
+        registro_diario:   `${yy}-${mm}-${dd}`,
+        hora_entrada:      ahora.toISOString(),
         horario_laboral_id: jornadaId,
       });
       const hora = hhmm(ahora);

@@ -44,7 +44,7 @@ export default function KioskoAcciones({ empleado, kioskoInfo, jornadaId, onDone
   const entrada  = parseTime(session?.hora_entrada);
   const enPausa  = !!session?.hora_salida_brake && !session?.horara_ingreso_brake;
 
-  const ahora = () => new Date().toTimeString().slice(0, 8);
+  const ahora = () => new Date().toISOString();
 
   const ejecutar = async (payload, mensaje) => {
     setGuardando(true);

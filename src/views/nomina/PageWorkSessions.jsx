@@ -18,7 +18,8 @@ function fmtHora(dt) {
 
 function fmtFecha(d) {
   if (!d) return "—";
-  return new Date(d + "T00:00:00").toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" });
+  // d may arrive as full ISO datetime ("2026-05-20T00:00:00.000000Z") or bare date ("2026-05-20")
+  return new Date(d.slice(0, 10) + "T00:00:00").toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" });
 }
 
 function getInitials(name = "") {
