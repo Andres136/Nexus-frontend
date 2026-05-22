@@ -9,7 +9,7 @@ const hhmm = (date) =>
   date.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" });
 
 // ── Teclado PIN ───────────────────────────────────────────────────────────────
-function PinModal({ cedulaMap, empleadosMap, jornadaId, kioskoInfo, onReconocido, onEntradaCompleta, onClose }) {
+function PinModal({ cedulaMap, empleadosMap, jornadaId, jornadaActiva, kioskoInfo, onReconocido, onEntradaCompleta, onClose }) {
   const [pin, setPin]       = useState("");
   const [estado, setEstado] = useState("idle"); // idle | buscando | error | exito
   const [msg, setMsg]       = useState("");
@@ -29,7 +29,7 @@ function PinModal({ cedulaMap, empleadosMap, jornadaId, kioskoInfo, onReconocido
     if (!userId) {
       setEstado("error");
       setMsg("Cédula no encontrada. Verifica el número.");
-      hablar("Cédula no encontrada. Por favor intenta de nuevo.");
+      decir(jornadaActiva, "Cédula no encontrada. Por favor intenta de nuevo.");
       setTimeout(() => { setEstado("idle"); setMsg(""); setPin(""); }, 2500);
       return;
     }
@@ -49,7 +49,7 @@ function PinModal({ cedulaMap, empleadosMap, jornadaId, kioskoInfo, onReconocido
         const info = empleadosMap.get(userId) ?? { nombre: "Empleado" };
         setEstado("error");
         setMsg(`${info.nombre}, tu jornada de hoy ya finalizó.`);
-        hablar(`${info.nombre}, tu jornada de hoy ya fue completada. Hasta mañana.`);
+        decir(jornadaActiva, `${info.nombre}, tu jornada de hoy ya fue completada. Hasta mañana.`);
         setTimeout(onClose, 3500);
         return;
       }
@@ -69,15 +69,22 @@ function PinModal({ cedulaMap, empleadosMap, jornadaId, kioskoInfo, onReconocido
       });
 
       const hora = hhmm(ahora);
-      hablar(`Bienvenido, ${info.nombre}. Registro exitoso.`);
+      const tarde = minutosTardeEntrada(ahora, jornadaActiva?.hora_entrada) > 0;
+      decir(jornadaActiva, tarde
+        ? `Registro exitoso. ${info.nombre}, has ingresado tarde.`
+        : `Bienvenido, ${info.nombre}. Registro exitoso.`
+      );
       setEstado("exito");
-      setMsg(`¡Bienvenido, ${info.nombre}! Entrada registrada a las ${hora}.`);
+      setMsg(tarde
+        ? `${info.nombre}, entrada registrada a las ${hora}. Ingreso tardío.`
+        : `¡Bienvenido, ${info.nombre}! Entrada registrada a las ${hora}.`
+      );
       onEntradaCompleta(info.nombre, hora);
       setTimeout(onClose, 3000);
     } catch {
       setEstado("error");
       setMsg("Error al registrar. Intenta de nuevo.");
-      hablar("Error al registrar. Por favor intenta de nuevo.");
+      decir(jornadaActiva, "Error al registrar. Por favor intenta de nuevo.");
       setTimeout(() => { setEstado("idle"); setMsg(""); setPin(""); }, 2500);
     }
   };
@@ -145,6 +152,7 @@ PinModal.propTypes = {
   cedulaMap:         PropTypes.instanceOf(Map).isRequired,
   empleadosMap:      PropTypes.instanceOf(Map).isRequired,
   jornadaId:         PropTypes.number.isRequired,
+  jornadaActiva:     PropTypes.object,
   kioskoInfo:        PropTypes.shape({ id: PropTypes.number, name: PropTypes.string }).isRequired,
   onReconocido:      PropTypes.func.isRequired,
   onEntradaCompleta: PropTypes.func.isRequired,
@@ -158,12 +166,25 @@ const tiempoHHMMSS = (date) => {
   return `${hh}:${mi}:${ss}`;
 };
 
+function minutosTardeEntrada(fecha, horaEntrada = "07:00") {
+  const [hh = "7", mm = "0"] = String(horaEntrada || "07:00").split(":");
+  const limite = new Date(fecha);
+  limite.setHours(Number(hh), Number(mm), 0, 0);
+  return Math.max(0, Math.round((fecha - limite) / 60000));
+}
+
+function decir(jornada, texto) {
+  if (jornada?.comando_voz_activo === false) return;
+  hablar(texto);
+}
+
 export default function KioskoScanner({
   faceMatcher,
   empleadosMap,
   cedulaMap,
   kioskoInfo,
   jornadaId,
+  jornadaActiva,
   ultimaMarca,
   onReconocido,
   onEntradaCompleta,
@@ -171,6 +192,7 @@ export default function KioskoScanner({
   const videoRef   = useRef(null);
   const streamRef  = useRef(null);
   const loopRef    = useRef(null);
+  const autoPinRef = useRef(null);
   const cooldown   = useRef(false);
   const detecting  = useRef(false);
   const detOptions = useRef(new faceapi.SsdMobilenetv1Options({ minConfidence: 0.4 }));
@@ -182,6 +204,7 @@ export default function KioskoScanner({
   const [exitoMsg, setExitoMsg]         = useState("");
   const [jornadaCerrada, setJornadaCerrada] = useState(false);
   const [showPin, setShowPin]           = useState(false);
+  const [reconocimientoFallido, setReconocimientoFallido] = useState(false);
 
   const resetear = useCallback(() => {
     setCandidato(null);
@@ -189,6 +212,7 @@ export default function KioskoScanner({
     setGuardando(false);
     setExitoMsg("");
     setJornadaCerrada(false);
+    setReconocimientoFallido(false);
     setTimeout(() => { cooldown.current = false; }, 2000);
   }, []);
 
@@ -227,6 +251,7 @@ export default function KioskoScanner({
       if (match.label === "unknown") return;
 
       cooldown.current = true;
+      setReconocimientoFallido(false);
       const userId = Number(match.label);
       const info   = empleadosMap.get(userId) ?? { nombre: "Empleado", photoUrl: null };
       setCandidato({ userId, nombre: info.nombre, photoUrl: info.photoUrl });
@@ -246,7 +271,7 @@ export default function KioskoScanner({
         // Jornada ya cerrada → una sola entrada/salida por día
         if (session && session.hora_salida) {
           setJornadaCerrada(true);
-          hablar(`${info.nombre}, tu jornada de hoy ya fue completada. Hasta mañana.`);
+          decir(jornadaActiva, `${info.nombre}, tu jornada de hoy ya fue completada. Hasta mañana.`);
           setExitoMsg(`Tu jornada de hoy ya finalizó, ${info.nombre}.`);
           setTimeout(resetear, 4000);
           return;
@@ -269,13 +294,20 @@ export default function KioskoScanner({
         });
 
         const hora = hhmm(ahora);
-        hablar(`Bienvenido, ${info.nombre}. Registro exitoso.`);
-        setExitoMsg(`¡Bienvenido, ${info.nombre}! Entrada marcada a las ${hora}.`);
+        const tarde = minutosTardeEntrada(ahora, jornadaActiva?.hora_entrada) > 0;
+        decir(jornadaActiva, tarde
+          ? `Registro exitoso. ${info.nombre}, has ingresado tarde.`
+          : `Bienvenido, ${info.nombre}. Registro exitoso.`
+        );
+        setExitoMsg(tarde
+          ? `${info.nombre}, entrada marcada a las ${hora}. Ingreso tardío.`
+          : `¡Bienvenido, ${info.nombre}! Entrada marcada a las ${hora}.`
+        );
         onEntradaCompleta(info.nombre, hora);
         setTimeout(resetear, 3500);
 
       } catch {
-        hablar("Error al registrar. Por favor intenta de nuevo.");
+        decir(jornadaActiva, "Error al registrar. Por favor intenta de nuevo.");
         setExitoMsg("Error al registrar la entrada. Intenta de nuevo.");
         setTimeout(resetear, 3000);
       } finally {
@@ -287,12 +319,25 @@ export default function KioskoScanner({
     } finally {
       detecting.current = false;
     }
-  }, [faceMatcher, empleadosMap, candidato, onReconocido, kioskoInfo, jornadaId, onEntradaCompleta, resetear]);
+  }, [faceMatcher, empleadosMap, candidato, onReconocido, kioskoInfo, jornadaId, jornadaActiva, onEntradaCompleta, resetear]);
 
   useEffect(() => {
     loopRef.current = setInterval(detectar, 300);
     return () => clearInterval(loopRef.current);
   }, [detectar]);
+
+  useEffect(() => {
+    clearTimeout(autoPinRef.current);
+
+    if (candidato || exitoMsg || showPin || reconocimientoFallido) return;
+
+    autoPinRef.current = setTimeout(() => {
+      decir(jornadaActiva, "No fue posible validar el reconocimiento facial. Puedes usar el PIN alterno con tu número de cédula.");
+      setReconocimientoFallido(true);
+    }, 8000);
+
+    return () => clearTimeout(autoPinRef.current);
+  }, [candidato, exitoMsg, showPin, reconocimientoFallido, jornadaActiva]);
 
   // ── UI ──────────────────────────────────────────────────────────────────────
   return (
@@ -303,9 +348,10 @@ export default function KioskoScanner({
           cedulaMap={cedulaMap}
           empleadosMap={empleadosMap}
           jornadaId={jornadaId}
+          jornadaActiva={jornadaActiva}
           kioskoInfo={kioskoInfo}
           onReconocido={(userId, session) => { setShowPin(false); onReconocido(userId, session); }}
-          onEntradaCompleta={(nombre, hora) => { setShowPin(false); onEntradaCompleta(nombre, hora); }}
+          onEntradaCompleta={(nombre, hora) => { setShowPin(false); setReconocimientoFallido(false); onEntradaCompleta(nombre, hora); }}
           onClose={() => setShowPin(false)}
         />
       )}
@@ -321,6 +367,7 @@ export default function KioskoScanner({
         <p className="text-gray-400 text-sm mt-1">
           {candidato
             ? checkingSession ? "Verificando sesión..." : "Reconocimiento completado"
+            : reconocimientoFallido || camError ? "Reconocimiento no validado · Usa PIN alterno"
             : "Reconocimiento facial · Acércate a la cámara"}
         </p>
       </div>
@@ -382,25 +429,28 @@ export default function KioskoScanner({
 
         {!candidato && !exitoMsg && (
           <>
-            <div className="w-full py-4 rounded-2xl bg-green-600/90 border border-green-500/60 text-white text-center text-sm font-bold select-none shadow-lg shadow-green-900/40">
-              Acércate a la cámara
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowPin(true)}
-                className="flex items-center justify-center gap-2 flex-1 py-2.5 rounded-xl bg-indigo-700/70 border border-indigo-500/40 text-indigo-200 text-sm font-medium hover:bg-indigo-600/80 transition-colors">
-                <KeyRound className="h-4 w-4" strokeWidth={2} />
-                PIN alterno
-              </button>
-              <a
-                href="https://wa.me/573108157335"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 flex-1 py-2.5 rounded-xl bg-gray-800 border border-gray-700 text-gray-300 text-sm font-medium hover:bg-green-900/50 hover:text-green-300 hover:border-green-700/50 transition-colors">
-                <MessageCircle className="h-4 w-4" strokeWidth={2} />
-                Ayuda
-              </a>
-            </div>
+            {!reconocimientoFallido && !camError ? (
+              <div className="w-full py-4 rounded-2xl bg-green-600/90 border border-green-500/60 text-white text-center text-sm font-bold select-none shadow-lg shadow-green-900/40">
+                Acércate a la cámara
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowPin(true)}
+                  className="flex items-center justify-center gap-2 flex-1 py-2.5 rounded-xl bg-indigo-700/70 border border-indigo-500/40 text-indigo-200 text-sm font-medium hover:bg-indigo-600/80 transition-colors">
+                  <KeyRound className="h-4 w-4" strokeWidth={2} />
+                  PIN alterno
+                </button>
+                <a
+                  href="https://wa.me/573108157335"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 flex-1 py-2.5 rounded-xl bg-gray-800 border border-gray-700 text-gray-300 text-sm font-medium hover:bg-green-900/50 hover:text-green-300 hover:border-green-700/50 transition-colors">
+                  <MessageCircle className="h-4 w-4" strokeWidth={2} />
+                  Ayuda
+                </a>
+              </div>
+            )}
           </>
         )}
 
@@ -431,6 +481,7 @@ KioskoScanner.propTypes = {
   cedulaMap:         PropTypes.instanceOf(Map).isRequired,
   kioskoInfo:        PropTypes.shape({ id: PropTypes.number, name: PropTypes.string }).isRequired,
   jornadaId:         PropTypes.number.isRequired,
+  jornadaActiva:     PropTypes.object,
   ultimaMarca:       PropTypes.shape({ nombre: PropTypes.string, hora: PropTypes.string }),
   onReconocido:      PropTypes.func.isRequired,
   onEntradaCompleta: PropTypes.func.isRequired,

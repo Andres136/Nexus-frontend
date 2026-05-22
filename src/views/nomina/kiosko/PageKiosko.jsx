@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import { useParams } from "react-router-dom";
 import * as faceapi from "face-api.js";
 import KioskoScanner from "./KioskoScanner";
@@ -86,6 +87,12 @@ function PantallaEstado({ titulo, detalle, error }) {
   );
 }
 
+PantallaEstado.propTypes = {
+  titulo: PropTypes.string.isRequired,
+  detalle: PropTypes.string,
+  error: PropTypes.bool,
+};
+
 // ─── Componente principal ─────────────────────────────────────────────────────
 export default function PageKiosko() {
   const { code } = useParams();
@@ -96,6 +103,7 @@ export default function PageKiosko() {
 
   const [kioskoInfo, setKioskoInfo] = useState(null);  // { id, name, uuid }
   const [jornadaId, setJornadaId]   = useState(null);  // integer ID primera jornada
+  const [jornadaActiva, setJornadaActiva] = useState(null);
   const [faceMatcher, setFaceMatcher] = useState(null);
   const [empleadosMap, setEmpleadosMap] = useState(new Map()); // userId → { nombre, photoUrl }
   const [cedulaMap, setCedulaMap]       = useState(new Map()); // cedula → userId
@@ -126,6 +134,7 @@ export default function PageKiosko() {
         const jornadaActiva = jornadas.find((j) => j.status !== false) ?? jornadas[0];
         if (!jornadaActiva) throw new Error("No hay jornadas laborales configuradas.");
         setJornadaId(jornadaActiva.id);
+        setJornadaActiva(jornadaActiva);
 
         // 4. Empleados (nombre por userId)
         setLoadMsg("Cargando empleados...");
@@ -190,6 +199,7 @@ export default function PageKiosko() {
           cedulaMap={cedulaMap}
           kioskoInfo={kioskoInfo}
           jornadaId={jornadaId}
+          jornadaActiva={jornadaActiva}
           ultimaMarca={ultimaMarca}
           onReconocido={handleReconocido}
           onEntradaCompleta={handleAccionCompleta}
@@ -200,6 +210,7 @@ export default function PageKiosko() {
           empleado={empleadoActual}
           kioskoInfo={kioskoInfo}
           jornadaId={jornadaId}
+          jornadaActiva={jornadaActiva}
           onDone={handleAccionCompleta}
           onCancelar={() => { setEmpleadoActual(null); setStep("scanner"); }}
         />

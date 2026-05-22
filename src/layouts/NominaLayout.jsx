@@ -1,5 +1,4 @@
 import { useState } from "react";
-import PropTypes from "prop-types";
 import {
   ReceiptText,
   FileText,
@@ -43,21 +42,7 @@ import PageDesprendibles from "../views/nomina/PageDesprendibles";
 import PageCertificadoLaboral from "../views/nomina/PageCertificadoLaboral";
 import PageLlamadosAtencion from "../views/nomina/PageLlamadosAtencion";
 import PageDescargos from "../views/nomina/PageDescargos";
-
-function Placeholder({ label, description }) {
-  Placeholder.propTypes = { label: PropTypes.string, description: PropTypes.string };
-  return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-xl font-semibold text-gray-800">{label}</h1>
-        {description && <p className="text-sm text-gray-500 mt-0.5">{description}</p>}
-      </div>
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-14 text-center text-sm text-gray-400">
-        Módulo próximamente disponible.
-      </div>
-    </div>
-  );
-}
+import PageConfiguracionNomina from "../views/nomina/PageConfiguracionNomina";
 
 const NAV_ITEMS = [
   {
@@ -214,7 +199,7 @@ const NAV_ITEMS = [
     id: "configuracion",
     label: "Configuración",
     icon: Settings,
-    component: <Placeholder label="Configuración" description="Parámetros generales del módulo de nómina." />,
+    component: <PageConfiguracionNomina />,
   },
 ];
 

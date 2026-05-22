@@ -3,7 +3,19 @@ let vozLista = false;
 function elegirVozFemenina() {
   const voces = speechSynthesis.getVoices();
   // Preferencia: voz femenina en español
-  const preferidas = ["Paulina", "Monica", "Sabina", "female", "mujer", "Google español"];
+  const preferidas = [
+    "Paulina",
+    "Mónica",
+    "Monica",
+    "Sabina",
+    "Helena",
+    "Laura",
+    "Dalia",
+    "Luciana",
+    "Google español",
+    "female",
+    "mujer",
+  ];
   for (const p of preferidas) {
     const v = voces.find(
       (voz) => voz.lang.startsWith("es") && voz.name.toLowerCase().includes(p.toLowerCase())
