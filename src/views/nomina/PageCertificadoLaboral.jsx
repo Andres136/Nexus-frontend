@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import {
-  FileBadge, Download, ChevronDown, Search, Loader2, Building2, User, Calendar,
+  FileBadge, Download, ChevronDown, Search, Loader2, Building2, User, Calendar, Send,
 } from "lucide-react";
 import { contratacionService, portalEmpleadoService } from "../../services/nominaService";
+import { useAuth } from "../../hooks/useAuth";
 
 function fmtFecha(d) {
   if (!d) return "—";
@@ -23,6 +24,7 @@ function descargarBlob(blob, nombre) {
 }
 
 export default function PageCertificadoLaboral() {
+  const { user } = useAuth({ middleware: "auth" });
   const [empleados, setEmpleados]   = useState([]);
   const [search, setSearch]         = useState("");
   const [showDrop, setShowDrop]     = useState(false);
@@ -30,7 +32,10 @@ export default function PageCertificadoLaboral() {
   const [contrato, setContrato]     = useState(null);
   const [loadingCnt, setLoadingCnt] = useState(false);
   const [dirigidoA, setDirigidoA]   = useState("");
+  const [correo, setCorreo]         = useState("");
   const [descargando, setDescargando] = useState(false);
+  const [enviando, setEnviando]     = useState(false);
+  const [mensaje, setMensaje]       = useState("");
   const [error, setError]           = useState("");
 
   useEffect(() => {
@@ -39,17 +44,25 @@ export default function PageCertificadoLaboral() {
       .catch(() => {});
   }, []);
 
+  useEffect(() => {
+    if (!user?.id || empSel) return;
+    setEmpSel({ id: user.id, name: user.name });
+  }, [user, empSel]);
+
   // Cargar contrato al seleccionar empleado
   useEffect(() => {
-    if (!empSel) { setContrato(null); return; }
+    if (!empSel) { setContrato(null); setCorreo(""); return; }
     setLoadingCnt(true);
     setError("");
-    contratacionService.getContrataciones({ user_id: empSel.id, per_page: 1 })
+    setMensaje("");
+    contratacionService.getContratos({ user_id: empSel.id, per_page: 1 })
       .then((res) => {
         const data = res.data?.data?.data ?? res.data?.data ?? [];
-        setContrato(data[0] ?? null);
+        const contratoActual = data[0] ?? null;
+        setContrato(contratoActual);
+        setCorreo(contratoActual?.correo ?? empSel.email ?? "");
       })
-      .catch(() => setContrato(null))
+      .catch(() => { setContrato(null); setCorreo(""); })
       .finally(() => setLoadingCnt(false));
   }, [empSel]);
 
@@ -71,6 +84,25 @@ export default function PageCertificadoLaboral() {
       setError("Error al generar el certificado. Verifica que el empleado tenga contrato activo.");
     } finally {
       setDescargando(false);
+    }
+  };
+
+  const handleEnviar = async () => {
+    if (!contrato?.uuid) return;
+    setEnviando(true);
+    setError("");
+    setMensaje("");
+    try {
+      const res = await portalEmpleadoService.enviarCertificadoLaboral(
+        contrato.uuid,
+        dirigidoA.trim(),
+        correo.trim()
+      );
+      setMensaje(res.data?.message || "Certificado enviado correctamente.");
+    } catch (err) {
+      setError(err.response?.data?.message || "Error al enviar el certificado al correo.");
+    } finally {
+      setEnviando(false);
     }
   };
 
@@ -114,7 +146,7 @@ export default function PageCertificadoLaboral() {
                   <div className="max-h-48 overflow-y-auto">
                     {empFiltrados.map((e) => (
                       <button key={e.id}
-                        onClick={() => { setEmpSel(e); setShowDrop(false); setSearch(""); setError(""); }}
+                        onClick={() => { setEmpSel(e); setShowDrop(false); setSearch(""); setError(""); setMensaje(""); }}
                         className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors">
                         {e.name}
                       </button>
@@ -155,6 +187,10 @@ export default function PageCertificadoLaboral() {
                     <p className="text-sm font-medium text-gray-700">{fmtFecha(contrato.inicio_contratacion)}</p>
                   </div>
                 </div>
+                <div>
+                  <p className="text-[10px] text-gray-400 uppercase">Correo</p>
+                  <p className="text-sm font-medium text-gray-700">{contrato.correo ?? "Sin correo registrado"}</p>
+                </div>
               </>
             ) : (
               <p className="text-xs text-gray-400 italic">
@@ -177,7 +213,18 @@ export default function PageCertificadoLaboral() {
               value={dirigidoA}
               onChange={(e) => setDirigidoA(e.target.value)}
               className="w-full h-9 px-3 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-            <p className="text-xs text-gray-400 mt-1">Puede dejarse en blanco para "A quien interese".</p>
+            <p className="text-xs text-gray-400 mt-1">Puede dejarse en blanco para A quien interese.</p>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+              Enviar a correo
+            </label>
+            <input type="email"
+              placeholder="correo@empresa.com"
+              value={correo}
+              onChange={(e) => setCorreo(e.target.value)}
+              className="w-full h-9 px-3 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
           </div>
 
           {/* Preview */}
@@ -203,17 +250,34 @@ export default function PageCertificadoLaboral() {
             </p>
           )}
 
+          {mensaje && (
+            <p className="text-xs text-green-600 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+              {mensaje}
+            </p>
+          )}
+
           {/* Botón */}
-          <div className="mt-auto pt-2 border-t border-gray-100">
+          <div className="mt-auto pt-2 border-t border-gray-100 space-y-2">
+            <button
+              onClick={handleEnviar}
+              disabled={!empSel || !contrato || !correo.trim() || enviando}
+              className="flex items-center justify-center gap-2 w-full h-10 bg-indigo-600 text-white text-sm font-medium rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md shadow-indigo-200"
+            >
+              {enviando ? (
+                <><Loader2 className="h-4 w-4 animate-spin" /> Enviando...</>
+              ) : (
+                <><Send className="h-4 w-4" /> Enviar certificado al correo</>
+              )}
+            </button>
             <button
               onClick={handleDescargar}
               disabled={!empSel || !contrato || descargando}
-              className="flex items-center justify-center gap-2 w-full h-10 bg-indigo-600 text-white text-sm font-medium rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md shadow-indigo-200"
+              className="flex items-center justify-center gap-2 w-full h-9 bg-white text-indigo-700 text-sm font-medium rounded-xl border border-indigo-100 hover:bg-indigo-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {descargando ? (
                 <><Loader2 className="h-4 w-4 animate-spin" /> Generando PDF...</>
               ) : (
-                <><Download className="h-4 w-4" /> Descargar Certificado PDF</>
+                <><Download className="h-4 w-4" /> Descargar PDF</>
               )}
             </button>
           </div>

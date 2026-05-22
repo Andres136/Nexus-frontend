@@ -350,10 +350,19 @@ export const portalEmpleadoService = {
       responseType: "blob",
     });
   },
+  enviarDesprendible(nominaUuid, correo = "") {
+    return apiClient.post(`api/nomina/nominas/${nominaUuid}/desprendible/enviar`, { correo });
+  },
   certificadoLaboralPdf(contratacionUuid, dirigidoA = "") {
     return apiClient.get(`api/nomina/contratacion/${contratacionUuid}/certificado`, {
       params: { dirigido_a: dirigidoA },
       responseType: "blob",
+    });
+  },
+  enviarCertificadoLaboral(contratacionUuid, dirigidoA = "", correo = "") {
+    return apiClient.post(`api/nomina/contratacion/${contratacionUuid}/certificado/enviar`, {
+      dirigido_a: dirigidoA,
+      correo,
     });
   },
 };

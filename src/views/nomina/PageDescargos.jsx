@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import PropTypes from "prop-types";
 import {
   FileText, User, Building2, Calendar, ChevronDown,
   Printer, Send, CheckCircle, Search, ClipboardList,
@@ -35,6 +36,12 @@ function Campo({ label, icon: Icon, children }) {
   );
 }
 
+Campo.propTypes = {
+  label: PropTypes.string.isRequired,
+  icon: PropTypes.elementType,
+  children: PropTypes.node,
+};
+
 // ── Componente principal ──────────────────────────────────────────────────────
 export default function PageDescargos() {
   const [empleados, setEmpleados]     = useState([]);
@@ -63,7 +70,7 @@ export default function PageDescargos() {
   useEffect(() => {
     if (!empleadoSel) { setContrato(null); return; }
     setLoadingCnt(true);
-    contratacionService.getContrataciones({ user_id: empleadoSel.id, per_page: 1 })
+    contratacionService.getContratos({ user_id: empleadoSel.id, per_page: 1 })
       .then((res) => {
         const data = res.data?.data?.data ?? res.data?.data ?? [];
         setContrato(data[0] ?? null);
