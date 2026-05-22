@@ -98,6 +98,7 @@ export default function PageKiosko() {
   const [jornadaId, setJornadaId]   = useState(null);  // integer ID primera jornada
   const [faceMatcher, setFaceMatcher] = useState(null);
   const [empleadosMap, setEmpleadosMap] = useState(new Map()); // userId → { nombre, photoUrl }
+  const [cedulaMap, setCedulaMap]       = useState(new Map()); // cedula → userId
 
   const [step, setStep]             = useState("scanner"); // scanner | acciones
   const [empleadoActual, setEmpleadoActual] = useState(null); // { userId, nombre, photoUrl, session }
@@ -138,13 +139,18 @@ export default function PageKiosko() {
 
         // Mapa userId → { nombre, photoUrl }
         const mapa = new Map();
-        empleados.forEach((e) => mapa.set(e.id, { nombre: e.name, photoUrl: null }));
+        const cedulas = new Map(); // cedula → userId
+        empleados.forEach((e) => {
+          mapa.set(e.id, { nombre: e.name, photoUrl: null });
+          if (e.numero_documento) cedulas.set(String(e.numero_documento).trim(), e.id);
+        });
         fotos.forEach((f) => {
           const entry = mapa.get(f.users_id);
           if (entry) entry.photoUrl = f.photo ? STORAGE_URL + f.photo : null;
           else mapa.set(f.users_id, { nombre: `Usuario #${f.users_id}`, photoUrl: f.photo ? STORAGE_URL + f.photo : null });
         });
         setEmpleadosMap(mapa);
+        setCedulaMap(cedulas);
 
         // 6. Construir FaceMatcher
         setLoadMsg("Procesando descriptores faciales...");
@@ -181,6 +187,7 @@ export default function PageKiosko() {
         <KioskoScanner
           faceMatcher={faceMatcher}
           empleadosMap={empleadosMap}
+          cedulaMap={cedulaMap}
           kioskoInfo={kioskoInfo}
           jornadaId={jornadaId}
           ultimaMarca={ultimaMarca}

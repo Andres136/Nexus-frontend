@@ -1,11 +1,155 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import PropTypes from "prop-types";
 import * as faceapi from "face-api.js";
+import { KeyRound, MessageCircle } from "lucide-react";
 import { workSessionService } from "../../../services/nominaService";
 import { hablar } from "../../../helpers/voz";
 
 const hhmm = (date) =>
   date.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" });
+
+// ── Teclado PIN ───────────────────────────────────────────────────────────────
+function PinModal({ cedulaMap, empleadosMap, jornadaId, kioskoInfo, onReconocido, onEntradaCompleta, onClose }) {
+  const [pin, setPin]       = useState("");
+  const [estado, setEstado] = useState("idle"); // idle | buscando | error | exito
+  const [msg, setMsg]       = useState("");
+
+  const TECLAS = ["1","2","3","4","5","6","7","8","9","","0","⌫"];
+
+  const presionar = (t) => {
+    if (estado !== "idle") return;
+    if (t === "⌫") { setPin((p) => p.slice(0, -1)); return; }
+    if (t === "") return;
+    setPin((p) => (p.length < 12 ? p + t : p));
+  };
+
+  const buscar = async () => {
+    if (!pin.trim()) return;
+    const userId = cedulaMap.get(pin.trim());
+    if (!userId) {
+      setEstado("error");
+      setMsg("Cédula no encontrada. Verifica el número.");
+      hablar("Cédula no encontrada. Por favor intenta de nuevo.");
+      setTimeout(() => { setEstado("idle"); setMsg(""); setPin(""); }, 2500);
+      return;
+    }
+
+    setEstado("buscando");
+    try {
+      const res      = await workSessionService.getSessionHoy(userId);
+      const sessions = res.data?.data?.data ?? res.data?.data ?? [];
+      const session  = sessions[0] ?? null;
+
+      if (session && !session.hora_salida) {
+        onReconocido(userId, session);
+        return;
+      }
+
+      if (session && session.hora_salida) {
+        const info = empleadosMap.get(userId) ?? { nombre: "Empleado" };
+        setEstado("error");
+        setMsg(`${info.nombre}, tu jornada de hoy ya finalizó.`);
+        hablar(`${info.nombre}, tu jornada de hoy ya fue completada. Hasta mañana.`);
+        setTimeout(onClose, 3500);
+        return;
+      }
+
+      const info  = empleadosMap.get(userId) ?? { nombre: "Empleado", photoUrl: null };
+      const ahora = new Date();
+      const yy    = ahora.getFullYear();
+      const mm    = String(ahora.getMonth() + 1).padStart(2, "0");
+      const dd    = String(ahora.getDate()).padStart(2, "0");
+
+      await workSessionService.createSession({
+        user_id:            userId,
+        kiosko_id:          kioskoInfo.id,
+        registro_diario:    `${yy}-${mm}-${dd}`,
+        hora_entrada:       tiempoHHMMSS(ahora),
+        horario_laboral_id: jornadaId,
+      });
+
+      const hora = hhmm(ahora);
+      hablar(`Bienvenido, ${info.nombre}. Registro exitoso.`);
+      setEstado("exito");
+      setMsg(`¡Bienvenido, ${info.nombre}! Entrada registrada a las ${hora}.`);
+      onEntradaCompleta(info.nombre, hora);
+      setTimeout(onClose, 3000);
+    } catch {
+      setEstado("error");
+      setMsg("Error al registrar. Intenta de nuevo.");
+      hablar("Error al registrar. Por favor intenta de nuevo.");
+      setTimeout(() => { setEstado("idle"); setMsg(""); setPin(""); }, 2500);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+      <div className="bg-gray-900 border border-gray-700 rounded-3xl w-full max-w-xs p-6 flex flex-col gap-5">
+        <div className="text-center">
+          <p className="text-indigo-400 text-xs font-semibold uppercase tracking-widest mb-1">PIN Alterno</p>
+          <p className="text-white text-lg font-bold">Ingresa tu cédula</p>
+        </div>
+
+        <div className={`rounded-2xl px-4 py-3 text-center border ${
+          estado === "error" ? "bg-red-900/40 border-red-500/40"    :
+          estado === "exito" ? "bg-green-900/40 border-green-500/40" :
+          "bg-gray-800 border-gray-700"
+        }`}>
+          {msg ? (
+            <p className={`text-sm font-medium ${estado === "error" ? "text-red-300" : "text-green-300"}`}>{msg}</p>
+          ) : (
+            <p className="text-white text-2xl font-mono tracking-widest min-h-[2rem]">
+              {pin || <span className="text-gray-600">_ _ _ _ _ _</span>}
+            </p>
+          )}
+        </div>
+
+        {estado === "idle" && (
+          <div className="grid grid-cols-3 gap-2.5">
+            {TECLAS.map((t, i) => (
+              <button key={i} onClick={() => presionar(t)}
+                className={`h-14 rounded-2xl text-lg font-bold transition-all ${
+                  t === "⌫" ? "bg-gray-700 text-red-400 hover:bg-gray-600" :
+                  t === ""  ? "invisible" :
+                  "bg-gray-800 text-white hover:bg-indigo-600 active:scale-95"
+                }`}>
+                {t}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div className="flex gap-2">
+          <button onClick={onClose}
+            className="flex-1 py-3 rounded-2xl bg-gray-800 text-gray-400 text-sm font-medium hover:bg-gray-700 transition-colors">
+            Cancelar
+          </button>
+          {estado === "idle" && (
+            <button onClick={buscar} disabled={!pin.trim()}
+              className="flex-1 py-3 rounded-2xl bg-green-600 text-white text-sm font-bold hover:bg-green-700 disabled:opacity-40 transition-colors">
+              Confirmar
+            </button>
+          )}
+          {estado === "buscando" && (
+            <div className="flex-1 py-3 rounded-2xl bg-indigo-700/40 text-indigo-300 text-sm text-center animate-pulse">
+              Verificando...
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+PinModal.propTypes = {
+  cedulaMap:         PropTypes.instanceOf(Map).isRequired,
+  empleadosMap:      PropTypes.instanceOf(Map).isRequired,
+  jornadaId:         PropTypes.number.isRequired,
+  kioskoInfo:        PropTypes.shape({ id: PropTypes.number, name: PropTypes.string }).isRequired,
+  onReconocido:      PropTypes.func.isRequired,
+  onEntradaCompleta: PropTypes.func.isRequired,
+  onClose:           PropTypes.func.isRequired,
+};
 
 const tiempoHHMMSS = (date) => {
   const hh = String(date.getHours()).padStart(2, "0");
@@ -17,6 +161,7 @@ const tiempoHHMMSS = (date) => {
 export default function KioskoScanner({
   faceMatcher,
   empleadosMap,
+  cedulaMap,
   kioskoInfo,
   jornadaId,
   ultimaMarca,
@@ -36,6 +181,7 @@ export default function KioskoScanner({
   const [guardando, setGuardando]       = useState(false);
   const [exitoMsg, setExitoMsg]         = useState("");
   const [jornadaCerrada, setJornadaCerrada] = useState(false);
+  const [showPin, setShowPin]           = useState(false);
 
   const resetear = useCallback(() => {
     setCandidato(null);
@@ -152,6 +298,18 @@ export default function KioskoScanner({
   return (
     <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-between py-8 px-4">
 
+      {showPin && (
+        <PinModal
+          cedulaMap={cedulaMap}
+          empleadosMap={empleadosMap}
+          jornadaId={jornadaId}
+          kioskoInfo={kioskoInfo}
+          onReconocido={(userId, session) => { setShowPin(false); onReconocido(userId, session); }}
+          onEntradaCompleta={(nombre, hora) => { setShowPin(false); onEntradaCompleta(nombre, hora); }}
+          onClose={() => setShowPin(false)}
+        />
+      )}
+
       {/* Header */}
       <div className="text-center">
         <p className="text-indigo-400 text-xs font-semibold uppercase tracking-widest mb-1">
@@ -224,16 +382,24 @@ export default function KioskoScanner({
 
         {!candidato && !exitoMsg && (
           <>
-            <div className="w-full py-4 rounded-2xl bg-blue-600/20 border border-blue-500/20 text-blue-300 text-center text-sm font-medium select-none">
+            <div className="w-full py-4 rounded-2xl bg-green-600/90 border border-green-500/60 text-white text-center text-sm font-bold select-none shadow-lg shadow-green-900/40">
               Acércate a la cámara
             </div>
             <div className="flex gap-2">
-              <button className="flex-1 py-2.5 rounded-xl bg-gray-800 text-gray-400 text-sm font-medium hover:bg-gray-700 transition-colors">
+              <button
+                onClick={() => setShowPin(true)}
+                className="flex items-center justify-center gap-2 flex-1 py-2.5 rounded-xl bg-indigo-700/70 border border-indigo-500/40 text-indigo-200 text-sm font-medium hover:bg-indigo-600/80 transition-colors">
+                <KeyRound className="h-4 w-4" strokeWidth={2} />
                 PIN alterno
               </button>
-              <button className="flex-1 py-2.5 rounded-xl bg-gray-800 text-gray-400 text-sm font-medium hover:bg-gray-700 transition-colors">
+              <a
+                href="https://wa.me/573108157335"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 flex-1 py-2.5 rounded-xl bg-gray-800 border border-gray-700 text-gray-300 text-sm font-medium hover:bg-green-900/50 hover:text-green-300 hover:border-green-700/50 transition-colors">
+                <MessageCircle className="h-4 w-4" strokeWidth={2} />
                 Ayuda
-              </button>
+              </a>
             </div>
           </>
         )}
@@ -262,6 +428,7 @@ export default function KioskoScanner({
 KioskoScanner.propTypes = {
   faceMatcher:       PropTypes.object,
   empleadosMap:      PropTypes.instanceOf(Map).isRequired,
+  cedulaMap:         PropTypes.instanceOf(Map).isRequired,
   kioskoInfo:        PropTypes.shape({ id: PropTypes.number, name: PropTypes.string }).isRequired,
   jornadaId:         PropTypes.number.isRequired,
   ultimaMarca:       PropTypes.shape({ nombre: PropTypes.string, hora: PropTypes.string }),
