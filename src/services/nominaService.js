@@ -308,3 +308,52 @@ export const fotoFacialService = {
     return apiClient.delete(`api/nomina/users-face-photos/${uuid}`);
   },
 };
+
+export const llamadoAtencionService = {
+  getLlamados(params = {}) {
+    return apiClient.get("api/nomina/llamados-atencion", { params });
+  },
+  createLlamado(data) {
+    return apiClient.post("api/nomina/llamados-atencion", data);
+  },
+  deleteLlamado(uuid) {
+    return apiClient.delete(`api/nomina/llamados-atencion/${uuid}`);
+  },
+  pdfLlamado(uuid, descripcion) {
+    return apiClient.get(`api/nomina/llamados-atencion/${uuid}/pdf`, {
+      params: { descripcion },
+      responseType: "blob",
+    });
+  },
+};
+
+export const descargoService = {
+  getDescargos(params = {}) {
+    return apiClient.get("api/nomina/descargos", { params });
+  },
+  createDescargo(data) {
+    return apiClient.post("api/nomina/descargos", data);
+  },
+  deleteDescargo(uuid) {
+    return apiClient.delete(`api/nomina/descargos/${uuid}`);
+  },
+  pdfDescargo(uuid) {
+    return apiClient.get(`api/nomina/descargos/${uuid}/pdf`, {
+      responseType: "blob",
+    });
+  },
+};
+
+export const portalEmpleadoService = {
+  desprendiblePdf(nominaUuid) {
+    return apiClient.get(`api/nomina/nominas/${nominaUuid}/desprendible`, {
+      responseType: "blob",
+    });
+  },
+  certificadoLaboralPdf(contratacionUuid, dirigidoA = "") {
+    return apiClient.get(`api/nomina/contratacion/${contratacionUuid}/certificado`, {
+      params: { dirigido_a: dirigidoA },
+      responseType: "blob",
+    });
+  },
+};

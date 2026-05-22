@@ -140,6 +140,13 @@ export default function RegisterContrato({ uuid = null, onClose }) {
             {err("cargo")}
           </div>
 
+          {/* Correo */}
+          <div>
+            {label("Correo")}
+            <input type="email" name="correo" value={formData.correo} onChange={handleChange} placeholder="correo@empresa.com" className={inputClass("correo")} />
+            {err("correo")}
+          </div>
+
           {/* Empresa + Tipo contrato */}
           <div className="grid grid-cols-2 gap-3">
             <div>

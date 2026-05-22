@@ -9,6 +9,7 @@ const EMPTY_FORM = {
   empresa_id: "",
   tipo_documento: "CC",
   numero_documento: "",
+  correo: "",
   cargo: "",
   no_salarial: 0,
   base_salario: "",
@@ -46,7 +47,7 @@ export const useGetRegisterContratacion = ({ uuid = null, onSuccess } = {}) => {
   useEffect(() => {
     if (contratacion?.data) {
       const {
-        id_contrato, users_id, empresa_id, tipo_documento, numero_documento, cargo,
+        id_contrato, users_id, empresa_id, tipo_documento, numero_documento, correo, cargo,
         no_salarial, base_salario, auxilio_transporte, pago_frecuencia,
         inicio_contratacion, fin_contrato, status, eps_id, arl_id,
         fondo_pensiones_id, caja_penciones_id,
@@ -57,6 +58,7 @@ export const useGetRegisterContratacion = ({ uuid = null, onSuccess } = {}) => {
         empresa_id: empresa_id ?? "",
         tipo_documento: tipo_documento ?? "CC",
         numero_documento: numero_documento ?? "",
+        correo: correo ?? "",
         cargo: cargo ?? "",
         no_salarial: no_salarial ?? 0,
         base_salario: base_salario ?? "",

@@ -142,6 +142,9 @@ export default function PageContratos() {
                   <td className="px-4 py-3">
                     <p className="font-medium text-gray-800">{item.usuario?.name ?? "—"}</p>
                     <p className="text-xs text-gray-400">{item.usuario?.email ?? ""}</p>
+                    {item.correo && (
+                      <p className="text-xs text-indigo-500">{item.correo}</p>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-gray-600">
                     <p className="text-xs font-medium text-gray-500">{item.tipo_documento ?? "—"}</p>
