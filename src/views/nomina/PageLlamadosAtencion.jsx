@@ -1,9 +1,10 @@
 import { useState, useMemo, useEffect } from "react";
+import PropTypes from "prop-types";
 import {
-  AlertTriangle, Search, Download, X, FileWarning, Plus, Pencil,
+  AlertTriangle, Search, Download, X, FileWarning, Plus, Pencil, Loader2,
 } from "lucide-react";
 import { useGetWorkSessions } from "../../hooks/nomina/useGetWorkSessions";
-import { contratacionService } from "../../services/nominaService";
+import { contratacionService, llamadoAtencionService } from "../../services/nominaService";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function fmtFecha(d) {
@@ -26,6 +27,17 @@ function retardoAlmuerzo(session) {
   const ing  = new Date(session.hora_ingreso_almuerzo);
   const mins = Math.round((ing - sal) / 60000);
   return mins > 60 ? mins - 60 : 0;
+}
+
+function descargarBlob(blob, nombre) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = nombre;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
 }
 
 const BADGE = {
@@ -72,6 +84,7 @@ function ModalOtro({ empleados, onGuardar, onClose }) {
     if (!empObj || !titulo.trim()) return;
     onGuardar({
       uuid:    crypto.randomUUID(),
+      user_id: empObj.id,
       nombre:  empObj.name,
       fecha,
       tipo:    "otro",
@@ -166,15 +179,53 @@ function ModalOtro({ empleados, onGuardar, onClose }) {
   );
 }
 
+ModalOtro.propTypes = {
+  empleados: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    name: PropTypes.string,
+  })).isRequired,
+  onGuardar: PropTypes.func.isRequired,
+  onClose: PropTypes.func.isRequired,
+};
+
 // ── Modal generar llamado ─────────────────────────────────────────────────────
 function ModalLlamado({ infraccion, onClose }) {
   const [texto, setTexto] = useState("");
+  const [generando, setGenerando] = useState(false);
+  const [error, setError] = useState("");
 
   const descripcionAuto = {
     tardanza: `El empleado registró una llegada tarde de ${minsToHM(infraccion.minutos)} el día ${fmtFecha(infraccion.fecha)}, incumpliendo el horario laboral establecido.`,
     almuerzo: `El empleado excedió el tiempo de almuerzo en ${minsToHM(infraccion.minutos)} el día ${fmtFecha(infraccion.fecha)}.`,
     ausencia: `El empleado no registró asistencia el día ${fmtFecha(infraccion.fecha)} sin justificación documentada.`,
   }[infraccion.tipo] ?? "";
+
+  const descripcion = texto || descripcionAuto || infraccion.detalle || "";
+
+  const handleGenerarPdf = async () => {
+    if (!infraccion.user_id || !descripcion.trim()) return;
+    setGenerando(true);
+    setError("");
+    try {
+      const creado = await llamadoAtencionService.createLlamado({
+        user_id: infraccion.user_id,
+        tipo: infraccion.tipo,
+        titulo: infraccion.titulo ?? LABEL_TIPO[infraccion.tipo] ?? infraccion.tipo,
+        detalle: descripcion.trim(),
+        minutos: infraccion.minutos ?? 0,
+        fecha_hecho: infraccion.fecha,
+        severidad: calcSeveridad(infraccion.minutos ?? 0),
+      });
+      const uuid = creado.data?.uuid;
+      const pdf = await llamadoAtencionService.pdfLlamado(uuid, descripcion.trim());
+      descargarBlob(pdf.data, `llamado_${uuid}.pdf`);
+      onClose();
+    } catch (err) {
+      setError(err.response?.data?.message || "No se pudo generar el PDF del llamado.");
+    } finally {
+      setGenerando(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -209,7 +260,7 @@ function ModalLlamado({ infraccion, onClose }) {
             </label>
             <textarea
               rows={4}
-              value={texto || descripcionAuto}
+              value={descripcion}
               onChange={(e) => setTexto(e.target.value)}
               className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none text-gray-700"
             />
@@ -222,6 +273,11 @@ function ModalLlamado({ infraccion, onClose }) {
               {calcSeveridad(infraccion.minutos)}
             </span>
           </div>
+          {error && (
+            <p className="text-xs text-red-500 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+              {error}
+            </p>
+          )}
         </div>
 
         <div className="px-6 pb-5 flex gap-2 justify-end">
@@ -230,16 +286,31 @@ function ModalLlamado({ infraccion, onClose }) {
             Cancelar
           </button>
           <button
-            onClick={() => { window.print(); onClose(); }}
-            className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors">
-            <Download className="h-4 w-4" />
-            Generar PDF
+            onClick={handleGenerarPdf}
+            disabled={generando || !descripcion.trim()}
+            className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+            {generando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            {generando ? "Generando..." : "Generar PDF"}
           </button>
         </div>
       </div>
     </div>
   );
 }
+
+ModalLlamado.propTypes = {
+  infraccion: PropTypes.shape({
+    uuid: PropTypes.string,
+    user_id: PropTypes.number,
+    nombre: PropTypes.string,
+    fecha: PropTypes.string,
+    tipo: PropTypes.string,
+    titulo: PropTypes.string,
+    detalle: PropTypes.string,
+    minutos: PropTypes.number,
+  }).isRequired,
+  onClose: PropTypes.func.isRequired,
+};
 
 // ── Página principal ──────────────────────────────────────────────────────────
 export default function PageLlamadosAtencion() {
@@ -267,10 +338,9 @@ export default function PageLlamadosAtencion() {
   }), [fechaInicio, fechaFin]);
 
   const { workSessions, isLoading } = useGetWorkSessions(params);
-  const lista = workSessions?.data?.data ?? [];
-
   // Construir infracciones: automáticas (sesiones) + manuales
   const infracciones = useMemo(() => {
+    const lista = workSessions?.data?.data ?? [];
     const result = [];
     lista.forEach((s) => {
       const nombre = s.empleado?.name ?? "—";
@@ -279,6 +349,7 @@ export default function PageLlamadosAtencion() {
       if (s.minutos_tardanza > 0) {
         result.push({
           uuid:    s.uuid + "_t",
+          user_id: s.user_id ?? s.empleado?.id,
           nombre,
           fecha:   s.registro_diario,
           tipo:    "tardanza",
@@ -292,6 +363,7 @@ export default function PageLlamadosAtencion() {
       if (retAlmuerzo > 0) {
         result.push({
           uuid:    s.uuid + "_a",
+          user_id: s.user_id ?? s.empleado?.id,
           nombre,
           fecha:   s.registro_diario,
           tipo:    "almuerzo",
@@ -308,7 +380,7 @@ export default function PageLlamadosAtencion() {
     });
 
     return result;
-  }, [lista, search, manuales]);
+  }, [workSessions, search, manuales]);
 
   return (
     <div className="p-6">

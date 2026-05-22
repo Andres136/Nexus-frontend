@@ -2,9 +2,9 @@ import { useState, useEffect, useMemo } from "react";
 import PropTypes from "prop-types";
 import {
   FileText, User, Building2, Calendar, ChevronDown,
-  Printer, Send, CheckCircle, Search, ClipboardList,
+  Printer, CheckCircle, Search, ClipboardList, Download,
 } from "lucide-react";
-import { contratacionService } from "../../services/nominaService";
+import { contratacionService, descargoService } from "../../services/nominaService";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function fmtFecha(d) {
@@ -12,6 +12,17 @@ function fmtFecha(d) {
   return new Date(d.slice(0, 10) + "T00:00:00").toLocaleDateString("es-CO", {
     day: "2-digit", month: "long", year: "numeric",
   });
+}
+
+function descargarBlob(blob, nombre) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = nombre;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
 }
 
 const TIPOS_DESCARGO = [
@@ -57,6 +68,8 @@ export default function PageDescargos() {
   const [descargo, setDescargo]         = useState("");
   const [enviado, setEnviado]           = useState(false);
   const [enviando, setEnviando]         = useState(false);
+  const [ultimoDescargo, setUltimoDescargo] = useState(null);
+  const [error, setError]               = useState("");
 
   // Cargar empleados
   useEffect(() => {
@@ -87,9 +100,24 @@ export default function PageDescargos() {
   const handleEnviar = async () => {
     if (!empleadoSel || !descargo.trim()) return;
     setEnviando(true);
-    await new Promise((r) => setTimeout(r, 1000));
-    setEnviando(false);
-    setEnviado(true);
+    setError("");
+    try {
+      const creado = await descargoService.createDescargo({
+        user_id: empleadoSel.id,
+        tipo_descargo: tipoDescargo,
+        fecha_hecho: fechaHecho,
+        descripcion: descargo.trim(),
+      });
+      const uuid = creado.data?.uuid;
+      setUltimoDescargo({ uuid, empleado: empleadoSel.name });
+      const pdf = await descargoService.pdfDescargo(uuid);
+      descargarBlob(pdf.data, `descargo_${uuid}.pdf`);
+      setEnviado(true);
+    } catch (err) {
+      setError(err.response?.data?.message || "No se pudo registrar y generar el PDF del descargo.");
+    } finally {
+      setEnviando(false);
+    }
   };
 
   const handleNuevo = () => {
@@ -97,6 +125,8 @@ export default function PageDescargos() {
     setEmpleadoSel(null);
     setContrato(null);
     setDescargo("");
+    setUltimoDescargo(null);
+    setError("");
     setTipoDescargo(TIPOS_DESCARGO[0]);
     setFechaHecho(new Date().toISOString().slice(0, 10));
   };
@@ -111,7 +141,7 @@ export default function PageDescargos() {
           <div>
             <h2 className="text-lg font-semibold text-gray-800">Descargo registrado</h2>
             <p className="text-sm text-gray-500 mt-1 max-w-xs">
-              El descargo de <span className="font-medium text-gray-700">{empleadoSel?.name}</span> ha sido registrado correctamente.
+              El descargo de <span className="font-medium text-gray-700">{ultimoDescargo?.empleado ?? empleadoSel?.name}</span> ha sido registrado y el PDF fue generado correctamente.
             </p>
           </div>
           <div className="flex gap-2 mt-2">
@@ -271,6 +301,12 @@ export default function PageDescargos() {
           )}
 
           {/* Acciones */}
+          {error && (
+            <p className="text-xs text-red-500 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+              {error}
+            </p>
+          )}
+
           <div className="flex items-center justify-between pt-2 border-t border-gray-100">
             <button onClick={() => window.print()}
               className="flex items-center gap-1.5 px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors">
@@ -283,7 +319,7 @@ export default function PageDescargos() {
               {enviando ? (
                 <span className="animate-pulse">Registrando...</span>
               ) : (
-                <><Send className="h-4 w-4" /> Registrar descargo</>
+                <><Download className="h-4 w-4" /> Registrar y generar PDF</>
               )}
             </button>
           </div>
