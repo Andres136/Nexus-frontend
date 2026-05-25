@@ -2,6 +2,9 @@ import { useState, useMemo } from "react";
 import { useGetNominas } from "../../hooks/nomina/useGetNominas";
 import { useGetNominaSummary } from "../../hooks/nomina/useGetNominaSummary";
 import { useGetContrataciones } from "../../hooks/nomina/useGetContrataciones";
+import ModalLiquidarNomina from "../../components/nomina/ModalLiquidarNomina";
+import { nominaService } from "../../services/nominaService";
+import { showToast } from "../../helpers/utils/showToast";
 
 const MESES = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -9,6 +12,7 @@ const MESES = [
 ];
 
 const YEARS = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i);
+const CENTROS_COSTO = ["Cali", "Barranquilla", "Medellín", "Girardot"];
 
 function formatCOP(value) {
   if (!value && value !== 0) return "$ 0";
@@ -38,6 +42,28 @@ function avatarColor(name = "") {
   let hash = 0;
   for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
+function normalizarTexto(value = "") {
+  return String(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function getCentroCosto(item = {}) {
+  const sede = item.usuario?.sede?.nombre ?? item.empleado?.sede?.nombre ?? "";
+  const empresa = item.empresa?.nombre ?? item.contratacion?.empresa?.nombre ?? "";
+  const texto = normalizarTexto(`${sede} ${empresa}`);
+  const centro = CENTROS_COSTO.find((nombre) => texto.includes(normalizarTexto(nombre)));
+  return centro ?? "Sin sede";
+}
+
+function buildNominaByUser(nominas = []) {
+  return nominas.reduce((acc, nomina) => {
+    if (nomina?.user_id && nomina.liquidada) acc[nomina.user_id] = nomina;
+    return acc;
+  }, {});
 }
 
 function KpiCard({ label, value, sub, icon, valueColor = "text-gray-900" }) {
@@ -118,6 +144,9 @@ export default function PageProcesarNomina() {
   const [page, setPage] = useState(1);
   const [perPage] = useState(10);
   const [activeTab, setActiveTab] = useState("resumen");
+  const [showLiquidarModal, setShowLiquidarModal] = useState(false);
+  const [liquidarInitialData, setLiquidarInitialData] = useState({});
+  const [openActions, setOpenActions] = useState(null);
 
   const periodoInicio = useMemo(
     () => `${anio}-${String(mes + 1).padStart(2, "0")}-01`,
@@ -143,16 +172,115 @@ export default function PageProcesarNomina() {
     [periodoInicio, periodoFin]
   );
 
-  const { nominas } = useGetNominas(nominaParams);
+  const { nominas, isLoading: loadingNominas } = useGetNominas(nominaParams);
   const { contrataciones, isLoading } = useGetContrataciones(contratacionParams);
   const { summary, isLoading: loadingSummary } = useGetNominaSummary(summaryParams);
 
   const lista = contrataciones?.data?.data ?? [];
   const meta  = contrataciones?.data ?? null;
+  const nominasLista = nominas?.data?.data ?? [];
+  const nominaByUser = useMemo(() => buildNominaByUser(nominasLista), [nominasLista]);
+
+  const conceptos = useMemo(() => {
+    return nominasLista.reduce((acc, item) => {
+      acc.salario += Number(item.salario_base_devengado ?? 0);
+      acc.auxilio += Number(item.auxilio_transporte ?? 0);
+      acc.extras += Number(item.valor_horas_extras_diurnas ?? 0)
+        + Number(item.valor_horas_extras_nocturnas ?? 0)
+        + Number(item.valor_horas_festivas ?? 0)
+        + Number(item.valor_horas_nocturnas_festivas ?? 0);
+      acc.salud += Number(item.deduccion_salud ?? 0);
+      acc.pension += Number(item.deduccion_pension ?? 0);
+      acc.descuentos += Number(item.total_descuentos_adicionales ?? 0);
+      acc.devengado += Number(item.total_devengado ?? 0);
+      acc.deducciones += Number(item.total_deducciones ?? 0);
+      acc.neto += Number(item.salario_neto ?? 0);
+      return acc;
+    }, {
+      salario: 0,
+      auxilio: 0,
+      extras: 0,
+      salud: 0,
+      pension: 0,
+      descuentos: 0,
+      devengado: 0,
+      deducciones: 0,
+      neto: 0,
+    });
+  }, [nominasLista]);
+
+  const centrosCosto = useMemo(() => {
+    const base = CENTROS_COSTO.reduce((acc, nombre) => {
+      acc[nombre] = { nombre, empleados: 0, liquidados: 0, devengado: 0, deducciones: 0, neto: 0 };
+      return acc;
+    }, {});
+
+    lista.forEach((contrato) => {
+      const centro = getCentroCosto(contrato);
+      if (!base[centro]) base[centro] = { nombre: centro, empleados: 0, liquidados: 0, devengado: 0, deducciones: 0, neto: 0 };
+      const nomina = nominaByUser[contrato.users_id];
+      base[centro].empleados += 1;
+      if (nomina) {
+        base[centro].liquidados += 1;
+        base[centro].devengado += Number(nomina.total_devengado ?? 0);
+        base[centro].deducciones += Number(nomina.total_deducciones ?? 0);
+        base[centro].neto += Number(nomina.salario_neto ?? 0);
+      }
+    });
+
+    return Object.values(base);
+  }, [lista, nominaByUser]);
 
   const handleMes = (e) => { setMes(Number(e.target.value)); setPage(1); };
   const handleAnio = (e) => { setAnio(Number(e.target.value)); setPage(1); };
   const handleSearch = (e) => { setSearch(e.target.value); setPage(1); };
+
+  const abrirLiquidacion = (item = {}) => {
+    setLiquidarInitialData({
+      user_id: item.users_id ? String(item.users_id) : "",
+      periodo_inicio: periodoInicio,
+      periodo_fin: periodoFin,
+    });
+    setShowLiquidarModal(true);
+    setOpenActions(null);
+  };
+
+  const descargarDesprendible = async (nomina) => {
+    if (!nomina?.uuid) {
+      showToast("error", "Primero debes liquidar esta nómina.");
+      return;
+    }
+
+    try {
+      const response = await nominaService.desprendiblePdf(nomina.uuid);
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: "application/pdf" }));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `desprendible_${nomina.uuid}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      setOpenActions(null);
+    } catch {
+      showToast("error", "No se pudo descargar el desprendible.");
+    }
+  };
+
+  const enviarDesprendible = async (nomina) => {
+    if (!nomina?.uuid) {
+      showToast("error", "Primero debes liquidar esta nómina.");
+      return;
+    }
+
+    try {
+      const response = await nominaService.enviarDesprendible(nomina.uuid);
+      showToast("success", response.data?.message || "Desprendible enviado.");
+      setOpenActions(null);
+    } catch (error) {
+      showToast("error", error.response?.data?.message || "No se pudo enviar el desprendible.");
+    }
+  };
 
   const TABS = [
     { id: "resumen", label: "Resumen de Nómina", icon: "📋" },
@@ -195,6 +323,13 @@ export default function PageProcesarNomina() {
             </svg>
           </div>
 
+          <button
+            type="button"
+            onClick={() => abrirLiquidacion()}
+            className="h-9 px-4 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
+          >
+            Liquidar Nómina
+          </button>
         </div>
       </div>
 
@@ -358,8 +493,7 @@ export default function PageProcesarNomina() {
                     const neto      = devengado - deducciones;
 
                     // ¿ya tiene nómina liquidada en este período?
-                    const nominasLista = nominas?.data?.data ?? [];
-                    const nominaExiste = nominasLista.find((n) => n.user_id === item.users_id && n.liquidada);
+                    const nominaExiste = nominaByUser[item.users_id];
 
                     return (
                       <tr key={item.uuid} className="hover:bg-gray-50 transition-colors">
@@ -398,12 +532,44 @@ export default function PageProcesarNomina() {
                             </span>
                           )}
                         </td>
-                        <td className="px-4 py-3.5 text-right">
-                          <button className="w-7 h-7 flex items-center justify-center rounded-md border border-gray-200 hover:bg-gray-100 transition-colors ml-auto text-gray-500">
+                        <td className="px-4 py-3.5 text-right relative">
+                          <button
+                            type="button"
+                            onClick={() => setOpenActions(openActions === item.uuid ? null : item.uuid)}
+                            className="w-7 h-7 flex items-center justify-center rounded-md border border-gray-200 hover:bg-gray-100 transition-colors ml-auto text-gray-500"
+                          >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
                               <circle cx="5" cy="12" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="19" cy="12" r="1.5" />
                             </svg>
                           </button>
+                          {openActions === item.uuid && (
+                            <div className="absolute right-4 top-11 z-20 w-48 rounded-md border border-gray-200 bg-white shadow-lg text-left">
+                              <button
+                                type="button"
+                                onClick={() => abrirLiquidacion(item)}
+                                className="block w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:text-gray-400"
+                                disabled={Boolean(nominaExiste)}
+                              >
+                                Liquidar período
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => descargarDesprendible(nominaExiste)}
+                                className="block w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:text-gray-400"
+                                disabled={!nominaExiste}
+                              >
+                                Descargar desprendible
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => enviarDesprendible(nominaExiste)}
+                                className="block w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:text-gray-400"
+                                disabled={!nominaExiste}
+                              >
+                                Enviar por correo
+                              </button>
+                            </div>
+                          )}
                         </td>
                       </tr>
                     );
@@ -416,12 +582,198 @@ export default function PageProcesarNomina() {
           </>
         )}
 
-        {activeTab !== "resumen" && (
-          <div className="py-20 text-center text-sm text-gray-400">
-            Módulo próximamente disponible.
-          </div>
+        {activeTab === "historial" && (
+          <>
+            <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
+              <div>
+                <h3 className="text-sm font-semibold text-gray-800">
+                  Historial de Nóminas — {MESES[mes]} {anio}
+                </h3>
+                <p className="text-xs text-gray-400 mt-0.5">{nominasLista.length} liquidaciones encontradas</p>
+              </div>
+              <div className="relative">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  type="text"
+                  value={search}
+                  onChange={handleSearch}
+                  placeholder="Buscar historial..."
+                  className="pl-9 pr-4 h-9 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 w-56"
+                />
+              </div>
+            </div>
+
+            {loadingNominas ? (
+              <div className="flex justify-center items-center py-20 text-sm text-gray-400">Cargando historial...</div>
+            ) : nominasLista.length === 0 ? (
+              <div className="text-center py-20 text-sm text-gray-400">No hay nóminas liquidadas para este período.</div>
+            ) : (
+              <table className="min-w-full divide-y divide-gray-100 text-sm">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comprobante</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Empleado</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Período</th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Devengado</th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Deducciones</th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Neto</th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-50">
+                  {nominasLista.map((item) => (
+                    <tr key={item.uuid} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-3.5 text-gray-500 font-mono text-xs">#{item.id}</td>
+                      <td className="px-4 py-3.5">
+                        <p className="font-medium text-gray-800">{item.empleado?.name ?? "—"}</p>
+                        <p className="text-xs text-gray-400">{item.contratacion?.cargo ?? "—"}</p>
+                      </td>
+                      <td className="px-4 py-3.5 text-gray-600">
+                        {item.periodo_inicio} / {item.periodo_fin}
+                      </td>
+                      <td className="px-4 py-3.5 text-right font-medium text-gray-700">{formatCOP(item.total_devengado)}</td>
+                      <td className="px-4 py-3.5 text-right font-medium text-orange-600">{formatCOP(item.total_deducciones)}</td>
+                      <td className="px-4 py-3.5 text-right font-semibold text-green-600">{formatCOP(item.salario_neto)}</td>
+                      <td className="px-4 py-3.5 text-right">
+                        <div className="flex justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => descargarDesprendible(item)}
+                            className="h-8 px-3 rounded-md border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50"
+                          >
+                            Descargar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => enviarDesprendible(item)}
+                            className="h-8 px-3 rounded-md border border-indigo-200 bg-indigo-50 text-xs font-medium text-indigo-700 hover:bg-indigo-100"
+                          >
+                            Enviar
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </>
+        )}
+
+        {activeTab === "conceptos" && (
+          <>
+            <div className="px-4 py-4 border-b border-gray-100">
+              <h3 className="text-sm font-semibold text-gray-800">
+                Conceptos — {MESES[mes]} {anio}
+              </h3>
+              <p className="text-xs text-gray-400 mt-0.5">Resumen de devengados y deducciones liquidadas</p>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4 p-4 border-b border-gray-100">
+              <KpiCard label="Total Devengado" value={formatCOP(conceptos.devengado)} sub="Ingresos del período" valueColor="text-gray-900" icon={<span className="text-xl">+</span>} />
+              <KpiCard label="Total Deducciones" value={formatCOP(conceptos.deducciones)} sub="Descuentos del período" valueColor="text-orange-600" icon={<span className="text-xl">−</span>} />
+              <KpiCard label="Neto Pagado" value={formatCOP(conceptos.neto)} sub="Valor final a pagar" valueColor="text-green-600" icon={<span className="text-xl">=</span>} />
+            </div>
+
+            <table className="min-w-full divide-y divide-gray-100 text-sm">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Concepto</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Valor</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-50">
+                {[
+                  ["Devengado", "Salario base", conceptos.salario],
+                  ["Devengado", "Auxilio de transporte", conceptos.auxilio],
+                  ["Devengado", "Horas extras / recargos", conceptos.extras],
+                  ["Deducción", "Salud empleado", conceptos.salud],
+                  ["Deducción", "Pensión empleado", conceptos.pension],
+                  ["Deducción", "Descuentos y permisos no remunerados", conceptos.descuentos],
+                ].map(([tipo, nombre, valor]) => (
+                  <tr key={`${tipo}-${nombre}`} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-3.5">
+                      <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        tipo === "Devengado" ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"
+                      }`}>
+                        {tipo}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3.5 font-medium text-gray-800">{nombre}</td>
+                    <td className={`px-4 py-3.5 text-right font-semibold ${
+                      tipo === "Devengado" ? "text-green-600" : "text-orange-600"
+                    }`}>
+                      {formatCOP(valor)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
+        )}
+
+        {activeTab === "costos" && (
+          <>
+            <div className="px-4 py-4 border-b border-gray-100">
+              <h3 className="text-sm font-semibold text-gray-800">
+                Centros de Costo — {MESES[mes]} {anio}
+              </h3>
+              <p className="text-xs text-gray-400 mt-0.5">Distribución por sedes: Cali, Barranquilla, Medellín y Girardot</p>
+            </div>
+
+            <div className="grid grid-cols-4 gap-4 p-4 border-b border-gray-100">
+              {centrosCosto
+                .filter((centro) => CENTROS_COSTO.includes(centro.nombre))
+                .map((centro) => (
+                  <div key={centro.nombre} className="rounded-lg border border-gray-200 p-4">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">{centro.nombre}</p>
+                    <p className="text-xl font-bold text-gray-900 mt-2">{formatCOP(centro.neto)}</p>
+                    <p className="text-xs text-gray-400 mt-1">{centro.liquidados} liquidados de {centro.empleados} empleados</p>
+                  </div>
+                ))}
+            </div>
+
+            <table className="min-w-full divide-y divide-gray-100 text-sm">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sede</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Empleados</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Liquidados</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Devengado</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Deducciones</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Neto</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-50">
+                {centrosCosto.map((centro) => (
+                  <tr key={centro.nombre} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-3.5 font-medium text-gray-800">{centro.nombre}</td>
+                    <td className="px-4 py-3.5 text-right text-gray-600">{centro.empleados}</td>
+                    <td className="px-4 py-3.5 text-right text-gray-600">{centro.liquidados}</td>
+                    <td className="px-4 py-3.5 text-right font-medium text-gray-700">{formatCOP(centro.devengado)}</td>
+                    <td className="px-4 py-3.5 text-right font-medium text-orange-600">{formatCOP(centro.deducciones)}</td>
+                    <td className="px-4 py-3.5 text-right font-semibold text-green-600">{formatCOP(centro.neto)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
         )}
       </div>
+
+      {showLiquidarModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl">
+            <ModalLiquidarNomina
+              onClose={() => setShowLiquidarModal(false)}
+              initialData={liquidarInitialData}
+            />
+          </div>
+        </div>
+      )}
 
     </div>
   );

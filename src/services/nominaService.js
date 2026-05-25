@@ -206,6 +206,9 @@ export const nominaService = {
   getSummary(params = {}) {
     return apiClient.get("api/nomina/nominas/resumen", { params });
   },
+  preliquidar(data) {
+    return apiClient.post("api/nomina/nominas/preliquidar", data);
+  },
   liquidar(data) {
     return apiClient.post("api/nomina/nominas/liquidar", data);
   },

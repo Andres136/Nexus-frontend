@@ -2,18 +2,27 @@ import PropTypes from "prop-types";
 import Select from "react-select";
 import { useLiquidarNomina } from "../../hooks/nomina/useLiquidarNomina";
 
-export default function ModalLiquidarNomina({ onClose }) {
+function formatCOP(value) {
+  if (!value && value !== 0) return "$ 0";
+  return "$ " + Number(value).toLocaleString("es-CO");
+}
+
+export default function ModalLiquidarNomina({ onClose, initialData = {} }) {
   const {
     formData,
     handleChange,
     handleSelectEmpleado,
+    handlePreview,
     handleSubmit,
     fieldErrors,
     loading,
+    preview,
+    previewLoading,
     empleados,
     loadingEmpleados,
     jornadas,
-  } = useLiquidarNomina({ onSuccess: onClose });
+    loadingJornadas,
+  } = useLiquidarNomina({ onSuccess: onClose, initialData });
 
   const inputClass = (field) =>
     `block w-full h-10 px-3 rounded-md border shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
@@ -21,6 +30,7 @@ export default function ModalLiquidarNomina({ onClose }) {
     }`;
 
   const empleadoOptions = empleados.map((e) => ({ value: e.value, label: e.label }));
+  const empleadoSeleccionado = empleadoOptions.find((e) => String(e.value) === String(formData.user_id)) ?? null;
 
   return (
     <div>
@@ -39,6 +49,7 @@ export default function ModalLiquidarNomina({ onClose }) {
           </label>
           <Select
             options={empleadoOptions}
+            value={empleadoSeleccionado}
             isLoading={loadingEmpleados}
             onChange={handleSelectEmpleado}
             placeholder="Buscar empleado..."
@@ -73,9 +84,10 @@ export default function ModalLiquidarNomina({ onClose }) {
             name="jornada_laboral_id"
             value={formData.jornada_laboral_id}
             onChange={handleChange}
+            disabled={loadingJornadas}
             className={inputClass("jornada_laboral_id")}
           >
-            <option value="">Seleccionar jornada...</option>
+            <option value="">{loadingJornadas ? "Cargando jornadas..." : "Seleccionar jornada..."}</option>
             {jornadas.map((j) => (
               <option key={j.id} value={j.id}>{j.nombre}</option>
             ))}
@@ -119,6 +131,32 @@ export default function ModalLiquidarNomina({ onClose }) {
           </div>
         </div>
 
+        {preview && (
+          <div className="rounded-lg border border-indigo-100 bg-indigo-50 p-4">
+            <p className="text-sm font-semibold text-indigo-900 mb-3">Vista previa</p>
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <p className="text-xs text-indigo-500">Devengado</p>
+                <p className="font-semibold text-gray-900">{formatCOP(preview.total_devengado)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-indigo-500">Deducciones</p>
+                <p className="font-semibold text-orange-600">{formatCOP(preview.total_deducciones)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-indigo-500">Neto a pagar</p>
+                <p className="font-semibold text-green-700">{formatCOP(preview.salario_neto)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-indigo-500">Horas extra</p>
+                <p className="font-semibold text-gray-900">
+                  {Number(preview.horas_extras_diurnas || 0) + Number(preview.horas_extras_nocturnas || 0)} h
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Botones */}
         <div className="flex justify-end gap-3 pt-2">
           <button
@@ -127,6 +165,14 @@ export default function ModalLiquidarNomina({ onClose }) {
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
           >
             Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={handlePreview}
+            disabled={previewLoading || loading}
+            className="px-4 py-2 text-sm font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-md hover:bg-indigo-100 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+          >
+            {previewLoading ? "Calculando..." : "Preliquidar"}
           </button>
           <button
             type="submit"
@@ -151,4 +197,5 @@ export default function ModalLiquidarNomina({ onClose }) {
 
 ModalLiquidarNomina.propTypes = {
   onClose: PropTypes.func.isRequired,
+  initialData: PropTypes.object,
 };
