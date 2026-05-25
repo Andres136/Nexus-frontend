@@ -128,7 +128,7 @@ export default function RegisterContrato({ uuid = null, onClose }) {
             </div>
             <div>
               {label("Número de documento", true)}
-              <input type="text" name="numero_documento" value={formData.numero_documento} onChange={handleChange} placeholder="Ej: 1234567890" className={inputClass("numero_documento")} />
+              <input type="text" name="numero_documento" value={formData.numero_documento} onChange={handleChange} placeholder="Escriba el número de documento" className={inputClass("numero_documento")} />
               {err("numero_documento")}
             </div>
           </div>
@@ -136,14 +136,14 @@ export default function RegisterContrato({ uuid = null, onClose }) {
           {/* Cargo */}
           <div>
             {label("Cargo", true)}
-            <input type="text" name="cargo" value={formData.cargo} onChange={handleChange} placeholder="Ej: Desarrollador Senior" className={inputClass("cargo")} />
+            <input type="text" name="cargo" value={formData.cargo} onChange={handleChange} placeholder="Escriba el cargo" className={inputClass("cargo")} />
             {err("cargo")}
           </div>
 
           {/* Correo */}
           <div>
             {label("Correo")}
-            <input type="email" name="correo" value={formData.correo} onChange={handleChange} placeholder="correo@empresa.com" className={inputClass("correo")} />
+            <input type="email" name="correo" value={formData.correo} onChange={handleChange} placeholder="Escriba el correo" className={inputClass("correo")} />
             {err("correo")}
           </div>
 

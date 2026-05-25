@@ -131,8 +131,8 @@ export const incapacidadService = {
       headers: { "Content-Type": "multipart/form-data" },
     });
   },
-  revisarIncapacidad(uuid) {
-    return apiClient.patch(`api/nomina/incapacidades/${uuid}/revisar`);
+  revisarIncapacidad(uuid, data = {}) {
+    return apiClient.patch(`api/nomina/incapacidades/${uuid}/revisar`, data);
   },
   deleteIncapacidad(uuid) {
     return apiClient.delete(`api/nomina/incapacidades/${uuid}`);
@@ -190,6 +190,9 @@ export const contratacionService = {
   },
   updateContrato(id, data) {
     return apiClient.put(`api/nomina/contratacion/${id}`, data);
+  },
+  cambiarEstadoContrato(uuid, status) {
+    return apiClient.patch(`api/nomina/contratacion/${uuid}/estado`, { status });
   },
   deleteContrato(id) {
     return apiClient.delete(`api/nomina/contratacion/${id}`);

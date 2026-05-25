@@ -78,7 +78,7 @@ export default function ModalLiquidarNomina({ onClose, initialData = {} }) {
         {/* Jornada */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Jornada Laboral <span className="text-red-500">*</span>
+            Jornada Laboral
           </label>
           <select
             name="jornada_laboral_id"
@@ -87,11 +87,14 @@ export default function ModalLiquidarNomina({ onClose, initialData = {} }) {
             disabled={loadingJornadas}
             className={inputClass("jornada_laboral_id")}
           >
-            <option value="">{loadingJornadas ? "Cargando jornadas..." : "Seleccionar jornada..."}</option>
+            <option value="">{loadingJornadas ? "Cargando jornadas..." : "Usar jornada del ingreso..."}</option>
             {jornadas.map((j) => (
-              <option key={j.id} value={j.id}>{j.nombre}</option>
+              <option key={j.id} value={j.id}>{j.nombre} · {j.horas_semanales} h/semana</option>
             ))}
           </select>
+          <p className="mt-1 text-xs text-gray-400">
+            Si la dejas vacía se toma la jornada registrada en los ingresos del período.
+          </p>
           {fieldErrors.jornada_laboral_id && (
             <p className="mt-1 text-xs text-red-500">{fieldErrors.jornada_laboral_id[0]}</p>
           )}
@@ -134,6 +137,16 @@ export default function ModalLiquidarNomina({ onClose, initialData = {} }) {
         {preview && (
           <div className="rounded-lg border border-indigo-100 bg-indigo-50 p-4">
             <p className="text-sm font-semibold text-indigo-900 mb-3">Vista previa</p>
+            {preview.advertencias?.length > 0 && (
+              <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 p-3">
+                <p className="text-xs font-semibold text-amber-800">Advertencia</p>
+                {preview.advertencias.map((advertencia) => (
+                  <p key={advertencia} className="mt-1 text-xs text-amber-700">
+                    {advertencia}
+                  </p>
+                ))}
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
                 <p className="text-xs text-indigo-500">Devengado</p>
@@ -150,8 +163,27 @@ export default function ModalLiquidarNomina({ onClose, initialData = {} }) {
               <div>
                 <p className="text-xs text-indigo-500">Horas extra</p>
                 <p className="font-semibold text-gray-900">
-                  {Number(preview.horas_extras_diurnas || 0) + Number(preview.horas_extras_nocturnas || 0)} h
+                  {Number(preview.horas_extras_diurnas || 0)
+                    + Number(preview.horas_extras_nocturnas || 0)
+                    + Number(preview.horas_festivas || 0)
+                    + Number(preview.horas_nocturnas_festivas || 0)} h
                 </p>
+              </div>
+              <div>
+                <p className="text-xs text-indigo-500">Jornada</p>
+                <p className="font-semibold text-gray-900">
+                  {preview.horas_semanales_jornada ?? "—"} h/semana
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-indigo-500">Horas período</p>
+                <p className="font-semibold text-gray-900">
+                  {preview.horas_esperadas_periodo ?? "—"} h
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-indigo-500">Valor hora</p>
+                <p className="font-semibold text-gray-900">{formatCOP(preview.valor_hora_normal)}</p>
               </div>
             </div>
           </div>

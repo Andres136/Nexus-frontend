@@ -48,9 +48,21 @@ const NAV_ITEMS = [
   {
     id: "procesar",
     label: "Nómina",
-    
     icon: ReceiptText,
-    component: <PageProcesarNomina />,
+    tabs: [
+      {
+        id: "liquidacion",
+        label: "Liquidación",
+        icon: ReceiptText,
+        component: <PageProcesarNomina />,
+      },
+      {
+        id: "descuentos",
+        label: "Descuentos / Préstamos",
+        icon: Percent,
+        component: <PageDescuentos />,
+      },
+    ],
   },
   {
     id: "contratacion",
@@ -74,12 +86,6 @@ const NAV_ITEMS = [
         label: "Contrataciones",
         icon: UserCheck,
         component: <PageContratos />,
-      },
-      {
-        id: "descuentos",
-        label: "Descuentos / Préstamos",
-        icon: Percent,
-        component: <PageDescuentos />,
       },
     ],
   },
@@ -139,18 +145,6 @@ const NAV_ITEMS = [
     icon: Clock,
     tabs: [
       {
-        id: "jornada",
-        label: "Jornada Laboral",
-        icon: Timer,
-        component: <PageJornadaLaboral />,
-      },
-      {
-        id: "valores",
-        label: "Valores de Horas",
-        icon: Coins,
-        component: <PageValores />,
-      },
-      {
         id: "tipo-registros",
         label: "Tipos de Registro",
         icon: ClipboardList,
@@ -173,6 +167,25 @@ const NAV_ITEMS = [
         label: "Reconocimiento Facial",
         icon: ScanFace,
         component: <PageReconocimientoFacial />,
+      },
+    ],
+  },
+  {
+    id: "jornada-laboral",
+    label: "Jornada Laboral",
+    icon: Timer,
+    tabs: [
+      {
+        id: "jornada",
+        label: "Jornadas",
+        icon: Timer,
+        component: <PageJornadaLaboral />,
+      },
+      {
+        id: "valores",
+        label: "Valores de Horas",
+        icon: Coins,
+        component: <PageValores />,
       },
     ],
   },
@@ -224,15 +237,15 @@ export default function NominaLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen w-0 min-w-full max-w-full overflow-hidden bg-gray-50">
       {/* Top Navigation Bar */}
-      <nav className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-30">
-        <div className="px-6">
-          <div className="flex items-center h-14 gap-0.5">
+      <nav className="w-full min-w-0 max-w-full overflow-hidden bg-white border-b border-gray-200 shadow-sm sticky top-0 z-30">
+        <div className="w-full min-w-0 max-w-full px-4 sm:px-6 box-border">
+          <div className="flex min-w-0 items-center h-14 gap-0.5">
          
 
             {/* Nav items */}
-            <div className="flex items-center gap-0.5 overflow-x-auto">
+            <div className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto overscroll-x-contain [scrollbar-width:thin]">
               {NAV_ITEMS.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeNav === item.id;
@@ -261,8 +274,8 @@ export default function NominaLayout() {
 
       {/* Sub-tabs */}
       {currentNav?.tabs && (
-        <div className="bg-white border-b border-gray-100 px-6">
-          <div className="flex items-center gap-0.5">
+        <div className="w-full min-w-0 max-w-full overflow-hidden bg-white border-b border-gray-100 px-4 sm:px-6 box-border">
+          <div className="flex min-w-0 items-center gap-0.5 overflow-x-auto overscroll-x-contain [scrollbar-width:thin]">
             {currentNav.tabs.map((tab) => {
               const TabIcon = tab.icon;
               const isActive = currentTabId === tab.id;
@@ -289,7 +302,7 @@ export default function NominaLayout() {
       )}
 
       {/* Content */}
-      <main>{currentComponent}</main>
+      <main className="w-0 min-w-full max-w-full overflow-hidden">{currentComponent}</main>
     </div>
   );
 }

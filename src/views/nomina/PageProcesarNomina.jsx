@@ -68,10 +68,10 @@ function buildNominaByUser(nominas = []) {
 
 function KpiCard({ label, value, sub, icon, valueColor = "text-gray-900" }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5 flex items-start justify-between">
-      <div>
+    <div className="min-w-0 bg-white rounded-xl border border-gray-200 p-4 flex items-start justify-between">
+      <div className="min-w-0">
         <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">{label}</p>
-        <p className={`text-2xl font-bold ${valueColor}`}>{value}</p>
+        <p className={`text-xl font-bold break-words ${valueColor}`}>{value}</p>
         <p className="text-xs text-gray-400 mt-1">{sub}</p>
       </div>
       <div className="ml-4 flex-shrink-0">{icon}</div>
@@ -235,11 +235,27 @@ export default function PageProcesarNomina() {
   const handleAnio = (e) => { setAnio(Number(e.target.value)); setPage(1); };
   const handleSearch = (e) => { setSearch(e.target.value); setPage(1); };
 
+  const periodoContrato = (item = {}) => {
+    if (Number(item.pago_frecuencia) !== 15) {
+      return { inicio: periodoInicio, fin: periodoFin };
+    }
+
+    const seleccionadoEsMesActual = mes === now.getMonth() && anio === now.getFullYear();
+    const usaSegundaQuincena = seleccionadoEsMesActual && now.getDate() > 15;
+    const mesTexto = String(mes + 1).padStart(2, "0");
+
+    return {
+      inicio: `${anio}-${mesTexto}-${usaSegundaQuincena ? "16" : "01"}`,
+      fin: usaSegundaQuincena ? periodoFin : `${anio}-${mesTexto}-15`,
+    };
+  };
+
   const abrirLiquidacion = (item = {}) => {
+    const periodo = periodoContrato(item);
     setLiquidarInitialData({
       user_id: item.users_id ? String(item.users_id) : "",
-      periodo_inicio: periodoInicio,
-      periodo_fin: periodoFin,
+      periodo_inicio: periodo.inicio,
+      periodo_fin: periodo.fin,
     });
     setShowLiquidarModal(true);
     setOpenActions(null);
@@ -290,14 +306,14 @@ export default function PageProcesarNomina() {
   ];
 
   return (
-    <div className="p-6 max-w-screen-xl mx-auto">
+    <div className="w-0 min-w-full max-w-full overflow-hidden box-border p-4 sm:p-6">
       {/* Encabezado */}
-      <div className="flex items-start justify-between mb-6">
-        <div>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between mb-6">
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold text-gray-900">Nómina</h1>
           <p className="text-sm text-gray-500 mt-0.5">Gestión y control de la nómina empresarial</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           {/* Selector de período */}
           <div className="flex items-center gap-1 border border-gray-200 rounded-lg bg-white px-3 h-9 shadow-sm">
             <select
@@ -334,7 +350,7 @@ export default function PageProcesarNomina() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-5 gap-4 mb-6">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-4 mb-6">
         <KpiCard
           label="Empleados Activos"
           value={loadingSummary ? "—" : (summary?.empleados_activos ?? 0)}
@@ -402,8 +418,8 @@ export default function PageProcesarNomina() {
       </div>
 
       {/* Tabs internos */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-        <div className="border-b border-gray-100 px-4 flex items-center gap-0.5">
+      <div className="min-w-0 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="border-b border-gray-100 px-4 flex min-w-0 items-center gap-0.5 overflow-x-auto">
           {TABS.map((tab) => (
             <button
               key={tab.id}
@@ -423,7 +439,7 @@ export default function PageProcesarNomina() {
         {activeTab === "resumen" && (
           <>
             {/* Barra de búsqueda + filtros */}
-            <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
+            <div className="flex flex-col gap-3 px-4 py-4 border-b border-gray-100 md:flex-row md:items-center md:justify-between">
               <div>
                 <h3 className="text-sm font-semibold text-gray-800">
                   Resumen de Nómina — {MESES[mes]} {anio}
@@ -442,7 +458,7 @@ export default function PageProcesarNomina() {
                     value={search}
                     onChange={handleSearch}
                     placeholder="Buscar empleado..."
-                    className="pl-9 pr-4 h-9 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 w-56"
+                    className="pl-9 pr-4 h-9 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full sm:w-56"
                   />
                 </div>
                 <button className="flex items-center gap-1.5 h-9 px-3 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
@@ -468,7 +484,8 @@ export default function PageProcesarNomina() {
                 No hay nóminas procesadas para este período.
               </div>
             ) : (
-              <table className="min-w-full divide-y divide-gray-100 text-sm">
+              <div className="w-full max-w-full overflow-x-auto">
+              <table className="min-w-[980px] divide-y divide-gray-100 text-sm">
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
@@ -576,6 +593,7 @@ export default function PageProcesarNomina() {
                   })}
                 </tbody>
               </table>
+              </div>
             )}
 
             <Pagination meta={meta} page={page} onPage={setPage} />
@@ -584,7 +602,7 @@ export default function PageProcesarNomina() {
 
         {activeTab === "historial" && (
           <>
-            <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
+            <div className="flex flex-col gap-3 px-4 py-4 border-b border-gray-100 md:flex-row md:items-center md:justify-between">
               <div>
                 <h3 className="text-sm font-semibold text-gray-800">
                   Historial de Nóminas — {MESES[mes]} {anio}
@@ -600,7 +618,7 @@ export default function PageProcesarNomina() {
                   value={search}
                   onChange={handleSearch}
                   placeholder="Buscar historial..."
-                  className="pl-9 pr-4 h-9 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 w-56"
+                  className="pl-9 pr-4 h-9 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full sm:w-56"
                 />
               </div>
             </div>
@@ -610,7 +628,8 @@ export default function PageProcesarNomina() {
             ) : nominasLista.length === 0 ? (
               <div className="text-center py-20 text-sm text-gray-400">No hay nóminas liquidadas para este período.</div>
             ) : (
-              <table className="min-w-full divide-y divide-gray-100 text-sm">
+              <div className="w-full max-w-full overflow-x-auto">
+              <table className="min-w-[920px] divide-y divide-gray-100 text-sm">
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comprobante</th>
@@ -658,6 +677,7 @@ export default function PageProcesarNomina() {
                   ))}
                 </tbody>
               </table>
+              </div>
             )}
           </>
         )}
@@ -671,13 +691,14 @@ export default function PageProcesarNomina() {
               <p className="text-xs text-gray-400 mt-0.5">Resumen de devengados y deducciones liquidadas</p>
             </div>
 
-            <div className="grid grid-cols-3 gap-4 p-4 border-b border-gray-100">
+            <div className="grid grid-cols-1 gap-4 p-4 border-b border-gray-100 md:grid-cols-3">
               <KpiCard label="Total Devengado" value={formatCOP(conceptos.devengado)} sub="Ingresos del período" valueColor="text-gray-900" icon={<span className="text-xl">+</span>} />
               <KpiCard label="Total Deducciones" value={formatCOP(conceptos.deducciones)} sub="Descuentos del período" valueColor="text-orange-600" icon={<span className="text-xl">−</span>} />
               <KpiCard label="Neto Pagado" value={formatCOP(conceptos.neto)} sub="Valor final a pagar" valueColor="text-green-600" icon={<span className="text-xl">=</span>} />
             </div>
 
-            <table className="min-w-full divide-y divide-gray-100 text-sm">
+            <div className="w-full max-w-full overflow-x-auto">
+            <table className="min-w-[760px] divide-y divide-gray-100 text-sm">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
@@ -712,6 +733,7 @@ export default function PageProcesarNomina() {
                 ))}
               </tbody>
             </table>
+            </div>
           </>
         )}
 
@@ -724,7 +746,7 @@ export default function PageProcesarNomina() {
               <p className="text-xs text-gray-400 mt-0.5">Distribución por sedes: Cali, Barranquilla, Medellín y Girardot</p>
             </div>
 
-            <div className="grid grid-cols-4 gap-4 p-4 border-b border-gray-100">
+            <div className="grid grid-cols-1 gap-4 p-4 border-b border-gray-100 sm:grid-cols-2 xl:grid-cols-4">
               {centrosCosto
                 .filter((centro) => CENTROS_COSTO.includes(centro.nombre))
                 .map((centro) => (
@@ -736,7 +758,8 @@ export default function PageProcesarNomina() {
                 ))}
             </div>
 
-            <table className="min-w-full divide-y divide-gray-100 text-sm">
+            <div className="w-full max-w-full overflow-x-auto">
+            <table className="min-w-[820px] divide-y divide-gray-100 text-sm">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sede</th>
@@ -760,6 +783,7 @@ export default function PageProcesarNomina() {
                 ))}
               </tbody>
             </table>
+            </div>
           </>
         )}
       </div>

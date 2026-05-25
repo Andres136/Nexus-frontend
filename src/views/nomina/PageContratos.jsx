@@ -1,8 +1,11 @@
 import { useState, useMemo } from "react";
 import PropTypes from "prop-types";
+import { useQueryClient } from "@tanstack/react-query";
 import { Search, Plus, Pencil, CheckCircle2, XCircle } from "lucide-react";
 import { useGetContrataciones } from "../../hooks/nomina/useGetContrataciones";
 import RegisterContrato from "../../components/nomina/RegisterContrato";
+import { contratacionService } from "../../services/nominaService";
+import { showToast } from "../../helpers/utils/showToast";
 
 function formatCOP(value) {
   if (!value && value !== 0) return "—";
@@ -53,14 +56,17 @@ function Pagination({ meta, page, onPage }) {
 }
 
 export default function PageContratos() {
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedUuid, setSelectedUuid] = useState(null);
+  const [updatingStatusUuid, setUpdatingStatusUuid] = useState(null);
 
   const params = useMemo(
-    () => ({ search: search || undefined, page, per_page: 10 }),
-    [search, page]
+    () => ({ search: search || undefined, page, per_page: perPage }),
+    [search, page, perPage]
   );
 
   const { contrataciones, isLoading } = useGetContrataciones(params);
@@ -75,11 +81,31 @@ export default function PageContratos() {
   const closeModal = () => { setModalOpen(false); setSelectedUuid(null); };
 
   const handleSearch = (e) => { setSearch(e.target.value); setPage(1); };
+  const handlePerPage = (e) => {
+    setPerPage(Number(e.target.value));
+    setPage(1);
+  };
+
+  const toggleStatus = async (item) => {
+    setUpdatingStatusUuid(item.uuid);
+    try {
+      const nextStatus = !Boolean(item.status);
+      await contratacionService.cambiarEstadoContrato(item.uuid, nextStatus);
+      showToast("success", nextStatus ? "Contrato activado" : "Contrato inactivado");
+      queryClient.invalidateQueries(["contrataciones"]);
+      queryClient.invalidateQueries(["contratacion", item.uuid]);
+    } catch (error) {
+      showToast("error", error.response?.data?.message || "No se pudo cambiar el estado");
+    } finally {
+      setUpdatingStatusUuid(null);
+    }
+  };
 
   return (
-    <div className="p-6">
+    <div className="w-full min-w-0 max-w-full overflow-hidden box-border p-4 sm:p-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-5">
+      
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-5">
         <div>
           <h1 className="text-xl font-semibold text-gray-800">Contrataciones</h1>
           <p className="text-sm text-gray-500 mt-0.5">Gestiona los contratos laborales de los empleados.</p>
@@ -92,7 +118,7 @@ export default function PageContratos() {
       </div>
 
       {/* Buscador */}
-      <div className="mb-4 flex items-center gap-3">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="relative flex-1 max-w-xs">
           <Search className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" strokeWidth={2} />
           <input
@@ -103,10 +129,24 @@ export default function PageContratos() {
             className="pl-9 pr-4 h-9 w-full text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
+        <label className="flex items-center gap-2 text-sm text-gray-500">
+          Mostrar
+          <select
+            value={perPage}
+            onChange={handlePerPage}
+            className="h-9 rounded-lg border border-gray-200 bg-white px-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            {[3, 5, 10, 20, 50].map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
       {/* Tabla */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="w-full max-w-full bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         {isLoading ? (
           <div className="flex justify-center items-center py-16 text-sm text-gray-400">
             <svg className="animate-spin h-5 w-5 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24">
@@ -120,71 +160,81 @@ export default function PageContratos() {
             No hay contratos registrados.
           </div>
         ) : (
-          <table className="min-w-full divide-y divide-gray-100 text-sm">
+          <div className="w-full max-w-full overflow-x-auto overscroll-x-contain">
+          <table className="min-w-[1180px] divide-y divide-gray-100 text-sm">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Empleado</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Documento</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cargo</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo contrato</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Empresa</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Salario base</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Auxilio</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Inicio</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Frecuencia</th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                <th className="w-[190px] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Empleado</th>
+                <th className="w-[120px] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Documento</th>
+                <th className="w-[150px] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cargo</th>
+                <th className="w-[135px] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo contrato</th>
+                <th className="w-[150px] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Empresa</th>
+                <th className="w-[120px] px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Salario base</th>
+                <th className="w-[105px] px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Auxilio</th>
+                <th className="w-[105px] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Inicio</th>
+                <th className="w-[110px] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Frecuencia</th>
+                <th className="w-[105px] px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                <th className="w-[95px] px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-50">
               {lista.map((item) => (
                 <tr key={item.uuid} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-3">
-                    <p className="font-medium text-gray-800">{item.usuario?.name ?? "—"}</p>
-                    <p className="text-xs text-gray-400">{item.usuario?.email ?? ""}</p>
-                    {item.correo && (
-                      <p className="text-xs text-indigo-500">{item.correo}</p>
-                    )}
+                  <td className="px-4 py-3 align-top">
+                    <p className="font-medium text-gray-800 truncate max-w-[160px]">{item.usuario?.name ?? "—"}</p>
+                    <p className="text-xs text-gray-400 truncate max-w-[160px]">{item.usuario?.email ?? ""}</p>
                   </td>
-                  <td className="px-4 py-3 text-gray-600">
+                  <td className="px-4 py-3 text-gray-600 align-top">
                     <p className="text-xs font-medium text-gray-500">{item.tipo_documento ?? "—"}</p>
                     <p className="text-sm text-gray-800">{item.numero_documento ?? "—"}</p>
                   </td>
-                  <td className="px-4 py-3 text-gray-600">
+                  <td className="px-4 py-3 text-gray-600 align-top">
                     {item.cargo ?? "—"}
                   </td>
-                  <td className="px-4 py-3 text-gray-600">
+                  <td className="px-4 py-3 text-gray-600 align-top">
                     {item.tipo_contrato?.nombre ?? item.tipoContrato?.nombre ?? "—"}
                   </td>
-                  <td className="px-4 py-3 text-gray-600">
+                  <td className="px-4 py-3 text-gray-600 align-top">
                     {item.empresa?.nombre ?? "—"}
                   </td>
-                  <td className="px-4 py-3 text-right font-medium text-gray-800">
+                  <td className="px-4 py-3 text-right font-medium text-gray-800 align-top whitespace-nowrap">
                     {formatCOP(item.base_salario)}
                   </td>
-                  <td className="px-4 py-3 text-right text-gray-500">
+                  <td className="px-4 py-3 text-right text-gray-500 align-top whitespace-nowrap">
                     {formatCOP(item.auxilio_transporte)}
                   </td>
-                  <td className="px-4 py-3 text-gray-600">
+                  <td className="px-4 py-3 text-gray-600 align-top whitespace-nowrap">
                     {item.inicio_contratacion
                       ? new Date(item.inicio_contratacion).toLocaleDateString("es-CO")
                       : "—"}
                   </td>
-                  <td className="px-4 py-3 text-gray-600">
+                  <td className="px-4 py-3 text-gray-600 align-top whitespace-nowrap">
                     {item.pago_frecuencia == 15 ? "Quincenal" : item.pago_frecuencia == 30 ? "Mensual" : "—"}
                   </td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="px-4 py-3 text-center align-top">
                     {item.status ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                      <button
+                        type="button"
+                        onClick={() => toggleStatus(item)}
+                        disabled={updatingStatusUuid === item.uuid}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 hover:bg-green-200 disabled:opacity-60"
+                        title="Clic para inactivar"
+                      >
                         <CheckCircle2 className="h-3 w-3" />Activo
-                      </span>
+                      </button>
                     ) : (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
+                      <button
+                        type="button"
+                        onClick={() => toggleStatus(item)}
+                        disabled={updatingStatusUuid === item.uuid}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700 hover:bg-red-200 disabled:opacity-60"
+                        title="Clic para activar"
+                      >
                         <XCircle className="h-3 w-3" />Inactivo
-                      </span>
+                      </button>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-4 py-3 text-right align-top">
                     <button onClick={() => openEdit(item.uuid)}
                       className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-800 transition-colors">
                       <Pencil className="h-3.5 w-3.5" />
@@ -195,6 +245,7 @@ export default function PageContratos() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
         <Pagination meta={meta} page={page} onPage={setPage} />
       </div>
