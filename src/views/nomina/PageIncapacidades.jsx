@@ -1,9 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import * as pdfjs from "pdfjs-dist";
 import RegisterIncapacidad from "../../components/nomina/RegisterIncapacidad";
 import { useGetIncapacidades } from "../../hooks/nomina/useGetIncapacidades";
 import { incapacidadService } from "../../services/nominaService";
 import { showToast } from "../../helpers/utils/showToast";
+
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  "pdfjs-dist/build/pdf.worker.min.mjs",
+  import.meta.url
+).toString();
 
 export default function PageIncapacidades() {
   const queryClient = useQueryClient();
@@ -13,6 +19,7 @@ export default function PageIncapacidades() {
   const [revisando, setRevisando] = useState(null);
   const [revisionItem, setRevisionItem] = useState(null);
   const [observacionRevision, setObservacionRevision] = useState("");
+  const [soportePreview, setSoportePreview] = useState({ pages: [], imageUrl: null, type: "", loading: false, error: "" });
 
   const lista = incapacidades?.data?.data ?? [];
 
@@ -60,34 +67,144 @@ export default function PageIncapacidades() {
     }
   };
 
-  const renderSoporte = (item) => {
-    if (!item?.soporte_url) {
+  useEffect(() => {
+    let objectUrl = null;
+    let cancelled = false;
+
+    const renderPdfPages = async (arrayBuffer) => {
+      const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+      const pages = [];
+
+      for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+        const page = await pdf.getPage(pageNumber);
+        const viewport = page.getViewport({ scale: 1.35 });
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
+
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+
+        await page.render({ canvasContext: context, viewport }).promise;
+        pages.push(canvas.toDataURL("image/png"));
+      }
+
+      return pages;
+    };
+
+    const cargarSoporte = async () => {
+      if (!revisionItem?.uuid || !revisionItem?.soporte_url) {
+        setSoportePreview({ pages: [], imageUrl: null, type: "", loading: false, error: "" });
+        return;
+      }
+
+      setSoportePreview({ pages: [], imageUrl: null, type: "", loading: true, error: "" });
+
+      try {
+        const response = await incapacidadService.soporteIncapacidad(revisionItem.uuid);
+        const contentType = response.headers["content-type"] || "";
+        const blob = new Blob([response.data], { type: contentType });
+
+        if (contentType.includes("image/")) {
+          objectUrl = URL.createObjectURL(blob);
+          if (!cancelled) {
+            setSoportePreview({
+              pages: [],
+              imageUrl: objectUrl,
+              type: contentType,
+              loading: false,
+              error: "",
+            });
+          }
+          return;
+        }
+
+        const pages = await renderPdfPages(response.data);
+
+        if (!cancelled) {
+          setSoportePreview({
+            pages,
+            imageUrl: null,
+            type: contentType,
+            loading: false,
+            error: "",
+          });
+        }
+      } catch (error) {
+        if (cancelled) return;
+        setSoportePreview({
+          pages: [],
+          imageUrl: null,
+          type: "",
+          loading: false,
+          error: error?.response?.data?.message || "No fue posible cargar el PDF que subió el trabajador.",
+        });
+      }
+    };
+
+    cargarSoporte();
+
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [revisionItem]);
+
+  const renderSoportePreview = () => {
+    if (!revisionItem?.soporte_url) {
       return (
-        <div className="flex h-64 items-center justify-center rounded-lg border border-dashed border-gray-300 text-sm text-gray-400">
+        <div className="flex h-[520px] items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 text-sm text-gray-400">
           Esta incapacidad no tiene soporte adjunto.
         </div>
       );
     }
 
-    const soporte = item.soporte_url;
-    const esImagen = /\.(png|jpe?g|webp)$/i.test(soporte.split("?")[0]);
+    if (soportePreview.loading) {
+      return (
+        <div className="flex h-[520px] items-center justify-center rounded-lg border border-gray-200 bg-gray-50 text-sm text-gray-400">
+          Cargando soporte...
+        </div>
+      );
+    }
 
-    if (esImagen) {
+    if (soportePreview.error) {
+      return (
+        <div className="flex h-[520px] items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-sm text-gray-500">
+          {soportePreview.error}
+        </div>
+      );
+    }
+
+    if (soportePreview.imageUrl) {
       return (
         <img
-          src={soporte}
+          src={soportePreview.imageUrl}
           alt="Soporte de incapacidad"
-          className="max-h-[460px] w-full rounded-lg border border-gray-200 object-contain"
+          className="max-h-[520px] w-full rounded-lg border border-gray-200 object-contain"
         />
       );
     }
 
+    if (soportePreview.pages.length === 0) {
+      return (
+        <div className="flex h-[520px] items-center justify-center rounded-lg border border-gray-200 bg-gray-50 text-sm text-gray-400">
+          Preparando vista del soporte...
+        </div>
+      );
+    }
+
     return (
-      <iframe
-        title="Soporte de incapacidad"
-        src={soporte}
-        className="h-[460px] w-full rounded-lg border border-gray-200"
-      />
+      <div className="h-[520px] overflow-y-auto rounded-lg border border-gray-200 bg-gray-100 p-3">
+        <div className="flex flex-col items-center gap-4">
+          {soportePreview.pages.map((pageSrc, index) => (
+            <img
+              key={pageSrc}
+              src={pageSrc}
+              alt={`Página ${index + 1} del soporte`}
+              className="w-full max-w-[760px] rounded bg-white shadow-sm"
+            />
+          ))}
+        </div>
+      </div>
     );
   };
 
@@ -165,14 +282,9 @@ export default function PageIncapacidades() {
                     </td>
                     <td className="px-6 py-4">
                       {item.soporte_url ? (
-                        <a
-                          href={item.soporte_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-indigo-600 hover:underline text-xs"
-                        >
-                          Ver
-                        </a>
+                        <span className="inline-flex rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700">
+                          Cargado
+                        </span>
                       ) : (
                         <span className="text-gray-400 text-xs">Sin soporte</span>
                       )}
@@ -255,17 +367,7 @@ export default function PageIncapacidades() {
 
             <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
               <div>
-                {renderSoporte(revisionItem)}
-                {revisionItem.soporte_url && (
-                  <a
-                    href={revisionItem.soporte_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-3 inline-flex text-xs font-medium text-indigo-600 hover:underline"
-                  >
-                    Abrir soporte en otra pestaña
-                  </a>
-                )}
+                {renderSoportePreview()}
               </div>
 
               <div className="space-y-4">

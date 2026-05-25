@@ -134,6 +134,11 @@ export const incapacidadService = {
   revisarIncapacidad(uuid, data = {}) {
     return apiClient.patch(`api/nomina/incapacidades/${uuid}/revisar`, data);
   },
+  soporteIncapacidad(uuid) {
+    return apiClient.get(`api/nomina/incapacidades/${uuid}/soporte`, {
+      responseType: "arraybuffer",
+    });
+  },
   deleteIncapacidad(uuid) {
     return apiClient.delete(`api/nomina/incapacidades/${uuid}`);
   },
