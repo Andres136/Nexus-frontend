@@ -114,12 +114,6 @@ const NAV_ITEMS = [
         icon: Baby,
         component: <PageLicencias />,
       },
-      {
-        id: "horas-extras",
-        label: "Horas Extras",
-        icon: Timer,
-        component: <PageHorasExtras />,
-      },
     ],
   },
   {
@@ -220,7 +214,20 @@ const NAV_ITEMS = [
     id: "configuracion",
     label: "Configuración",
     icon: Settings,
-    component: <PageConfiguracionNomina />,
+    tabs: [
+      {
+        id: "parametros",
+        label: "Parámetros",
+        icon: Settings,
+        component: <PageConfiguracionNomina />,
+      },
+      {
+        id: "horas-extras",
+        label: "Horas Extras Operación",
+        icon: Timer,
+        component: <PageHorasExtras />,
+      },
+    ],
   },
 ];
 

@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Baby, CheckCircle, Loader2, Search, XCircle } from "lucide-react";
+import { Baby, CheckCircle, Loader2, Search, XCircle, Plus } from "lucide-react";
 import { useGetLicencias } from "../../hooks/nomina/useGetLicencias";
 import { licenciaService } from "../../services/nominaService";
 import { showToast } from "../../helpers/utils/showToast";
+import ModalCrearSolicitud from "../../components/nomina/ModalCrearSolicitud";
 
 const STATUS_BADGE = {
   pendiente: "bg-yellow-100 text-yellow-700",
@@ -56,6 +57,8 @@ export default function PageLicencias() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [gestion, setGestion] = useState(null);
+  const [crear, setCrear] = useState(false);
+  const [creando, setCreando] = useState(false);
   const [loadingUuid, setLoadingUuid] = useState(null);
   const { licencias, isLoading } = useGetLicencias({ search: search || undefined });
   const lista = licencias?.data?.data ?? licencias?.data ?? [];
@@ -77,6 +80,28 @@ export default function PageLicencias() {
     }
   };
 
+  const handleCrear = async (form) => {
+    setCreando(true);
+    const payload = new FormData();
+    Object.entries(form).forEach(([key, value]) => {
+      if (value !== null && value !== undefined && value !== "") {
+        payload.append(key, value);
+      }
+    });
+
+    try {
+      const res = await licenciaService.createLicencia(payload);
+      showToast("success", res.data.message || "Licencia registrada");
+      queryClient.invalidateQueries(["licencias"]);
+      setCrear(false);
+    } catch (error) {
+      showToast("error", error.response?.data?.message || "Error al registrar la licencia");
+      throw error;
+    } finally {
+      setCreando(false);
+    }
+  };
+
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-5">
@@ -84,15 +109,20 @@ export default function PageLicencias() {
           <h1 className="text-xl font-semibold text-gray-800">Licencias</h1>
           <p className="text-sm text-gray-500 mt-0.5">Gestiona licencias de maternidad y paternidad.</p>
         </div>
-        <div className="relative">
-          <Search className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar empleado..."
-            className="pl-9 pr-4 h-9 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 w-56"
-          />
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <Search className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar empleado..."
+              className="pl-9 pr-4 h-9 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 w-56"
+            />
+          </div>
+          <button onClick={() => setCrear(true)} className="inline-flex items-center gap-2 h-9 px-3 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700">
+            <Plus className="h-4 w-4" /> Nueva
+          </button>
         </div>
       </div>
 
@@ -158,6 +188,14 @@ export default function PageLicencias() {
           onClose={() => setGestion(null)}
           onConfirm={handleGestion}
           loading={!!loadingUuid}
+        />
+      )}
+      {crear && (
+        <ModalCrearSolicitud
+          tipo="licencia"
+          onClose={() => setCrear(false)}
+          onSubmit={handleCrear}
+          loading={creando}
         />
       )}
     </div>

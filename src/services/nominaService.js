@@ -289,6 +289,9 @@ export const permisoService = {
   getPermisos(params = {}) {
     return apiClient.get("api/nomina/permisos", { params });
   },
+  createPermiso(data) {
+    return apiClient.post("api/nomina/permisos", data);
+  },
   aprobar(uuid, data = {}) {
     return apiClient.patch(`api/nomina/permisos/${uuid}/aprobar`, data);
   },
@@ -300,6 +303,9 @@ export const permisoService = {
 export const vacacionService = {
   getVacaciones(params = {}) {
     return apiClient.get("api/nomina/vacaciones", { params });
+  },
+  createVacacion(data) {
+    return apiClient.post("api/nomina/vacaciones", data);
   },
   resumen(userId, params = {}) {
     return apiClient.get(`api/nomina/vacaciones/resumen/${userId}`, { params });
@@ -338,6 +344,9 @@ export const licenciaService = {
 export const horaExtraService = {
   getHorasExtras(params = {}) {
     return apiClient.get("api/nomina/horas-extras", { params });
+  },
+  createHoraExtra(data) {
+    return apiClient.post("api/nomina/horas-extras", data);
   },
   aprobar(uuid, data = {}) {
     return apiClient.patch(`api/nomina/horas-extras/${uuid}/aprobar`, data);

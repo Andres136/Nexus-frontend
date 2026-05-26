@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Search, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { Search, CheckCircle, XCircle, Loader2, Plus } from "lucide-react";
 import { useGetHorasExtras } from "../../hooks/nomina/useGetHorasExtras";
 import { horaExtraService } from "../../services/nominaService";
 import { showToast } from "../../helpers/utils/showToast";
+import ModalCrearSolicitud from "../../components/nomina/ModalCrearSolicitud";
 
 const STATUS_BADGE = {
   pendiente: "bg-yellow-100 text-yellow-700",
@@ -65,6 +66,8 @@ export default function PageHorasExtras() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [gestion, setGestion] = useState(null);
+  const [crear, setCrear] = useState(false);
+  const [creando, setCreando] = useState(false);
   const [loadingUuid, setLoadingUuid] = useState(null);
 
   const { horasExtras, isLoading } = useGetHorasExtras({ search: search || undefined });
@@ -75,7 +78,7 @@ export default function PageHorasExtras() {
     setLoadingUuid(item.uuid);
     try {
       const fn = accion === "aprobar" ? horaExtraService.aprobar : horaExtraService.rechazar;
-      const res = await fn(item.uuid, { observacion_gestion: observacion });
+      const res = await fn(item.uuid, { observacion });
       showToast("success", res.data.message || `Hora extra ${accion === "aprobar" ? "aprobada" : "rechazada"}`);
       queryClient.invalidateQueries(["horasExtras"]);
     } catch {
@@ -86,22 +89,49 @@ export default function PageHorasExtras() {
     }
   };
 
+  const handleCrear = async (form) => {
+    setCreando(true);
+    try {
+      const payload = {
+        users: [Number(form.user_id)],
+        fecha: form.fecha,
+        horas: Number(form.horas),
+        tipo: form.tipo,
+        motivo: form.motivo,
+      };
+      const res = await horaExtraService.createHoraExtra(payload);
+      showToast("success", res.data.message || "Hora extra registrada");
+      queryClient.invalidateQueries(["horasExtras"]);
+      setCrear(false);
+    } catch (error) {
+      showToast("error", error.response?.data?.message || "Error al registrar la hora extra");
+      throw error;
+    } finally {
+      setCreando(false);
+    }
+  };
+
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h1 className="text-xl font-semibold text-gray-800">Horas Extras</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Gestiona las solicitudes de horas extras del personal.</p>
+          <h1 className="text-xl font-semibold text-gray-800">Horas Extras Operación</h1>
+          <p className="text-sm text-gray-500 mt-0.5">Registra y autoriza horas extra reportadas por líderes de bodega u operación.</p>
         </div>
-        <div className="relative">
-          <Search className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar empleado..."
-            className="pl-9 pr-4 h-9 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 w-56"
-          />
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <Search className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar empleado..."
+              className="pl-9 pr-4 h-9 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 w-56"
+            />
+          </div>
+          <button onClick={() => setCrear(true)} className="inline-flex items-center gap-2 h-9 px-3 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700">
+            <Plus className="h-4 w-4" /> Nueva
+          </button>
         </div>
       </div>
 
@@ -175,6 +205,14 @@ export default function PageHorasExtras() {
           onClose={() => setGestion(null)}
           onConfirm={handleGestion}
           loading={!!loadingUuid}
+        />
+      )}
+      {crear && (
+        <ModalCrearSolicitud
+          tipo="horaExtra"
+          onClose={() => setCrear(false)}
+          onSubmit={handleCrear}
+          loading={creando}
         />
       )}
     </div>
