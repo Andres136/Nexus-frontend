@@ -87,13 +87,20 @@ export const useLiquidarNomina = ({ onSuccess, initialData = {} } = {}) => {
       const response = formData.tipo_liquidacion === "retiro"
         ? await nominaService.liquidarRetiro(buildPayload())
         : await nominaService.liquidar(buildPayload());
-      showToast("success", response.data.message || "Liquidación registrada exitosamente");
+
+      const advs = response.data.advertencias ?? [];
+      if (advs.length > 0) {
+        advs.forEach((adv) => showToast("warning", adv));
+      } else {
+        showToast("success", response.data.message || "Liquidación registrada exitosamente");
+      }
+
       queryClient.invalidateQueries(["nominas"]);
       queryClient.invalidateQueries(["nominaSummary"]);
       queryClient.invalidateQueries(["contrataciones"]);
       setFormData({ ...EMPTY_FORM, ...initialData });
       setPreview(null);
-      onSuccess?.();
+      onSuccess?.(response.data);
     } catch (err) {
       const data = err.response?.data;
       if (data?.errors) setFieldErrors(data.errors);

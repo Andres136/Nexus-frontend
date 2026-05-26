@@ -218,6 +218,7 @@ Switch.propTypes = {
 
 export default function PageConfiguracionNomina() {
   const queryClient = useQueryClient();
+  const [instruccionForm, setInstruccionForm] = useState(INSTRUCCION_DEFAULT);
   const { jornadas, isLoading } = useGetJornadaLaboral({ per_page: 50 });
   const { data: configuracionData, isLoading: loadingConfig } = useQuery({
     queryKey: ["configuracionNomina"],
@@ -227,18 +228,18 @@ export default function PageConfiguracionNomina() {
     },
   });
   const { data: instruccionData, isLoading: loadingInstruccion } = useQuery({
-    queryKey: ["horarioOperacionHoy"],
+    queryKey: ["horarioOperacionHoy", instruccionForm.fecha],
     queryFn: async () => {
-      const response = await horarioOperacionService.getHoy();
+      const response = await horarioOperacionService.getHoy({ fecha: instruccionForm.fecha || hoyLocal() });
       return response.data.data;
     },
+    enabled: !!instruccionForm.fecha,
   });
   const lista = useMemo(() => jornadas?.data?.data ?? [], [jornadas]);
   const [jornadaUuid, setJornadaUuid] = useState("");
   const jornada = lista.find((item) => item.uuid === jornadaUuid) ?? lista[0];
   const [form, setForm] = useState(prepararForm(jornada));
   const [configForm, setConfigForm] = useState(CONFIG_DEFAULT);
-  const [instruccionForm, setInstruccionForm] = useState(INSTRUCCION_DEFAULT);
 
   useEffect(() => {
     if (!jornadaUuid && lista[0]?.uuid) {
@@ -358,6 +359,25 @@ export default function PageConfiguracionNomina() {
       comando_voz_activo: true,
       hora_salida_pausa: form.hora_salida_pausa || null,
       hora_ingreso_pausa: form.hora_ingreso_pausa || null,
+    });
+  };
+
+  const guardarHorarioPorFecha = () => {
+    if (!jornada) return;
+    instruccionMutation.mutate({
+      fecha: instruccionForm.fecha || hoyLocal(),
+      jornada_laboral_id: jornada.id,
+      hora_entrada: form.hora_entrada || null,
+      hora_entrada_limite: instruccionForm.hora_entrada_limite || form.hora_entrada || null,
+      hora_salida_pausa: form.hora_salida_pausa || null,
+      hora_ingreso_pausa: form.hora_ingreso_pausa || null,
+      hora_salida_almuerzo: form.hora_salida_almuerzo || null,
+      hora_ingreso_almuerzo: form.hora_ingreso_almuerzo || null,
+      hora_salida: form.hora_salida || null,
+      duracion_pausa_minutos: form.duracion_pausa_minutos ? Number(form.duracion_pausa_minutos) : null,
+      duracion_almuerzo_minutos: form.duracion_almuerzo_minutos ? Number(form.duracion_almuerzo_minutos) : null,
+      motivo: instruccionForm.motivo || `Horario operativo para ${jornada.nombre}`,
+      status: true,
     });
   };
 
@@ -681,9 +701,16 @@ export default function PageConfiguracionNomina() {
           <div className="px-5 py-4 border-b border-gray-100 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
               <h2 className="text-lg font-bold text-gray-900">{jornada?.nombre ?? "Sin jornada seleccionada"}</h2>
-              <p className="text-sm text-gray-500">Los cambios aplican a las nuevas marcaciones del kiosko.</p>
+              <p className="text-sm text-gray-500">Puedes guardar la jornada base o aplicarla solo a una fecha operativa.</p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
+              <input
+                type="date"
+                name="fecha"
+                value={instruccionForm.fecha}
+                onChange={handleInstruccion}
+                className="h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-800 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+              />
               <button
                 type="button"
                 onClick={aplicarDefault}
@@ -693,12 +720,21 @@ export default function PageConfiguracionNomina() {
                 7 AM · 1 PM · 5 PM
               </button>
               <button
+                type="button"
+                onClick={guardarHorarioPorFecha}
+                disabled={!jornada || instruccionMutation.isPending}
+                className="inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 disabled:opacity-50"
+              >
+                <Save className="h-4 w-4" />
+                {instruccionMutation.isPending ? "Guardando..." : "Guardar para fecha"}
+              </button>
+              <button
                 type="submit"
                 disabled={!jornada || mutation.isPending}
                 className="inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50"
               >
                 <Save className="h-4 w-4" />
-                {mutation.isPending ? "Guardando..." : "Guardar horario"}
+                {mutation.isPending ? "Guardando..." : "Guardar jornada base"}
               </button>
             </div>
           </div>
@@ -712,6 +748,7 @@ export default function PageConfiguracionNomina() {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
                   <CampoHoraStepper label="Entrada laboral" name="hora_entrada" value={form.hora_entrada} onChange={handleTimeChange} icon={AlarmClock} fallback="07:00" />
+                  <CampoHoraStepper label="Tardía después de" name="hora_entrada_limite" value={instruccionForm.hora_entrada_limite} onChange={handleInstruccionTime} icon={AlarmClock} fallback="08:00" />
                   <CampoHoraStepper label="Salida a almuerzo" name="hora_salida_almuerzo" value={form.hora_salida_almuerzo} onChange={handleTimeChange} icon={Coffee} fallback="13:00" />
                   <CampoHoraStepper label="Regreso de almuerzo" name="hora_ingreso_almuerzo" value={form.hora_ingreso_almuerzo} onChange={handleTimeChange} icon={Coffee} fallback="14:00" />
                   <CampoHoraStepper label="Salida laboral" name="hora_salida" value={form.hora_salida} onChange={handleTimeChange} icon={CheckCircle2} fallback="17:00" />

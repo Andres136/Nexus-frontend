@@ -6,6 +6,13 @@ import { hablar } from "../../../helpers/voz";
 const hhmm = (date) =>
   date.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" });
 
+const minsToHM = (mins) => {
+  if (!mins) return "0 h 0 min";
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return `${h} h ${m} min`;
+};
+
 const tiempoHHMMSS = () => {
   const d = new Date();
   return `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}:${String(d.getSeconds()).padStart(2,"0")}`;
@@ -25,13 +32,12 @@ function minutosDesde(fechaInicio, fechaFin = new Date()) {
 
 // Mensajes de voz por acción
 const VOZ = {
-  salida:         (nombre) => `Registro exitoso. Hasta pronto, ${nombre}.`,
-  salidaTemprana: (nombre) => `${nombre}, no es hora de salir aún.`,
-  pausaSalida:    (nombre) => `Registro exitoso. Inicio de pausa registrado. Descansa, ${nombre}.`,
-  pausaEntrada:   (nombre) => `Registro exitoso. Fin de pausa. Bienvenido de vuelta, ${nombre}.`,
-  almuerzoSalida: (nombre) => `Registro exitoso. Salida a almuerzo registrada. Buen provecho, ${nombre}.`,
-  almuerzoEntrada:(nombre) => `Registro exitoso. Regreso de almuerzo registrado. Bienvenido, ${nombre}.`,
-  almuerzoEntradaTarde: (nombre, minutos) => `Registro exitoso. ${nombre}, has ingresado tarde del almuerzo. Tiempo excedido: ${minutos} minutos.`,
+  salida:         (nombre) => `Registro exitoso, ${nombre}. Salida laboral registrada. Hasta pronto.`,
+  pausaSalida:    (nombre) => `Registro exitoso, ${nombre}. Salida a pausa registrada. Que tengas una buena pausa.`,
+  pausaEntrada:   (nombre) => `Registro exitoso, ${nombre}. Regreso de pausa registrado. Bienvenido de vuelta.`,
+  almuerzoSalida: (nombre) => `Buen provecho, ${nombre}. Salida a almuerzo registrada correctamente.`,
+  almuerzoEntrada:(nombre) => `Registro exitoso, ${nombre}. Regreso de almuerzo registrado. Bienvenido de vuelta.`,
+  almuerzoEntradaTarde: (nombre, minutos) => `Registro exitoso, ${nombre}. Regreso de almuerzo registrado con tardanza de ${minutos} minutos.`,
 };
 
 function obtenerJornada(session, jornadaActiva) {
@@ -84,24 +90,78 @@ function minutosTardeContraHora(horaProgramada, fecha = new Date()) {
   return Math.max(0, minutosDia(fecha) - limite);
 }
 
-export default function KioskoAcciones({ empleado, kioskoInfo, jornadaActiva, onDone, onCancelar }) {
+function entradaTieneTardanza(session, jornada) {
+  if ((session?.minutos_tardanza ?? 0) > 0) return true;
+  const entrada = parseTime(session?.hora_entrada);
+  const limite = jornada?.hora_entrada_limite ?? jornada?.hora_entrada;
+  if (!entrada || !limite) return false;
+
+  const [hh = "0", mm = "0"] = String(limite).split(":");
+  const programada = new Date(entrada);
+  programada.setHours(Number(hh), Number(mm), 0, 0);
+
+  return entrada > programada;
+}
+
+function entradaOperativa(session, jornada) {
+  const entrada = parseTime(session?.hora_entrada);
+  if (!entrada || !jornada?.hora_entrada) return entrada;
+
+  const [hh = "0", mm = "0"] = String(jornada.hora_entrada).split(":");
+  const programada = new Date(entrada);
+  programada.setHours(Number(hh), Number(mm), 0, 0);
+
+  return entrada < programada ? programada : entrada;
+}
+
+export default function KioskoAcciones({ empleado, kioskoInfo, jornadaActiva, onRefrescarJornada, onDone, onCancelar }) {
   const { session } = empleado;
   const [guardando, setGuardando] = useState(false);
   const [exitoMsg, setExitoMsg]   = useState("");
   const [esperaMsg, setEsperaMsg] = useState("Detectando marcación según tu horario...");
-  const jornada = useMemo(() => obtenerJornada(session, jornadaActiva), [session, jornadaActiva]);
+  const [tipoMensaje, setTipoMensaje] = useState("info");
+  const [jornadaSincronizada, setJornadaSincronizada] = useState(false);
+  const [jornadaOperativa, setJornadaOperativa] = useState(null);
+  const jornada = useMemo(() => obtenerJornada(session, jornadaOperativa ?? jornadaActiva), [session, jornadaActiva, jornadaOperativa]);
   const accionDetectada = useMemo(() => detectarAccion(session, jornada), [session, jornada]);
 
-  const entrada       = parseTime(session?.hora_entrada);
+  const entrada       = entradaOperativa(session, jornada);
+  const llegadaTarde  = entradaTieneTardanza(session, jornada);
   const enPausa       = !!session?.hora_salida_brake  && !session?.hora_ingreso_brake;
   const enAlmuerzo    = !!session?.hora_salida_almuerzo && !session?.hora_ingreso_almuerzo;
 
+  useEffect(() => {
+    let mounted = true;
+    setJornadaSincronizada(false);
+    setEsperaMsg("Actualizando horario operativo del día...");
+    Promise.resolve(onRefrescarJornada?.())
+      .then((jornadaActualizada) => {
+        if (mounted && jornadaActualizada) {
+          setJornadaOperativa(jornadaActualizada);
+        }
+      })
+      .catch(() => {
+        if (mounted) {
+          setJornadaOperativa(jornadaActiva ?? null);
+        }
+      })
+      .finally(() => {
+        if (mounted) setJornadaSincronizada(true);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [jornadaActiva, onRefrescarJornada]);
+
   const ejecutar = useCallback(async (payload, textoVoz, mensajePantalla) => {
     setGuardando(true);
+    setTipoMensaje("info");
     setEsperaMsg("Registrando marcación...");
     try {
       await workSessionService.updateSession(session.uuid, payload);
       decir(jornada, textoVoz);
+      setTipoMensaje("exito");
       setExitoMsg(mensajePantalla);
       setTimeout(() => onDone(empleado.nombre, hhmm(new Date())), 3000);
     } catch {
@@ -114,28 +174,29 @@ export default function KioskoAcciones({ empleado, kioskoInfo, jornadaActiva, on
   }, [empleado.nombre, jornada, onCancelar, onDone, session.uuid]);
 
   useEffect(() => {
+    if (!jornadaSincronizada) return;
     if (guardando || exitoMsg) return;
 
     const acciones = {
       salida: () => ejecutar(
         { hora_salida: tiempoHHMMSS() },
         VOZ.salida(empleado.nombre),
-        `¡Hasta pronto, ${empleado.nombre}! Salida registrada.`
+        `Registro exitoso. Salida laboral registrada, ${empleado.nombre}.`
       ),
       pausaSalida: () => ejecutar(
         { hora_salida_brake: tiempoHHMMSS() },
         VOZ.pausaSalida(empleado.nombre),
-        `Pausa iniciada. Descansa un momento, ${empleado.nombre}.`
+        `Registro exitoso. Salida a pausa registrada, ${empleado.nombre}.`
       ),
       pausaEntrada: () => ejecutar(
         { hora_ingreso_brake: tiempoHHMMSS() },
         VOZ.pausaEntrada(empleado.nombre),
-        `¡Bienvenido de vuelta, ${empleado.nombre}!`
+        `Registro exitoso. Regreso de pausa registrado, ${empleado.nombre}.`
       ),
       almuerzoSalida: () => ejecutar(
         { hora_salida_almuerzo: tiempoHHMMSS() },
         VOZ.almuerzoSalida(empleado.nombre),
-        `Salida a almuerzo registrada. ¡Buen provecho, ${empleado.nombre}!`
+        `Buen provecho, ${empleado.nombre}. Salida a almuerzo registrada.`
       ),
       almuerzoEntrada: () => ejecutar(
         { hora_ingreso_almuerzo: tiempoHHMMSS() },
@@ -143,8 +204,8 @@ export default function KioskoAcciones({ empleado, kioskoInfo, jornadaActiva, on
           ? VOZ.almuerzoEntradaTarde(empleado.nombre, minutosTardeContraHora(jornada?.hora_ingreso_almuerzo))
           : VOZ.almuerzoEntrada(empleado.nombre),
         minutosTardeContraHora(jornada?.hora_ingreso_almuerzo) > 0
-          ? `Ingreso tardío de almuerzo. Exceso: ${minutosTardeContraHora(jornada?.hora_ingreso_almuerzo)} min.`
-          : `¡Bienvenido, ${empleado.nombre}! Regreso de almuerzo registrado.`
+          ? `Registro exitoso. Regreso de almuerzo con tardanza de ${minutosTardeContraHora(jornada?.hora_ingreso_almuerzo)} min, ${empleado.nombre}.`
+          : `Registro exitoso. Regreso de almuerzo registrado, ${empleado.nombre}.`
       ),
     };
 
@@ -155,11 +216,24 @@ export default function KioskoAcciones({ empleado, kioskoInfo, jornadaActiva, on
 
     const salida = minutosHora(jornada?.hora_salida);
     if (!session?.hora_salida && salida !== null && minutosDia() < salida) {
-      setEsperaMsg("No es hora de salir aún.");
-      decir(jornada, VOZ.salidaTemprana(empleado.nombre));
+      const minutosParaSalida = salida - minutosDia();
+      if (minutosParaSalida <= 60) {
+        setTipoMensaje("alerta");
+        setEsperaMsg(llegadaTarde ? "Llegada tarde registrada. Aún no es hora de salida." : "Aún no es hora de salida.");
+        decir(jornada, llegadaTarde
+          ? `${empleado.nombre}, llegada tarde registrada. Aún no es hora de salida.`
+          : `${empleado.nombre}, aún no es hora de salida.`
+        );
+      } else {
+        setTipoMensaje(llegadaTarde ? "tarde" : "info");
+        setEsperaMsg(llegadaTarde ? "Llegada tarde registrada." : "Marcación registrada. Jornada en curso.");
+        if (llegadaTarde) {
+          decir(jornada, `${empleado.nombre}, llegada tarde registrada.`);
+        }
+      }
     } else {
+      setTipoMensaje("info");
       setEsperaMsg("No hay una marcación programada para este momento.");
-      decir(jornada, `${empleado.nombre}, no hay una marcación programada para este momento.`);
     }
     const timer = setTimeout(onCancelar, 3000);
     return () => clearTimeout(timer);
@@ -170,6 +244,8 @@ export default function KioskoAcciones({ empleado, kioskoInfo, jornadaActiva, on
     guardando,
     ejecutar,
     jornada,
+    jornadaSincronizada,
+    llegadaTarde,
     onCancelar,
     session?.hora_salida_almuerzo,
     session?.hora_salida_brake,
@@ -212,6 +288,11 @@ export default function KioskoAcciones({ empleado, kioskoInfo, jornadaActiva, on
                : entrada  ? `En jornada desde ${hhmm(entrada)}`
                : "Sesión activa"}
             </p>
+            {llegadaTarde && (
+              <p className="mt-1 text-xs font-bold uppercase tracking-wider text-amber-300">
+                Llegada tarde
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -226,11 +307,11 @@ export default function KioskoAcciones({ empleado, kioskoInfo, jornadaActiva, on
             <p className="text-green-200 text-sm font-medium">{exitoMsg}</p>
           </div>
         ) : (
-          <div className="bg-indigo-900/30 border border-indigo-500/30 rounded-xl px-5 py-5 text-center">
-            <p className="text-indigo-300 text-xs font-semibold uppercase tracking-widest mb-1">
-              {guardando ? "Registrando" : "Validando horario"}
+          <div className={`${tipoMensaje === "alerta" || tipoMensaje === "tarde" ? "bg-amber-900/30 border-amber-500/30" : "bg-indigo-900/30 border-indigo-500/30"} border rounded-xl px-5 py-5 text-center`}>
+            <p className={`${tipoMensaje === "alerta" || tipoMensaje === "tarde" ? "text-amber-300" : "text-indigo-300"} text-xs font-semibold uppercase tracking-widest mb-1`}>
+              {guardando ? "Registrando" : tipoMensaje === "alerta" ? "Salida no permitida" : llegadaTarde ? "Llegada tarde" : "Validando horario"}
             </p>
-            <p className="text-indigo-100 text-sm font-medium">{esperaMsg}</p>
+            <p className={`${tipoMensaje === "alerta" || tipoMensaje === "tarde" ? "text-amber-100" : "text-indigo-100"} text-sm font-medium`}>{esperaMsg}</p>
           </div>
         )}
       </div>
@@ -258,6 +339,7 @@ KioskoAcciones.propTypes = {
   }).isRequired,
   kioskoInfo: PropTypes.shape({ id: PropTypes.number, name: PropTypes.string }).isRequired,
   jornadaActiva: PropTypes.object,
+  onRefrescarJornada: PropTypes.func,
   onDone:     PropTypes.func.isRequired,
   onCancelar: PropTypes.func.isRequired,
 };

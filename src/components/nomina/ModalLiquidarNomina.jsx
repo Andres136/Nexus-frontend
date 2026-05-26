@@ -441,19 +441,28 @@ export default function ModalLiquidarNomina({ onClose, initialData = {} }) {
                       <span className="font-medium text-gray-900">{formatCOP(preview.deduccion_incapacidad ?? 0)}</span>
                     </div>
                   )}
-                  {(preview.minutos_permisos_no_remunerados ?? 0) > 0 && (
-                    <div className="flex justify-between gap-3">
-                      <span className="text-gray-500">Permisos no remunerados</span>
-                      <span className="font-medium text-gray-900">{formatCOP(preview.valor_permisos_no_remunerados ?? 0)}</span>
-                    </div>
-                  )}
-                  {(preview.minutos_tardanza ?? 0) > 0 && (
-                    <div className="flex justify-between gap-3">
-                      <span className="text-gray-500">Tardanzas ({preview.minutos_tardanza} min)</span>
-                      <span className="font-medium text-gray-900">{formatCOP(preview.valor_tardanzas ?? 0)}</span>
-                    </div>
-                  )}
                 </div>
+
+                {/* Informativos — no se descuentan automáticamente */}
+                {((preview.minutos_tardanza ?? 0) > 0 || (preview.minutos_permisos_no_remunerados ?? 0) > 0) && (
+                  <div className="mt-3 pt-2 border-t border-dashed border-gray-200">
+                    <p className="mb-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">Informativos (no descontados)</p>
+                    <div className="space-y-1">
+                      {(preview.minutos_permisos_no_remunerados ?? 0) > 0 && (
+                        <div className="flex justify-between gap-3 text-xs text-gray-400">
+                          <span>Permisos no remunerados ({preview.minutos_permisos_no_remunerados} min)</span>
+                          <span>{formatCOP(preview.valor_permisos_no_remunerados ?? 0)}</span>
+                        </div>
+                      )}
+                      {(preview.minutos_tardanza ?? 0) > 0 && (
+                        <div className="flex justify-between gap-3 text-xs text-gray-400">
+                          <span>Tardanzas ({preview.minutos_tardanza} min)</span>
+                          <span>{formatCOP(preview.valor_tardanzas ?? 0)}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {/* Costo empleador */}
                 {(preview.costo_total_empleador ?? 0) > 0 && (

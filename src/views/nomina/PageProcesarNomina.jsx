@@ -1,7 +1,9 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useGetNominas } from "../../hooks/nomina/useGetNominas";
 import { useGetNominaSummary } from "../../hooks/nomina/useGetNominaSummary";
 import { useGetContrataciones } from "../../hooks/nomina/useGetContrataciones";
+import { useGetJornadaLaboral } from "../../hooks/nomina/useGetJornadaLaboral";
 import ModalLiquidarNomina from "../../components/nomina/ModalLiquidarNomina";
 import { nominaService } from "../../services/nominaService";
 import { showToast } from "../../helpers/utils/showToast";
@@ -52,11 +54,38 @@ function normalizarTexto(value = "") {
 }
 
 function getCentroCosto(item = {}) {
+  if (item.centro_costo) return item.centro_costo;
+  if (item.contratacion?.centro_costo) return item.contratacion.centro_costo;
   const sede = item.usuario?.sede?.nombre ?? item.empleado?.sede?.nombre ?? "";
   const empresa = item.empresa?.nombre ?? item.contratacion?.empresa?.nombre ?? "";
   const texto = normalizarTexto(`${sede} ${empresa}`);
   const centro = CENTROS_COSTO.find((nombre) => texto.includes(normalizarTexto(nombre)));
   return centro ?? "Sin sede";
+}
+
+function diasPeriodo(inicio, fin) {
+  const desde = new Date(`${inicio}T00:00:00`);
+  const hasta = new Date(`${fin}T00:00:00`);
+  return Math.max(1, Math.round((hasta - desde) / 86400000) + 1);
+}
+
+function estimarNominaContrato(item = {}, periodoInicio, periodoFin) {
+  const dias = Math.min(30, diasPeriodo(periodoInicio, periodoFin));
+  const frecuencia = Number(item.pago_frecuencia ?? 30);
+  const salarioPeriodo = (Number(item.base_salario ?? 0) / 30) * dias;
+  const auxilioPeriodo = Number(item.auxilio_transporte ?? 0) * (dias / 30);
+  const noSalarialBase = Number(item.no_salarial ?? 0);
+  const noSalarialPeriodo = frecuencia === 15
+    ? noSalarialBase * (dias > 15 ? 2 : 1)
+    : noSalarialBase * (dias / 30);
+  const deducciones = salarioPeriodo * 0.08;
+  const devengado = salarioPeriodo + auxilioPeriodo + noSalarialPeriodo;
+
+  return {
+    devengado: Math.round(devengado),
+    deducciones: Math.round(deducciones),
+    neto: Math.round(devengado - deducciones),
+  };
 }
 
 function buildNominaByUser(nominas = []) {
@@ -138,8 +167,10 @@ function Pagination({ meta, page, onPage }) {
 
 export default function PageProcesarNomina() {
   const now = new Date();
+  const queryClient = useQueryClient();
   const [mes, setMes] = useState(now.getMonth());
   const [anio, setAnio] = useState(now.getFullYear());
+  const [quincena, setQuincena] = useState("0");           // "0"=mes completo, "1"=primera, "2"=segunda
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [perPage] = useState(10);
@@ -148,14 +179,25 @@ export default function PageProcesarNomina() {
   const [liquidarInitialData, setLiquidarInitialData] = useState({});
   const [openActions, setOpenActions] = useState(null);
 
-  const periodoInicio = useMemo(
-    () => `${anio}-${String(mes + 1).padStart(2, "0")}-01`,
-    [mes, anio]
-  );
+  // ── Lote ───────────────────────────────────────────────────────────
+  const [showBatch, setShowBatch] = useState(false);
+  const [batchJornada, setBatchJornada] = useState("");
+  const [batchRunning, setBatchRunning] = useState(false);
+  const [batchResults, setBatchResults] = useState([]);
+
+  const { jornadas } = useGetJornadaLaboral();
+  const jornadasList = jornadas?.data?.data ?? [];
+
+  const periodoInicio = useMemo(() => {
+    if (quincena === "2") return `${anio}-${String(mes + 1).padStart(2, "0")}-16`;
+    return `${anio}-${String(mes + 1).padStart(2, "0")}-01`;
+  }, [mes, anio, quincena]);
   const periodoFin = useMemo(() => {
+    const m = String(mes + 1).padStart(2, "0");
+    if (quincena === "1") return `${anio}-${m}-15`;
     const ultimo = new Date(anio, mes + 1, 0).getDate();
-    return `${anio}-${String(mes + 1).padStart(2, "0")}-${ultimo}`;
-  }, [mes, anio]);
+    return `${anio}-${m}-${ultimo}`;
+  }, [mes, anio, quincena]);
 
   const nominaParams = useMemo(
     () => ({ periodo_inicio: periodoInicio, periodo_fin: periodoFin, search: search || undefined, page, per_page: perPage }),
@@ -235,6 +277,47 @@ export default function PageProcesarNomina() {
   const handleAnio = (e) => { setAnio(Number(e.target.value)); setPage(1); };
   const handleSearch = (e) => { setSearch(e.target.value); setPage(1); };
 
+  // Liquidación en lote de todos los empleados pendientes
+  const handleBatchLiquidar = useCallback(async () => {
+    if (!batchJornada) { showToast("error", "Selecciona una jornada laboral."); return; }
+    const pendientes = lista.filter((item) => !nominaByUser[item.users_id]);
+    if (pendientes.length === 0) { showToast("success", "Todos los empleados ya están liquidados."); return; }
+
+    setBatchRunning(true);
+    setBatchResults([]);
+    const results = [];
+
+    for (const item of pendientes) {
+      const nombre = item.usuario?.name ?? `Contrato #${item.id}`;
+      try {
+        const res = await nominaService.liquidar({
+          user_id: item.users_id,
+          jornada_laboral_id: Number(batchJornada),
+          periodo_inicio: periodoInicio,
+          periodo_fin: periodoFin,
+        });
+        results.push({
+          nombre,
+          status: "ok",
+          neto: res.data.data?.salario_neto,
+          advertencias: res.data.advertencias ?? [],
+        });
+      } catch (err) {
+        results.push({
+          nombre,
+          status: "error",
+          message: err.response?.data?.message ?? "Error al liquidar",
+        });
+      }
+    }
+
+    setBatchResults(results);
+    setBatchRunning(false);
+    queryClient.invalidateQueries(["nominas"]);
+    queryClient.invalidateQueries(["nominaSummary"]);
+    queryClient.invalidateQueries(["contrataciones"]);
+  }, [batchJornada, lista, nominaByUser, periodoInicio, periodoFin, queryClient]);
+
   const periodoContrato = (item = {}) => {
     if (Number(item.pago_frecuencia) !== 15) {
       return { inicio: periodoInicio, fin: periodoFin };
@@ -298,6 +381,25 @@ export default function PageProcesarNomina() {
     }
   };
 
+  const deleteMutation = useMutation({
+    mutationFn: (uuid) => nominaService.deleteNomina(uuid),
+    onSuccess: () => {
+      showToast("success", "Nómina eliminada. Ya puedes re-liquidar el período.");
+      queryClient.invalidateQueries(["nominas"]);
+      queryClient.invalidateQueries(["nominaSummary"]);
+      setOpenActions(null);
+    },
+    onError: (error) => {
+      showToast("error", error.response?.data?.message || "No se pudo eliminar la nómina.");
+    },
+  });
+
+  const eliminarNomina = (nomina) => {
+    if (!nomina?.uuid) return;
+    if (!window.confirm(`¿Eliminar la nómina de ${nomina.empleado?.name ?? "este empleado"}? No se puede deshacer.`)) return;
+    deleteMutation.mutate(nomina.uuid);
+  };
+
   const TABS = [
     { id: "resumen", label: "Resumen de Nómina", icon: "📋" },
     { id: "historial", label: "Historial de Nóminas", icon: "🗂" },
@@ -334,11 +436,27 @@ export default function PageProcesarNomina() {
                 <option key={y} value={y}>{y}</option>
               ))}
             </select>
+            <select
+              value={quincena}
+              onChange={(e) => { setQuincena(e.target.value); setPage(1); }}
+              className="text-sm text-gray-700 bg-transparent border-none outline-none cursor-pointer ml-1"
+            >
+              <option value="0">Mes completo</option>
+              <option value="1">1ª quincena</option>
+              <option value="2">2ª quincena</option>
+            </select>
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           </div>
 
+          <button
+            type="button"
+            onClick={() => { setShowBatch((v) => !v); setBatchResults([]); }}
+            className="h-9 px-4 text-sm font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-colors"
+          >
+            Liquidar todos
+          </button>
           <button
             type="button"
             onClick={() => abrirLiquidacion()}
@@ -416,6 +534,78 @@ export default function PageProcesarNomina() {
           }
         />
       </div>
+
+      {/* Panel de liquidación en lote */}
+      {showBatch && (
+        <div className="mb-6 bg-white rounded-xl border border-indigo-200 shadow-sm p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="text-sm font-semibold text-indigo-900">Liquidar todos los empleados pendientes</p>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Período: {periodoInicio} / {periodoFin} &nbsp;·&nbsp;
+                {lista.filter((i) => !nominaByUser[i.users_id]).length} empleado(s) sin liquidar
+              </p>
+            </div>
+            <button onClick={() => { setShowBatch(false); setBatchResults([]); }}
+              className="text-gray-400 hover:text-gray-600 text-lg leading-none">✕</button>
+          </div>
+
+          <div className="flex flex-wrap gap-3 items-end mb-4">
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Jornada laboral</label>
+              <select
+                value={batchJornada}
+                onChange={(e) => setBatchJornada(e.target.value)}
+                className="h-9 pl-3 pr-8 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="">Seleccionar jornada...</option>
+                {jornadasList.map((j) => (
+                  <option key={j.id} value={j.id}>{j.nombre} · {j.horas_semanales} h/sem</option>
+                ))}
+              </select>
+            </div>
+            <button
+              onClick={handleBatchLiquidar}
+              disabled={batchRunning || !batchJornada}
+              className="h-9 px-5 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+            >
+              {batchRunning ? "Procesando..." : "Iniciar liquidación"}
+            </button>
+          </div>
+
+          {/* Resultados del lote */}
+          {batchResults.length > 0 && (
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {batchResults.map((r, i) => (
+                <div key={i} className={`flex items-start gap-3 px-3 py-2.5 rounded-lg text-sm border ${
+                  r.status === "ok" && r.advertencias?.length === 0
+                    ? "bg-green-50 border-green-200"
+                    : r.status === "ok"
+                    ? "bg-amber-50 border-amber-200"
+                    : "bg-red-50 border-red-200"
+                }`}>
+                  <span className="text-base leading-none mt-0.5">
+                    {r.status === "ok" && r.advertencias?.length === 0 ? "✅" : r.status === "ok" ? "⚠️" : "❌"}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="font-medium text-gray-800">{r.nombre}</p>
+                    {r.status === "ok" ? (
+                      <>
+                        <p className="text-xs text-gray-500">Neto a pagar: {formatCOP(r.neto)}</p>
+                        {r.advertencias?.map((adv, j) => (
+                          <p key={j} className="text-xs text-amber-700 mt-0.5">{adv}</p>
+                        ))}
+                      </>
+                    ) : (
+                      <p className="text-xs text-red-600">{r.message}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Tabs internos */}
       <div className="min-w-0 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
@@ -504,10 +694,7 @@ export default function PageProcesarNomina() {
                     const cargo     = item.cargo ?? "—";
                     const tipoDoc   = item.tipo_documento ?? "CC";
                     const numDoc    = item.numero_documento ?? "";
-                    const devengado = Number(item.base_salario ?? 0) + Number(item.auxilio_transporte ?? 0);
-                    const base      = Number(item.base_salario ?? 0);
-                    const deducciones = Math.round(base * 0.08);
-                    const neto      = devengado - deducciones;
+                    const estimado  = estimarNominaContrato(item, periodoInicio, periodoFin);
 
                     // ¿ya tiene nómina liquidada en este período?
                     const nominaExiste = nominaByUser[item.users_id];
@@ -530,13 +717,13 @@ export default function PageProcesarNomina() {
                         </td>
                         <td className="px-4 py-3.5 text-gray-600">{cargo}</td>
                         <td className="px-4 py-3.5 text-right text-gray-700 font-medium">
-                          {nominaExiste ? formatCOP(nominaExiste.total_devengado) : formatCOP(devengado)}
+                          {nominaExiste ? formatCOP(nominaExiste.total_devengado) : formatCOP(estimado.devengado)}
                         </td>
                         <td className="px-4 py-3.5 text-right text-orange-600 font-medium">
-                          {nominaExiste ? formatCOP(nominaExiste.total_deducciones) : formatCOP(deducciones)}
+                          {nominaExiste ? formatCOP(nominaExiste.total_deducciones) : formatCOP(estimado.deducciones)}
                         </td>
                         <td className="px-4 py-3.5 text-right text-green-600 font-semibold">
-                          {nominaExiste ? formatCOP(nominaExiste.salario_neto) : formatCOP(neto)}
+                          {nominaExiste ? formatCOP(nominaExiste.salario_neto) : formatCOP(estimado.neto)}
                         </td>
                         <td className="px-4 py-3.5 text-center">
                           {nominaExiste ? (
@@ -585,6 +772,16 @@ export default function PageProcesarNomina() {
                               >
                                 Enviar por correo
                               </button>
+                              {nominaExiste && (
+                                <button
+                                  type="button"
+                                  onClick={() => eliminarNomina(nominaExiste)}
+                                  disabled={deleteMutation.isPending}
+                                  className="block w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 border-t border-gray-100 disabled:opacity-50"
+                                >
+                                  Eliminar nómina
+                                </button>
+                              )}
                             </div>
                           )}
                         </td>
@@ -670,6 +867,14 @@ export default function PageProcesarNomina() {
                             className="h-8 px-3 rounded-md border border-indigo-200 bg-indigo-50 text-xs font-medium text-indigo-700 hover:bg-indigo-100"
                           >
                             Enviar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => eliminarNomina(item)}
+                            disabled={deleteMutation.isPending}
+                            className="h-8 px-3 rounded-md border border-red-200 bg-red-50 text-xs font-medium text-red-600 hover:bg-red-100 disabled:opacity-50"
+                          >
+                            Eliminar
                           </button>
                         </div>
                       </td>

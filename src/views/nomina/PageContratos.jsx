@@ -161,7 +161,7 @@ export default function PageContratos() {
           </div>
         ) : (
           <div className="w-full max-w-full overflow-x-auto overscroll-x-contain">
-          <table className="min-w-[1180px] divide-y divide-gray-100 text-sm">
+          <table className="min-w-[1300px] divide-y divide-gray-100 text-sm">
             <thead className="bg-gray-50">
               <tr>
                 <th className="w-[190px] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Empleado</th>
@@ -169,6 +169,7 @@ export default function PageContratos() {
                 <th className="w-[150px] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cargo</th>
                 <th className="w-[135px] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo contrato</th>
                 <th className="w-[150px] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Empresa</th>
+                <th className="w-[135px] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Centro costo</th>
                 <th className="w-[120px] px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Salario base</th>
                 <th className="w-[105px] px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Auxilio</th>
                 <th className="w-[105px] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Inicio</th>
@@ -196,6 +197,9 @@ export default function PageContratos() {
                   </td>
                   <td className="px-4 py-3 text-gray-600 align-top">
                     {item.empresa?.nombre ?? "—"}
+                  </td>
+                  <td className="px-4 py-3 text-gray-600 align-top">
+                    {item.centro_costo ?? "—"}
                   </td>
                   <td className="px-4 py-3 text-right font-medium text-gray-800 align-top whitespace-nowrap">
                     {formatCOP(item.base_salario)}

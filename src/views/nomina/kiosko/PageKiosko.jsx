@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import PropTypes from "prop-types";
 import { useParams } from "react-router-dom";
 import * as faceapi from "face-api.js";
@@ -50,7 +51,7 @@ async function buildFaceMatcher(fotos) {
     try {
       const img = await loadImageViaApi(foto.uuid);
       const det = await faceapi
-        .detectSingleFace(img, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 }))
+        .detectSingleFace(img, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.35 }))
         .withFaceLandmarks()
         .withFaceDescriptor();
       if (det) {
@@ -63,7 +64,7 @@ async function buildFaceMatcher(fotos) {
     }
   }
   if (!labeled.length) return null;
-  return new faceapi.FaceMatcher(labeled, 0.5);
+  return new faceapi.FaceMatcher(labeled, 0.62);
 }
 
 function aplicarInstruccionDiaria(jornada, instruccion) {
@@ -82,6 +83,14 @@ function aplicarInstruccionDiaria(jornada, instruccion) {
     duracion_pausa_minutos: instruccion.duracion_pausa_minutos ?? jornada?.duracion_pausa_minutos,
     duracion_almuerzo_minutos: instruccion.duracion_almuerzo_minutos ?? jornada?.duracion_almuerzo_minutos,
   };
+}
+
+function fechaLocal() {
+  const fecha = new Date();
+  const yyyy = fecha.getFullYear();
+  const mm = String(fecha.getMonth() + 1).padStart(2, "0");
+  const dd = String(fecha.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
 }
 
 // ─── Pantalla de carga ────────────────────────────────────────────────────────
@@ -115,14 +124,15 @@ PantallaEstado.propTypes = {
 // ─── Componente principal ─────────────────────────────────────────────────────
 export default function PageKiosko() {
   const { code } = useParams();
+  const queryClient = useQueryClient();
+  const fechaOperacion = fechaLocal();
 
   const [status, setStatus]         = useState("loading"); // loading | error | ready
   const [loadMsg, setLoadMsg]       = useState("Inicializando kiosko...");
   const [errorMsg, setErrorMsg]     = useState("");
 
   const [kioskoInfo, setKioskoInfo] = useState(null);  // { id, name, uuid }
-  const [jornadaId, setJornadaId]   = useState(null);  // integer ID primera jornada
-  const [jornadaActiva, setJornadaActiva] = useState(null);
+  const [jornadasLaborales, setJornadasLaborales] = useState([]);
   const [faceMatcher, setFaceMatcher] = useState(null);
   const [empleadosMap, setEmpleadosMap] = useState(new Map()); // userId → { nombre, photoUrl }
   const [cedulaMap, setCedulaMap]       = useState(new Map()); // cedula → userId
@@ -130,6 +140,53 @@ export default function PageKiosko() {
   const [step, setStep]             = useState("scanner"); // scanner | acciones
   const [empleadoActual, setEmpleadoActual] = useState(null); // { userId, nombre, photoUrl, session }
   const [ultimaMarca, setUltimaMarca] = useState(null); // { nombre, hora }
+
+  const jornadaBaseActiva = useMemo(
+    () => jornadasLaborales.find((j) => j.status !== false) ?? jornadasLaborales[0] ?? null,
+    [jornadasLaborales]
+  );
+
+  const construirJornadaOperativa = useCallback((instruccionDiaria) => {
+    if (!jornadaBaseActiva) return null;
+    const jornadaDelDia = instruccionDiaria?.jornada_laboral ?? instruccionDiaria?.jornadaLaboral ?? jornadaBaseActiva;
+    return aplicarInstruccionDiaria(jornadaDelDia, instruccionDiaria);
+  }, [jornadaBaseActiva]);
+
+  const { data: instruccionOperativa } = useQuery({
+    queryKey: ["horarioOperacionKiosko", fechaOperacion],
+    queryFn: async () => {
+      const response = await horarioOperacionService.getHoy({ fecha: fechaOperacion });
+      return response.data?.data ?? null;
+    },
+    enabled: status === "ready" && jornadasLaborales.length > 0,
+    refetchInterval: 5000,
+    refetchOnWindowFocus: true,
+    staleTime: 0,
+  });
+
+  const jornadaActiva = useMemo(
+    () => construirJornadaOperativa(instruccionOperativa) ?? jornadaBaseActiva,
+    [construirJornadaOperativa, instruccionOperativa, jornadaBaseActiva]
+  );
+  const jornadaId = jornadaActiva?.id ?? jornadaBaseActiva?.id ?? null;
+
+  const refrescarJornadaOperativa = useCallback(async () => {
+    if (!jornadasLaborales.length) return jornadaActiva;
+
+    const instruccionDiaria = await queryClient.fetchQuery({
+      queryKey: ["horarioOperacionKiosko", fechaOperacion],
+      queryFn: async () => {
+        const response = await horarioOperacionService.getHoy({ fecha: fechaOperacion });
+        return response.data?.data ?? null;
+      },
+      staleTime: 0,
+    });
+
+    const jornadaOperativa = construirJornadaOperativa(instruccionDiaria);
+    if (!jornadaOperativa) return jornadaActiva;
+
+    return jornadaOperativa;
+  }, [construirJornadaOperativa, fechaOperacion, jornadaActiva, jornadasLaborales, queryClient]);
 
   useEffect(() => {
     async function init() {
@@ -150,16 +207,9 @@ export default function PageKiosko() {
         setLoadMsg("Cargando jornadas laborales...");
         const jRes = await jornadaLaboralService.getJornadas({ per_page: 50 });
         const jornadas = jRes.data?.data?.data ?? jRes.data?.data ?? [];
+        setJornadasLaborales(jornadas);
         const jornadaBase = jornadas.find((j) => j.status !== false) ?? jornadas[0];
         if (!jornadaBase) throw new Error("No hay jornadas laborales configuradas.");
-
-        const hRes = await horarioOperacionService.getHoy();
-        const instruccionDiaria = hRes.data?.data ?? null;
-        const jornadaDelDia = instruccionDiaria?.jornada_laboral ?? instruccionDiaria?.jornadaLaboral ?? jornadaBase;
-        const jornadaOperativa = aplicarInstruccionDiaria(jornadaDelDia, instruccionDiaria);
-
-        setJornadaId(jornadaOperativa.id ?? jornadaBase.id);
-        setJornadaActiva(jornadaOperativa);
 
         // 4. Empleados (nombre por userId)
         setLoadMsg("Cargando empleados...");
@@ -226,6 +276,7 @@ export default function PageKiosko() {
           jornadaId={jornadaId}
           jornadaActiva={jornadaActiva}
           ultimaMarca={ultimaMarca}
+          onRefrescarJornada={refrescarJornadaOperativa}
           onReconocido={handleReconocido}
           onEntradaCompleta={handleAccionCompleta}
         />
@@ -236,6 +287,7 @@ export default function PageKiosko() {
           kioskoInfo={kioskoInfo}
           jornadaId={jornadaId}
           jornadaActiva={jornadaActiva}
+          onRefrescarJornada={refrescarJornadaOperativa}
           onDone={handleAccionCompleta}
           onCancelar={() => { setEmpleadoActual(null); setStep("scanner"); }}
         />

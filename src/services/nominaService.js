@@ -120,6 +120,13 @@ export const configuracionNominaService = {
   updateConfiguracion(data) {
     return apiClient.put("api/nomina/configuracion", data);
   },
+  subirFirma(file) {
+    const form = new FormData();
+    form.append("firma", file);
+    return apiClient.post("api/nomina/configuracion/firma", form, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
 };
 
 export const horarioOperacionService = {

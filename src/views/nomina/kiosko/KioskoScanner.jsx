@@ -9,7 +9,7 @@ const hhmm = (date) =>
   date.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" });
 
 // ── Teclado PIN ───────────────────────────────────────────────────────────────
-function PinModal({ cedulaMap, empleadosMap, jornadaId, jornadaActiva, kioskoInfo, onReconocido, onEntradaCompleta, onClose }) {
+function PinModal({ cedulaMap, empleadosMap, jornadaId, jornadaActiva, kioskoInfo, onRefrescarJornada, onReconocido, onEntradaCompleta, onClose }) {
   const [pin, setPin]       = useState("");
   const [estado, setEstado] = useState("idle"); // idle | buscando | error | exito
   const [msg, setMsg]       = useState("");
@@ -55,6 +55,7 @@ function PinModal({ cedulaMap, empleadosMap, jornadaId, jornadaActiva, kioskoInf
       }
 
       const info  = empleadosMap.get(userId) ?? { nombre: "Empleado", photoUrl: null };
+      const jornadaOperativa = await onRefrescarJornada?.() ?? jornadaActiva;
       const ahora = new Date();
       const yy    = ahora.getFullYear();
       const mm    = String(ahora.getMonth() + 1).padStart(2, "0");
@@ -65,13 +66,13 @@ function PinModal({ cedulaMap, empleadosMap, jornadaId, jornadaActiva, kioskoInf
         kiosko_id:          kioskoInfo.id,
         registro_diario:    `${yy}-${mm}-${dd}`,
         hora_entrada:       tiempoHHMMSS(ahora),
-        horario_laboral_id: jornadaId,
+        horario_laboral_id: jornadaOperativa?.id ?? jornadaId,
       });
 
       const hora = hhmm(ahora);
-      const tarde = minutosTardeEntrada(ahora, jornadaActiva?.hora_entrada_limite ?? jornadaActiva?.hora_entrada) > 0;
-      decir(jornadaActiva, tarde
-        ? `Registro exitoso. ${info.nombre}, has ingresado tarde.`
+      const tarde = minutosTardeEntrada(ahora, jornadaOperativa?.hora_entrada_limite ?? jornadaOperativa?.hora_entrada) > 0;
+      decir(jornadaOperativa, tarde
+        ? `Registro exitoso. ${info.nombre}, ingreso tarde.`
         : `Bienvenido, ${info.nombre}. Registro exitoso.`
       );
       setEstado("exito");
@@ -153,6 +154,7 @@ PinModal.propTypes = {
   empleadosMap:      PropTypes.instanceOf(Map).isRequired,
   jornadaId:         PropTypes.number.isRequired,
   jornadaActiva:     PropTypes.object,
+  onRefrescarJornada: PropTypes.func,
   kioskoInfo:        PropTypes.shape({ id: PropTypes.number, name: PropTypes.string }).isRequired,
   onReconocido:      PropTypes.func.isRequired,
   onEntradaCompleta: PropTypes.func.isRequired,
@@ -186,6 +188,7 @@ export default function KioskoScanner({
   jornadaId,
   jornadaActiva,
   ultimaMarca,
+  onRefrescarJornada,
   onReconocido,
   onEntradaCompleta,
 }) {
@@ -195,7 +198,7 @@ export default function KioskoScanner({
   const autoPinRef = useRef(null);
   const cooldown   = useRef(false);
   const detecting  = useRef(false);
-  const detOptions = useRef(new faceapi.SsdMobilenetv1Options({ minConfidence: 0.4 }));
+  const detOptions = useRef(new faceapi.SsdMobilenetv1Options({ minConfidence: 0.3 }));
 
   const [camError, setCamError]         = useState("");
   const [candidato, setCandidato]       = useState(null);
@@ -280,6 +283,7 @@ export default function KioskoScanner({
         // Sin sesión → registrar entrada
         setChecking(false);
         setGuardando(true);
+        const jornadaOperativa = await onRefrescarJornada?.() ?? jornadaActiva;
         const ahora = new Date();
         const yy = ahora.getFullYear();
         const mm = String(ahora.getMonth() + 1).padStart(2, "0");
@@ -290,13 +294,13 @@ export default function KioskoScanner({
           kiosko_id:          kioskoInfo.id,
           registro_diario:    `${yy}-${mm}-${dd}`,
           hora_entrada:       tiempoHHMMSS(ahora),
-          horario_laboral_id: jornadaId,
+          horario_laboral_id: jornadaOperativa?.id ?? jornadaId,
         });
 
         const hora = hhmm(ahora);
-        const tarde = minutosTardeEntrada(ahora, jornadaActiva?.hora_entrada_limite ?? jornadaActiva?.hora_entrada) > 0;
-        decir(jornadaActiva, tarde
-          ? `Registro exitoso. ${info.nombre}, has ingresado tarde.`
+        const tarde = minutosTardeEntrada(ahora, jornadaOperativa?.hora_entrada_limite ?? jornadaOperativa?.hora_entrada) > 0;
+        decir(jornadaOperativa, tarde
+          ? `Registro exitoso. ${info.nombre}, ingreso tarde.`
           : `Bienvenido, ${info.nombre}. Registro exitoso.`
         );
         setExitoMsg(tarde
@@ -319,7 +323,7 @@ export default function KioskoScanner({
     } finally {
       detecting.current = false;
     }
-  }, [faceMatcher, empleadosMap, candidato, onReconocido, kioskoInfo, jornadaId, jornadaActiva, onEntradaCompleta, resetear]);
+  }, [faceMatcher, empleadosMap, candidato, onReconocido, kioskoInfo, jornadaId, jornadaActiva, onRefrescarJornada, onEntradaCompleta, resetear]);
 
   useEffect(() => {
     loopRef.current = setInterval(detectar, 300);
@@ -334,7 +338,7 @@ export default function KioskoScanner({
     autoPinRef.current = setTimeout(() => {
       decir(jornadaActiva, "No fue posible validar el reconocimiento facial. Puedes usar el PIN alterno con tu número de cédula.");
       setReconocimientoFallido(true);
-    }, 8000);
+    }, 10000);
 
     return () => clearTimeout(autoPinRef.current);
   }, [candidato, exitoMsg, showPin, reconocimientoFallido, jornadaActiva]);
@@ -349,6 +353,7 @@ export default function KioskoScanner({
           empleadosMap={empleadosMap}
           jornadaId={jornadaId}
           jornadaActiva={jornadaActiva}
+          onRefrescarJornada={onRefrescarJornada}
           kioskoInfo={kioskoInfo}
           onReconocido={(userId, session) => { setShowPin(false); onReconocido(userId, session); }}
           onEntradaCompleta={(nombre, hora) => { setShowPin(false); setReconocimientoFallido(false); onEntradaCompleta(nombre, hora); }}
@@ -482,6 +487,7 @@ KioskoScanner.propTypes = {
   kioskoInfo:        PropTypes.shape({ id: PropTypes.number, name: PropTypes.string }).isRequired,
   jornadaId:         PropTypes.number.isRequired,
   jornadaActiva:     PropTypes.object,
+  onRefrescarJornada: PropTypes.func,
   ultimaMarca:       PropTypes.shape({ nombre: PropTypes.string, hora: PropTypes.string }),
   onReconocido:      PropTypes.func.isRequired,
   onEntradaCompleta: PropTypes.func.isRequired,

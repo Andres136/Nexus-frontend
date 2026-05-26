@@ -7,6 +7,8 @@ import { useGetSeguridadSocial } from "../../hooks/nomina/useGetSeguridadSocial"
 import { useGetRegisterContratacion } from "../../hooks/nomina/useGetRegisterContratacion";
 import { useGetEmpleados } from "../../hooks/nomina/useGetEmpleados";
 
+const CENTROS_COSTO = ["Bogotá", "Cali", "Barranquilla", "Medellín", "Girardot", "Bodega", "Administrativo", "Producción"];
+
 const selectStyles = (hasError) => ({
   control: (base, state) => ({
     ...base,
@@ -147,8 +149,8 @@ export default function RegisterContrato({ uuid = null, onClose }) {
             {err("correo")}
           </div>
 
-          {/* Empresa + Tipo contrato */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* Empresa + Centro costo + Tipo contrato */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               {label("Empresa", true)}
               <select name="empresa_id" value={formData.empresa_id} onChange={handleChange} className={inputClass("empresa_id")}>
@@ -156,6 +158,14 @@ export default function RegisterContrato({ uuid = null, onClose }) {
                 {empresasLista.map((e) => <option key={e.id} value={e.id}>{e.nombre}</option>)}
               </select>
               {err("empresa_id")}
+            </div>
+            <div>
+              {label("Centro de costo")}
+              <select name="centro_costo" value={formData.centro_costo} onChange={handleChange} className={inputClass("centro_costo")}>
+                <option value="">Seleccionar...</option>
+                {CENTROS_COSTO.map((centro) => <option key={centro} value={centro}>{centro}</option>)}
+              </select>
+              {err("centro_costo")}
             </div>
             <div>
               {label("Tipo de contrato", true)}
