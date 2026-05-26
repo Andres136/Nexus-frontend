@@ -238,6 +238,12 @@ export const nominaService = {
   liquidar(data) {
     return apiClient.post("api/nomina/nominas/liquidar", data);
   },
+  preliquidarRetiro(data) {
+    return apiClient.post("api/nomina/nominas/preliquidar-retiro", data);
+  },
+  liquidarRetiro(data) {
+    return apiClient.post("api/nomina/nominas/liquidar-retiro", data);
+  },
   deleteNomina(uuid) {
     return apiClient.delete(`api/nomina/nominas/${uuid}`);
   },
@@ -295,11 +301,37 @@ export const vacacionService = {
   getVacaciones(params = {}) {
     return apiClient.get("api/nomina/vacaciones", { params });
   },
+  resumen(userId, params = {}) {
+    return apiClient.get(`api/nomina/vacaciones/resumen/${userId}`, { params });
+  },
   aprobar(uuid, data = {}) {
     return apiClient.patch(`api/nomina/vacaciones/${uuid}/aprobar`, data);
   },
   rechazar(uuid, data = {}) {
     return apiClient.patch(`api/nomina/vacaciones/${uuid}/rechazar`, data);
+  },
+};
+
+export const licenciaService = {
+  getLicencias(params = {}) {
+    return apiClient.get("api/nomina/licencias", { params });
+  },
+  getLicenciaByUuid(uuid) {
+    return apiClient.get(`api/nomina/licencias/${uuid}`);
+  },
+  createLicencia(formData) {
+    return apiClient.post("api/nomina/licencias", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+  aprobar(uuid, data = {}) {
+    return apiClient.patch(`api/nomina/licencias/${uuid}/aprobar`, data);
+  },
+  rechazar(uuid, data = {}) {
+    return apiClient.patch(`api/nomina/licencias/${uuid}/rechazar`, data);
+  },
+  deleteLicencia(uuid) {
+    return apiClient.delete(`api/nomina/licencias/${uuid}`);
   },
 };
 

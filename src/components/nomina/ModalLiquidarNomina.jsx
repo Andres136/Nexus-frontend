@@ -19,6 +19,14 @@ function totalHorasExtra(preview = {}) {
     + Number(preview.horas_nocturnas_festivas || 0);
 }
 
+const motivosRetiro = [
+  { value: "renuncia", label: "Renuncia" },
+  { value: "terminacion_sin_justa_causa", label: "Terminación sin justa causa" },
+  { value: "terminacion_con_justa_causa", label: "Terminación con justa causa" },
+  { value: "mutuo_acuerdo", label: "Mutuo acuerdo" },
+  { value: "fin_contrato", label: "Fin de contrato" },
+];
+
 export default function ModalLiquidarNomina({ onClose, initialData = {} }) {
   const {
     formData,
@@ -50,11 +58,26 @@ export default function ModalLiquidarNomina({ onClose, initialData = {} }) {
       <div className="mb-6">
         <h2 className="text-lg font-semibold text-gray-800">Procesar Nómina</h2>
         <p className="text-sm text-gray-500 mt-1">
-          Selecciona el empleado y período para liquidar automáticamente.
+          Selecciona empleado, jornada y tipo de liquidación.
         </p>
       </div>
 
       <form onSubmit={handleSubmit} noValidate className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Tipo de liquidación
+          </label>
+          <select
+            name="tipo_liquidacion"
+            value={formData.tipo_liquidacion}
+            onChange={handleChange}
+            className={inputClass("tipo_liquidacion")}
+          >
+            <option value="nomina">Nómina periódica</option>
+            <option value="retiro">Liquidación definitiva por retiro</option>
+          </select>
+        </div>
+
         {/* Empleado */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -110,41 +133,158 @@ export default function ModalLiquidarNomina({ onClose, initialData = {} }) {
           )}
         </div>
 
-        {/* Período */}
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Inicio <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="date"
-              name="periodo_inicio"
-              value={formData.periodo_inicio}
-              onChange={handleChange}
-              className={inputClass("periodo_inicio")}
-            />
-            {fieldErrors.periodo_inicio && (
-              <p className="mt-1 text-xs text-red-500">{fieldErrors.periodo_inicio[0]}</p>
-            )}
+        {formData.tipo_liquidacion === "retiro" ? (
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Fecha de retiro <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                name="fecha_retiro"
+                value={formData.fecha_retiro}
+                onChange={handleChange}
+                className={inputClass("fecha_retiro")}
+              />
+              {fieldErrors.fecha_retiro && (
+                <p className="mt-1 text-xs text-red-500">{fieldErrors.fecha_retiro[0]}</p>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Motivo <span className="text-red-500">*</span>
+              </label>
+              <select
+                name="motivo_retiro"
+                value={formData.motivo_retiro}
+                onChange={handleChange}
+                className={inputClass("motivo_retiro")}
+              >
+                {motivosRetiro.map((motivo) => (
+                  <option key={motivo.value} value={motivo.value}>{motivo.label}</option>
+                ))}
+              </select>
+              {fieldErrors.motivo_retiro && (
+                <p className="mt-1 text-xs text-red-500">{fieldErrors.motivo_retiro[0]}</p>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Indemnización manual
+              </label>
+              <input
+                type="number"
+                min="0"
+                name="indemnizacion"
+                value={formData.indemnizacion}
+                onChange={handleChange}
+                placeholder="0"
+                className={inputClass("indemnizacion")}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Deducciones finales
+              </label>
+              <input
+                type="number"
+                min="0"
+                name="deducciones"
+                value={formData.deducciones}
+                onChange={handleChange}
+                placeholder="0"
+                className={inputClass("deducciones")}
+              />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Fin <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="date"
-              name="periodo_fin"
-              value={formData.periodo_fin}
-              onChange={handleChange}
-              className={inputClass("periodo_fin")}
-            />
-            {fieldErrors.periodo_fin && (
-              <p className="mt-1 text-xs text-red-500">{fieldErrors.periodo_fin[0]}</p>
-            )}
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Inicio <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                name="periodo_inicio"
+                value={formData.periodo_inicio}
+                onChange={handleChange}
+                className={inputClass("periodo_inicio")}
+              />
+              {fieldErrors.periodo_inicio && (
+                <p className="mt-1 text-xs text-red-500">{fieldErrors.periodo_inicio[0]}</p>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Fin <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                name="periodo_fin"
+                value={formData.periodo_fin}
+                onChange={handleChange}
+                className={inputClass("periodo_fin")}
+              />
+              {fieldErrors.periodo_fin && (
+                <p className="mt-1 text-xs text-red-500">{fieldErrors.periodo_fin[0]}</p>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
-        {preview && (
+        {preview && formData.tipo_liquidacion === "retiro" && (
+          <div className="space-y-4 rounded-lg border border-amber-100 bg-amber-50 p-4">
+            <div>
+              <p className="text-sm font-semibold text-amber-900">Vista previa de liquidación definitiva</p>
+              <p className="mt-1 text-xs text-amber-700">
+                Incluye salario pendiente, cesantías, intereses, prima, vacaciones e indemnización manual si aplica.
+              </p>
+            </div>
+            {preview.advertencias?.length > 0 && (
+              <div className="rounded-md border border-amber-300 bg-white p-3">
+                <p className="text-xs font-semibold text-amber-800">Advertencia</p>
+                {preview.advertencias.map((advertencia) => (
+                  <p key={advertencia} className="mt-1 text-xs text-amber-700">{advertencia}</p>
+                ))}
+              </div>
+            )}
+
+            <div className="grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
+              <div className="rounded-md bg-white/80 p-3">
+                <p className="text-xs text-amber-600">Fecha retiro</p>
+                <p className="font-semibold text-gray-900">{formatDate(preview.fecha_retiro)}</p>
+              </div>
+              <div className="rounded-md bg-white/80 p-3">
+                <p className="text-xs text-amber-600">Días contrato</p>
+                <p className="font-semibold text-gray-900">{preview.dias_contrato}</p>
+              </div>
+              <div className="rounded-md bg-white/80 p-3">
+                <p className="text-xs text-amber-600">Total devengado</p>
+                <p className="font-semibold text-gray-900">{formatCOP(preview.total_devengado)}</p>
+              </div>
+              <div className="rounded-md bg-white/80 p-3">
+                <p className="text-xs text-amber-600">Neto a pagar</p>
+                <p className="font-semibold text-green-700">{formatCOP(preview.neto_pagar)}</p>
+              </div>
+            </div>
+
+            <div className="rounded-md border border-amber-100 bg-white p-3 text-sm">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-amber-600">Prestaciones y retiro</p>
+              <div className="space-y-1.5">
+                <div className="flex justify-between gap-3"><span className="text-gray-500">Salario pendiente</span><span className="font-medium">{formatCOP(preview.salario_pendiente)}</span></div>
+                <div className="flex justify-between gap-3"><span className="text-gray-500">Pago no prestacional pendiente</span><span className="font-medium">{formatCOP(preview.pago_no_prestacional)}</span></div>
+                <div className="flex justify-between gap-3"><span className="text-gray-500">Cesantías ({preview.dias_cesantias} días)</span><span className="font-medium">{formatCOP(preview.cesantias)}</span></div>
+                <div className="flex justify-between gap-3"><span className="text-gray-500">Intereses cesantías</span><span className="font-medium">{formatCOP(preview.intereses_cesantias)}</span></div>
+                <div className="flex justify-between gap-3"><span className="text-gray-500">Prima ({preview.dias_prima} días)</span><span className="font-medium">{formatCOP(preview.prima_servicios)}</span></div>
+                <div className="flex justify-between gap-3"><span className="text-gray-500">Vacaciones ({preview.dias_vacaciones} días base)</span><span className="font-medium">{formatCOP(preview.vacaciones)}</span></div>
+                <div className="flex justify-between gap-3"><span className="text-gray-500">Indemnización</span><span className="font-medium">{formatCOP(preview.indemnizacion)}</span></div>
+                <div className="flex justify-between gap-3"><span className="text-gray-500">Deducciones finales</span><span className="font-medium">{formatCOP(preview.total_deducciones)}</span></div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {preview && formData.tipo_liquidacion !== "retiro" && (
           <div className="space-y-4 rounded-lg border border-indigo-100 bg-indigo-50 p-4">
             <div>
               <p className="text-sm font-semibold text-indigo-900">Vista previa de liquidación</p>
@@ -357,7 +497,7 @@ export default function ModalLiquidarNomina({ onClose, initialData = {} }) {
             disabled={previewLoading || loading}
             className="px-4 py-2 text-sm font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-md hover:bg-indigo-100 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
           >
-            {previewLoading ? "Calculando..." : "Preliquidar"}
+            {previewLoading ? "Calculando..." : formData.tipo_liquidacion === "retiro" ? "Preliquidar retiro" : "Preliquidar"}
           </button>
           <button
             type="submit"
@@ -372,7 +512,7 @@ export default function ModalLiquidarNomina({ onClose, initialData = {} }) {
                 </svg>
                 Procesando...
               </>
-            ) : "Liquidar Nómina"}
+            ) : formData.tipo_liquidacion === "retiro" ? "Liquidar Retiro" : "Liquidar Nómina"}
           </button>
         </div>
       </form>

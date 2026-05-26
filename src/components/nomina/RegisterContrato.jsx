@@ -172,7 +172,7 @@ export default function RegisterContrato({ uuid = null, onClose }) {
         <div className="space-y-3">
           <SectionTitle>Condiciones económicas</SectionTitle>
 
-          {/* Salario + Auxilio + Comp. no salarial */}
+          {/* Salario + Auxilio + Pago no prestacional */}
           <div className="grid grid-cols-3 gap-3">
             <div>
               {label("Salario base", true)}
@@ -185,9 +185,10 @@ export default function RegisterContrato({ uuid = null, onClose }) {
               {err("auxilio_transporte")}
             </div>
             <div>
-              {label("Comp. no salarial")}
-              <input type="number" name="no_salarial" value={formData.no_salarial} onChange={handleChange} min="0" placeholder="0" className={inputClass("no_salarial")} />
+              {label("Pago no prestacional")}
+              <input type="number" name="no_salarial" value={formData.no_salarial} onChange={handleChange} min="0" placeholder="300000" className={inputClass("no_salarial")} />
               {err("no_salarial")}
+              <p className="mt-0.5 text-[10px] text-gray-400">Suma al pago, no a seguridad social ni prestaciones.</p>
             </div>
           </div>
 

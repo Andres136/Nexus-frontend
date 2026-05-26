@@ -11,6 +11,11 @@ const EMPTY_FORM = {
   periodo_inicio: "",
   periodo_fin: "",
   descuento_id: "",
+  tipo_liquidacion: "nomina",
+  fecha_retiro: "",
+  motivo_retiro: "renuncia",
+  indemnizacion: "",
+  deducciones: "",
 };
 
 export const useLiquidarNomina = ({ onSuccess, initialData = {} } = {}) => {
@@ -37,7 +42,21 @@ export const useLiquidarNomina = ({ onSuccess, initialData = {} } = {}) => {
 
   const buildPayload = () => {
     const payload = { ...formData };
+    delete payload.tipo_liquidacion;
     if (!payload.descuento_id) delete payload.descuento_id;
+    if (!payload.fecha_retiro) delete payload.fecha_retiro;
+    if (!payload.indemnizacion) delete payload.indemnizacion;
+    if (!payload.deducciones) delete payload.deducciones;
+    if (formData.tipo_liquidacion !== "retiro") {
+      delete payload.motivo_retiro;
+      delete payload.indemnizacion;
+      delete payload.deducciones;
+      delete payload.fecha_retiro;
+    } else {
+      delete payload.periodo_inicio;
+      delete payload.periodo_fin;
+      delete payload.descuento_id;
+    }
     return payload;
   };
 
@@ -45,7 +64,9 @@ export const useLiquidarNomina = ({ onSuccess, initialData = {} } = {}) => {
     setPreviewLoading(true);
     setFieldErrors({});
     try {
-      const response = await nominaService.preliquidar(buildPayload());
+      const response = formData.tipo_liquidacion === "retiro"
+        ? await nominaService.preliquidarRetiro(buildPayload())
+        : await nominaService.preliquidar(buildPayload());
       setPreview(response.data.data);
       showToast("success", response.data.message || "Preliquidación calculada");
     } catch (err) {
@@ -63,8 +84,10 @@ export const useLiquidarNomina = ({ onSuccess, initialData = {} } = {}) => {
     setLoading(true);
     setFieldErrors({});
     try {
-      const response = await nominaService.liquidar(buildPayload());
-      showToast("success", response.data.message || "Nómina liquidada exitosamente");
+      const response = formData.tipo_liquidacion === "retiro"
+        ? await nominaService.liquidarRetiro(buildPayload())
+        : await nominaService.liquidar(buildPayload());
+      showToast("success", response.data.message || "Liquidación registrada exitosamente");
       queryClient.invalidateQueries(["nominas"]);
       queryClient.invalidateQueries(["nominaSummary"]);
       queryClient.invalidateQueries(["contrataciones"]);

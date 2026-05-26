@@ -71,6 +71,25 @@ export default function RegisterIncapacidad({ uuid = null, onClose }) {
           )}
         </div>
 
+        <div>
+          <label htmlFor="origen" className="block text-sm font-medium text-gray-700 mb-1">
+            Origen <span className="text-red-500">*</span>
+          </label>
+          <select
+            id="origen"
+            name="origen"
+            value={formData.origen}
+            onChange={handleChange}
+            className={inputClass("origen")}
+          >
+            <option value="eps">EPS - enfermedad general</option>
+            <option value="arl">ARL - accidente/enfermedad laboral</option>
+          </select>
+          {fieldErrors.origen && (
+            <p className="mt-1 text-xs text-red-500">{fieldErrors.origen[0]}</p>
+          )}
+        </div>
+
         {/* Entidad médica */}
         <div>
           <label htmlFor="identidad_medica_id" className="block text-sm font-medium text-gray-700 mb-1">

@@ -6,6 +6,7 @@ import { useGetIncapacidadById } from "./useGetIncapacidadById";
 
 const EMPTY_FORM = {
   tipo_incapacidad: "",
+  origen: "eps",
   identidad_medica_id: "",
   inicio: "",
   fin: "",
@@ -22,9 +23,10 @@ export const useRegisterIncapacidad = ({ uuid = null, onSuccess } = {}) => {
 
   useEffect(() => {
     if (incapacidad?.data) {
-      const { tipo_incapacidad, identidad_medica_id, inicio, fin } = incapacidad.data;
+      const { tipo_incapacidad, origen, identidad_medica_id, inicio, fin } = incapacidad.data;
       setFormData({
         tipo_incapacidad: tipo_incapacidad ?? "",
+        origen: origen ?? "eps",
         identidad_medica_id: identidad_medica_id ?? "",
         inicio: inicio?.slice(0, 10) ?? "",
         fin: fin?.slice(0, 10) ?? "",

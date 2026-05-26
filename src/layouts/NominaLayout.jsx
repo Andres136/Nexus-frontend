@@ -21,6 +21,7 @@ import {
   FileBadge,
   AlertTriangle,
   FileWarning,
+  Baby,
 } from "lucide-react";
 
 import PageProcesarNomina from "../views/nomina/PageProcesarNomina";
@@ -36,6 +37,7 @@ import PageWorkSessions from "../views/nomina/PageWorkSessions";
 import PageKioscos from "../views/nomina/PageKioscos";
 import PagePermisos from "../views/nomina/PagePermisos";
 import PageVacaciones from "../views/nomina/PageVacaciones";
+import PageLicencias from "../views/nomina/PageLicencias";
 import PageHorasExtras from "../views/nomina/PageHorasExtras";
 import PageReconocimientoFacial from "../views/nomina/PageReconocimientoFacial";
 import PageDesprendibles from "../views/nomina/PageDesprendibles";
@@ -105,6 +107,12 @@ const NAV_ITEMS = [
         label: "Vacaciones",
         icon: Palmtree,
         component: <PageVacaciones />,
+      },
+      {
+        id: "licencias",
+        label: "Licencias",
+        icon: Baby,
+        component: <PageLicencias />,
       },
       {
         id: "horas-extras",
