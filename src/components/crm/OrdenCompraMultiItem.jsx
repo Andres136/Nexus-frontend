@@ -2,8 +2,10 @@ import { formatCurrency } from "../../helpers";
 import { Trash2, Plus, Package } from "lucide-react";
 import useOrdenCompraItems from "../../hooks/useOrdenCompraItems";
 import { useProducts } from "../../hooks/useProducts";
+import { productsApi } from "../../services/api";
 import Select from "react-select";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import PropTypes from "prop-types";
 
 const inputCls = "w-full border border-gray-300 px-1.5 py-1 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-400";
 const errSpan = (msg) => msg ? <span className="text-xs text-red-500 block">{msg}</span> : null;
@@ -23,23 +25,112 @@ export default function OrdenCompraMultiItem({ onDetallesChange, errores = {}, v
     initialItems: value,
   });
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedProducts, setSelectedProducts] = useState([]);
   const { products, isLoading, isEmpty, isFetching } = useProducts({ search: searchTerm });
-  console.log("Productos para select:", products);
+  const safeProducts = useMemo(
+    () =>
+      Array.isArray(products?.data)
+        ? products.data
+        : Array.isArray(products)
+          ? products
+          : [],
+    [products]
+  );
 
-  const productOptions = products.map((p) => ({
+  const rowProducts = useMemo(() => rows.map((row) => row.product).filter(Boolean), [rows]);
+  const allProducts = useMemo(
+    () =>
+      [...safeProducts, ...rowProducts, ...selectedProducts].filter(
+        (product, index, array) =>
+          product?.id && array.findIndex((item) => String(item?.id) === String(product.id)) === index
+      ),
+    [safeProducts, rowProducts, selectedProducts]
+  );
+
+  const selectedProductIds = useMemo(
+    () =>
+      rows
+        .map((row) => row.product_id)
+        .filter(Boolean)
+        .map(String)
+        .join(","),
+    [rows]
+  );
+
+  useEffect(() => {
+    const ids = selectedProductIds ? selectedProductIds.split(",") : [];
+    const missingIds = ids.filter(
+      (productId) => !allProducts.some((product) => String(product.id) === productId)
+    );
+
+    if (missingIds.length === 0) return;
+
+    let isMounted = true;
+
+    Promise.all(
+      missingIds.map((productId) =>
+        productsApi
+          .getById(productId)
+          .then((response) => response.data?.data ?? response.data)
+          .catch(() => null)
+      )
+    ).then((loadedProducts) => {
+      if (!isMounted) return;
+
+      const validProducts = loadedProducts.filter(Boolean);
+      if (validProducts.length === 0) return;
+
+      setSelectedProducts((prev) => {
+        const merged = [...prev, ...validProducts];
+        return merged.filter(
+          (product, index, array) =>
+            product?.id && array.findIndex((item) => String(item?.id) === String(product.id)) === index
+        );
+      });
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedProductIds, allProducts]);
+ 
+  const productOptions = allProducts.map((p) => ({
     value: p.id,
     label: `${p.code || p.code_id || "Sin código"} - ${p.name || "Sin nombre"}`,
+    product: p,
   }));
+
+  const getProductValue = (row) => {
+    if (!row.product_id) return null;
+
+    const product = allProducts.find((p) => String(p.id) === String(row.product_id));
+    if (product) {
+      return {
+        value: product.id,
+        label: `${product.code || product.code_id || "Sin código"} - ${product.name || "Sin nombre"}`,
+      };
+    }
+
+    if (row.product && String(row.product.id) === String(row.product_id)) {
+      return {
+        value: row.product.id || row.product_id,
+        label: `${row.product.code || row.product.code_id || "Sin código"} - ${row.product.name || "Sin nombre"}`,
+      };
+    }
+
+    return null;
+  };
 
   const renderProductSelect = (row) => (
     <Select
       isLoading={isLoading || isFetching}
       options={productOptions}
-   value={row.product || null}
-      onChange={(opt) => {
-  handleInputChange(row._uuid, "product_id", opt ? opt.value : "");
-  handleInputChange(row._uuid, "product", opt || null);
-}}
+      value={getProductValue(row)}
+      onChange={(opt) =>
+        handleInputChange(row._uuid, "product_id", opt ? opt.value : "", {
+          product: opt?.product || null,
+        })
+      }
       onInputChange={(v) => setSearchTerm(v)}
       placeholder="Buscar producto..."
       noOptionsMessage={() => isLoading ? "Cargando..." : isEmpty ? "Sin resultados" : "Escribe para buscar"}
@@ -274,3 +365,9 @@ export default function OrdenCompraMultiItem({ onDetallesChange, errores = {}, v
     </div>
   );
 }
+
+OrdenCompraMultiItem.propTypes = {
+  onDetallesChange: PropTypes.func,
+  errores: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
+  value: PropTypes.array,
+};

@@ -8,6 +8,22 @@ import { useProducts } from "../../hooks/useProducts";
 import Select from "react-select";
 import { calcularCamposBolsa } from "../../helpers/utils/calculoBolsa";
 import { auditApi } from "../../services/api";
+import {
+  AlertCircle,
+  Building2,
+  CalendarDays,
+  CheckCircle2,
+  ClipboardList,
+  Eye,
+  FileText,
+  Loader2,
+  MapPin,
+  PackageSearch,
+  Plus,
+  Trash2,
+  Truck,
+  UserRound,
+} from "lucide-react";
 
 
 
@@ -210,452 +226,456 @@ const tieneDocumentoCliente = Boolean(ordenSeleccionada?.cliente_documento);
   
     obtenerSedes();
   }, []);
- 
+ const safeProducts = Array.isArray(products?.data)
+  ? products.data
+  : Array.isArray(products)
+    ? products
+    : [];
+
+  const inputClass =
+    "w-full rounded-md border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900 shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100";
+  const compactInputClass =
+    "w-full rounded-md border border-gray-300 bg-white px-2 py-1 text-center text-sm text-gray-900 shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100";
+  const readOnlyMetricClass =
+    "rounded-md border border-gray-200 bg-gray-50 px-2 py-1 text-center text-sm font-semibold text-gray-800";
+  const tableHeadClass =
+    "sticky top-0 z-10 border-b border-gray-200 bg-gray-50 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500";
+  const tableCellClass = "border-b border-gray-100 px-3 py-2 align-top";
+  const totalOrden = detalles.reduce((sum, detalle) => sum + (Number(detalle.valor_total) || 0), 0);
+
+  const infoCards = [
+    {
+      label: "Fecha de entrega",
+      value: ordenSeleccionada?.fecha_entrega || "No disponible",
+      icon: CalendarDays,
+      tone: "bg-blue-50 text-blue-700",
+    },
+    {
+      label: "Asesor comercial",
+      value: ordenSeleccionada?.user?.name || "No disponible",
+      icon: UserRound,
+      tone: "bg-emerald-50 text-emerald-700",
+    },
+    {
+      label: "Dirección de entrega",
+      value: ordenSeleccionada?.ubicacion_entrega || "No disponible",
+      icon: MapPin,
+      tone: "bg-amber-50 text-amber-700",
+    },
+    {
+      label: "Observaciones",
+      value: ordenSeleccionada?.observaciones || "No disponible",
+      icon: ClipboardList,
+      tone: "bg-violet-50 text-violet-700",
+    },
+  ];
 
   return (
-    <div className="min-h-screen  text-gray-900 p-6">
-<div className="bg-white rounded-md shadow-sm border border-gray-200 p-3 mb-4">
+    <div className="min-h-screen bg-slate-50 px-4 py-5 text-gray-900 sm:px-6">
+      <div className="mx-auto max-w-[1600px] space-y-5">
+        <section className="rounded-lg border border-gray-200 bg-white shadow-sm">
+          <div className="flex flex-col gap-4 border-b border-gray-100 p-4 lg:flex-row lg:items-start lg:justify-between">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700">
+                  <FileText className="h-3.5 w-3.5" />
+                  Orden de compra
+                </span>
+                {ordenSeleccionada && (
+                  <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">
+                    #{ordenSeleccionada.id}
+                  </span>
+                )}
+                {documentoVisto && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Documento revisado
+                  </span>
+                )}
+              </div>
+              <h2 className="mt-3 text-xl font-semibold leading-tight text-gray-950 sm:text-2xl">
+                {ordenSeleccionada
+                  ? ordenSeleccionada.cliente?.nombre || "Cliente desconocido"
+                  : "Detalles de la Orden de Compra"}
+              </h2>
+              <p className="mt-1 text-sm text-gray-500">
+                Revisa los detalles comerciales antes de generar la orden de trabajo.
+              </p>
+            </div>
 
-<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-4">
-  {/* Cliente */}
-  <h2 className="text-2xl font-semibold text-gray-900">
-    {ordenSeleccionada ? (
-      <>
-        Detalles de la Orden de Compra #{ordenSeleccionada.id} –{" "}
-        {ordenSeleccionada.cliente?.nombre || "Cliente desconocido"}
-      </>
-    ) : (
-      "Detalles de la Orden de Compra"
-    )}
-  </h2>
+            {ordenSeleccionada && tieneDocumentoCliente && (
+              <button
+                onClick={async () => {
+                  window.open(
+                    `${import.meta.env.VITE_API_URL}/api/orden-compras/${ordenSeleccionada.id}/preview-documento`,
+                    "_blank",
+                    "noopener,noreferrer"
+                  );
 
-  {/* Botón documento */}
-  {ordenSeleccionada && tieneDocumentoCliente && (
-<button
-  onClick={async () => {
-    window.open(
-      `${import.meta.env.VITE_API_URL}/api/orden-compras/${ordenSeleccionada.id}/preview-documento`,
-      "_blank",
-      "noopener,noreferrer"
-    );
+                  const response = await auditApi.postOrdenCompraRevisada(ordenSeleccionada.id);
 
-    const response = await auditApi.postOrdenCompraRevisada(ordenSeleccionada.id);
+                  toast(response.data.message || "Documento marcado como revisado");
 
-    toast(response.data.message || "Documento marcado como revisado");
-
-    setDocumentoVisto(true);
-  }}
-  className="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium 
-             rounded hover:bg-blue-700 transition whitespace-nowrap"
->
-  Ver Orden de Compra del Cliente
-</button>
-
-  )}
-</div>
-
-
-
-
-<div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-  
-  {/* Fecha de entrega */}
-  <div className="bg-gray-50 rounded-md p-2 flex items-center gap-2 md:col-span-1">
-    <div className="w-6 h-6 bg-blue-100 rounded flex items-center justify-center">
-      <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-      </svg>
-    </div>
-    <div>
-      <p className="text-xs font-medium text-gray-600">Fecha de Entrega</p>
-      <p className="text-sm font-semibold text-gray-900">
-        {ordenSeleccionada?.fecha_entrega || "No disponible"}
-      </p>
-    </div>
-  </div>
-
-  {/* Asesor Comercial */}
-  <div className="bg-gray-50 rounded-md p-2 flex items-center gap-2 md:col-span-1">
-    <div className="w-6 h-6 bg-green-100 rounded flex items-center justify-center">
-      <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-      </svg>
-    </div>
-    <div>
-      <p className="text-xs font-medium text-gray-600">Asesor Comercial</p>
-      <p className="text-sm font-semibold text-gray-900">
-        {ordenSeleccionada?.user?.name || "No disponible"}
-      </p>
-    </div>
-  </div>
-
-  {/* Dirección de entrega */}
-  <div className="bg-gray-50 rounded-md p-2 flex items-start gap-2 md:col-span-1">
-    <div className="w-6 h-6 bg-orange-100 rounded flex items-center justify-center mt-0.5">
-      <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-      </svg>
-    </div>
-    <div>
-      <p className="text-xs font-medium text-gray-600">Dirección de Entrega</p>
-      <p className="text-sm font-semibold text-gray-900">
-        {ordenSeleccionada?.ubicacion_entrega || "No disponible"}
-      </p>
-    </div>
-
-
-
-  </div>
-
-  {/* Observaciones */}
-  <div className="bg-gray-50 rounded-md p-2 flex items-start gap-2 md:col-span-1">
-    <div className="w-6 h-6 bg-purple-100 rounded flex items-center justify-center mt-0.5">
-      <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 4h2a2 2 0 012 2v2m-4-4v2m-4-2v2m-4-2v2m0 4v2m4-2v2m4-2v2m4-2v2" />
-      </svg>
-    </div>
-    <div>
-      <p className="text-xs font-medium text-gray-600">Observaciones</p>
-      <p className="text-sm font-semibold text-gray-900">
-        {ordenSeleccionada?.observaciones || "No disponible"}
-      </p>
-    </div>
-  </div>
-</div>
-
-</div>
-
-
-  <div className="grid grid-cols-2 gap-4">
-
-
-    
-      <div className="col-span-2">
-
-      {/* Si no hay orden */}
-      {!ordenSeleccionada ? (
-        <p className="text-red-500 text-lg font-semibold">
-          No se encontró la orden de compra con ID {id}
-        </p>
-      ) : (
-        <>
-          {/* Tabla de detalles */}
-          <div className="overflow-x-auto mb-4">
-            <table className="w-full min-w-[900px] border border-gray-300">
-              <thead className="bg-gray-800 text-white text-sm">
-                <tr>
-                  <th className="border border-gray-300 px-2 py-1">Acciones</th>
-                  <th className="border border-gray-300 px-2 py-1">Item</th>
-                  <th className="border border-gray-300 px-2 py-1">Producto</th>
-                  <th className="border border-gray-300 px-2 py-1">Referencia</th>
-                 <th className="border border-gray-300 px-2 py-1">Ancho cm</th>
-                 <th className="border border-gray-300 px-2 py-1">Largo cm</th>  
-                  <th className="border border-gray-300 px-2 py-1">Calibre</th>
-                  <th className="border border-gray-300 px-2 py-1">Peso Bolsa</th>
-                  <th className="border border-gray-300 px-2 py-1"># Bolsas</th>
-                  <th className="border border-gray-300 px-2 py-1">Cliente Clb</th>
-                  <th className="border border-gray-300 px-2 py-1"> (Kg)</th>
-                  <th className="border border-gray-300 px-2 py-1">Descripción</th>
-                  <th className="border border-gray-300 px-2 py-1">Cantidad</th>
-                  <th className="border border-gray-300 px-2 py-1">Valor Unitario</th>
-                  <th className="border border-gray-300 px-2 py-1">Valor Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {detalles.map((detalle, index) => (
-                  <tr key={index} className="hover:bg-gray-100">
-                    <td className="border border-gray-300 px-2 py-1">
-                      <button
-                        onClick={() => eliminarItem(index)}
-                        className="bg-red-500 text-white px-2 py-1 rounded"
-                      >
-                        Eliminar
-                      </button>
-                    </td>
-                    <td className="border border-gray-300 px-2 py-1 text-center">
-                      <input
-                        type="text"
-                        value={detalle.observaciones}
-                        onChange={(e) =>
-                          handleChangeDetalle(index, "observaciones", e.target.value)
-                        }
-                        className="w-full border border-gray-300 rounded px-1"
-                      />
-                    </td>
-                    <td className="border border-gray-300 px-2 py-1">
-                     <Select
-  isLoading={isLoading || isFetching}
-  options={products.map((p) => ({
-    value: p.id,
-    label: `${p.code || p.code_id || "Sin código"} - ${p.name || "Sin nombre"}`,
-    code: p.code,
-    name: p.name,
-  }))}
-  value={
-    detalle.product_id && products.length > 0
-      ? (() => {
-          const product = products.find((p) => p.id === detalle.product_id);
-          if (product) {
-            return {
-              value: product.id,
-              label: `${product.code || product.code_id || "Sin código"} - ${product.name || "Sin nombre"}`,
-            };
-          } 
-        })()
-      : null
-  }
- onChange={(selectedOption) => {
-  const newDetalles = [...detalles];
-
-  newDetalles[index].product_id = selectedOption?.value || null;
-
-  // 🔥 AQUÍ LLENAS LA REFERENCIA AUTOMÁTICAMENTE
-  newDetalles[index].referencia = selectedOption?.name || "";
-  newDetalles[index].descripcion = selectedOption?.name || "";
-
-  setDetalles(newDetalles);
-}}
-  onInputChange={(inputValue) => setSearchTerm(inputValue)}
-  placeholder="Buscar producto por código o nombre..."
-  noOptionsMessage={() =>
-    isLoading
-      ? "Cargando productos..."
-      : isEmpty
-      ? "No se encontraron productos"
-      : "Escribe para buscar"
-  }
-  className="min-w-[250px]"
-  menuPortalTarget={document.body}
-  styles={{
-    menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-    control: (base, { data }) => ({
-      ...base,
-      minHeight: "32px",
-      fontSize: "14px",
-      borderColor: data?.isInvalid ? "#dc2626" : base.borderColor,
-    }),
-    singleValue: (base, { data }) => ({
-      ...base,
-      color: data?.isInvalid ? "#dc2626" : base.color,
-    }),
-  }}
-/>
-{errores[`detalles.${index}.product_id`] && (
-  <div className="text-red-500 text-sm">
-    {errores[`detalles.${index}.product_id`]}
-  </div>
-)}
-                    </td>
-                    <td className="border border-gray-300 px-2 py-1">
-                      <input
-                        type="text"
-                        value={detalle.referencia || detalle.product?.name || ""}
-                        onChange={(e) =>
-                          handleChangeDetalle(index, "referencia", e.target.value)
-                        }
-                        className="w-full border border-gray-300 rounded px-1"
-                      />
-                    </td>
-                    {/* Ancho */}
-                    <td className="border border-gray-300 px-2 py-1">
-                      <input
-                        type="number"
-                        value={detalle.ancho_cm}
-                        onChange={(e) =>
-                          handleChangeDetalle(index, "ancho_cm", e.target.value)
-                        }
-                        className="w-full border border-gray-300 rounded px-1"
-                      />      {/* Largo */}
-          
-                    </td>          <td className="border border-gray-300 px-2 py-1">
-                      <input
-                        type="number"
-                        value={detalle.largo_cm}
-                        onChange={(e) =>
-                          handleChangeDetalle(index, "largo_cm", e.target.value)
-                        }
-                        className="w-full border border-gray-300 rounded px-1"
-                      />
-                    </td>
-                    {/* Calibre */}
-                    <td className="border border-gray-300 px-2 py-1">
-                      <input
-                        type="number"
-                        value={detalle.calibre}
-                        onChange={(e) =>
-                          handleChangeDetalle(index, "calibre", e.target.value)
-                        }
-                        className="w-full border border-gray-300 rounded px-1"
-                      />
-                    </td>
-                    {/* Peso Bolsa */}
-                    <td className="border border-gray-300 px-2 py-1 text-center">
-                      {detalle.peso_bolsa?.toFixed(2)}
-                    </td>
-                    {/* # Bolsas */}
-                    <td className="border border-gray-300 px-2 py-1 text-center">
-                      {detalle.numero_bolsas || 0}
-                    </td>
-                    {/* Cliente Clb */}
-                    <td className="border border-gray-300 px-2 py-1">
-                      <input
-                        type="text"
-                        value={detalle.cliente_clb}
-                        onChange={(e) =>
-                          handleChangeDetalle(index, "cliente_clb", e.target.value)
-                        }
-                        className="w-full border border-gray-300 rounded px-1"
-                      />
-                    </td>
-                    {/* Cant Req. (Kg) */}
-            {/* Cant Req. (Kg) - MÁS PEQUEÑO */}
-<td className="border border-gray-300 px-2 py-1 text-center">
-  <input 
-    type="number"
-    value={detalle.cantidad_requerida_kg.toFixed(2)}    
-    onChange={(e) =>
-      handleChangeDetalle(index, "cantidad_requerida_kg", e.target.value)
-    }
-    className="w-16 border border-gray-300 rounded px-1 py-1 text-xs text-center"
-    step="0.01"
-    min="0"
-  />
-</td>
-                    {/* Descripción */}
-              {/* Descripción - Cambiar por textarea */}
-<td className="border border-gray-300 px-2 py-1">
-  <textarea
-    value={detalle.descripcion}
-    onChange={(e) =>
-      handleChangeDetalle(index, "descripcion", e.target.value)
-    }
-    className="w-full min-w-[200px] border border-gray-300 rounded px-2 py-1 resize-none text-sm"
-    rows="2"
-    placeholder="Descripción del producto..."
-  />
-</td>
-                    {/* Cantidad */}
-                    <td className="border border-gray-300 px-2 py-1">
-                      <input
-                        type="number"
-                        value={detalle.cantidad}
-                        onChange={(e) =>
-                          handleChangeDetalle(index, "cantidad", e.target.value)
-                        }
-                        className="w-full border border-gray-300 rounded px-1"
-                      />
-                    </td>
-                    {/* Valor Unitario */}
-                    <td className="border border-gray-300 px-2 py-1">
-                      <input
-                        type="number"
-                        value={detalle.valor_unitario}
-                        onChange={(e) =>
-                          handleChangeDetalle(index, "valor_unitario", e.target.value)
-                        }
-                        className="w-full border border-gray-300 rounded px-1"
-                      />
-                    </td>
-                    {/* Valor Total */}
-                    <td className="border border-gray-300 px-2 py-1 text-center">
-                      {formatCurrency(detalle.valor_total)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Botón para agregar item */}
-          <button
-            onClick={agregarItem}
-            className="bg-gray-800 text-white px-4 py-2 rounded hover:bg-green-800 mb-4"
-          >
-            Agregar Ítem
-          </button>
-
-          {/* Observaciones para la OT */}
-          <div className="mb-4">
-            <textarea
-              className="w-full border border-gray-300 rounded p-2"
-              rows={4}
-              placeholder="Observaciones de la Orden de Trabajo"
-              value={observaciones}
-              onChange={(e) => setObservaciones(e.target.value)}
-            />
-            {errores.observaciones && (
-              <p className="text-red-500 text-sm">{errores.observaciones}</p>
+                  setDocumentoVisto(true);
+                }}
+                className="inline-flex items-center justify-center gap-2 rounded-md bg-blue-600 px-3.5 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              >
+                <Eye className="h-4 w-4" />
+                Ver documento del cliente
+              </button>
             )}
           </div>
 
-{/* Selección de sede y entregas parciales */}
-<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div className="grid grid-cols-1 gap-3 p-4 md:grid-cols-2 xl:grid-cols-4">
+            {infoCards.map(({ label, value, icon: Icon, tone }) => (
+              <div key={label} className="rounded-lg border border-gray-100 bg-gray-50/70 p-3">
+                <div className="flex items-start gap-3">
+                  <span className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${tone}`}>
+                    <Icon className="h-4 w-4" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium uppercase tracking-wide text-gray-500">{label}</p>
+                    <p className="mt-1 break-words text-sm font-semibold leading-5 text-gray-900">{value}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
 
-  {/* Selección de sede */}
-  <div className="bg-gray-50 rounded-md p-3 border border-gray-200">
-    <label className="block text-xs font-medium text-gray-600 mb-1">
-      Selecciona la sede
-    </label>
-    <select
-      className={`w-full border rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none ${
-        errores.sede_id ? "border-red-500" : "border-gray-300"
-      }`}
-      value={sedeId}
-      onChange={(e) => setSedeId(e.target.value)}
-    >
-      <option value="">-- Selecciona una sede --</option>
-      {sedes.map((sede) => (
-        <option key={sede.id} value={sede.id}>
-          {sede.nombre}
-        </option>
-      ))}
-    </select>
-    {errores.sede_id && (
-      <p className="text-red-500 text-xs mt-1">
-        {Array.isArray(errores.sede_id) ? errores.sede_id[0] : errores.sede_id}
-      </p>
-    )}
-  </div>
+        {!ordenSeleccionada ? (
+          <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
+            <AlertCircle className="h-5 w-5 shrink-0" />
+            <p className="text-sm font-semibold">No se encontró la orden de compra con ID {id}</p>
+          </div>
+        ) : (
+          <>
+            <section className="rounded-lg border border-gray-200 bg-white shadow-sm">
+              <div className="flex flex-col gap-3 border-b border-gray-100 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h3 className="text-base font-semibold text-gray-950">Detalle de productos</h3>
+                  <p className="mt-0.5 text-sm text-gray-500">
+                    {detalles.length} item{detalles.length !== 1 ? "s" : ""} en la orden
+                  </p>
+                </div>
+                <button
+                  onClick={agregarItem}
+                  className="inline-flex items-center justify-center gap-2 rounded-md bg-gray-900 px-3.5 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-300"
+                >
+                  <Plus className="h-4 w-4" />
+                  Agregar item
+                </button>
+              </div>
 
-  {/* Checkbox de entregas parciales */}
-  <div className="bg-gray-50 rounded-md p-3 border border-gray-200 flex items-center">
-    <input
-      type="checkbox"
-      id="entregasParciales"
-      className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
-      checked={forzarEntregaParcial}
-      onChange={(e) => setForzarEntregaParcial(e.target.checked)}
-    />
-    <label
-      htmlFor="entregasParciales"
-      className="ml-2 text-sm text-gray-700 font-medium cursor-pointer"
-    >
-      Cliente requiere entregas parciales
-    </label>
-  </div>
-</div>
+              {detalles.length === 0 ? (
+                <div className="flex flex-col items-center justify-center px-4 py-12 text-center">
+                  <PackageSearch className="h-10 w-10 text-gray-300" />
+                  <p className="mt-3 text-sm font-medium text-gray-700">No hay items registrados</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-[1320px] w-full text-sm">
+                    <thead>
+                      <tr>
+                        <th className={`${tableHeadClass} w-12`}></th>
+                        <th className={`${tableHeadClass} w-20`}>Item</th>
+                        <th className={`${tableHeadClass} min-w-[280px]`}>Producto</th>
+                        <th className={`${tableHeadClass} w-24`}>Ancho</th>
+                        <th className={`${tableHeadClass} w-24`}>Largo</th>
+                        <th className={`${tableHeadClass} w-24`}>Calibre</th>
+                        <th className={`${tableHeadClass} w-28`}>Peso bolsa</th>
+                        <th className={`${tableHeadClass} w-28`}>Bolsas</th>
+                        <th className={`${tableHeadClass} w-24`}>Cliente</th>
+                        <th className={`${tableHeadClass} w-28`}>Kg req.</th>
+                        <th className={`${tableHeadClass} min-w-[240px]`}>Descripción</th>
+                        <th className={`${tableHeadClass} w-24`}>Cantidad</th>
+                        <th className={`${tableHeadClass} w-32`}>Valor unit.</th>
+                        <th className={`${tableHeadClass} w-32 text-right`}>Valor total</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 bg-white">
+                      {detalles.map((detalle, index) => (
+                        <tr key={index} className="transition hover:bg-blue-50/30">
+                          <td className={tableCellClass}>
+                            <button
+                              onClick={() => eliminarItem(index)}
+                              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-red-500 transition hover:bg-red-50 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-100"
+                              title="Eliminar item"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </td>
+                          <td className={tableCellClass}>
+                            <input
+                              type="text"
+                              value={detalle.observaciones}
+                              onChange={(e) =>
+                                handleChangeDetalle(index, "observaciones", e.target.value)
+                              }
+                              className={compactInputClass}
+                            />
+                          </td>
+                          <td className={tableCellClass}>
+                            <Select
+                              isLoading={isLoading || isFetching}
+                              options={safeProducts.map((p) => ({
+                                value: p.id,
+                                label: `${p.code || p.code_id || "Sin código"} - ${p.name || "Sin nombre"}`,
+                                code: p.code,
+                                name: p.name,
+                              }))}
+                              value={(() => {
+                                // Buscar en resultados actuales
+                                const product = safeProducts.find(
+                                  (p) => String(p.id) === String(detalle.product_id)
+                                );
 
+                                // Si existe en búsqueda actual
+                                if (product) {
+                                  return {
+                                    value: product.id,
+                                    label: `${product.code || product.code_id || "Sin código"} - ${product.name || "Sin nombre"}`,
+                                  };
+                                }
 
+                                // Si NO existe en búsqueda actual usar el que vino del backend
+                                if (detalle.product) {
+                                  return {
+                                    value: detalle.product.id,
+                                    label: `${detalle.product.code || "Sin código"} - ${detalle.product.name || "Sin nombre"}`,
+                                  };
+                                }
 
+                                return null;
+                              })()}
+                              onChange={(selectedOption) => {
+                                const newDetalles = [...detalles];
 
-          {/* Botón Generar Orden de Trabajo */}
-          <button
-            onClick={handleGenerarOrdenTrabajo}
-            disabled={loading}
-            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-          >
-            {loading ? "Generando..." : "Generar Orden de Trabajo"}
-          </button>
-        </>
-      )}
+                                newDetalles[index].product_id = selectedOption?.value || null;
 
+                                // 🔥 AQUÍ LLENAS LA REFERENCIA AUTOMÁTICAMENTE
+                                newDetalles[index].referencia = selectedOption?.name || "";
+                                newDetalles[index].descripcion = selectedOption?.name || "";
+
+                                setDetalles(newDetalles);
+                              }}
+                              onInputChange={(inputValue) => setSearchTerm(inputValue)}
+                              placeholder="Buscar producto por código o nombre..."
+                              noOptionsMessage={() =>
+                                isLoading
+                                  ? "Cargando productos..."
+                                  : isEmpty
+                                  ? "No se encontraron productos"
+                                  : "Escribe para buscar"
+                              }
+                              className="min-w-[250px]"
+                              menuPortalTarget={document.body}
+                              styles={{
+                                menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                                control: (base, { data }) => ({
+                                  ...base,
+                                  minHeight: "38px",
+                                  borderRadius: "6px",
+                                  fontSize: "14px",
+                                  borderColor: data?.isInvalid ? "#dc2626" : base.borderColor,
+                                  boxShadow: "none",
+                                }),
+                                singleValue: (base, { data }) => ({
+                                  ...base,
+                                  color: data?.isInvalid ? "#dc2626" : base.color,
+                                }),
+                              }}
+                            />
+                            {errores[`detalles.${index}.product_id`] && (
+                              <div className="mt-1 text-xs font-medium text-red-600">
+                                {errores[`detalles.${index}.product_id`]}
+                              </div>
+                            )}
+                          </td>
+                          <td className={tableCellClass}>
+                            <input
+                              type="number"
+                              value={detalle.ancho_cm}
+                              onChange={(e) =>
+                                handleChangeDetalle(index, "ancho_cm", e.target.value)
+                              }
+                              className={compactInputClass}
+                            />
+                          </td>
+                          <td className={tableCellClass}>
+                            <input
+                              type="number"
+                              value={detalle.largo_cm}
+                              onChange={(e) =>
+                                handleChangeDetalle(index, "largo_cm", e.target.value)
+                              }
+                              className={compactInputClass}
+                            />
+                          </td>
+                          <td className={tableCellClass}>
+                            <input
+                              type="number"
+                              value={detalle.calibre}
+                              onChange={(e) =>
+                                handleChangeDetalle(index, "calibre", e.target.value)
+                              }
+                              className={compactInputClass}
+                            />
+                          </td>
+                          <td className={tableCellClass}>
+                            <div className={readOnlyMetricClass}>{detalle.peso_bolsa?.toFixed(2)}</div>
+                          </td>
+                          <td className={tableCellClass}>
+                            <div className={readOnlyMetricClass}>{detalle.numero_bolsas || 0}</div>
+                          </td>
+                          <td className={tableCellClass}>
+                            <input
+                              type="text"
+                              value={detalle.cliente_clb}
+                              onChange={(e) =>
+                                handleChangeDetalle(index, "cliente_clb", e.target.value)
+                              }
+                              className={compactInputClass}
+                            />
+                          </td>
+                          <td className={tableCellClass}>
+                            <input
+                              type="number"
+                              value={detalle.cantidad_requerida_kg.toFixed(2)}
+                              onChange={(e) =>
+                                handleChangeDetalle(index, "cantidad_requerida_kg", e.target.value)
+                              }
+                              className={compactInputClass}
+                              step="0.01"
+                              min="0"
+                            />
+                          </td>
+                          <td className={tableCellClass}>
+                            <textarea
+                              value={detalle.descripcion}
+                              onChange={(e) =>
+                                handleChangeDetalle(index, "descripcion", e.target.value)
+                              }
+                              className={`${inputClass} min-h-[42px] resize-none uppercase`}
+                              rows="2"
+                              placeholder="Descripción del producto..."
+                            />
+                          </td>
+                          <td className={tableCellClass}>
+                            <input
+                              type="number"
+                              value={detalle.cantidad}
+                              onChange={(e) =>
+                                handleChangeDetalle(index, "cantidad", e.target.value)
+                              }
+                              className={compactInputClass}
+                            />
+                          </td>
+                          <td className={tableCellClass}>
+                            <input
+                              type="number"
+                              value={detalle.valor_unitario}
+                              onChange={(e) =>
+                                handleChangeDetalle(index, "valor_unitario", e.target.value)
+                              }
+                              className={compactInputClass}
+                            />
+                          </td>
+                          <td className={`${tableCellClass} text-right`}>
+                            <div className="rounded-md bg-emerald-50 px-2 py-1.5 font-semibold text-emerald-700">
+                              {formatCurrency(detalle.valor_total)}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              <div className="flex flex-col gap-3 border-t border-gray-100 bg-gray-50/70 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="text-sm text-gray-500">
+                  Total estimado de la orden
+                </div>
+                <div className="text-xl font-bold text-gray-950">{formatCurrency(totalOrden)}</div>
+              </div>
+            </section>
+
+            <section className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_320px]">
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                    Observaciones de la Orden de Trabajo
+                  </label>
+                  <textarea
+                    className={`${inputClass} min-h-[120px] resize-none`}
+                    rows={4}
+                    placeholder="Observaciones de la Orden de Trabajo"
+                    value={observaciones}
+                    onChange={(e) => setObservaciones(e.target.value)}
+                  />
+                  {errores.observaciones && (
+                    <p className="mt-1 text-sm font-medium text-red-600">{errores.observaciones}</p>
+                  )}
+                </div>
+
+                <div className="space-y-3">
+                  <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                    <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-gray-700">
+                      <Building2 className="h-4 w-4 text-gray-500" />
+                      Sede
+                    </label>
+                    <select
+                      className={`w-full rounded-md border bg-white p-2 text-sm shadow-sm transition focus:outline-none focus:ring-2 focus:ring-blue-100 ${
+                        errores.sede_id ? "border-red-500" : "border-gray-300 focus:border-blue-500"
+                      }`}
+                      value={sedeId}
+                      onChange={(e) => setSedeId(e.target.value)}
+                    >
+                      <option value="">-- Selecciona una sede --</option>
+                      {sedes.map((sede) => (
+                        <option key={sede.id} value={sede.id}>
+                          {sede.nombre}
+                        </option>
+                      ))}
+                    </select>
+                    {errores.sede_id && (
+                      <p className="mt-1 text-xs font-medium text-red-600">
+                        {Array.isArray(errores.sede_id) ? errores.sede_id[0] : errores.sede_id}
+                      </p>
+                    )}
+                  </div>
+
+                  <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
+                    <input
+                      type="checkbox"
+                      id="entregasParciales"
+                      className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                      checked={forzarEntregaParcial}
+                      onChange={(e) => setForzarEntregaParcial(e.target.checked)}
+                    />
+                    <span className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                      <Truck className="h-4 w-4 text-gray-500" />
+                      Cliente requiere entregas parciales
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="mt-5 flex justify-end border-t border-gray-100 pt-4">
+                <button
+                  onClick={handleGenerarOrdenTrabajo}
+                  disabled={loading}
+                  className="inline-flex items-center justify-center gap-2 rounded-md bg-green-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-200 disabled:cursor-not-allowed disabled:bg-green-400"
+                >
+                  {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {loading ? "Generando..." : "Generar Orden de Trabajo"}
+                </button>
+              </div>
+            </section>
+          </>
+        )}
       </div>
-       
-
-  </div>
-
-
     </div>
   );
 }

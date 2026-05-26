@@ -53,6 +53,7 @@ export default function useOrdenCompraForm({ modo, id }) {
           detalles: data.detalles.map((d) => ({
             id: d.id,
             product_id: d.product_id,
+            product: d.product || d.producto || null,
             largo_cm: d.largo_cm,
             ancho_cm: d.ancho_cm,
             calibre: d.calibre,
@@ -108,11 +109,17 @@ export default function useOrdenCompraForm({ modo, id }) {
         data.append("cliente_documento", formData.cliente_documento);
       }
 
-      const detallesNormalizados = formData.detalles.map((d) => ({
-        ...d,
-        product_id:
-          d.product_id === "" || d.product_id === undefined ? null : d.product_id,
-      }));
+      const detallesNormalizados = formData.detalles.map((detalle) => {
+        const d = { ...detalle };
+        delete d.product;
+        delete d.producto;
+
+        return {
+          ...d,
+          product_id:
+            d.product_id === "" || d.product_id === undefined ? null : d.product_id,
+        };
+      });
       detallesNormalizados.forEach((detalle, i) => {
         Object.entries(detalle).forEach(([key, value]) => {
           if (value !== null && value !== undefined) {

@@ -65,10 +65,10 @@ export default function useCotizacionItems({ errores = {}, onChange, initialItem
   }, [rows]);    
            
 
-  const handleInputChange = (_uuid, field, value) => {
+  const handleInputChange = (_uuid, field, value, extraFields = {}) => {
     setRows(rows.map((r) => {
       if (r._uuid !== _uuid) return r;
-      const updated = { ...r, [field]: value };
+      const updated = { ...r, [field]: value, ...extraFields };
       return { ...updated, ...updateRow(updated) };
     }));
   };
