@@ -431,8 +431,8 @@ const tieneDocumentoCliente = Boolean(ordenSeleccionada?.cliente_documento);
                               type="text"
                               readOnly
                               value={
-                                safeProducts.find((p) => String(p.id) === String(detalle.product_id))?.name ||
                                 detalle.product?.name ||
+                                detalle.descripcion ||
                                 ""
                               }
                               onClick={() => setEditingProductIndex(index)}
@@ -660,8 +660,9 @@ const tieneDocumentoCliente = Boolean(ordenSeleccionada?.cliente_documento);
               options={safeProducts.map((p) => ({
                 value: p.id,
                 label: `${p.code || p.code_id || "Sin código"} - ${p.name || "Sin nombre"}`,
-                code: p.code,
+                code: p.code || p.code_id,
                 name: p.name,
+                product: p,
               }))}
               value={(() => {
                 const det = detalles[editingProductIndex];
@@ -684,9 +685,15 @@ const tieneDocumentoCliente = Boolean(ordenSeleccionada?.cliente_documento);
               })()}
               onChange={(selectedOption) => {
                 const newDetalles = [...detalles];
-                newDetalles[editingProductIndex].product_id = selectedOption?.value || null;
-                newDetalles[editingProductIndex].referencia = selectedOption?.name || "";
-                newDetalles[editingProductIndex].descripcion = selectedOption?.name || "";
+                const selectedProduct = selectedOption?.product || null;
+
+                newDetalles[editingProductIndex] = {
+                  ...newDetalles[editingProductIndex],
+                  product_id: selectedOption?.value || null,
+                  product: selectedProduct,
+                  referencia: selectedOption?.name || "",
+                  descripcion: selectedOption?.name || "",
+                };
                 setDetalles(newDetalles);
                 setEditingProductIndex(null);
               }}

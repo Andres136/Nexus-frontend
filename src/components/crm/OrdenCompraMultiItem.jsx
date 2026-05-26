@@ -10,14 +10,6 @@ import PropTypes from "prop-types";
 const inputCls = "w-full border border-gray-300 px-1.5 py-1 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-400";
 const errSpan = (msg) => msg ? <span className="text-xs text-red-500 block">{msg}</span> : null;
 
-const selectStyles = {
-  menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-  control: (base) => ({ ...base, minHeight: "28px", fontSize: "12px" }),
-  dropdownIndicator: (base) => ({ ...base, padding: "2px" }),
-  clearIndicator: (base) => ({ ...base, padding: "2px" }),
-  valueContainer: (base) => ({ ...base, padding: "0 6px" }),
-};
-
 export default function OrdenCompraMultiItem({ onDetallesChange, errores = {}, value = [] }) {
   const { rows, handleInputChange, addRow, removeRow } = useOrdenCompraItems({
     errores,
@@ -122,24 +114,6 @@ export default function OrdenCompraMultiItem({ onDetallesChange, errores = {}, v
     return null;
   };
 
-  const renderProductSelect = (row) => (
-    <Select
-      isLoading={isLoading || isFetching}
-      options={productOptions}
-      value={getProductValue(row)}
-      onChange={(opt) =>
-        handleInputChange(row._uuid, "product_id", opt ? opt.value : "", {
-          product: opt?.product || null,
-        })
-      }
-      onInputChange={(v) => setSearchTerm(v)}
-      placeholder="Buscar producto..."
-      noOptionsMessage={() => isLoading ? "Cargando..." : isEmpty ? "Sin resultados" : "Escribe para buscar"}
-      menuPortalTarget={document.body}
-      styles={selectStyles}
-    />
-  );
-
   const subtotal = rows.reduce((s, r) => s + (r.valor_paquete || 0), 0);
   const ivaTotal = rows.reduce((s, r) => s + ((r.valor_total || 0) - (r.valor_paquete || 0)), 0);
   const total = subtotal + ivaTotal;
@@ -169,7 +143,11 @@ export default function OrdenCompraMultiItem({ onDetallesChange, errores = {}, v
                 <input
                   type="text"
                   readOnly
-                  value={allProducts.find((p) => String(p.id) === String(row.product_id))?.name || row.product?.name || ""}
+                  value={
+                    row.product?.name ||
+                    row.descripcion ||
+                    ""
+                  }
                   onClick={() => setEditingProductUuid(row._uuid)}
                   placeholder="Sin producto seleccionado"
                   className="flex-1 cursor-pointer rounded border border-gray-200 bg-gray-50 px-2 py-1.5 text-xs text-gray-700 hover:border-blue-400"
@@ -296,7 +274,7 @@ export default function OrdenCompraMultiItem({ onDetallesChange, errores = {}, v
                   <input
                     type="text"
                     readOnly
-                    value={allProducts.find((p) => String(p.id) === String(row.product_id))?.name || row.product?.name || ""}
+                    value={row.product?.name || row.descripcion || ""}
                     onClick={() => setEditingProductUuid(row._uuid)}
                     placeholder="Sin producto"
                     className="w-full min-w-[140px] cursor-pointer rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-xs text-gray-700 hover:border-blue-400"
@@ -433,6 +411,7 @@ export default function OrdenCompraMultiItem({ onDetallesChange, errores = {}, v
                 onChange={(opt) => {
                   handleInputChange(editingRow._uuid, "product_id", opt ? opt.value : "", {
                     product: opt?.product || null,
+                    descripcion: opt?.product?.name || "",
                   });
                   setEditingProductUuid(null);
                 }}
