@@ -113,6 +113,24 @@ export const valorService = {
   },
 };
 
+export const configuracionNominaService = {
+  getConfiguracion() {
+    return apiClient.get("api/nomina/configuracion");
+  },
+  updateConfiguracion(data) {
+    return apiClient.put("api/nomina/configuracion", data);
+  },
+};
+
+export const horarioOperacionService = {
+  getHoy(params = {}) {
+    return apiClient.get("api/nomina/horario-operacion/hoy", { params });
+  },
+  guardarHoy(data) {
+    return apiClient.put("api/nomina/horario-operacion/hoy", data);
+  },
+};
+
 export const incapacidadService = {
   getIncapacidades(params = {}) {
     return apiClient.get("api/nomina/incapacidades", { params });

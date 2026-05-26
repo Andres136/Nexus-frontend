@@ -7,6 +7,18 @@ function formatCOP(value) {
   return "$ " + Number(value).toLocaleString("es-CO");
 }
 
+function formatDate(value) {
+  if (!value) return "—";
+  return String(value).slice(0, 10);
+}
+
+function totalHorasExtra(preview = {}) {
+  return Number(preview.horas_extras_diurnas || 0)
+    + Number(preview.horas_extras_nocturnas || 0)
+    + Number(preview.horas_festivas || 0)
+    + Number(preview.horas_nocturnas_festivas || 0);
+}
+
 export default function ModalLiquidarNomina({ onClose, initialData = {} }) {
   const {
     formData,
@@ -31,6 +43,7 @@ export default function ModalLiquidarNomina({ onClose, initialData = {} }) {
 
   const empleadoOptions = empleados.map((e) => ({ value: e.value, label: e.label }));
   const empleadoSeleccionado = empleadoOptions.find((e) => String(e.value) === String(formData.user_id)) ?? null;
+  const jornadaSeleccionada = jornadas.find((j) => String(j.id) === String(formData.jornada_laboral_id));
 
   return (
     <div>
@@ -78,7 +91,7 @@ export default function ModalLiquidarNomina({ onClose, initialData = {} }) {
         {/* Jornada */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Jornada Laboral
+            Jornada Laboral <span className="text-red-500">*</span>
           </label>
           <select
             name="jornada_laboral_id"
@@ -87,14 +100,11 @@ export default function ModalLiquidarNomina({ onClose, initialData = {} }) {
             disabled={loadingJornadas}
             className={inputClass("jornada_laboral_id")}
           >
-            <option value="">{loadingJornadas ? "Cargando jornadas..." : "Usar jornada del ingreso..."}</option>
+            <option value="">{loadingJornadas ? "Cargando jornadas..." : "Seleccionar jornada laboral..."}</option>
             {jornadas.map((j) => (
               <option key={j.id} value={j.id}>{j.nombre} · {j.horas_semanales} h/semana</option>
             ))}
           </select>
-          <p className="mt-1 text-xs text-gray-400">
-            Si la dejas vacía se toma la jornada registrada en los ingresos del período.
-          </p>
           {fieldErrors.jornada_laboral_id && (
             <p className="mt-1 text-xs text-red-500">{fieldErrors.jornada_laboral_id[0]}</p>
           )}
@@ -135,10 +145,15 @@ export default function ModalLiquidarNomina({ onClose, initialData = {} }) {
         </div>
 
         {preview && (
-          <div className="rounded-lg border border-indigo-100 bg-indigo-50 p-4">
-            <p className="text-sm font-semibold text-indigo-900 mb-3">Vista previa</p>
+          <div className="space-y-4 rounded-lg border border-indigo-100 bg-indigo-50 p-4">
+            <div>
+              <p className="text-sm font-semibold text-indigo-900">Vista previa de liquidación</p>
+              <p className="mt-1 text-xs text-indigo-600">
+                Revisa empleado, período, jornada y valores antes de liquidar.
+              </p>
+            </div>
             {preview.advertencias?.length > 0 && (
-              <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 p-3">
+              <div className="rounded-md border border-amber-200 bg-amber-50 p-3">
                 <p className="text-xs font-semibold text-amber-800">Advertencia</p>
                 {preview.advertencias.map((advertencia) => (
                   <p key={advertencia} className="mt-1 text-xs text-amber-700">
@@ -147,7 +162,31 @@ export default function ModalLiquidarNomina({ onClose, initialData = {} }) {
                 ))}
               </div>
             )}
-            <div className="grid grid-cols-2 gap-3 text-sm">
+
+            <div className="grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
+              <div className="rounded-md bg-white/80 p-3">
+                <p className="text-xs text-indigo-500">Empleado</p>
+                <p className="font-semibold text-gray-900">{empleadoSeleccionado?.label ?? "—"}</p>
+              </div>
+              <div className="rounded-md bg-white/80 p-3">
+                <p className="text-xs text-indigo-500">Período</p>
+                <p className="font-semibold text-gray-900">
+                  {formatDate(preview.periodo_inicio)} / {formatDate(preview.periodo_fin)}
+                </p>
+              </div>
+              <div className="rounded-md bg-white/80 p-3">
+                <p className="text-xs text-indigo-500">Días liquidados</p>
+                <p className="font-semibold text-gray-900">{preview.dias_liquidados ?? "—"}</p>
+              </div>
+              <div className="rounded-md bg-white/80 p-3">
+                <p className="text-xs text-indigo-500">Jornada</p>
+                <p className="font-semibold text-gray-900">
+                  {jornadaSeleccionada?.nombre ?? "—"} · {preview.horas_semanales_jornada ?? "—"} h
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
               <div>
                 <p className="text-xs text-indigo-500">Devengado</p>
                 <p className="font-semibold text-gray-900">{formatCOP(preview.total_devengado)}</p>
@@ -162,18 +201,11 @@ export default function ModalLiquidarNomina({ onClose, initialData = {} }) {
               </div>
               <div>
                 <p className="text-xs text-indigo-500">Horas extra</p>
-                <p className="font-semibold text-gray-900">
-                  {Number(preview.horas_extras_diurnas || 0)
-                    + Number(preview.horas_extras_nocturnas || 0)
-                    + Number(preview.horas_festivas || 0)
-                    + Number(preview.horas_nocturnas_festivas || 0)} h
-                </p>
+                <p className="font-semibold text-gray-900">{totalHorasExtra(preview)} h</p>
               </div>
               <div>
-                <p className="text-xs text-indigo-500">Jornada</p>
-                <p className="font-semibold text-gray-900">
-                  {preview.horas_semanales_jornada ?? "—"} h/semana
-                </p>
+                <p className="text-xs text-indigo-500">Horas normales</p>
+                <p className="font-semibold text-gray-900">{preview.horas_normales ?? "—"} h</p>
               </div>
               <div>
                 <p className="text-xs text-indigo-500">Horas período</p>
@@ -182,8 +214,129 @@ export default function ModalLiquidarNomina({ onClose, initialData = {} }) {
                 </p>
               </div>
               <div>
+                <p className="text-xs text-indigo-500">Trabajadas período</p>
+                <p className="font-semibold text-gray-900">
+                  {preview.horas_trabajadas_periodo ?? "—"} h
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-indigo-500">Extra automática</p>
+                <p className="font-semibold text-orange-600">
+                  {Number(preview.horas_extras_diurnas_detectadas || 0) + Number(preview.horas_extras_nocturnas_detectadas || 0)} h
+                </p>
+              </div>
+              <div>
                 <p className="text-xs text-indigo-500">Valor hora</p>
                 <p className="font-semibold text-gray-900">{formatCOP(preview.valor_hora_normal)}</p>
+              </div>
+            </div>
+
+            <div className="grid gap-3 text-sm lg:grid-cols-2">
+              {/* DEVENGADOS */}
+              <div className="rounded-md border border-indigo-100 bg-white p-3">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-indigo-500">Devengados</p>
+                <div className="space-y-1.5">
+                  <div className="flex justify-between gap-3">
+                    <span className="text-gray-500">Salario base período <span className="text-gray-300 text-xs">510506</span></span>
+                    <span className="font-medium text-gray-900">{formatCOP(preview.salario_base_devengado)}</span>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <span className="text-gray-500">Auxilio transporte <span className="text-gray-300 text-xs">510527</span></span>
+                    <span className="font-medium text-gray-900">{formatCOP(preview.auxilio_transporte)}</span>
+                  </div>
+                  {(preview.pago_no_prestacional ?? 0) > 0 && (
+                    <div className="flex justify-between gap-3">
+                      <span className="text-gray-500">Pago no prestacional <span className="text-gray-300 text-xs">510548</span></span>
+                      <span className="font-medium text-gray-900">{formatCOP(preview.pago_no_prestacional)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between gap-3">
+                    <span className="text-gray-500">H. extra diurnas <span className="text-gray-300 text-xs">510530</span></span>
+                    <span className="font-medium text-gray-900">{formatCOP(preview.valor_horas_extras_diurnas)}</span>
+                  </div>
+                  <div className="flex justify-between gap-3 text-xs">
+                    <span className="text-gray-500">Diurnas detectadas / aprobadas</span>
+                    <span className="font-medium text-gray-700">
+                      {preview.horas_extras_diurnas_detectadas ?? 0} h / {preview.horas_extras_diurnas_aprobadas ?? 0} h
+                    </span>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <span className="text-gray-500">H. extra nocturnas <span className="text-gray-300 text-xs">510533</span></span>
+                    <span className="font-medium text-gray-900">{formatCOP(preview.valor_horas_extras_nocturnas)}</span>
+                  </div>
+                  <div className="flex justify-between gap-3 text-xs">
+                    <span className="text-gray-500">Nocturnas detectadas / aprobadas</span>
+                    <span className="font-medium text-gray-700">
+                      {preview.horas_extras_nocturnas_detectadas ?? 0} h / {preview.horas_extras_nocturnas_aprobadas ?? 0} h
+                    </span>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <span className="text-gray-500">Festivas / dominicales <span className="text-gray-300 text-xs">510536</span></span>
+                    <span className="font-medium text-gray-900">
+                      {formatCOP(Number(preview.valor_horas_festivas || 0) + Number(preview.valor_horas_nocturnas_festivas || 0))}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* DEDUCCIONES */}
+              <div className="rounded-md border border-indigo-100 bg-white p-3">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-indigo-500">Deducciones empleado</p>
+                <div className="space-y-1.5">
+                  <div className="flex justify-between gap-3">
+                    <span className="text-gray-500">Salud {Number(preview.porcentaje_salud_empleado || 0).toFixed(2)}% <span className="text-gray-300 text-xs">237005</span></span>
+                    <span className="font-medium text-gray-900">{formatCOP(preview.deduccion_salud)}</span>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <span className="text-gray-500">Pensión {Number(preview.porcentaje_pension_empleado || 0).toFixed(2)}% <span className="text-gray-300 text-xs">237010</span></span>
+                    <span className="font-medium text-gray-900">{formatCOP(preview.deduccion_pension)}</span>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <span className="text-gray-500">Descuentos / préstamos <span className="text-gray-300 text-xs">142005</span></span>
+                    <span className="font-medium text-gray-900">{formatCOP(preview.total_descuentos_adicionales)}</span>
+                  </div>
+                  {(preview.dias_incapacidad ?? 0) > 0 && (
+                    <div className="flex justify-between gap-3">
+                      <span className="text-gray-500">Incapacidades ({preview.dias_incapacidad} día(s)) <span className="text-gray-300 text-xs">236535</span></span>
+                      <span className="font-medium text-gray-900">{formatCOP(preview.deduccion_incapacidad ?? 0)}</span>
+                    </div>
+                  )}
+                  {(preview.minutos_permisos_no_remunerados ?? 0) > 0 && (
+                    <div className="flex justify-between gap-3">
+                      <span className="text-gray-500">Permisos no remunerados</span>
+                      <span className="font-medium text-gray-900">{preview.minutos_permisos_no_remunerados} min</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Costo empleador */}
+                {(preview.costo_total_empleador ?? 0) > 0 && (
+                  <div className="mt-3 pt-3 border-t border-amber-100">
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-amber-500">Costo empleador</p>
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between gap-3">
+                        <span className="text-gray-500">Salud {Number(preview.porcentaje_salud_empleador || 0).toFixed(2)}% <span className="text-gray-300 text-xs">250505</span></span>
+                        <span className="font-medium text-amber-700">{formatCOP(preview.costo_salud_empleador)}</span>
+                      </div>
+                      <div className="flex justify-between gap-3">
+                        <span className="text-gray-500">Pensión {Number(preview.porcentaje_pension_empleador || 0).toFixed(2)}% <span className="text-gray-300 text-xs">250510</span></span>
+                        <span className="font-medium text-amber-700">{formatCOP(preview.costo_pension_empleador)}</span>
+                      </div>
+                      <div className="flex justify-between gap-3">
+                        <span className="text-gray-500">ARL {Number(preview.porcentaje_arl || 0).toFixed(3)}% <span className="text-gray-300 text-xs">250515</span></span>
+                        <span className="font-medium text-amber-700">{formatCOP(preview.costo_arl)}</span>
+                      </div>
+                      <div className="flex justify-between gap-3">
+                        <span className="text-gray-500">Parafiscales SENA/ICBF/Caja <span className="text-gray-300 text-xs">250520-30</span></span>
+                        <span className="font-medium text-amber-700">{formatCOP(preview.costo_parafiscales)}</span>
+                      </div>
+                      <div className="flex justify-between gap-3 pt-1 border-t border-amber-100 font-semibold">
+                        <span className="text-amber-700">Total costo empresa</span>
+                        <span className="text-amber-700">{formatCOP(preview.costo_total_empleador)}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

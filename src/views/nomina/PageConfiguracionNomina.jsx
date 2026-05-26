@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import PropTypes from "prop-types";
 import {
   AlarmClock,
@@ -15,19 +15,53 @@ import {
   X,
 } from "lucide-react";
 import { useGetJornadaLaboral } from "../../hooks/nomina/useGetJornadaLaboral";
-import { jornadaLaboralService } from "../../services/nominaService";
+import { configuracionNominaService, horarioOperacionService, jornadaLaboralService } from "../../services/nominaService";
 import { showToast } from "../../helpers/utils/showToast";
 
 const HORARIO_DEFAULT = {
   hora_entrada: "07:00",
-  hora_salida_almuerzo: "13:00",
-  hora_ingreso_almuerzo: "14:00",
+  hora_salida_almuerzo: "12:00",
+  hora_ingreso_almuerzo: "13:00",
   hora_salida_pausa: "",
   hora_ingreso_pausa: "",
-  hora_salida: "17:00",
+  hora_salida: "16:48",
   duracion_pausa_minutos: 15,
   duracion_almuerzo_minutos: 60,
   comando_voz_activo: true,
+  status: true,
+};
+
+const CONFIG_DEFAULT = {
+  nombre: "Configuración general",
+  porcentaje_salud_empleado: 4,
+  porcentaje_pension_empleado: 4,
+  porcentaje_salud_empleador: 8.50,
+  porcentaje_pension_empleador: 12.00,
+  porcentaje_arl: 2.436,
+  porcentaje_sena: 2.00,
+  porcentaje_icbf: 3.00,
+  porcentaje_caja_compensacion: 4.00,
+  status: true,
+};
+
+const hoyLocal = () => {
+  const fecha = new Date();
+  const yyyy = fecha.getFullYear();
+  const mm = String(fecha.getMonth() + 1).padStart(2, "0");
+  const dd = String(fecha.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+};
+
+const INSTRUCCION_DEFAULT = {
+  fecha: hoyLocal(),
+  jornada_laboral_id: "",
+  hora_salida_pausa: "",
+  hora_ingreso_pausa: "",
+  hora_salida_almuerzo: "",
+  hora_ingreso_almuerzo: "",
+  duracion_pausa_minutos: 15,
+  duracion_almuerzo_minutos: 60,
+  motivo: "",
   status: true,
 };
 
@@ -62,7 +96,7 @@ function ajustarTiempo(value, parte, delta, fallback) {
 function prepararForm(jornada) {
   return {
     nombre: jornada?.nombre ?? "",
-    horas_semanales: jornada?.horas_semanales ?? 48,
+    horas_semanales: jornada?.horas_semanales ?? 44,
     status: jornada?.status ?? true,
     hora_entrada: normalizarHora(jornada?.hora_entrada) || HORARIO_DEFAULT.hora_entrada,
     hora_salida_almuerzo: normalizarHora(jornada?.hora_salida_almuerzo) || HORARIO_DEFAULT.hora_salida_almuerzo,
@@ -175,10 +209,26 @@ Switch.propTypes = {
 export default function PageConfiguracionNomina() {
   const queryClient = useQueryClient();
   const { jornadas, isLoading } = useGetJornadaLaboral({ per_page: 50 });
+  const { data: configuracionData, isLoading: loadingConfig } = useQuery({
+    queryKey: ["configuracionNomina"],
+    queryFn: async () => {
+      const response = await configuracionNominaService.getConfiguracion();
+      return response.data.data;
+    },
+  });
+  const { data: instruccionData, isLoading: loadingInstruccion } = useQuery({
+    queryKey: ["horarioOperacionHoy"],
+    queryFn: async () => {
+      const response = await horarioOperacionService.getHoy();
+      return response.data.data;
+    },
+  });
   const lista = useMemo(() => jornadas?.data?.data ?? [], [jornadas]);
   const [jornadaUuid, setJornadaUuid] = useState("");
   const jornada = lista.find((item) => item.uuid === jornadaUuid) ?? lista[0];
   const [form, setForm] = useState(prepararForm(jornada));
+  const [configForm, setConfigForm] = useState(CONFIG_DEFAULT);
+  const [instruccionForm, setInstruccionForm] = useState(INSTRUCCION_DEFAULT);
 
   useEffect(() => {
     if (!jornadaUuid && lista[0]?.uuid) {
@@ -187,6 +237,36 @@ export default function PageConfiguracionNomina() {
     }
     setForm(prepararForm(jornada));
   }, [jornada, jornadaUuid, lista]);
+
+  useEffect(() => {
+    if (!configuracionData) return;
+    setConfigForm({
+      nombre: configuracionData.nombre ?? CONFIG_DEFAULT.nombre,
+      porcentaje_salud_empleado:    configuracionData.porcentaje_salud_empleado    ?? 4,
+      porcentaje_pension_empleado:  configuracionData.porcentaje_pension_empleado  ?? 4,
+      porcentaje_salud_empleador:   configuracionData.porcentaje_salud_empleador   ?? 8.50,
+      porcentaje_pension_empleador: configuracionData.porcentaje_pension_empleador ?? 12.00,
+      porcentaje_arl:               configuracionData.porcentaje_arl               ?? 2.436,
+      porcentaje_sena:              configuracionData.porcentaje_sena              ?? 2.00,
+      porcentaje_icbf:              configuracionData.porcentaje_icbf              ?? 3.00,
+      porcentaje_caja_compensacion: configuracionData.porcentaje_caja_compensacion ?? 4.00,
+      status: configuracionData.status ?? true,
+    });
+  }, [configuracionData]);
+
+  useEffect(() => {
+    setInstruccionForm((prev) => ({
+      ...INSTRUCCION_DEFAULT,
+      ...prev,
+      ...(instruccionData ?? {}),
+      fecha: instruccionData?.fecha ? String(instruccionData.fecha).slice(0, 10) : prev.fecha,
+      jornada_laboral_id: instruccionData?.jornada_laboral_id ?? prev.jornada_laboral_id,
+      hora_salida_pausa: normalizarHora(instruccionData?.hora_salida_pausa) || prev.hora_salida_pausa,
+      hora_ingreso_pausa: normalizarHora(instruccionData?.hora_ingreso_pausa) || prev.hora_ingreso_pausa,
+      hora_salida_almuerzo: normalizarHora(instruccionData?.hora_salida_almuerzo) || prev.hora_salida_almuerzo,
+      hora_ingreso_almuerzo: normalizarHora(instruccionData?.hora_ingreso_almuerzo) || prev.hora_ingreso_almuerzo,
+    }));
+  }, [instruccionData]);
 
   const mutation = useMutation({
     mutationFn: (payload) => jornadaLaboralService.updateJornada(jornada.uuid, payload),
@@ -199,6 +279,30 @@ export default function PageConfiguracionNomina() {
     },
   });
 
+  const configMutation = useMutation({
+    mutationFn: (payload) => configuracionNominaService.updateConfiguracion(payload),
+    onSuccess: (response) => {
+      showToast("success", response.data?.message || "Configuración de nómina actualizada");
+      queryClient.invalidateQueries({ queryKey: ["configuracionNomina"] });
+      queryClient.invalidateQueries({ queryKey: ["nominas"] });
+      queryClient.invalidateQueries({ queryKey: ["nominaSummary"] });
+    },
+    onError: (error) => {
+      showToast("error", error.response?.data?.message || "No fue posible guardar los porcentajes");
+    },
+  });
+
+  const instruccionMutation = useMutation({
+    mutationFn: (payload) => horarioOperacionService.guardarHoy(payload),
+    onSuccess: (response) => {
+      showToast("success", response.data?.message || "Instrucción operativa guardada");
+      queryClient.invalidateQueries({ queryKey: ["horarioOperacionHoy"] });
+    },
+    onError: (error) => {
+      showToast("error", error.response?.data?.message || "No fue posible guardar la instrucción del día");
+    },
+  });
+
   const handleTimeChange = (name, value) => {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
@@ -206,6 +310,20 @@ export default function PageConfiguracionNomina() {
   const handleNumber = (event) => {
     const { name, value } = event.target;
     setForm((prev) => ({ ...prev, [name]: Number(value) }));
+  };
+
+  const handleConfig = (event) => {
+    const { name, value } = event.target;
+    setConfigForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleInstruccion = (event) => {
+    const { name, value } = event.target;
+    setInstruccionForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleInstruccionTime = (name, value) => {
+    setInstruccionForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const aplicarDefault = () => {
@@ -220,6 +338,37 @@ export default function PageConfiguracionNomina() {
       comando_voz_activo: true,
       hora_salida_pausa: form.hora_salida_pausa || null,
       hora_ingreso_pausa: form.hora_ingreso_pausa || null,
+    });
+  };
+
+  const guardarConfig = (event) => {
+    event.preventDefault();
+    configMutation.mutate({
+      ...configForm,
+      porcentaje_salud_empleado:    Number(configForm.porcentaje_salud_empleado),
+      porcentaje_pension_empleado:  Number(configForm.porcentaje_pension_empleado),
+      porcentaje_salud_empleador:   Number(configForm.porcentaje_salud_empleador),
+      porcentaje_pension_empleador: Number(configForm.porcentaje_pension_empleador),
+      porcentaje_arl:               Number(configForm.porcentaje_arl),
+      porcentaje_sena:              Number(configForm.porcentaje_sena),
+      porcentaje_icbf:              Number(configForm.porcentaje_icbf),
+      porcentaje_caja_compensacion: Number(configForm.porcentaje_caja_compensacion),
+      status: true,
+    });
+  };
+
+  const guardarInstruccion = (event) => {
+    event.preventDefault();
+    instruccionMutation.mutate({
+      ...instruccionForm,
+      jornada_laboral_id: instruccionForm.jornada_laboral_id ? Number(instruccionForm.jornada_laboral_id) : null,
+      duracion_pausa_minutos: instruccionForm.duracion_pausa_minutos ? Number(instruccionForm.duracion_pausa_minutos) : null,
+      duracion_almuerzo_minutos: instruccionForm.duracion_almuerzo_minutos ? Number(instruccionForm.duracion_almuerzo_minutos) : null,
+      hora_salida_pausa: instruccionForm.hora_salida_pausa || null,
+      hora_ingreso_pausa: instruccionForm.hora_ingreso_pausa || null,
+      hora_salida_almuerzo: instruccionForm.hora_salida_almuerzo || null,
+      hora_ingreso_almuerzo: instruccionForm.hora_ingreso_almuerzo || null,
+      status: true,
     });
   };
 
@@ -242,6 +391,188 @@ export default function PageConfiguracionNomina() {
           </div>
         </div>
       </div>
+
+      <form onSubmit={guardarConfig} className="mb-5 rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div className="flex flex-col gap-3 border-b border-gray-100 px-5 py-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-gray-900">Porcentajes de liquidación</h2>
+            <p className="text-sm text-gray-500">Estos valores se usan para calcular salud y pensión en preliquidación y liquidación.</p>
+          </div>
+          <button
+            type="submit"
+            disabled={loadingConfig || configMutation.isPending}
+            className="inline-flex h-10 items-center gap-2 rounded-lg bg-indigo-600 px-4 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+          >
+            <Save className="h-4 w-4" />
+            {configMutation.isPending ? "Guardando..." : "Guardar porcentajes"}
+          </button>
+        </div>
+        <div className="p-5 space-y-5">
+          {/* Empleado */}
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Deducciones al empleado</p>
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              {[
+                { name: "porcentaje_salud_empleado",   label: "Salud empleado",   puc: "237005" },
+                { name: "porcentaje_pension_empleado", label: "Pensión empleado", puc: "237010" },
+              ].map(({ name, label, puc }) => (
+                <label key={name} className="block">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+                    {label} <span className="text-gray-300 font-normal">· {puc}</span>
+                  </span>
+                  <div className="mt-1 flex h-11 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3">
+                    <input type="number" min="0" max="100" step="0.01" name={name}
+                      value={configForm[name]} onChange={handleConfig}
+                      className="w-full border-none bg-transparent text-sm text-gray-800 outline-none" />
+                    <span className="text-xs font-semibold text-gray-400">%</span>
+                  </div>
+                </label>
+              ))}
+              <div className="rounded-lg border border-indigo-100 bg-indigo-50 px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-indigo-500">Resumen empleado</p>
+                <p className="mt-1 text-sm font-bold text-indigo-900">
+                  Salud {Number(configForm.porcentaje_salud_empleado || 0).toFixed(2)}% · Pensión {Number(configForm.porcentaje_pension_empleado || 0).toFixed(2)}%
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Empleador */}
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Aportes empleador (costo empresa)</p>
+            <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-6">
+              {[
+                { name: "porcentaje_salud_empleador",   label: "Salud empleador",  puc: "250505", step: "0.01" },
+                { name: "porcentaje_pension_empleador", label: "Pensión empleador", puc: "250510", step: "0.01" },
+                { name: "porcentaje_arl",               label: "ARL",              puc: "250515", step: "0.001" },
+                { name: "porcentaje_sena",              label: "SENA",             puc: "250520", step: "0.01" },
+                { name: "porcentaje_icbf",              label: "ICBF",             puc: "250525", step: "0.01" },
+                { name: "porcentaje_caja_compensacion", label: "Caja compensación",puc: "250530", step: "0.01" },
+              ].map(({ name, label, puc, step }) => (
+                <label key={name} className="block">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+                    {label} <span className="text-gray-300 font-normal">· {puc}</span>
+                  </span>
+                  <div className="mt-1 flex h-11 items-center gap-2 rounded-lg border border-amber-100 bg-amber-50 px-3">
+                    <input type="number" min="0" max="100" step={step} name={name}
+                      value={configForm[name]} onChange={handleConfig}
+                      className="w-full border-none bg-transparent text-sm text-gray-800 outline-none" />
+                    <span className="text-xs font-semibold text-amber-400">%</span>
+                  </div>
+                </label>
+              ))}
+            </div>
+            <div className="mt-3 rounded-lg border border-amber-100 bg-amber-50 px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-wider text-amber-600">Total costo empleador sobre base prestacional</p>
+              <p className="mt-1 text-sm font-bold text-amber-900">
+                {(
+                  Number(configForm.porcentaje_salud_empleador || 0) +
+                  Number(configForm.porcentaje_pension_empleador || 0) +
+                  Number(configForm.porcentaje_arl || 0) +
+                  Number(configForm.porcentaje_sena || 0) +
+                  Number(configForm.porcentaje_icbf || 0) +
+                  Number(configForm.porcentaje_caja_compensacion || 0)
+                ).toFixed(3)}% · Ley 2101/2021: jornada diurna 42 h/semana desde jul 15 de 2026
+              </p>
+            </div>
+          </div>
+        </div>
+      </form>
+
+      <form onSubmit={guardarInstruccion} className="mb-5 rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div className="flex flex-col gap-3 border-b border-gray-100 px-5 py-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-gray-900">Instrucción operativa del día</h2>
+            <p className="text-sm text-gray-500">El kiosko usa estos horarios solo para la fecha indicada, por encima de la jornada base.</p>
+          </div>
+          <button
+            type="submit"
+            disabled={loadingInstruccion || instruccionMutation.isPending}
+            className="inline-flex h-10 items-center gap-2 rounded-lg bg-indigo-600 px-4 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+          >
+            <Save className="h-4 w-4" />
+            {instruccionMutation.isPending ? "Guardando..." : "Guardar instrucción"}
+          </button>
+        </div>
+        <div className="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-4">
+          <label className="block">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Fecha</span>
+            <input
+              type="date"
+              name="fecha"
+              value={instruccionForm.fecha}
+              onChange={handleInstruccion}
+              className="mt-1 h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-800 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+            />
+          </label>
+
+          <label className="block">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Jornada base</span>
+            <select
+              name="jornada_laboral_id"
+              value={instruccionForm.jornada_laboral_id}
+              onChange={handleInstruccion}
+              className="mt-1 h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-800 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+            >
+              <option value="">Usar jornada activa del kiosko</option>
+              {lista.map((item) => (
+                <option key={item.uuid} value={item.id}>
+                  {item.nombre} · {item.horas_semanales} h
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <CampoHoraStepper label="Salida a pausa" name="hora_salida_pausa" value={instruccionForm.hora_salida_pausa} onChange={handleInstruccionTime} icon={TimerReset} optional fallback="11:00" />
+          <CampoHoraStepper label="Regreso de pausa" name="hora_ingreso_pausa" value={instruccionForm.hora_ingreso_pausa} onChange={handleInstruccionTime} icon={TimerReset} optional fallback="11:15" />
+          <CampoHoraStepper label="Salida a almuerzo" name="hora_salida_almuerzo" value={instruccionForm.hora_salida_almuerzo} onChange={handleInstruccionTime} icon={Coffee} optional fallback="15:00" />
+          <CampoHoraStepper label="Regreso de almuerzo" name="hora_ingreso_almuerzo" value={instruccionForm.hora_ingreso_almuerzo} onChange={handleInstruccionTime} icon={Coffee} optional fallback="16:00" />
+
+          <label className="block">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Duración pausa</span>
+            <div className="mt-1 flex h-11 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3">
+              <input
+                type="number"
+                min="1"
+                max="180"
+                name="duracion_pausa_minutos"
+                value={instruccionForm.duracion_pausa_minutos}
+                onChange={handleInstruccion}
+                className="w-full border-none bg-transparent text-sm text-gray-800 outline-none"
+              />
+              <span className="text-xs text-gray-400">min</span>
+            </div>
+          </label>
+
+          <label className="block">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Duración almuerzo</span>
+            <div className="mt-1 flex h-11 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3">
+              <input
+                type="number"
+                min="1"
+                max="240"
+                name="duracion_almuerzo_minutos"
+                value={instruccionForm.duracion_almuerzo_minutos}
+                onChange={handleInstruccion}
+                className="w-full border-none bg-transparent text-sm text-gray-800 outline-none"
+              />
+              <span className="text-xs text-gray-400">min</span>
+            </div>
+          </label>
+
+          <label className="block md:col-span-2">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Motivo</span>
+            <input
+              type="text"
+              name="motivo"
+              value={instruccionForm.motivo ?? ""}
+              onChange={handleInstruccion}
+              placeholder="Ej: Bodega sale a pausa a las 11:00 por instrucción del líder"
+              className="mt-1 h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-800 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+            />
+          </label>
+        </div>
+      </form>
 
       <div className="grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-5">
         <aside className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 h-fit">

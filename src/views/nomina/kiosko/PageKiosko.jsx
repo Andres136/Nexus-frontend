@@ -7,6 +7,7 @@ import KioskoAcciones from "./KioskoAcciones";
 import {
   kioskoDeviceService,
   fotoFacialService,
+  horarioOperacionService,
   jornadaLaboralService,
 } from "../../../services/nominaService";
 import { contratacionService } from "../../../services/nominaService";
@@ -63,6 +64,21 @@ async function buildFaceMatcher(fotos) {
   }
   if (!labeled.length) return null;
   return new faceapi.FaceMatcher(labeled, 0.5);
+}
+
+function aplicarInstruccionDiaria(jornada, instruccion) {
+  if (!instruccion) return jornada;
+
+  return {
+    ...jornada,
+    instruccion_operativa_diaria: instruccion,
+    hora_salida_pausa: instruccion.hora_salida_pausa ?? jornada?.hora_salida_pausa,
+    hora_ingreso_pausa: instruccion.hora_ingreso_pausa ?? jornada?.hora_ingreso_pausa,
+    hora_salida_almuerzo: instruccion.hora_salida_almuerzo ?? jornada?.hora_salida_almuerzo,
+    hora_ingreso_almuerzo: instruccion.hora_ingreso_almuerzo ?? jornada?.hora_ingreso_almuerzo,
+    duracion_pausa_minutos: instruccion.duracion_pausa_minutos ?? jornada?.duracion_pausa_minutos,
+    duracion_almuerzo_minutos: instruccion.duracion_almuerzo_minutos ?? jornada?.duracion_almuerzo_minutos,
+  };
 }
 
 // ─── Pantalla de carga ────────────────────────────────────────────────────────
@@ -131,10 +147,16 @@ export default function PageKiosko() {
         setLoadMsg("Cargando jornadas laborales...");
         const jRes = await jornadaLaboralService.getJornadas({ per_page: 50 });
         const jornadas = jRes.data?.data?.data ?? jRes.data?.data ?? [];
-        const jornadaActiva = jornadas.find((j) => j.status !== false) ?? jornadas[0];
-        if (!jornadaActiva) throw new Error("No hay jornadas laborales configuradas.");
-        setJornadaId(jornadaActiva.id);
-        setJornadaActiva(jornadaActiva);
+        const jornadaBase = jornadas.find((j) => j.status !== false) ?? jornadas[0];
+        if (!jornadaBase) throw new Error("No hay jornadas laborales configuradas.");
+
+        const hRes = await horarioOperacionService.getHoy();
+        const instruccionDiaria = hRes.data?.data ?? null;
+        const jornadaDelDia = instruccionDiaria?.jornada_laboral ?? instruccionDiaria?.jornadaLaboral ?? jornadaBase;
+        const jornadaOperativa = aplicarInstruccionDiaria(jornadaDelDia, instruccionDiaria);
+
+        setJornadaId(jornadaOperativa.id ?? jornadaBase.id);
+        setJornadaActiva(jornadaOperativa);
 
         // 4. Empleados (nombre por userId)
         setLoadMsg("Cargando empleados...");

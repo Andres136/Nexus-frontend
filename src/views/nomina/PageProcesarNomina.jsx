@@ -12,7 +12,7 @@ const MESES = [
 ];
 
 const YEARS = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i);
-const CENTROS_COSTO = ["Cali", "Barranquilla", "Medellín", "Girardot"];
+const CENTROS_COSTO = ["Bogotá", "Cali", "Barranquilla", "Medellín", "Girardot"];
 
 function formatCOP(value) {
   if (!value && value !== 0) return "$ 0";
@@ -743,7 +743,7 @@ export default function PageProcesarNomina() {
               <h3 className="text-sm font-semibold text-gray-800">
                 Centros de Costo — {MESES[mes]} {anio}
               </h3>
-              <p className="text-xs text-gray-400 mt-0.5">Distribución por sedes: Cali, Barranquilla, Medellín y Girardot</p>
+              <p className="text-xs text-gray-400 mt-0.5">Distribución por sedes: Bogotá, Cali, Barranquilla, Medellín y Girardot</p>
             </div>
 
             <div className="grid grid-cols-1 gap-4 p-4 border-b border-gray-100 sm:grid-cols-2 xl:grid-cols-4">
@@ -790,7 +790,7 @@ export default function PageProcesarNomina() {
 
       {showLiquidarModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl">
+          <div className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-xl bg-white p-6 shadow-xl">
             <ModalLiquidarNomina
               onClose={() => setShowLiquidarModal(false)}
               initialData={liquidarInitialData}

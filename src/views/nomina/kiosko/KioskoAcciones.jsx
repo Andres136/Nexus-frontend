@@ -42,7 +42,7 @@ const VOZ = {
 };
 
 function obtenerJornada(session, jornadaActiva) {
-  return session?.jornada_laboral ?? session?.jornadaLaboral ?? jornadaActiva ?? {};
+  return jornadaActiva ?? session?.jornada_laboral ?? session?.jornadaLaboral ?? {};
 }
 
 function decir(jornada, texto) {
@@ -187,7 +187,9 @@ export default function KioskoAcciones({ empleado, kioskoInfo, jornadaActiva, on
           {kioskoInfo?.name ?? "Kiosko"}
         </p>
         <h1 className="text-white text-2xl font-bold">Tablet · Marcación automática</h1>
-        <p className="text-gray-400 text-sm mt-1">El sistema registra según el horario configurado</p>
+        <p className="text-gray-400 text-sm mt-1">
+          {jornada?.instruccion_operativa_diaria ? "El sistema registra según la instrucción operativa del día" : "El sistema registra según el horario configurado"}
+        </p>
       </div>
 
       {/* Empleado */}

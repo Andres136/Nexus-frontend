@@ -52,7 +52,7 @@ export default function RegisterJornadaLaboral({ uuid = null, onClose }) {
             value={formData.nombre}
             onChange={handleChange}
             maxLength={100}
-            placeholder="Ej: Jornada diurna"
+            placeholder="Ej: Jornada diurna 44 horas"
             className={inputClass("nombre")}
           />
           {fieldErrors.nombre && (
@@ -73,7 +73,7 @@ export default function RegisterJornadaLaboral({ uuid = null, onClose }) {
             onChange={handleChange}
             min="1"
             max="48"
-            placeholder="Ej: 40"
+            placeholder="Ej: 44"
             className={inputClass("horas_semanales")}
           />
           {fieldErrors.horas_semanales && (

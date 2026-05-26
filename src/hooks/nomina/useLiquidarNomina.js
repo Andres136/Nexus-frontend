@@ -38,7 +38,6 @@ export const useLiquidarNomina = ({ onSuccess, initialData = {} } = {}) => {
   const buildPayload = () => {
     const payload = { ...formData };
     if (!payload.descuento_id) delete payload.descuento_id;
-    if (!payload.jornada_laboral_id) delete payload.jornada_laboral_id;
     return payload;
   };
 

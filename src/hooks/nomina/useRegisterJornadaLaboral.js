@@ -5,8 +5,8 @@ import { jornadaLaboralService } from "../../services/nominaService";
 import { useGetJornadaLaboralById } from "./useGetJornadaLaboralById";
 
 const EMPTY_FORM = {
-  nombre: "",
-  horas_semanales: "",
+  nombre: "Jornada diurna 44 horas",
+  horas_semanales: 44,
   status: true,
 };
 
