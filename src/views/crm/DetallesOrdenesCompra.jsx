@@ -141,6 +141,32 @@ const tieneDocumentoCliente = Boolean(ordenSeleccionada?.cliente_documento);
     try {
       setLoading(true);
       setErrores({});
+
+      const erroresValidacion = detalles.reduce((acc, det, index) => {
+        const tieneProducto =
+          det.product_id !== null &&
+          det.product_id !== undefined &&
+          String(det.product_id).trim() !== "";
+
+        if (!tieneProducto) {
+          acc[`detalles.${index}.product_id`] = "Debes seleccionar un producto";
+        }
+
+        return acc;
+      }, {});
+
+      if (Object.keys(erroresValidacion).length > 0) {
+        setErrores(erroresValidacion);
+        const primerDetalleSinProducto = detalles.findIndex(
+          (det) =>
+            det.product_id === null ||
+            det.product_id === undefined ||
+            String(det.product_id).trim() === ""
+        );
+        setEditingProductIndex(primerDetalleSinProducto);
+        toast.error("Selecciona un producto para cada item antes de generar la orden");
+        return;
+      }
       
 
       const token = localStorage.getItem("token");
@@ -437,7 +463,11 @@ const tieneDocumentoCliente = Boolean(ordenSeleccionada?.cliente_documento);
                               }
                               onClick={() => setEditingProductIndex(index)}
                               placeholder="Sin producto"
-                              className="w-full min-w-[160px] cursor-pointer rounded-md border border-gray-200 bg-gray-50 px-2 py-1.5 text-sm text-gray-700 transition hover:border-blue-400 focus:outline-none"
+                              className={`w-full min-w-[160px] cursor-pointer rounded-md border bg-gray-50 px-2 py-1.5 text-sm text-gray-700 transition hover:border-blue-400 focus:outline-none ${
+                                errores[`detalles.${index}.product_id`]
+                                  ? "border-red-500"
+                                  : "border-gray-200"
+                              }`}
                               title="Clic para cambiar producto"
                             />
                             {errores[`detalles.${index}.product_id`] && (
@@ -688,6 +718,11 @@ const tieneDocumentoCliente = Boolean(ordenSeleccionada?.cliente_documento);
                 newDetalles[editingProductIndex].referencia = selectedOption?.name || "";
                 newDetalles[editingProductIndex].descripcion = selectedOption?.name || "";
                 setDetalles(newDetalles);
+                setErrores((prevErrores) => {
+                  const nextErrores = { ...prevErrores };
+                  delete nextErrores[`detalles.${editingProductIndex}.product_id`];
+                  return nextErrores;
+                });
                 setEditingProductIndex(null);
               }}
               onInputChange={(inputValue) => setSearchTerm(inputValue)}
