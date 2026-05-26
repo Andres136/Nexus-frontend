@@ -6,13 +6,6 @@ import { hablar } from "../../../helpers/voz";
 const hhmm = (date) =>
   date.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" });
 
-const minsToHM = (mins) => {
-  if (!mins) return "0 h 0 min";
-  const h = Math.floor(mins / 60);
-  const m = mins % 60;
-  return `${h} h ${m} min`;
-};
-
 const tiempoHHMMSS = () => {
   const d = new Date();
   return `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}:${String(d.getSeconds()).padStart(2,"0")}`;
@@ -33,9 +26,9 @@ function minutosDesde(fechaInicio, fechaFin = new Date()) {
 // Mensajes de voz por acción
 const VOZ = {
   salida:         (nombre) => `Registro exitoso. Hasta pronto, ${nombre}.`,
+  salidaTemprana: (nombre) => `${nombre}, no es hora de salir aún.`,
   pausaSalida:    (nombre) => `Registro exitoso. Inicio de pausa registrado. Descansa, ${nombre}.`,
   pausaEntrada:   (nombre) => `Registro exitoso. Fin de pausa. Bienvenido de vuelta, ${nombre}.`,
-  pausaEntradaTarde: (nombre, minutos) => `Registro exitoso. ${nombre}, has ingresado tarde de la pausa. Tiempo excedido: ${minutos} minutos.`,
   almuerzoSalida: (nombre) => `Registro exitoso. Salida a almuerzo registrada. Buen provecho, ${nombre}.`,
   almuerzoEntrada:(nombre) => `Registro exitoso. Regreso de almuerzo registrado. Bienvenido, ${nombre}.`,
   almuerzoEntradaTarde: (nombre, minutos) => `Registro exitoso. ${nombre}, has ingresado tarde del almuerzo. Tiempo excedido: ${minutos} minutos.`,
@@ -85,14 +78,18 @@ function detectarAccion(session, jornada, ahora = new Date()) {
   return null;
 }
 
+function minutosTardeContraHora(horaProgramada, fecha = new Date()) {
+  const limite = minutosHora(horaProgramada);
+  if (limite === null) return 0;
+  return Math.max(0, minutosDia(fecha) - limite);
+}
+
 export default function KioskoAcciones({ empleado, kioskoInfo, jornadaActiva, onDone, onCancelar }) {
   const { session } = empleado;
   const [guardando, setGuardando] = useState(false);
   const [exitoMsg, setExitoMsg]   = useState("");
   const [esperaMsg, setEsperaMsg] = useState("Detectando marcación según tu horario...");
   const jornada = useMemo(() => obtenerJornada(session, jornadaActiva), [session, jornadaActiva]);
-  const pausaPermitida = jornada?.duracion_pausa_minutos ?? 15;
-  const almuerzoPermitido = jornada?.duracion_almuerzo_minutos ?? 60;
   const accionDetectada = useMemo(() => detectarAccion(session, jornada), [session, jornada]);
 
   const entrada       = parseTime(session?.hora_entrada);
@@ -132,12 +129,8 @@ export default function KioskoAcciones({ empleado, kioskoInfo, jornadaActiva, on
       ),
       pausaEntrada: () => ejecutar(
         { hora_ingreso_brake: tiempoHHMMSS() },
-        minutosDesde(session?.hora_salida_brake) > pausaPermitida
-          ? VOZ.pausaEntradaTarde(empleado.nombre, minutosDesde(session?.hora_salida_brake) - pausaPermitida)
-          : VOZ.pausaEntrada(empleado.nombre),
-        minutosDesde(session?.hora_salida_brake) > pausaPermitida
-          ? `Ingreso tardío de pausa. Exceso: ${minutosDesde(session?.hora_salida_brake) - pausaPermitida} min.`
-          : `¡Bienvenido de vuelta, ${empleado.nombre}!`
+        VOZ.pausaEntrada(empleado.nombre),
+        `¡Bienvenido de vuelta, ${empleado.nombre}!`
       ),
       almuerzoSalida: () => ejecutar(
         { hora_salida_almuerzo: tiempoHHMMSS() },
@@ -146,11 +139,11 @@ export default function KioskoAcciones({ empleado, kioskoInfo, jornadaActiva, on
       ),
       almuerzoEntrada: () => ejecutar(
         { hora_ingreso_almuerzo: tiempoHHMMSS() },
-        minutosDesde(session?.hora_salida_almuerzo) > almuerzoPermitido
-          ? VOZ.almuerzoEntradaTarde(empleado.nombre, minutosDesde(session?.hora_salida_almuerzo) - almuerzoPermitido)
+        minutosTardeContraHora(jornada?.hora_ingreso_almuerzo) > 0
+          ? VOZ.almuerzoEntradaTarde(empleado.nombre, minutosTardeContraHora(jornada?.hora_ingreso_almuerzo))
           : VOZ.almuerzoEntrada(empleado.nombre),
-        minutosDesde(session?.hora_salida_almuerzo) > almuerzoPermitido
-          ? `Ingreso tardío de almuerzo. Exceso: ${minutosDesde(session?.hora_salida_almuerzo) - almuerzoPermitido} min.`
+        minutosTardeContraHora(jornada?.hora_ingreso_almuerzo) > 0
+          ? `Ingreso tardío de almuerzo. Exceso: ${minutosTardeContraHora(jornada?.hora_ingreso_almuerzo)} min.`
           : `¡Bienvenido, ${empleado.nombre}! Regreso de almuerzo registrado.`
       ),
     };
@@ -160,20 +153,24 @@ export default function KioskoAcciones({ empleado, kioskoInfo, jornadaActiva, on
       return;
     }
 
-    setEsperaMsg("No hay una marcación programada para este momento.");
-    decir(jornada, `${empleado.nombre}, no hay una marcación programada para este momento.`);
+    const salida = minutosHora(jornada?.hora_salida);
+    if (!session?.hora_salida && salida !== null && minutosDia() < salida) {
+      setEsperaMsg("No es hora de salir aún.");
+      decir(jornada, VOZ.salidaTemprana(empleado.nombre));
+    } else {
+      setEsperaMsg("No hay una marcación programada para este momento.");
+      decir(jornada, `${empleado.nombre}, no hay una marcación programada para este momento.`);
+    }
     const timer = setTimeout(onCancelar, 3000);
     return () => clearTimeout(timer);
   }, [
     accionDetectada,
-    almuerzoPermitido,
     empleado.nombre,
     exitoMsg,
     guardando,
     ejecutar,
     jornada,
     onCancelar,
-    pausaPermitida,
     session?.hora_salida_almuerzo,
     session?.hora_salida_brake,
   ]);

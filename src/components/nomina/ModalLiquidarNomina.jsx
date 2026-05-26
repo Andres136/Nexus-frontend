@@ -444,7 +444,13 @@ export default function ModalLiquidarNomina({ onClose, initialData = {} }) {
                   {(preview.minutos_permisos_no_remunerados ?? 0) > 0 && (
                     <div className="flex justify-between gap-3">
                       <span className="text-gray-500">Permisos no remunerados</span>
-                      <span className="font-medium text-gray-900">{preview.minutos_permisos_no_remunerados} min</span>
+                      <span className="font-medium text-gray-900">{formatCOP(preview.valor_permisos_no_remunerados ?? 0)}</span>
+                    </div>
+                  )}
+                  {(preview.minutos_tardanza ?? 0) > 0 && (
+                    <div className="flex justify-between gap-3">
+                      <span className="text-gray-500">Tardanzas ({preview.minutos_tardanza} min)</span>
+                      <span className="font-medium text-gray-900">{formatCOP(preview.valor_tardanzas ?? 0)}</span>
                     </div>
                   )}
                 </div>

@@ -62,10 +62,13 @@ const hoyLocal = () => {
 const INSTRUCCION_DEFAULT = {
   fecha: hoyLocal(),
   jornada_laboral_id: "",
+  hora_entrada: "07:00",
+  hora_entrada_limite: "08:00",
   hora_salida_pausa: "",
   hora_ingreso_pausa: "",
   hora_salida_almuerzo: "",
   hora_ingreso_almuerzo: "",
+  hora_salida: "17:00",
   duracion_pausa_minutos: 15,
   duracion_almuerzo_minutos: 60,
   motivo: "",
@@ -275,10 +278,13 @@ export default function PageConfiguracionNomina() {
       ...(instruccionData ?? {}),
       fecha: instruccionData?.fecha ? String(instruccionData.fecha).slice(0, 10) : prev.fecha,
       jornada_laboral_id: instruccionData?.jornada_laboral_id ?? prev.jornada_laboral_id,
+      hora_entrada: normalizarHora(instruccionData?.hora_entrada) || prev.hora_entrada,
+      hora_entrada_limite: normalizarHora(instruccionData?.hora_entrada_limite) || prev.hora_entrada_limite,
       hora_salida_pausa: normalizarHora(instruccionData?.hora_salida_pausa) || prev.hora_salida_pausa,
       hora_ingreso_pausa: normalizarHora(instruccionData?.hora_ingreso_pausa) || prev.hora_ingreso_pausa,
       hora_salida_almuerzo: normalizarHora(instruccionData?.hora_salida_almuerzo) || prev.hora_salida_almuerzo,
       hora_ingreso_almuerzo: normalizarHora(instruccionData?.hora_ingreso_almuerzo) || prev.hora_ingreso_almuerzo,
+      hora_salida: normalizarHora(instruccionData?.hora_salida) || prev.hora_salida,
     }));
   }, [instruccionData]);
 
@@ -385,10 +391,13 @@ export default function PageConfiguracionNomina() {
       jornada_laboral_id: instruccionForm.jornada_laboral_id ? Number(instruccionForm.jornada_laboral_id) : null,
       duracion_pausa_minutos: instruccionForm.duracion_pausa_minutos ? Number(instruccionForm.duracion_pausa_minutos) : null,
       duracion_almuerzo_minutos: instruccionForm.duracion_almuerzo_minutos ? Number(instruccionForm.duracion_almuerzo_minutos) : null,
+      hora_entrada: instruccionForm.hora_entrada || null,
+      hora_entrada_limite: instruccionForm.hora_entrada_limite || null,
       hora_salida_pausa: instruccionForm.hora_salida_pausa || null,
       hora_ingreso_pausa: instruccionForm.hora_ingreso_pausa || null,
       hora_salida_almuerzo: instruccionForm.hora_salida_almuerzo || null,
       hora_ingreso_almuerzo: instruccionForm.hora_ingreso_almuerzo || null,
+      hora_salida: instruccionForm.hora_salida || null,
       status: true,
     });
   };
@@ -584,6 +593,9 @@ export default function PageConfiguracionNomina() {
             </select>
           </label>
 
+          <CampoHoraStepper label="Entrada desde" name="hora_entrada" value={instruccionForm.hora_entrada} onChange={handleInstruccionTime} icon={AlarmClock} fallback="07:00" />
+          <CampoHoraStepper label="Tardía después de" name="hora_entrada_limite" value={instruccionForm.hora_entrada_limite} onChange={handleInstruccionTime} icon={AlarmClock} fallback="08:00" />
+          <CampoHoraStepper label="Salida mínima" name="hora_salida" value={instruccionForm.hora_salida} onChange={handleInstruccionTime} icon={CheckCircle2} fallback="17:00" />
           <CampoHoraStepper label="Salida a pausa" name="hora_salida_pausa" value={instruccionForm.hora_salida_pausa} onChange={handleInstruccionTime} icon={TimerReset} optional fallback="11:00" />
           <CampoHoraStepper label="Regreso de pausa" name="hora_ingreso_pausa" value={instruccionForm.hora_ingreso_pausa} onChange={handleInstruccionTime} icon={TimerReset} optional fallback="11:15" />
           <CampoHoraStepper label="Salida a almuerzo" name="hora_salida_almuerzo" value={instruccionForm.hora_salida_almuerzo} onChange={handleInstruccionTime} icon={Coffee} optional fallback="15:00" />

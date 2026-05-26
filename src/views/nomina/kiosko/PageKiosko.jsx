@@ -72,10 +72,13 @@ function aplicarInstruccionDiaria(jornada, instruccion) {
   return {
     ...jornada,
     instruccion_operativa_diaria: instruccion,
+    hora_entrada: instruccion.hora_entrada ?? jornada?.hora_entrada,
+    hora_entrada_limite: instruccion.hora_entrada_limite ?? jornada?.hora_entrada_limite,
     hora_salida_pausa: instruccion.hora_salida_pausa ?? jornada?.hora_salida_pausa,
     hora_ingreso_pausa: instruccion.hora_ingreso_pausa ?? jornada?.hora_ingreso_pausa,
     hora_salida_almuerzo: instruccion.hora_salida_almuerzo ?? jornada?.hora_salida_almuerzo,
     hora_ingreso_almuerzo: instruccion.hora_ingreso_almuerzo ?? jornada?.hora_ingreso_almuerzo,
+    hora_salida: instruccion.hora_salida ?? jornada?.hora_salida,
     duracion_pausa_minutos: instruccion.duracion_pausa_minutos ?? jornada?.duracion_pausa_minutos,
     duracion_almuerzo_minutos: instruccion.duracion_almuerzo_minutos ?? jornada?.duracion_almuerzo_minutos,
   };

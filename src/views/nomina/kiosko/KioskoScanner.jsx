@@ -69,7 +69,7 @@ function PinModal({ cedulaMap, empleadosMap, jornadaId, jornadaActiva, kioskoInf
       });
 
       const hora = hhmm(ahora);
-      const tarde = minutosTardeEntrada(ahora, jornadaActiva?.hora_entrada) > 0;
+      const tarde = minutosTardeEntrada(ahora, jornadaActiva?.hora_entrada_limite ?? jornadaActiva?.hora_entrada) > 0;
       decir(jornadaActiva, tarde
         ? `Registro exitoso. ${info.nombre}, has ingresado tarde.`
         : `Bienvenido, ${info.nombre}. Registro exitoso.`
@@ -294,7 +294,7 @@ export default function KioskoScanner({
         });
 
         const hora = hhmm(ahora);
-        const tarde = minutosTardeEntrada(ahora, jornadaActiva?.hora_entrada) > 0;
+        const tarde = minutosTardeEntrada(ahora, jornadaActiva?.hora_entrada_limite ?? jornadaActiva?.hora_entrada) > 0;
         decir(jornadaActiva, tarde
           ? `Registro exitoso. ${info.nombre}, has ingresado tarde.`
           : `Bienvenido, ${info.nombre}. Registro exitoso.`
