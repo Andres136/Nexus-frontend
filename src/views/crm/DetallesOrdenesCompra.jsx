@@ -59,8 +59,9 @@ export default function DetallesOrdenesCompra() {
   const [loading, setLoading] = useState(false);
   const [errores, setErrores] = useState({});
   const [forzarEntregaParcial, setForzarEntregaParcial] = useState(false);
-    const [searchTerm, setSearchTerm] = useState(" ");
-const [documentoVisto, setDocumentoVisto] = useState(false);
+  const [searchTerm, setSearchTerm] = useState(" ");
+  const [documentoVisto, setDocumentoVisto] = useState(false);
+  const [editingProductIndex, setEditingProductIndex] = useState(null);
 
 console.log("ordenesCompra desde detalles:", ordenesCompra);
       const { products, isLoading,isEmpty, isFetching } = useProducts({search: searchTerm});
@@ -378,8 +379,9 @@ const tieneDocumentoCliente = Boolean(ordenSeleccionada?.cliente_documento);
                     <thead>
                       <tr>
                         <th className={`${tableHeadClass} w-12`}></th>
-                        <th className={`${tableHeadClass} w-20`}>Item</th>
-                        <th className={`${tableHeadClass} min-w-[280px]`}>Producto</th>
+                        <th className={`${tableHeadClass} w-16`}>Item</th>
+                        <th className={`${tableHeadClass} w-10`}></th>
+                        <th className={`${tableHeadClass} min-w-[180px]`}>Referencia</th>
                         <th className={`${tableHeadClass} w-24`}>Ancho</th>
                         <th className={`${tableHeadClass} w-24`}>Largo</th>
                         <th className={`${tableHeadClass} w-24`}>Calibre</th>
@@ -415,76 +417,28 @@ const tieneDocumentoCliente = Boolean(ordenSeleccionada?.cliente_documento);
                               className={compactInputClass}
                             />
                           </td>
+                          <td className={`${tableCellClass} text-center`}>
+                            <button
+                              onClick={() => setEditingProductIndex(index)}
+                              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-blue-600 transition hover:bg-blue-50 hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                              title="Buscar producto"
+                            >
+                              <PackageSearch className="h-4 w-4" />
+                            </button>
+                          </td>
                           <td className={tableCellClass}>
-                            <Select
-                              isLoading={isLoading || isFetching}
-                              options={safeProducts.map((p) => ({
-                                value: p.id,
-                                label: `${p.code || p.code_id || "Sin código"} - ${p.name || "Sin nombre"}`,
-                                code: p.code,
-                                name: p.name,
-                              }))}
-                              value={(() => {
-                                // Buscar en resultados actuales
-                                const product = safeProducts.find(
-                                  (p) => String(p.id) === String(detalle.product_id)
-                                );
-
-                                // Si existe en búsqueda actual
-                                if (product) {
-                                  return {
-                                    value: product.id,
-                                    label: `${product.code || product.code_id || "Sin código"} - ${product.name || "Sin nombre"}`,
-                                  };
-                                }
-
-                                // Si NO existe en búsqueda actual usar el que vino del backend
-                                if (detalle.product) {
-                                  return {
-                                    value: detalle.product.id,
-                                    label: `${detalle.product.code || "Sin código"} - ${detalle.product.name || "Sin nombre"}`,
-                                  };
-                                }
-
-                                return null;
-                              })()}
-                              onChange={(selectedOption) => {
-                                const newDetalles = [...detalles];
-
-                                newDetalles[index].product_id = selectedOption?.value || null;
-
-                                // 🔥 AQUÍ LLENAS LA REFERENCIA AUTOMÁTICAMENTE
-                                newDetalles[index].referencia = selectedOption?.name || "";
-                                newDetalles[index].descripcion = selectedOption?.name || "";
-
-                                setDetalles(newDetalles);
-                              }}
-                              onInputChange={(inputValue) => setSearchTerm(inputValue)}
-                              placeholder="Buscar producto por código o nombre..."
-                              noOptionsMessage={() =>
-                                isLoading
-                                  ? "Cargando productos..."
-                                  : isEmpty
-                                  ? "No se encontraron productos"
-                                  : "Escribe para buscar"
+                            <input
+                              type="text"
+                              readOnly
+                              value={
+                                safeProducts.find((p) => String(p.id) === String(detalle.product_id))?.name ||
+                                detalle.product?.name ||
+                                ""
                               }
-                              className="min-w-[250px]"
-                              menuPortalTarget={document.body}
-                              styles={{
-                                menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                                control: (base, { data }) => ({
-                                  ...base,
-                                  minHeight: "38px",
-                                  borderRadius: "6px",
-                                  fontSize: "14px",
-                                  borderColor: data?.isInvalid ? "#dc2626" : base.borderColor,
-                                  boxShadow: "none",
-                                }),
-                                singleValue: (base, { data }) => ({
-                                  ...base,
-                                  color: data?.isInvalid ? "#dc2626" : base.color,
-                                }),
-                              }}
+                              onClick={() => setEditingProductIndex(index)}
+                              placeholder="Sin producto"
+                              className="w-full min-w-[160px] cursor-pointer rounded-md border border-gray-200 bg-gray-50 px-2 py-1.5 text-sm text-gray-700 transition hover:border-blue-400 focus:outline-none"
+                              title="Clic para cambiar producto"
                             />
                             {errores[`detalles.${index}.product_id`] && (
                               <div className="mt-1 text-xs font-medium text-red-600">
@@ -676,6 +630,92 @@ const tieneDocumentoCliente = Boolean(ordenSeleccionada?.cliente_documento);
           </>
         )}
       </div>
+
+      {/* Modal selector de producto */}
+      {editingProductIndex !== null && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onClick={() => setEditingProductIndex(null)}
+        >
+          <div
+            className="w-full max-w-lg rounded-xl border border-gray-200 bg-white p-5 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <PackageSearch className="h-4 w-4 text-blue-600" />
+                <h3 className="text-sm font-semibold text-gray-900">
+                  Seleccionar producto — Ítem {detalles[editingProductIndex]?.observaciones}
+                </h3>
+              </div>
+              <button
+                onClick={() => setEditingProductIndex(null)}
+                className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+            <Select
+              isLoading={isLoading || isFetching}
+              options={safeProducts.map((p) => ({
+                value: p.id,
+                label: `${p.code || p.code_id || "Sin código"} - ${p.name || "Sin nombre"}`,
+                code: p.code,
+                name: p.name,
+              }))}
+              value={(() => {
+                const det = detalles[editingProductIndex];
+                const product = safeProducts.find(
+                  (p) => String(p.id) === String(det?.product_id)
+                );
+                if (product) {
+                  return {
+                    value: product.id,
+                    label: `${product.code || product.code_id || "Sin código"} - ${product.name || "Sin nombre"}`,
+                  };
+                }
+                if (det?.product) {
+                  return {
+                    value: det.product.id,
+                    label: `${det.product.code || "Sin código"} - ${det.product.name || "Sin nombre"}`,
+                  };
+                }
+                return null;
+              })()}
+              onChange={(selectedOption) => {
+                const newDetalles = [...detalles];
+                newDetalles[editingProductIndex].product_id = selectedOption?.value || null;
+                newDetalles[editingProductIndex].referencia = selectedOption?.name || "";
+                newDetalles[editingProductIndex].descripcion = selectedOption?.name || "";
+                setDetalles(newDetalles);
+                setEditingProductIndex(null);
+              }}
+              onInputChange={(inputValue) => setSearchTerm(inputValue)}
+              placeholder="Buscar por código o nombre..."
+              noOptionsMessage={() =>
+                isLoading
+                  ? "Cargando productos..."
+                  : isEmpty
+                  ? "No se encontraron productos"
+                  : "Escribe para buscar"
+              }
+              autoFocus
+              menuIsOpen
+              className="w-full"
+              styles={{
+                control: (base) => ({
+                  ...base,
+                  minHeight: "38px",
+                  borderRadius: "6px",
+                  fontSize: "14px",
+                  boxShadow: "none",
+                }),
+                menu: (base) => ({ ...base, position: "relative", boxShadow: "none", border: "1px solid #e5e7eb", marginTop: "8px" }),
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
