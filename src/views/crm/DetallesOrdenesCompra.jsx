@@ -73,7 +73,11 @@ console.log("ordenesCompra desde detalles:", ordenesCompra);
     ? ordenesCompra.data.find((orden) => orden.id === parseInt(id))
     : null;
 const tieneDocumentoCliente = Boolean(ordenSeleccionada?.cliente_documento);
-
+ const safeProducts = Array.isArray(products?.data)
+  ? products.data
+  : Array.isArray(products)
+    ? products
+    : [];
 
     useEffect(() => {
       if (ordenSeleccionada) {
@@ -81,17 +85,38 @@ const tieneDocumentoCliente = Boolean(ordenSeleccionada?.cliente_documento);
         const detallesCalculados = ordenesCompra
           .data
           .find((orden) => orden.id === parseInt(id))
-          .detalles.map((det, index) => {
-            return {
-              ...det,
-              observaciones: ` ${index + 1}`,
-              ...calcularCamposBolsa(det)
-            };
-          });
     
+    .detalles.map((det, index) => {
+
+  const productoEncontrado = safeProducts.find((p) =>
+  p.name
+    ?.trim()
+    .toLowerCase()
+    .includes(det.descripcion?.trim().toLowerCase())
+);
+
+  return {
+    ...det,
+
+    product_id:
+      det.product?.id ||
+      det.product_id ||
+      productoEncontrado?.id ||
+      null,
+
+    product:
+      det.product ||
+      productoEncontrado ||
+      null,
+
+    observaciones: ` ${index + 1}`,
+
+    ...calcularCamposBolsa(det),
+  };
+});
         setDetalles(detallesCalculados);
       }
-    }, [ordenesCompra, id, ordenSeleccionada]);
+    }, [ordenesCompra, id, ordenSeleccionada, safeProducts]);
     
   // 2. Manejar cambio de input en cada fila
   const handleChangeDetalle = (index, field, value) => {
@@ -143,6 +168,8 @@ const tieneDocumentoCliente = Boolean(ordenSeleccionada?.cliente_documento);
       setErrores({});
 
       const erroresValidacion = detalles.reduce((acc, det, index) => {
+
+  console.log("VALIDANDO ITEM:", index, det);
         const tieneProducto =
           det.product_id !== null &&
           det.product_id !== undefined &&
@@ -253,11 +280,7 @@ const tieneDocumentoCliente = Boolean(ordenSeleccionada?.cliente_documento);
   
     obtenerSedes();
   }, []);
- const safeProducts = Array.isArray(products?.data)
-  ? products.data
-  : Array.isArray(products)
-    ? products
-    : [];
+
 
   const inputClass =
     "w-full rounded-md border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900 shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100";
@@ -694,44 +717,41 @@ const tieneDocumentoCliente = Boolean(ordenSeleccionada?.cliente_documento);
                 name: p.name,
                 product: p,
               }))}
-              value={(() => {
-                const det = detalles[editingProductIndex];
-                const product = safeProducts.find(
-                  (p) => String(p.id) === String(det?.product_id)
-                );
-                if (product) {
-                  return {
-                    value: product.id,
-                    label: `${product.code || product.code_id || "Sin código"} - ${product.name || "Sin nombre"}`,
-                  };
-                }
-                if (det?.product) {
-                  return {
-                    value: det.product.id,
-                    label: `${det.product.code || "Sin código"} - ${det.product.name || "Sin nombre"}`,
-                  };
-                }
-                return null;
-              })()}
-              onChange={(selectedOption) => {
-                const newDetalles = [...detalles];
-                const selectedProduct = selectedOption?.product || null;
+        value={(() => {
+  const det = detalles[editingProductIndex];
 
-                newDetalles[editingProductIndex] = {
-                  ...newDetalles[editingProductIndex],
-                  product_id: selectedOption?.value || null,
-                  product: selectedProduct,
-                  referencia: selectedOption?.name || "",
-                  descripcion: selectedOption?.name || "",
-                };
-                setDetalles(newDetalles);
-                setErrores((prevErrores) => {
-                  const nextErrores = { ...prevErrores };
-                  delete nextErrores[`detalles.${editingProductIndex}.product_id`];
-                  return nextErrores;
-                });
-                setEditingProductIndex(null);
-              }}
+  if (det?.product) {
+    return {
+      value: det.product.id,
+      label: `${det.product.code || "Sin código"} - ${det.product.name || "Sin nombre"}`,
+      product: det.product,
+    };
+  }
+
+  return null;
+})()}
+         onChange={(selectedOption) => {
+  const newDetalles = [...detalles];
+  const selectedProduct = selectedOption?.product || null;
+
+  newDetalles[editingProductIndex] = {
+    ...newDetalles[editingProductIndex],
+    product_id: selectedOption?.value || null,
+    product: selectedProduct,
+    referencia: selectedOption?.name || "",
+    descripcion: selectedOption?.name || "",
+  };
+
+  setDetalles(newDetalles);
+
+  setErrores((prevErrores) => {
+    const nextErrores = { ...prevErrores };
+    delete nextErrores[`detalles.${editingProductIndex}.product_id`];
+    return nextErrores;
+  });
+
+  setEditingProductIndex(null);
+}}
               onInputChange={(inputValue) => setSearchTerm(inputValue)}
               placeholder="Buscar por código o nombre..."
               noOptionsMessage={() =>
