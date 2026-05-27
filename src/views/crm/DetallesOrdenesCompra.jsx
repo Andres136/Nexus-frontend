@@ -63,7 +63,7 @@ export default function DetallesOrdenesCompra() {
   const [documentoVisto, setDocumentoVisto] = useState(false);
   const [editingProductIndex, setEditingProductIndex] = useState(null);
 
-console.log("ordenesCompra desde detalles:", ordenesCompra);
+//console.log("ordenesCompra desde detalles:", ordenesCompra);
       const { products, isLoading,isEmpty, isFetching } = useProducts({search: searchTerm});
 
 
@@ -169,7 +169,7 @@ const tieneDocumentoCliente = Boolean(ordenSeleccionada?.cliente_documento);
 
       const erroresValidacion = detalles.reduce((acc, det, index) => {
 
-  console.log("VALIDANDO ITEM:", index, det);
+ // console.log("VALIDANDO ITEM:", index, det);
         const tieneProducto =
           det.product_id !== null &&
           det.product_id !== undefined &&
