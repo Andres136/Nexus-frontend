@@ -251,8 +251,41 @@ export const nominaService = {
   liquidarRetiro(data) {
     return apiClient.post("api/nomina/nominas/liquidar-retiro", data);
   },
+  aprobarContabilidad(uuid) {
+    return apiClient.patch(`api/nomina/nominas/${uuid}/aprobar-contabilidad`);
+  },
+  cerrarPeriodo(data) {
+    return apiClient.post("api/nomina/nominas/cerrar-periodo", data);
+  },
+  exportarPuc(params = {}) {
+    return apiClient.get("api/nomina/nominas/exportar-puc", { params });
+  },
+  exportarPucPdf(params = {}) {
+    return apiClient.get("api/nomina/nominas/exportar-puc/pdf", {
+      params,
+      responseType: "blob",
+    });
+  },
   deleteNomina(uuid) {
     return apiClient.delete(`api/nomina/nominas/${uuid}`);
+  },
+};
+
+export const novedadRetroactivaService = {
+  getAll(params = {}) {
+    return apiClient.get("api/nomina/novedades-retroactivas", { params });
+  },
+  create(data) {
+    return apiClient.post("api/nomina/novedades-retroactivas", data);
+  },
+  aprobar(uuid, data = {}) {
+    return apiClient.patch(`api/nomina/novedades-retroactivas/${uuid}/aprobar`, data);
+  },
+  rechazar(uuid, data = {}) {
+    return apiClient.patch(`api/nomina/novedades-retroactivas/${uuid}/rechazar`, data);
+  },
+  delete(uuid) {
+    return apiClient.delete(`api/nomina/novedades-retroactivas/${uuid}`);
   },
 };
 

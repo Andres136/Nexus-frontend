@@ -4,7 +4,7 @@ import { useLiquidarNomina } from "../../hooks/nomina/useLiquidarNomina";
 
 function formatCOP(value) {
   if (!value && value !== 0) return "$ 0";
-  return "$ " + Number(value).toLocaleString("es-CO");
+  return "$ " + Number(value).toLocaleString("es-CO", { maximumFractionDigits: 0 });
 }
 
 function formatDate(value) {
@@ -386,7 +386,7 @@ export default function ModalLiquidarNomina({ onClose, initialData = {} }) {
                   </div>
                   {(preview.pago_no_prestacional ?? 0) > 0 && (
                     <div className="flex justify-between gap-3">
-                      <span className="text-gray-500">Pago no prestacional <span className="text-gray-300 text-xs">510548</span></span>
+                      <span className="text-gray-500">Pago no salarial <span className="text-gray-300 text-xs">510548</span></span>
                       <span className="font-medium text-gray-900">{formatCOP(preview.pago_no_prestacional)}</span>
                     </div>
                   )}
@@ -439,6 +439,24 @@ export default function ModalLiquidarNomina({ onClose, initialData = {} }) {
                     <div className="flex justify-between gap-3">
                       <span className="text-gray-500">Incapacidades ({preview.dias_incapacidad} día(s)) <span className="text-gray-300 text-xs">236535</span></span>
                       <span className="font-medium text-gray-900">{formatCOP(preview.deduccion_incapacidad ?? 0)}</span>
+                    </div>
+                  )}
+                  {(preview.fondo_solidaridad_pensional ?? 0) > 0 && (
+                    <div className="flex justify-between gap-3">
+                      <span className="text-gray-500">Fondo solidaridad pensional <span className="text-gray-300 text-xs">237015</span></span>
+                      <span className="font-medium text-gray-900">{formatCOP(preview.fondo_solidaridad_pensional)}</span>
+                    </div>
+                  )}
+                  {(preview.retencion_fuente ?? 0) > 0 && (
+                    <div className="flex justify-between gap-3">
+                      <span className="text-gray-500">Retención en la fuente <span className="text-gray-300 text-xs">236505</span></span>
+                      <span className="font-medium text-gray-900">{formatCOP(preview.retencion_fuente)}</span>
+                    </div>
+                  )}
+                  {(preview.total_novedades_retroactivas ?? 0) !== 0 && (
+                    <div className="flex justify-between gap-3">
+                      <span className="text-gray-500">Novedades retroactivas</span>
+                      <span className="font-medium text-gray-900">{formatCOP(preview.total_novedades_retroactivas)}</span>
                     </div>
                   )}
                 </div>

@@ -14,6 +14,7 @@ const EMPTY_FORM = {
   cargo: "",
   no_salarial: 0,
   base_salario: "",
+  salario_integral: false,
   auxilio_transporte: "",
   pago_frecuencia: "",
   inicio_contratacion: "",
@@ -49,7 +50,7 @@ export const useGetRegisterContratacion = ({ uuid = null, onSuccess } = {}) => {
     if (contratacion?.data) {
       const {
         id_contrato, users_id, empresa_id, centro_costo, tipo_documento, numero_documento, correo, cargo,
-        no_salarial, base_salario, auxilio_transporte, pago_frecuencia,
+        no_salarial, base_salario, salario_integral, auxilio_transporte, pago_frecuencia,
         inicio_contratacion, fin_contrato, status, eps_id, arl_id,
         fondo_pensiones_id, caja_penciones_id,
       } = contratacion.data;
@@ -64,6 +65,7 @@ export const useGetRegisterContratacion = ({ uuid = null, onSuccess } = {}) => {
         cargo: cargo ?? "",
         no_salarial: no_salarial ?? 0,
         base_salario: base_salario ?? "",
+        salario_integral: Boolean(salario_integral),
         auxilio_transporte: auxilio_transporte ?? "",
         pago_frecuencia: pago_frecuencia ?? "",
         inicio_contratacion: inicio_contratacion?.slice(0, 10) ?? "",

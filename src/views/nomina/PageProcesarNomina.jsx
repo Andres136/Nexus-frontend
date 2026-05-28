@@ -18,7 +18,7 @@ const CENTROS_COSTO = ["Bogotá", "Cali", "Barranquilla", "Medellín", "Girardot
 
 function formatCOP(value) {
   if (!value && value !== 0) return "$ 0";
-  return "$ " + Number(value).toLocaleString("es-CO");
+  return "$ " + Number(value).toLocaleString("es-CO", { maximumFractionDigits: 0 });
 }
 
 function getInitials(name = "") {

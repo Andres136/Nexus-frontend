@@ -22,6 +22,8 @@ import {
   AlertTriangle,
   FileWarning,
   Baby,
+  RefreshCcw,
+  Landmark,
 } from "lucide-react";
 
 import PageProcesarNomina from "../views/nomina/PageProcesarNomina";
@@ -45,6 +47,8 @@ import PageCertificadoLaboral from "../views/nomina/PageCertificadoLaboral";
 import PageLlamadosAtencion from "../views/nomina/PageLlamadosAtencion";
 import PageDescargos from "../views/nomina/PageDescargos";
 import PageConfiguracionNomina from "../views/nomina/PageConfiguracionNomina";
+import PageNovedadesRetroactivas from "../views/nomina/PageNovedadesRetroactivas";
+import PageControlContableNomina from "../views/nomina/PageControlContableNomina";
 
 const NAV_ITEMS = [
   {
@@ -63,6 +67,18 @@ const NAV_ITEMS = [
         label: "Descuentos / Préstamos",
         icon: Percent,
         component: <PageDescuentos />,
+      },
+      {
+        id: "retroactivos",
+        label: "Novedades Retroactivas",
+        icon: RefreshCcw,
+        component: <PageNovedadesRetroactivas />,
+      },
+      {
+        id: "control-contable",
+        label: "Control Contable",
+        icon: Landmark,
+        component: <PageControlContableNomina />,
       },
     ],
   },

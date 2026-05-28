@@ -201,6 +201,16 @@ export default function RegisterContrato({ uuid = null, onClose }) {
               <p className="mt-0.5 text-[10px] text-gray-400">Suma al pago, no a seguridad social ni prestaciones.</p>
             </div>
           </div>
+          <label className="inline-flex items-center gap-2 text-xs font-medium text-gray-600">
+            <input
+              type="checkbox"
+              name="salario_integral"
+              checked={Boolean(formData.salario_integral)}
+              onChange={handleChange}
+              className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+            />
+            Salario integral
+          </label>
 
           {/* Frecuencia + Fechas */}
           <div className="grid grid-cols-3 gap-3">
