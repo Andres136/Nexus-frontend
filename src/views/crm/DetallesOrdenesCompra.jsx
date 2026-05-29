@@ -716,7 +716,6 @@ const tieneDocumentoCliente = Boolean(ordenSeleccionada?.cliente_documento);
                 const newDetalles = [...detalles];
                 newDetalles[editingProductIndex].product_id = selectedOption?.value || null;
                 newDetalles[editingProductIndex].referencia = selectedOption?.name || "";
-                newDetalles[editingProductIndex].descripcion = selectedOption?.name || "";
                 setDetalles(newDetalles);
                 setErrores((prevErrores) => {
                   const nextErrores = { ...prevErrores };
