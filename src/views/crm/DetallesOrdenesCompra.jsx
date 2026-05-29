@@ -738,8 +738,12 @@ const tieneDocumentoCliente = Boolean(ordenSeleccionada?.cliente_documento);
               })()}
               onChange={(selectedOption) => {
                 const newDetalles = [...detalles];
-                newDetalles[editingProductIndex].product_id = selectedOption?.value || null;
-                newDetalles[editingProductIndex].referencia = selectedOption?.name || "";
+                newDetalles[editingProductIndex] = {
+                  ...newDetalles[editingProductIndex],
+                  product_id: selectedOption?.value || null,
+                  product:    selectedOption?.product || null,
+                  referencia: selectedOption?.name || "",
+                };
                 setDetalles(newDetalles);
                 setErrores((prevErrores) => {
                   const nextErrores = { ...prevErrores };
