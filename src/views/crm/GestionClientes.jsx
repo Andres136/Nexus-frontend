@@ -2,6 +2,7 @@ import { useClientes } from "../../hooks/useClientes";
 import * as XLSX from "xlsx";
 import ClientesList from "./ClientesList";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import clienteAxios from "../../config/axios";
 import {
   UserPlus,
@@ -15,12 +16,15 @@ import {
   Hash,
   X,
   Plus,
+  ClipboardList,
+  BarChart2,
 } from "lucide-react";
 import { showToast } from "../../helpers/utils/showToast";
 
 export default function GestionClientes() {
   const [excelError, setExcelError] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const navigate = useNavigate();
 
   const {
     registrarCliente,
@@ -92,14 +96,32 @@ export default function GestionClientes() {
       </div>
     </div>
 
-    {/* Derecha: botón acción */}
-    <button
-      onClick={() => setIsModalOpen(true)}
-      className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors shadow-sm shrink-0"
-    >
-      <Plus className="w-4 h-4" />
-      Nuevo Cliente
-    </button>
+    {/* Derecha: acciones */}
+    <div className="flex items-center gap-2 shrink-0">
+      <button
+        onClick={() => navigate("/auth/crm/encuestas")}
+        className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors shadow-sm"
+      >
+        <ClipboardList className="w-4 h-4" />
+        Mis Encuestas
+      </button>
+
+      <button
+        onClick={() => navigate("/auth/crm/encuestas/resultados")}
+        className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 active:bg-violet-800 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors shadow-sm"
+      >
+        <BarChart2 className="w-4 h-4" />
+        Resultados
+      </button>
+
+      <button
+        onClick={() => setIsModalOpen(true)}
+        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors shadow-sm"
+      >
+        <Plus className="w-4 h-4" />
+        Nuevo Cliente
+      </button>
+    </div>
   </div>
   <ClientesList />
 </div>

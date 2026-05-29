@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import PropTypes from "prop-types";
 import clienteAxios from "../../config/axios";
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
@@ -17,6 +18,52 @@ import {
   CheckCircle
 } from "lucide-react";
 
+const MAX_UPLOAD_MB = 8;
+const MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024;
+const ACCEPTED_EXTENSIONS = [".pdf", ".doc", ".docx", ".xls", ".xlsx"];
+
+const formatFileSize = (bytes = 0) => {
+  if (!bytes) return "0 MB";
+  return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+};
+
+const getFileExtension = (fileName = "") => {
+  const index = fileName.lastIndexOf(".");
+  return index >= 0 ? fileName.slice(index).toLowerCase() : "";
+};
+
+const normalizeUploadError = (uploadError) => {
+  if (!uploadError) return [];
+  if (typeof uploadError === "string") return [uploadError];
+
+  const responseData = uploadError?.response?.data || uploadError;
+  const maxUploadMessage = `El archivo no debe exceder los ${MAX_UPLOAD_MB} MB.`;
+
+  if (responseData?.errors && typeof responseData.errors === "object") {
+    return Object.values(responseData.errors).flat().map((message) => {
+      if (
+        typeof message === "string" &&
+        (message.includes("failed to upload") || message.includes("POST data is too large"))
+      ) {
+        return maxUploadMessage;
+      }
+
+      return message;
+    });
+  }
+
+  const message = responseData?.message || uploadError?.message;
+
+  if (
+    typeof message === "string" &&
+    (message.includes("failed to upload") || message.includes("POST data is too large"))
+  ) {
+    return [maxUploadMessage];
+  }
+
+  return [message || "No se pudo subir el documento. Intentalo nuevamente."];
+};
+
 export default function ModalCarpeta({ carpeta, onClose }) {
   const [archivo, setArchivo] = useState(null);
   const [nombreDocumento, setNombreDocumento] = useState("");
@@ -28,13 +75,20 @@ export default function ModalCarpeta({ carpeta, onClose }) {
     queryKey: ["documentos", carpeta.id],
     queryFn: async () => {
       const token = localStorage.getItem("token");
-      const response = await clienteAxios.get(
-        `/api/registrar-documentacion/${carpeta.id}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      return response.data;
+      try {
+        const response = await clienteAxios.get(
+          `/api/registrar-documentacion/${carpeta.id}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        return response.data;
+      } catch (err) {
+        if (err?.response?.status === 404) return [];
+        throw err;
+      }
     },
   });
+
+  const documentosCarpeta = Array.isArray(documentos) ? documentos : [];
 
   // Subir nuevo documento
   const subirDocumento = useMutation({
@@ -52,64 +106,58 @@ export default function ModalCarpeta({ carpeta, onClose }) {
             "Content-Type": "multipart/form-data",
           },
         });
-       toast.success(res.data.message);
+        toast.success(res.data.message);
         setError(null);
       } catch (err) {
         console.error("Error al subir documento:", err?.response?.data);
-        setError(err?.response?.data);
-        // relanza el error para React Query
+        setError(err);
         throw err;
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["documentos", carpeta.id]);
+      queryClient.invalidateQueries({ queryKey: ["documentos", carpeta.id] });
+      queryClient.invalidateQueries({ queryKey: ["carpetas"] });
       setArchivo(null);
       setNombreDocumento("");
     },
   });
 
-    // 3) Eliminar documento
     const eliminarDocumento = useMutation({
       mutationFn: async (id) => {
         const token = localStorage.getItem('token')
         const { data } = await clienteAxios.delete(
-          `/api/documentos-administrativos/${id}`,
+          `/api/registrar-documentacion/${id}`,
           { headers: { Authorization: `Bearer ${token}` } }
         )
         return data
       },
   
-      // **Antes** de enviar el DELETE, cancelamos y sacamos la caché actual
       onMutate: async (id) => {
-        await queryClient.cancelQueries(['documentos', carpeta.id])
+        await queryClient.cancelQueries({ queryKey: ['documentos', carpeta.id] })
   
         const previous = queryClient.getQueryData(['documentos', carpeta.id])
   
-        // **Actualizamos** la caché: filtramos el documento borrado
         queryClient.setQueryData(
           ['documentos', carpeta.id],
-          old => old.filter(doc => doc.id !== id)
+          old => Array.isArray(old) ? old.filter(doc => doc.id !== id) : []
         )
   
-        // devolvemos el snapshot para poder revertir en onError
         return { previous }
       },
   
-      // Si hay error, restauramos la caché original
       onError: (err, id, context) => {
         queryClient.setQueryData(
           ['documentos', carpeta.id],
-          context.previous
+          context?.previous ?? []
         )
         Swal.fire('Error', 'No se pudo eliminar', 'error')
       },
   
-      // Al final (sea éxito o error), opcionalmente refetch o no
       onSettled: () => {
-        queryClient.invalidateQueries(['documentos', carpeta.id])
+        queryClient.invalidateQueries({ queryKey: ['documentos', carpeta.id] })
+        queryClient.invalidateQueries({ queryKey: ['carpetas'] })
       },
   
-      // En el caso de éxito, podemos mostrar el mensaje
       onSuccess: (data) => {
         Swal.fire({
           icon: 'success',
@@ -120,6 +168,8 @@ export default function ModalCarpeta({ carpeta, onClose }) {
         })
       }
     });
+
+  const isUploading = subirDocumento.isPending || subirDocumento.isLoading;
   
 
   const handleSubirDocumento = () => {
@@ -130,7 +180,36 @@ export default function ModalCarpeta({ carpeta, onClose }) {
     subirDocumento.mutate();
   };
 
-  
+  const handleArchivoChange = (event) => {
+    const file = event.target.files?.[0];
+    setError(null);
+
+    if (!file) {
+      setArchivo(null);
+      return;
+    }
+
+    const extension = getFileExtension(file.name);
+
+    if (!ACCEPTED_EXTENSIONS.includes(extension)) {
+      setArchivo(null);
+      setError("Formato no permitido. Usa PDF, DOC, DOCX, XLS o XLSX.");
+      event.target.value = "";
+      return;
+    }
+
+    if (file.size > MAX_UPLOAD_BYTES) {
+      setArchivo(null);
+      setError(`El archivo pesa ${formatFileSize(file.size)}. El limite actual es ${MAX_UPLOAD_MB} MB.`);
+      event.target.value = "";
+      return;
+    }
+
+    setArchivo(file);
+  };
+
+  const uploadErrors = normalizeUploadError(error);
+
   const handleEliminar = (id) => {
     Swal.fire({
       title: '¿Estás seguro?',
@@ -150,24 +229,24 @@ export default function ModalCarpeta({ carpeta, onClose }) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
-        {/* ✅ Header mejorado */}
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[92vh] overflow-hidden">
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-white">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="bg-white bg-opacity-20 p-3 rounded-lg">
+            <div className="flex min-w-0 items-center gap-4">
+              <div className="bg-white bg-opacity-20 p-3 rounded-lg flex-shrink-0">
                 <Folder className="w-8 h-8 text-white" />
               </div>
-              <div>
-                <h2 className="text-2xl font-bold">{carpeta?.nombre}</h2>
+              <div className="min-w-0">
+                <h2 className="text-2xl font-bold truncate">{carpeta?.nombre}</h2>
                 <p className="text-blue-100 mt-1">
-                  {documentos?.length || 0} documento{documentos?.length !== 1 ? 's' : ''}
+                  {documentosCarpeta.length} documento{documentosCarpeta.length !== 1 ? 's' : ''}
                 </p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="bg-white bg-opacity-20 hover:bg-opacity-30 p-2 rounded-lg transition-all duration-200"
+              className="bg-white bg-opacity-20 hover:bg-opacity-30 p-2 rounded-lg transition-all duration-200 flex-shrink-0"
+              title="Cerrar"
             >
               <X className="w-6 h-6 text-white" />
             </button>
@@ -175,8 +254,7 @@ export default function ModalCarpeta({ carpeta, onClose }) {
         </div>
 
         <div className="flex flex-col lg:flex-row max-h-[calc(90vh-88px)]">
-          {/* ✅ Panel izquierdo - Subir documento */}
-          <div className="lg:w-1/3 border-r border-gray-200 bg-gray-50 p-6">
+          <div className="lg:w-80 lg:flex-shrink-0 border-r border-gray-200 bg-gray-50 p-6 overflow-y-auto">
             <div className="space-y-6">
               <div className="flex items-center gap-3 mb-4">
                 <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-2 rounded-lg">
@@ -185,16 +263,19 @@ export default function ModalCarpeta({ carpeta, onClose }) {
                 <h3 className="text-lg font-semibold text-gray-800">Subir Documento</h3>
               </div>
 
-              {/* ✅ Área de carga de archivos mejorada */}
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <div className="flex items-center justify-between gap-3 mb-2">
+                    <label className="block text-sm font-medium text-gray-700">
                     Seleccionar archivo
-                  </label>
+                    </label>
+                    <span className="text-xs font-medium text-gray-500">Max. {MAX_UPLOAD_MB} MB</span>
+                  </div>
                   <div className="relative">
                     <input
                       type="file"
-                      onChange={(e) => setArchivo(e.target.files[0])}
+                      onChange={handleArchivoChange}
+                      accept={ACCEPTED_EXTENSIONS.join(",")}
                       className="hidden"
                       id="file-upload"
                     />
@@ -209,13 +290,13 @@ export default function ModalCarpeta({ carpeta, onClose }) {
                       `}
                     >
                       {archivo ? (
-                        <div className="text-center">
+                        <div className="text-center px-4 w-full">
                           <CheckCircle className="w-8 h-8 text-green-500 mx-auto mb-2" />
-                          <p className="text-sm font-medium text-green-700">
+                          <p className="text-sm font-medium text-green-700 truncate" title={archivo.name}>
                             {archivo.name}
                           </p>
                           <p className="text-xs text-green-600 mt-1">
-                            {(archivo.size / 1024 / 1024).toFixed(2)} MB
+                            {formatFileSize(archivo.size)}
                           </p>
                         </div>
                       ) : (
@@ -248,16 +329,16 @@ export default function ModalCarpeta({ carpeta, onClose }) {
 
                 <button
                   onClick={handleSubirDocumento}
-                  disabled={!archivo || subirDocumento.isLoading}
+                  disabled={!archivo || isUploading}
                   className={`
-                    w-full py-3 px-4 rounded-lg flex items-center justify-center gap-2 font-medium transition-all duration-300 transform hover:scale-105
-                    ${!archivo || subirDocumento.isLoading
+                    w-full py-3 px-4 rounded-lg flex items-center justify-center gap-2 font-medium transition-all duration-200
+                    ${!archivo || isUploading
                       ? 'bg-gray-300 cursor-not-allowed text-gray-500'
                       : 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-lg'
                     }
                   `}
                 >
-                  {subirDocumento.isLoading ? (
+                  {isUploading ? (
                     <>
                       <Loader2 className="w-5 h-5 animate-spin" />
                       Subiendo...
@@ -270,8 +351,7 @@ export default function ModalCarpeta({ carpeta, onClose }) {
                   )}
                 </button>
 
-                {/* ✅ Mensajes de error mejorados */}
-                {error && (
+                {uploadErrors.length > 0 && (
                   <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                     <div className="flex items-start gap-3">
                       <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
@@ -280,17 +360,9 @@ export default function ModalCarpeta({ carpeta, onClose }) {
                           Error al subir archivo
                         </h4>
                         <div className="text-sm text-red-600">
-                          {error.errors && typeof error.errors === "object" ? (
-                            Object.entries(error.errors).map(([campo, mensajes]) => (
-                              <div key={campo} className="mb-1">
-                                {mensajes.map((msj, i) => (
-                                  <p key={i}>• {msj}</p>
-                                ))}
-                              </div>
-                            ))
-                          ) : (
-                            <p>{error.message || error}</p>
-                          )}
+                          {uploadErrors.map((message, index) => (
+                            <p key={index}>{message}</p>
+                          ))}
                         </div>
                       </div>
                     </div>
@@ -300,7 +372,6 @@ export default function ModalCarpeta({ carpeta, onClose }) {
             </div>
           </div>
 
-          {/* ✅ Panel derecho - Lista de documentos */}
           <div className="lg:w-2/3 flex flex-col">
             <div className="bg-white p-6 border-b border-gray-200">
               <div className="flex items-center gap-3">
@@ -317,7 +388,7 @@ export default function ModalCarpeta({ carpeta, onClose }) {
                     <p className="text-gray-500 font-medium">Cargando documentos...</p>
                   </div>
                 </div>
-              ) : documentos?.length === 0 ? (
+              ) : documentosCarpeta.length === 0 ? (
                 <div className="text-center py-12">
                   <div className="bg-gray-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
                     <FileText className="w-8 h-8 text-gray-400" />
@@ -331,7 +402,7 @@ export default function ModalCarpeta({ carpeta, onClose }) {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {documentos?.map((doc) => (
+                  {documentosCarpeta.map((doc) => (
                     <div
                       key={doc.id}
                       className="group bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md hover:border-blue-300 transition-all duration-200"
@@ -375,15 +446,14 @@ export default function ModalCarpeta({ carpeta, onClose }) {
               )}
             </div>
 
-            {/* ✅ Footer con información adicional */}
             <div className="bg-gray-50 p-4 border-t border-gray-200">
-              <div className="flex items-center justify-between text-sm text-gray-600">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm text-gray-600">
                 <span>
-                  Total: {documentos?.length || 0} documento{documentos?.length !== 1 ? 's' : ''}
+                  Total: {documentosCarpeta.length} documento{documentosCarpeta.length !== 1 ? 's' : ''}
                 </span>
-                <span className="flex items-center gap-2">
+                <span className="flex items-center gap-2 min-w-0">
                   <FileText className="w-4 h-4" />
-                  Carpeta: {carpeta?.nombre}
+                  <span className="truncate">Carpeta: {carpeta?.nombre}</span>
                 </span>
               </div>
             </div>
@@ -393,3 +463,11 @@ export default function ModalCarpeta({ carpeta, onClose }) {
     </div>
   );
 }
+
+ModalCarpeta.propTypes = {
+  carpeta: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+    nombre: PropTypes.string,
+  }).isRequired,
+  onClose: PropTypes.func.isRequired,
+};

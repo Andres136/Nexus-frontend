@@ -116,6 +116,9 @@ import CatalogoContable from "../views/contabilidad/CatalogoContable";
 import PageObtenerPagos from "../views/contabilidad/PageObtenerPagos";
 import PageCosteos from "../views/contabilidad/PageCosteos";
 import RegisterProductoNoConforme from "../components/calidad/RegisterProductoNoConforme";
+import EncuestasPage from "../views/crm/EncuestasPage";
+import ResultadosEncuesta from "../views/crm/ResultadosEncuesta";
+import EncuestaPublica from "../views/crm/EncuestaPublica";
 
 
 export default function Router() {
@@ -123,6 +126,9 @@ export default function Router() {
     <Routes>
       {/* 🔹 Ruta de Login (Accesible para todos) */}
       <Route path="/" element={<Login />} />
+
+      {/* 🔹 Encuesta pública — sin auth, el cliente responde por token */}
+      <Route path="/encuesta/:token" element={<EncuestaPublica />} />
 
       {/* 🔹 Rutas bajo AuthLayout (Procesos y CRM) */}
       <Route
@@ -368,6 +374,22 @@ export default function Router() {
             element={
               <DynamicProtectedRoute permission="/auth/crm/gestion-clientes">
                 <GestionClientes />
+              </DynamicProtectedRoute>
+            }
+          />
+          <Route
+            path="encuestas"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/gestion-clientes">
+                <EncuestasPage />
+              </DynamicProtectedRoute>
+            }
+          />
+          <Route
+            path="encuestas/resultados"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/gestion-clientes">
+                <ResultadosEncuesta />
               </DynamicProtectedRoute>
             }
           />

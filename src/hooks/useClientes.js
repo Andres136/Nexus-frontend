@@ -120,7 +120,7 @@ const obtenerClientes = async (page = 1, search = "") => {
 
     const response = await  clienteService.getClientes(page, search);
     
-  console.log(response.data);
+ // console.log(response.data);
     setPaginaActual(response.data.current_page);
     setTotalPaginas(response.data.last_page);
 
