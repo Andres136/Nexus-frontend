@@ -19,7 +19,7 @@ export default function DashboardCrm() {
   const year = new Date().getFullYear()
   const { kpis, loading } = useDashboardKpis(year)
 const cartera = kpis?.cartera || []
- console.log("KPI DATA:", kpis)
+console.log("KPI DATA:", kpis)
   if (loading) return <NexusLoader text="Cargando dashboard..." />
 
   const series = kpis?.series_mensual || []
@@ -290,7 +290,14 @@ const seriesConCartera = series.map((s) => {
         name="Conversión"
         strokeWidth={3}
       />
-
+<Line
+  type="monotone"
+  dataKey="conversion_clientes_trimestral_pct"
+  stroke="#8b5cf6"
+  name="Conversión Trimestral"
+  strokeWidth={3}
+  dot={{ r: 4 }}
+/>
       <Line
         type="monotone"
         dataKey="fidelizacion_clientes_pct"
@@ -317,39 +324,7 @@ const seriesConCartera = series.map((s) => {
 
     
 
-      {/* TICKET PROMEDIO */}
-
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-
-        <h3 className="font-semibold text-gray-700 mb-4">
-          Ticket promedio por mes
-        </h3>
-
-        <ResponsiveContainer width="100%" height={300}>
-
-          <LineChart data={ticketSeries}>
-
-            <CartesianGrid strokeDasharray="3 3" />
-
-            <XAxis dataKey="label" />
-
-            <YAxis tickFormatter={(v) => `$${(v / 1000).toFixed(0)}K`} />
-
-            <Tooltip formatter={(v) => money(v)} />
-
-            <Line
-              type="monotone"
-              dataKey="ticket"
-              stroke="#ef4444"
-              strokeWidth={3}
-            />
-
-          </LineChart>
-
-        </ResponsiveContainer>
-
-      </div>
-
+    
       <div className="bg-white rounded-xl shadow-sm border p-6">
 
   <h3 className="font-semibold text-gray-700 mb-4">

@@ -21,7 +21,8 @@ const metrics = [
   { key: "meta_mes", name: "Meta del Mes", color: "#0ea5e9" }, // ← azul más visible
   { key: "meta_individual",    name: "Meta Individual",     color: "#1e293b" },
   { key: "cumplimiento_pct",   name: "Cumplimiento (%)",    color: "#84cc16" },
-  { key: "conversion_pct",     name: "Conversión (%)",      color: "#fb923c" },
+
+{ key: "conversion_trimestral_pct", name: "Conversión Trimestral (%)",    color: "#8b5cf6" },
   { key: "fidelizacion_pct",   name: "Fidelización (%)",   color: "#38bdf8" },
   { key: "cartera_pct_gestion",name: "Gestión Cartera (%)", color: "#a78bfa" },
 ];
@@ -69,7 +70,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 // ─── Componente principal ─────────────────────────────────────────────────
 export default function ResumenDashboard() {
   const { data = [], isLoading, error } = useResumenDashboard();
-
+//console.log("Datos del dashboard:", data);
   const [selectedMonth, setSelectedMonth] = useState("");
   const [activeMetrics, setActiveMetrics] = useState(
     metrics.map((m) => m.key)

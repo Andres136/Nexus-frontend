@@ -1,20 +1,14 @@
 import { formatCurrency } from "../../helpers";
-import { Trash2, Plus, Package } from "lucide-react";
+import { Trash2, Plus, Package, PackageSearch } from "lucide-react";
 import useOrdenCompraItems from "../../hooks/useOrdenCompraItems";
 import { useProducts } from "../../hooks/useProducts";
+import { productsApi } from "../../services/api";
 import Select from "react-select";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import PropTypes from "prop-types";
 
 const inputCls = "w-full border border-gray-300 px-1.5 py-1 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-400";
 const errSpan = (msg) => msg ? <span className="text-xs text-red-500 block">{msg}</span> : null;
-
-const selectStyles = {
-  menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-  control: (base) => ({ ...base, minHeight: "28px", fontSize: "12px" }),
-  dropdownIndicator: (base) => ({ ...base, padding: "2px" }),
-  clearIndicator: (base) => ({ ...base, padding: "2px" }),
-  valueContainer: (base) => ({ ...base, padding: "0 6px" }),
-};
 
 export default function OrdenCompraMultiItem({ onDetallesChange, errores = {}, value = [] }) {
   const { rows, handleInputChange, addRow, removeRow } = useOrdenCompraItems({
@@ -23,33 +17,109 @@ export default function OrdenCompraMultiItem({ onDetallesChange, errores = {}, v
     initialItems: value,
   });
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedProducts, setSelectedProducts] = useState([]);
+  const [editingProductUuid, setEditingProductUuid] = useState(null);
   const { products, isLoading, isEmpty, isFetching } = useProducts({ search: searchTerm });
+  const safeProducts = useMemo(
+    () =>
+      Array.isArray(products?.data)
+        ? products.data
+        : Array.isArray(products)
+          ? products
+          : [],
+    [products]
+  );
 
-  const productOptions = products.map((p) => ({
+  const rowProducts = useMemo(() => rows.map((row) => row.product).filter(Boolean), [rows]);
+  const allProducts = useMemo(
+    () =>
+      [...safeProducts, ...rowProducts, ...selectedProducts].filter(
+        (product, index, array) =>
+          product?.id && array.findIndex((item) => String(item?.id) === String(product.id)) === index
+      ),
+    [safeProducts, rowProducts, selectedProducts]
+  );
+
+  const selectedProductIds = useMemo(
+    () =>
+      rows
+        .map((row) => row.product_id)
+        .filter(Boolean)
+        .map(String)
+        .join(","),
+    [rows]
+  );
+
+  useEffect(() => {
+    const ids = selectedProductIds ? selectedProductIds.split(",") : [];
+    const missingIds = ids.filter(
+      (productId) => !allProducts.some((product) => String(product.id) === productId)
+    );
+
+    if (missingIds.length === 0) return;
+
+    let isMounted = true;
+
+    Promise.all(
+      missingIds.map((productId) =>
+        productsApi
+          .getById(productId)
+          .then((response) => response.data?.data ?? response.data)
+          .catch(() => null)
+      )
+    ).then((loadedProducts) => {
+      if (!isMounted) return;
+
+      const validProducts = loadedProducts.filter(Boolean);
+      if (validProducts.length === 0) return;
+
+      setSelectedProducts((prev) => {
+        const merged = [...prev, ...validProducts];
+        return merged.filter(
+          (product, index, array) =>
+            product?.id && array.findIndex((item) => String(item?.id) === String(product.id)) === index
+        );
+      });
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedProductIds, allProducts]);
+ 
+  const productOptions = allProducts.map((p) => ({
     value: p.id,
     label: `${p.code || p.code_id || "Sin código"} - ${p.name || "Sin nombre"}`,
+    product: p,
   }));
 
-  const renderProductSelect = (row) => (
-    <Select
-      isLoading={isLoading || isFetching}
-      options={productOptions}
-      value={
-        row.product_id && products.length > 0
-          ? (() => {
-              const p = products.find((p) => p.id === row.product_id);
-              return p ? { value: p.id, label: `${p.code || p.code_id || "Sin código"} - ${p.name || "Sin nombre"}` } : null;
-            })()
-          : null
-      }
-      onChange={(opt) => handleInputChange(row._uuid, "product_id", opt ? opt.value : "")}
-      onInputChange={(v) => setSearchTerm(v)}
-      placeholder="Buscar producto..."
-      noOptionsMessage={() => isLoading ? "Cargando..." : isEmpty ? "Sin resultados" : "Escribe para buscar"}
-      menuPortalTarget={document.body}
-      styles={selectStyles}
-    />
-  );
+  const getProductValue = (row) => {
+    if (!row.product_id) return null;
+
+    const product = allProducts.find((p) => String(p.id) === String(row.product_id));
+    if (product) {
+      return {
+        value: product.id,
+        label: `${product.code || product.code_id || "Sin código"} - ${product.name || "Sin nombre"}`,
+      };
+    }
+
+    if (row.product && String(row.product.id) === String(row.product_id)) {
+      return {
+        value: row.product.id || row.product_id,
+        label: `${row.product.code || row.product.code_id || "Sin código"} - ${row.product.name || "Sin nombre"}`,
+      };
+    }
+
+    return null;
+  };
+
+  const getProductDisplayName = (row) => {
+    if (!row.product_id) return row.descripcion || "";
+
+    const product = allProducts.find((p) => String(p.id) === String(row.product_id));
+    return product?.name || row.product?.name || row.descripcion || "";
+  };
 
   const subtotal = rows.reduce((s, r) => s + (r.valor_paquete || 0), 0);
   const ivaTotal = rows.reduce((s, r) => s + ((r.valor_total || 0) - (r.valor_paquete || 0)), 0);
@@ -69,7 +139,23 @@ export default function OrdenCompraMultiItem({ onDetallesChange, errores = {}, v
               </button>
             </div>
             <div className="space-y-2">
-              {renderProductSelect(row)}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setEditingProductUuid(row._uuid)}
+                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded border border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100"
+                  title="Buscar producto"
+                >
+                  <PackageSearch className="w-4 h-4" />
+                </button>
+                <input
+                  type="text"
+                  readOnly
+                  value={getProductDisplayName(row)}
+                  onClick={() => setEditingProductUuid(row._uuid)}
+                  placeholder="Sin producto seleccionado"
+                  className="flex-1 cursor-pointer rounded border border-gray-200 bg-gray-50 px-2 py-1.5 text-xs text-gray-700 hover:border-blue-400"
+                />
+              </div>
 
               <div className="grid grid-cols-3 gap-1.5">
                 <div>
@@ -154,7 +240,8 @@ export default function OrdenCompraMultiItem({ onDetallesChange, errores = {}, v
             <tr>
               <th className="px-2 py-2 text-left font-medium text-gray-500 uppercase w-8">#</th>
               <th className="px-2 py-2 text-left font-medium text-gray-500 uppercase w-6"></th>
-              <th className="px-2 py-2 text-left font-medium text-gray-500 uppercase min-w-[220px]">Producto</th>
+              <th className="px-1 py-2 w-8"></th>
+              <th className="px-2 py-2 text-left font-medium text-gray-500 uppercase min-w-[160px]">Referencia</th>
               <th className="px-2 py-2 text-left font-medium text-gray-500 uppercase">Dim. cm</th>
               <th className="px-2 py-2 text-left font-medium text-gray-500 uppercase">Cal.</th>
               <th className="px-2 py-2 text-left font-medium text-gray-500 uppercase">Bolsas</th>
@@ -177,7 +264,26 @@ export default function OrdenCompraMultiItem({ onDetallesChange, errores = {}, v
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </td>
-                <td className="px-2 py-1.5">{renderProductSelect(row)}</td>
+                <td className="px-1 py-1.5 text-center">
+                  <button
+                    onClick={() => setEditingProductUuid(row._uuid)}
+                    className="inline-flex h-7 w-7 items-center justify-center rounded text-blue-600 hover:bg-blue-50 hover:text-blue-800"
+                    title="Buscar producto"
+                  >
+                    <PackageSearch className="w-3.5 h-3.5" />
+                  </button>
+                </td>
+                <td className="px-2 py-1.5">
+                  <input
+                    type="text"
+                    readOnly
+                    value={getProductDisplayName(row)}
+                    onClick={() => setEditingProductUuid(row._uuid)}
+                    placeholder="Sin producto"
+                    className="w-full min-w-[140px] cursor-pointer rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-xs text-gray-700 hover:border-blue-400"
+                    title="Clic para cambiar"
+                  />
+                </td>
                 <td className="px-2 py-1.5">
                   <div className="space-y-1">
                     <input type="text" placeholder="Ancho" className="w-16 border border-gray-300 px-1.5 py-0.5 rounded text-xs"
@@ -274,6 +380,63 @@ export default function OrdenCompraMultiItem({ onDetallesChange, errores = {}, v
           </button>
         </div>
       )}
+
+      {editingProductUuid !== null && (() => {
+        const editingRow = rows.find((r) => r._uuid === editingProductUuid);
+        if (!editingRow) return null;
+        return (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+            onClick={() => setEditingProductUuid(null)}
+          >
+            <div
+              className="w-full max-w-lg rounded-xl border border-gray-200 bg-white p-5 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <PackageSearch className="h-4 w-4 text-blue-600" />
+                  <h3 className="text-sm font-semibold text-gray-900">
+                    Seleccionar producto — Ítem #{editingRow.observaciones}
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setEditingProductUuid(null)}
+                  className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 text-lg leading-none"
+                >
+                  ✕
+                </button>
+              </div>
+              <Select
+                isLoading={isLoading || isFetching}
+                options={productOptions}
+                value={getProductValue(editingRow)}
+                onChange={(opt) => {
+                  handleInputChange(editingRow._uuid, "product_id", opt ? opt.value : "", {
+                    product: opt?.product || null,
+                  });
+                  setEditingProductUuid(null);
+                }}
+                onInputChange={(v) => setSearchTerm(v)}
+                placeholder="Buscar por código o nombre..."
+                noOptionsMessage={() => isLoading ? "Cargando..." : isEmpty ? "Sin resultados" : "Escribe para buscar"}
+                autoFocus
+                menuIsOpen
+                styles={{
+                  control: (base) => ({ ...base, minHeight: "36px", fontSize: "13px", boxShadow: "none" }),
+                  menu: (base) => ({ ...base, position: "relative", boxShadow: "none", border: "1px solid #e5e7eb", marginTop: "8px" }),
+                }}
+              />
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
+
+OrdenCompraMultiItem.propTypes = {
+  onDetallesChange: PropTypes.func,
+  errores: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
+  value: PropTypes.array,
+};

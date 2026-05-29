@@ -1,4 +1,5 @@
 import { useCallback, useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import {
   fetchOrdenCompra,
@@ -32,6 +33,7 @@ function parsearErroresDetalles(errors) {
 }
 
 export default function useOrdenCompraForm({ modo, id }) {
+  const queryClient = useQueryClient();
   const [formData, setFormData] = useState(FORM_INICIAL);
   const [errores, setErrores] = useState({});
   const [erroresDetalles, setErroresDetalles] = useState({});
@@ -53,6 +55,7 @@ export default function useOrdenCompraForm({ modo, id }) {
           detalles: data.detalles.map((d) => ({
             id: d.id,
             product_id: d.product_id,
+            product: d.product || d.producto || null,
             largo_cm: d.largo_cm,
             ancho_cm: d.ancho_cm,
             calibre: d.calibre,
@@ -104,15 +107,21 @@ export default function useOrdenCompraForm({ modo, id }) {
       data.append("ubicacion_entrega", formData.ubicacion_entrega);
       data.append("observaciones", formData.observaciones);
       data.append("empresa_id", formData.empresa_id);
-      if (formData.cliente_documento) {
+      if (formData.cliente_documento instanceof File) {
         data.append("cliente_documento", formData.cliente_documento);
       }
 
-      const detallesNormalizados = formData.detalles.map((d) => ({
-        ...d,
-        product_id:
-          d.product_id === "" || d.product_id === undefined ? null : d.product_id,
-      }));
+      const detallesNormalizados = formData.detalles.map((detalle) => {
+        const d = { ...detalle };
+        delete d.product;
+        delete d.producto;
+
+        return {
+          ...d,
+          product_id:
+            d.product_id === "" || d.product_id === undefined ? null : d.product_id,
+        };
+      });
       detallesNormalizados.forEach((detalle, i) => {
         Object.entries(detalle).forEach(([key, value]) => {
           if (value !== null && value !== undefined) {
@@ -120,6 +129,11 @@ export default function useOrdenCompraForm({ modo, id }) {
           }
         });
       });
+      console.log("=== FORM DATA ===");
+console.log(formData);
+
+console.log("=== DETALLES NORMALIZADOS ===");
+console.log(detallesNormalizados);
 
       const response =
         modo === "edicion"
@@ -128,6 +142,7 @@ export default function useOrdenCompraForm({ modo, id }) {
 
       toast.success(response.data.message);
       downloadOrdenPdf(response.data.orden_compra.id);
+      queryClient.invalidateQueries({ queryKey: ["ordenesCompra"] });
       setErrores({});
       setErroresDetalles({});
 
