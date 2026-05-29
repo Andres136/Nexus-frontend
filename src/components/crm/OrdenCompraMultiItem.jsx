@@ -114,6 +114,13 @@ export default function OrdenCompraMultiItem({ onDetallesChange, errores = {}, v
     return null;
   };
 
+  const getProductDisplayName = (row) => {
+    if (!row.product_id) return row.descripcion || "";
+
+    const product = allProducts.find((p) => String(p.id) === String(row.product_id));
+    return product?.name || row.product?.name || row.descripcion || "";
+  };
+
   const subtotal = rows.reduce((s, r) => s + (r.valor_paquete || 0), 0);
   const ivaTotal = rows.reduce((s, r) => s + ((r.valor_total || 0) - (r.valor_paquete || 0)), 0);
   const total = subtotal + ivaTotal;
@@ -143,11 +150,7 @@ export default function OrdenCompraMultiItem({ onDetallesChange, errores = {}, v
                 <input
                   type="text"
                   readOnly
-                  value={
-                    row.product?.name ||
-                    row.descripcion ||
-                    ""
-                  }
+                  value={getProductDisplayName(row)}
                   onClick={() => setEditingProductUuid(row._uuid)}
                   placeholder="Sin producto seleccionado"
                   className="flex-1 cursor-pointer rounded border border-gray-200 bg-gray-50 px-2 py-1.5 text-xs text-gray-700 hover:border-blue-400"
@@ -274,7 +277,7 @@ export default function OrdenCompraMultiItem({ onDetallesChange, errores = {}, v
                   <input
                     type="text"
                     readOnly
-                    value={row.product?.name || row.descripcion || ""}
+                    value={getProductDisplayName(row)}
                     onClick={() => setEditingProductUuid(row._uuid)}
                     placeholder="Sin producto"
                     className="w-full min-w-[140px] cursor-pointer rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-xs text-gray-700 hover:border-blue-400"
@@ -411,7 +414,6 @@ export default function OrdenCompraMultiItem({ onDetallesChange, errores = {}, v
                 onChange={(opt) => {
                   handleInputChange(editingRow._uuid, "product_id", opt ? opt.value : "", {
                     product: opt?.product || null,
-                    descripcion: opt?.product?.name || "",
                   });
                   setEditingProductUuid(null);
                 }}
