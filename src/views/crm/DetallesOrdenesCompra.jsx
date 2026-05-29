@@ -717,41 +717,37 @@ const tieneDocumentoCliente = Boolean(ordenSeleccionada?.cliente_documento);
                 name: p.name,
                 product: p,
               }))}
-        value={(() => {
-  const det = detalles[editingProductIndex];
-
-  if (det?.product) {
-    return {
-      value: det.product.id,
-      label: `${det.product.code || "Sin código"} - ${det.product.name || "Sin nombre"}`,
-      product: det.product,
-    };
-  }
-
-  return null;
-})()}
-         onChange={(selectedOption) => {
-  const newDetalles = [...detalles];
-  const selectedProduct = selectedOption?.product || null;
-
-  newDetalles[editingProductIndex] = {
-    ...newDetalles[editingProductIndex],
-    product_id: selectedOption?.value || null,
-    product: selectedProduct,
-    referencia: selectedOption?.name || "",
-    descripcion: selectedOption?.name || "",
-  };
-
-  setDetalles(newDetalles);
-
-  setErrores((prevErrores) => {
-    const nextErrores = { ...prevErrores };
-    delete nextErrores[`detalles.${editingProductIndex}.product_id`];
-    return nextErrores;
-  });
-
-  setEditingProductIndex(null);
-}}
+              value={(() => {
+                const det = detalles[editingProductIndex];
+                const product = safeProducts.find(
+                  (p) => String(p.id) === String(det?.product_id)
+                );
+                if (product) {
+                  return {
+                    value: product.id,
+                    label: `${product.code || product.code_id || "Sin código"} - ${product.name || "Sin nombre"}`,
+                  };
+                }
+                if (det?.product) {
+                  return {
+                    value: det.product.id,
+                    label: `${det.product.code || "Sin código"} - ${det.product.name || "Sin nombre"}`,
+                  };
+                }
+                return null;
+              })()}
+              onChange={(selectedOption) => {
+                const newDetalles = [...detalles];
+                newDetalles[editingProductIndex].product_id = selectedOption?.value || null;
+                newDetalles[editingProductIndex].referencia = selectedOption?.name || "";
+                setDetalles(newDetalles);
+                setErrores((prevErrores) => {
+                  const nextErrores = { ...prevErrores };
+                  delete nextErrores[`detalles.${editingProductIndex}.product_id`];
+                  return nextErrores;
+                });
+                setEditingProductIndex(null);
+              }}
               onInputChange={(inputValue) => setSearchTerm(inputValue)}
               placeholder="Buscar por código o nombre..."
               noOptionsMessage={() =>
