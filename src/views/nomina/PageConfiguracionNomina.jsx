@@ -42,13 +42,6 @@ const CONFIG_DEFAULT = {
   porcentaje_sena: 2.00,
   porcentaje_icbf: 3.00,
   porcentaje_caja_compensacion: 4.00,
-  fecha_cambio_jornada_legal: "2026-07-15",
-  horas_semanales_antes_cambio: 44,
-  horas_semanales_despues_cambio: 42,
-  recargo_extra_diurna: 25,
-  recargo_extra_nocturna: 75,
-  recargo_dominical_festivo: 90,
-  recargo_nocturna_festiva: 110,
   status: true,
 };
 
@@ -263,13 +256,6 @@ export default function PageConfiguracionNomina() {
       porcentaje_sena:              configuracionData.porcentaje_sena              ?? 2.00,
       porcentaje_icbf:              configuracionData.porcentaje_icbf              ?? 3.00,
       porcentaje_caja_compensacion: configuracionData.porcentaje_caja_compensacion ?? 4.00,
-      fecha_cambio_jornada_legal:   configuracionData.fecha_cambio_jornada_legal?.slice?.(0, 10) ?? "2026-07-15",
-      horas_semanales_antes_cambio: configuracionData.horas_semanales_antes_cambio ?? 44,
-      horas_semanales_despues_cambio: configuracionData.horas_semanales_despues_cambio ?? 42,
-      recargo_extra_diurna:         configuracionData.recargo_extra_diurna ?? 25,
-      recargo_extra_nocturna:       configuracionData.recargo_extra_nocturna ?? 75,
-      recargo_dominical_festivo:    configuracionData.recargo_dominical_festivo ?? 90,
-      recargo_nocturna_festiva:     configuracionData.recargo_nocturna_festiva ?? 110,
       status: configuracionData.status ?? true,
     });
   }, [configuracionData]);
@@ -406,13 +392,6 @@ export default function PageConfiguracionNomina() {
       porcentaje_sena:              Number(configForm.porcentaje_sena),
       porcentaje_icbf:              Number(configForm.porcentaje_icbf),
       porcentaje_caja_compensacion: Number(configForm.porcentaje_caja_compensacion),
-      fecha_cambio_jornada_legal:   configForm.fecha_cambio_jornada_legal,
-      horas_semanales_antes_cambio: Number(configForm.horas_semanales_antes_cambio),
-      horas_semanales_despues_cambio: Number(configForm.horas_semanales_despues_cambio),
-      recargo_extra_diurna:         Number(configForm.recargo_extra_diurna),
-      recargo_extra_nocturna:       Number(configForm.recargo_extra_nocturna),
-      recargo_dominical_festivo:    Number(configForm.recargo_dominical_festivo),
-      recargo_nocturna_festiva:     Number(configForm.recargo_nocturna_festiva),
       status: true,
     });
   };
@@ -577,48 +556,8 @@ export default function PageConfiguracionNomina() {
                   Number(configForm.porcentaje_sena || 0) +
                   Number(configForm.porcentaje_icbf || 0) +
                   Number(configForm.porcentaje_caja_compensacion || 0)
-                ).toFixed(3)}% · Ley 2101/2021: jornada diurna 42 h/semana desde jul 15 de 2026
+                ).toFixed(3)}%
               </p>
-            </div>
-          </div>
-
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Jornada legal y recargos</p>
-            <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-7">
-              <label className="block">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Fecha cambio jornada</span>
-                <input
-                  type="date"
-                  name="fecha_cambio_jornada_legal"
-                  value={configForm.fecha_cambio_jornada_legal}
-                  onChange={handleConfig}
-                  className="mt-1 h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-800 outline-none"
-                />
-              </label>
-              {[
-                { name: "horas_semanales_antes_cambio", label: "Horas antes" },
-                { name: "horas_semanales_despues_cambio", label: "Horas después" },
-                { name: "recargo_extra_diurna", label: "Extra diurna %" },
-                { name: "recargo_extra_nocturna", label: "Extra nocturna %" },
-                { name: "recargo_dominical_festivo", label: "Dominical/festivo %" },
-                { name: "recargo_nocturna_festiva", label: "Nocturna festiva %" },
-              ].map(({ name, label }) => (
-                <label key={name} className="block">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">{label}</span>
-                  <div className="mt-1 flex h-11 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3">
-                    <input
-                      type="number"
-                      min="0"
-                      max="300"
-                      step="0.01"
-                      name={name}
-                      value={configForm[name]}
-                      onChange={handleConfig}
-                      className="w-full border-none bg-transparent text-sm text-gray-800 outline-none"
-                    />
-                  </div>
-                </label>
-              ))}
             </div>
           </div>
         </div>
