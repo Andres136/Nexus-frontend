@@ -68,6 +68,10 @@ export const encuestaService = {
   getClientesParaEncuesta() {
     return apiClient.get("api/encuestas-clientes");
   },
+
+  getIndiceGeneral() {
+    return apiClient.get("api/encuestas-indice-general");
+  },
 };
 
 // ─── Encuesta pública (sin auth) ──────────────────────────────────────────────

@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useEncuestas } from "../../hooks/crm/useEncuestas";
 import { useEncuestaResultados } from "../../hooks/crm/useEncuestaResultados";
 import { useEncuestaContext } from "../../context/EncuestaContext";
 import { useAuth } from "../../hooks/useAuth";
 import GraficaResultados from "../../components/encuestas/GraficaResultados";
+import { encuestaService } from "../../services/encuestaService";
 import {
   BarChart2, ChevronDown, Loader2, BarChart, Users, Send, Smile,
-  Clock, ChevronUp, Filter,
+  Clock, ChevronUp, Filter, TrendingUp,
 } from "lucide-react";
 
 const ROLES_RESULTADOS = [1, 4]; // ADMINISTRADOR, ADMINISTRATIVO
@@ -40,6 +42,16 @@ export default function ResultadosEncuesta() {
 
   const puedeVerResultados = ROLES_RESULTADOS.includes(user?.role_id);
 
+  const { data: indiceGen } = useQuery({
+    queryKey: ["encuestas-indice-general"],
+    queryFn: async () => {
+      const res = await encuestaService.getIndiceGeneral();
+      return res.data;
+    },
+    enabled: puedeVerResultados,
+    staleTime: 2 * 60 * 1000,
+  });
+
   // Guard de rol
   if (user && !puedeVerResultados) {
     return (
@@ -68,6 +80,58 @@ export default function ResultadosEncuesta() {
           <p className="text-xs text-gray-400">Selecciona una encuesta para ver las respuestas</p>
         </div>
       </div>
+
+      {/* Índice general de satisfacción */}
+      {indiceGen && (() => {
+        const sinDatos = indiceGen.indice_general === null;
+        const nivel    = sinDatos ? null : nivelSatisfaccion(indiceGen.indice_general);
+        return (
+          <div className={`rounded-xl border p-5 ${sinDatos ? "bg-gray-50 border-gray-200" : `${nivel.bg} ${nivel.border}`}`}>
+            <div className="flex items-center justify-between gap-6">
+
+              {/* Ícono + etiqueta */}
+              <div className="flex items-center gap-4">
+                <div className={`p-3 rounded-xl shadow-sm ${sinDatos ? "bg-white" : "bg-white"}`}>
+                  <TrendingUp className={`w-6 h-6 ${sinDatos ? "text-gray-400" : nivel.text}`} />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    Satisfacción general
+                  </p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {sinDatos
+                      ? "Aún no hay respuestas de escala registradas"
+                      : `${indiceGen.respuestas_positivas} de ${indiceGen.total_respuestas} respuestas positivas en ${indiceGen.encuestas_con_datos} encuesta${indiceGen.encuestas_con_datos !== 1 ? "s" : ""}`
+                    }
+                  </p>
+                </div>
+              </div>
+
+              {/* Porcentaje */}
+              {!sinDatos && (
+                <div className="text-right shrink-0">
+                  <p className={`text-5xl font-black ${nivel.text}`}>
+                    {indiceGen.indice_general}%
+                  </p>
+                  <p className={`text-xs font-bold ${nivel.text} mt-0.5`}>
+                    {nivel.label}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Barra */}
+            {!sinDatos && (
+              <div className="mt-4 h-3 bg-white/60 rounded-full overflow-hidden">
+                <div
+                  className={`h-full ${nivel.bar} rounded-full transition-all duration-700`}
+                  style={{ width: `${indiceGen.indice_general}%` }}
+                />
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Selector de encuesta */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-4">
