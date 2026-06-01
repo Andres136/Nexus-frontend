@@ -428,33 +428,6 @@ export default function PlantillaEditor() {
                 )}
               </div>
 
-              {/* Imagen mascota (GAIA) */}
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">
-                  Imagen de mascota (aparece en el saludo)
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setImagenMascota(e.target.files[0])}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                />
-                {imagenMascota && (
-                  <div className="relative mt-2 inline-block">
-                    <img
-                      src={imagenMascota instanceof File ? URL.createObjectURL(imagenMascota) : storageUrl(imagenMascota)}
-                      alt="Mascota"
-                      className="w-24 h-24 rounded-full object-contain border-2 border-green-200 shadow bg-green-50"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setImagenMascota(null)}
-                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600"
-                    >×</button>
-                  </div>
-                )}
-              </div>
-
               {/* Imágenes del cuerpo */}
               <div className="space-y-2">
                 <label className="block text-sm font-semibold text-gray-700">Imágenes del cuerpo</label>
@@ -515,6 +488,33 @@ export default function PlantillaEditor() {
                   <Plus className="w-4 h-4" />
                   Agregar imágenes
                 </button>
+              </div>
+
+              {/* Imagen mascota (GAIA) */}
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">
+                  Imagen de mascota (aparece después de las imágenes del cuerpo)
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setImagenMascota(e.target.files[0])}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                />
+                {imagenMascota && (
+                  <div className="relative mt-2 inline-block">
+                    <img
+                      src={imagenMascota instanceof File ? URL.createObjectURL(imagenMascota) : storageUrl(imagenMascota)}
+                      alt="Mascota"
+                      className="w-24 h-24 rounded-full object-contain border-2 border-green-200 shadow bg-green-50"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setImagenMascota(null)}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600"
+                    >×</button>
+                  </div>
+                )}
               </div>
 
               {/* Contenido HTML */}

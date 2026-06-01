@@ -4,9 +4,11 @@ import { GripVertical, Trash2, Plus, X } from "lucide-react";
 
 const TIPOS = [
   { value: "texto",           label: "Respuesta libre" },
-  { value: "escala",          label: "Escala 1 – 5" },
+  { value: "escala",          label: "Escala numérica" },
   { value: "opcion_multiple", label: "Opción múltiple" },
 ];
+
+const OPCIONES_MAX_ESCALA = [3, 4, 5, 6, 7, 8, 10];
 
 export default function PreguntaEditor({ pregunta, index, onChange, onRemove }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
@@ -31,6 +33,8 @@ export default function PreguntaEditor({ pregunta, index, onChange, onRemove }) 
 
   const removeOpcion = (i) =>
     handleField("opciones", (pregunta.opciones ?? []).filter((_, idx) => idx !== i));
+
+  const maxEscala = pregunta.max_escala ?? 5;
 
   return (
     <div
@@ -129,18 +133,35 @@ export default function PreguntaEditor({ pregunta, index, onChange, onRemove }) 
         </div>
       )}
 
-      {/* ── Preview escala ── */}
+      {/* ── Configuración de escala ── */}
       {pregunta.tipo === "escala" && (
-        <div className="pl-10 flex items-center gap-2">
-          {[1, 2, 3, 4, 5].map((n) => (
-            <div
-              key={n}
-              className="w-8 h-8 rounded-full border-2 border-emerald-200 flex items-center justify-center text-xs font-semibold text-emerald-600"
+        <div className="pl-10 space-y-2">
+          {/* Selector del máximo */}
+          <div className="flex items-center gap-3">
+            <label className="text-xs text-gray-500 shrink-0">Escala del 1 al</label>
+            <select
+              value={maxEscala}
+              onChange={(e) => handleField("max_escala", Number(e.target.value))}
+              className="text-sm border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white w-16"
             >
-              {n}
-            </div>
-          ))}
-          <span className="text-xs text-gray-400 ml-1">El cliente elige un valor</span>
+              {OPCIONES_MAX_ESCALA.map((n) => (
+                <option key={n} value={n}>{n}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Preview de la escala */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {Array.from({ length: maxEscala }, (_, i) => i + 1).map((n) => (
+              <div
+                key={n}
+                className="w-8 h-8 rounded-full border-2 border-emerald-200 flex items-center justify-center text-xs font-semibold text-emerald-600"
+              >
+                {n}
+              </div>
+            ))}
+            <span className="text-xs text-gray-400 ml-1">El cliente elige un valor</span>
+          </div>
         </div>
       )}
     </div>

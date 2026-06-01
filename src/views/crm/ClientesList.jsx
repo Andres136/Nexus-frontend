@@ -13,14 +13,18 @@ import { useQuery } from "@tanstack/react-query";
 import { encuestaService } from "../../services/encuestaService";
 import {
   ClipboardList, X, CheckCircle2, Copy, Check, Loader2, Send,
+  Download, ShoppingCart, Clock, AlertTriangle,
 } from "lucide-react";
 
 function ModalSeleccionarEncuesta({ clienteIds, onClose }) {
   const [encuestaId, setEncuestaId] = useState(null);
   const [links, setLinks]           = useState([]);
+  const [excluidos, setExcluidos]   = useState([]);
   const [copiados, setCopiados]     = useState({});
+  const [todoCopiado, setTodoCop]   = useState(false);
   const [enviando, setEnviando]     = useState(false);
   const [error, setError]           = useState(null);
+  const enviado = links.length > 0 || excluidos.length > 0;
 
   const { data: encuestas = [], isLoading } = useQuery({
     queryKey: ["encuestas"],
@@ -37,7 +41,8 @@ function ModalSeleccionarEncuesta({ clienteIds, onClose }) {
     setError(null);
     try {
       const res = await encuestaService.enviar(encuestaId, clienteIds);
-      setLinks(res.data.links ?? []);
+      setLinks(res.data.links     ?? []);
+      setExcluidos(res.data.excluidos ?? []);
     } catch {
       setError("Ocurrió un error al enviar la encuesta.");
     } finally {
@@ -49,6 +54,39 @@ function ModalSeleccionarEncuesta({ clienteIds, onClose }) {
     await navigator.clipboard.writeText(link);
     setCopiados((prev) => ({ ...prev, [idx]: true }));
     setTimeout(() => setCopiados((prev) => ({ ...prev, [idx]: false })), 2000);
+  };
+
+  const copiarTodos = async () => {
+    const encuesta = encuestas.find((e) => e.id === encuestaId);
+    const texto = links
+      .map((l) => `${l.cliente_nombre} <${l.cliente_email}>\n${l.link}`)
+      .join("\n\n");
+    await navigator.clipboard.writeText(texto);
+    setTodoCop(true);
+    setTimeout(() => setTodoCop(false), 2500);
+  };
+
+  const descargarTxt = () => {
+    const enc   = encuestas.find((e) => e.id === encuestaId);
+    const lineas = [
+      `Encuesta: ${enc?.titulo ?? ""}`,
+      `Fecha: ${new Date().toLocaleString("es-CO")}`,
+      `Enviados: ${links.length}  |  No enviados: ${excluidos.length}`,
+      "",
+      "── ENVIADOS ──",
+      ...links.map((l, i) => `${i + 1}. ${l.cliente_nombre} <${l.cliente_email}>\n   ${l.link}`),
+    ];
+    if (excluidos.length > 0) {
+      lineas.push("", "── NO ENVIADOS ──");
+      excluidos.forEach((e, i) => lineas.push(`${i + 1}. ${e.cliente_nombre} — ${e.razon}`));
+    }
+    const blob = new Blob([lineas.join("\n")], { type: "text/plain;charset=utf-8" });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href     = url;
+    a.download = `links-encuesta-${Date.now()}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -76,35 +114,106 @@ function ModalSeleccionarEncuesta({ clienteIds, onClose }) {
         </div>
 
         <div className="p-6 space-y-4">
-          {links.length > 0 ? (
-            <div className="space-y-3">
-              <p className="text-sm font-semibold text-emerald-700 flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4" />
-                Enviada — {links.length} link{links.length !== 1 ? "s" : ""} generado{links.length !== 1 ? "s" : ""}
-              </p>
-              <ul className="space-y-2 max-h-56 overflow-y-auto">
-                {links.map((l, i) => (
-                  <li key={i} className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-2.5">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-800 truncate">{l.cliente_nombre}</p>
-                      <p className="text-xs text-gray-400 truncate">{l.link}</p>
-                    </div>
+          {/* ── Resultado del envío ── */}
+          {enviado ? (
+            <div className="space-y-4">
+
+              {/* Resumen */}
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-emerald-700 flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4" />
+                  {links.length} correo{links.length !== 1 ? "s" : ""} enviado{links.length !== 1 ? "s" : ""}
+                  {excluidos.length > 0 && (
+                    <span className="text-red-500 font-semibold ml-1">
+                      · {excluidos.length} excluido{excluidos.length !== 1 ? "s" : ""}
+                    </span>
+                  )}
+                </p>
+                {links.length > 0 && (
+                  <div className="flex items-center gap-2">
                     <button
-                      onClick={() => copiarLink(l.link, i)}
-                      className={`shrink-0 p-1.5 rounded-lg transition-colors ${
-                        copiados[i] ? "text-emerald-600 bg-emerald-50" : "text-gray-400 hover:text-emerald-600 hover:bg-emerald-50"
-                      }`}
+                      onClick={copiarTodos}
+                      className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors
+                        ${todoCopiado ? "border-emerald-300 text-emerald-700 bg-emerald-50" : "border-gray-200 text-gray-600 hover:border-emerald-300 hover:text-emerald-700 hover:bg-emerald-50"}`}
                     >
-                      {copiados[i] ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                      {todoCopiado ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                      {todoCopiado ? "¡Copiado!" : "Copiar todos"}
                     </button>
-                  </li>
-                ))}
-              </ul>
+                    <button
+                      onClick={descargarTxt}
+                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-700 hover:bg-blue-50 transition-colors"
+                    >
+                      <Download className="w-3.5 h-3.5" /> TXT
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Aviso cola */}
+              {links.length > 0 && (
+                <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5">
+                  <Clock className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
+                  <p className="text-xs text-amber-700">
+                    Los correos se envían en segundo plano. Usa los links como respaldo.
+                  </p>
+                </div>
+              )}
+
+              {/* Links enviados */}
+              {links.length > 0 && (
+                <ul className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                  {links.map((l, i) => (
+                    <li key={i} className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-2.5">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-800 truncate">{l.cliente_nombre}</p>
+                        <p className="text-xs text-gray-400 truncate">{l.cliente_email}</p>
+                        <p className="text-[11px] text-blue-500 truncate font-mono">{l.link}</p>
+                      </div>
+                      <button
+                        onClick={() => copiarLink(l.link, i)}
+                        className={`shrink-0 p-1.5 rounded-lg transition-colors ${
+                          copiados[i] ? "text-emerald-600 bg-emerald-50" : "text-gray-400 hover:text-emerald-600 hover:bg-emerald-50"
+                        }`}
+                      >
+                        {copiados[i] ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {/* Excluidos con nombre específico */}
+              {excluidos.length > 0 && (
+                <div className="border border-red-200 rounded-xl overflow-hidden">
+                  <div className="bg-red-50 px-4 py-2.5 flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+                    <p className="text-xs font-semibold text-red-600">
+                      No recibieron la encuesta
+                    </p>
+                  </div>
+                  <ul className="divide-y divide-red-50 max-h-44 overflow-y-auto">
+                    {excluidos.map((e, i) => (
+                      <li key={i} className="flex items-center justify-between gap-3 px-4 py-3 bg-white">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-gray-800">{e.cliente_nombre}</p>
+                          <p className="text-xs text-red-400 mt-0.5 flex items-center gap-1">
+                            <ShoppingCart className="w-3 h-3 shrink-0" />
+                            {e.razon}
+                          </p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               <button onClick={onClose} className="w-full py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium">
                 Cerrar
               </button>
             </div>
+
           ) : (
+            /* ── Selección de encuesta ── */
             <>
               {isLoading ? (
                 <div className="flex justify-center py-10">

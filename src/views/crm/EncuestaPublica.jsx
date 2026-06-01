@@ -18,9 +18,10 @@ function PreguntaInput({ pregunta, valor, onChange }) {
   }
 
   if (pregunta.tipo === "escala") {
+    const maxEscala = pregunta.max_escala ?? 5;
     return (
       <div className="flex gap-3 flex-wrap">
-        {[1, 2, 3, 4, 5].map((n) => (
+        {Array.from({ length: maxEscala }, (_, i) => i + 1).map((n) => (
           <button
             key={n}
             type="button"
