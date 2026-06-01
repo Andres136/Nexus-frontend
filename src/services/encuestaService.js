@@ -56,12 +56,17 @@ export const encuestaService = {
     return apiClient.post(`api/encuestas/${id}/enviar`, { cliente_ids: clienteIds });
   },
 
-  getResultados(id) {
-    return apiClient.get(`api/encuestas/${id}/resultados`);
+  getResultados(id, userId = null) {
+    const params = userId ? { user_id: userId } : {};
+    return apiClient.get(`api/encuestas/${id}/resultados`, { params });
   },
 
   getMisClientes() {
     return apiClient.get("api/clientes-registro-user");
+  },
+
+  getClientesParaEncuesta() {
+    return apiClient.get("api/encuestas-clientes");
   },
 };
 

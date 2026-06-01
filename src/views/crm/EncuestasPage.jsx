@@ -10,7 +10,7 @@ import {
 } from "@dnd-kit/sortable";
 import {
   ClipboardList, Plus, Pencil, Trash2, Send, BarChart2,
-  X, Save, Loader2, CheckCircle2, Clock, AlertCircle, Copy, Check,
+  X, Save, Loader2, CheckCircle2, Clock, AlertCircle, Copy, Check, Download, ShoppingCart,
 } from "lucide-react";
 import { useEncuestas } from "../../hooks/crm/useEncuestas";
 import { useEncuestaEnvios } from "../../hooks/crm/useEncuestaEnvios";
@@ -65,9 +65,14 @@ function ModalEncuesta({ encuesta, onClose, onSave, isSaving }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    const preguntasLimpias = preguntas.map(({ _key, ...p }) => ({
+      ...p,
+      opciones:   p.tipo === "opcion_multiple" ? p.opciones : null,
+      max_escala: p.tipo === "escala"          ? (p.max_escala ?? 5) : null,
+    }));
     onSave({
       ...(encuesta?.id ? { id: encuesta.id } : {}),
-      data: { titulo, descripcion, preguntas },
+      data: { titulo, descripcion, preguntas: preguntasLimpias },
     });
   };
 
@@ -184,31 +189,153 @@ function ModalEncuesta({ encuesta, onClose, onSave, isSaving }) {
 }
 
 // ─── Modal enviar ─────────────────────────────────────────────────────────────
+function PanelLinks({ links, excluidos = [], encuestaTitulo, onCerrar }) {
+  const [copiados, setCopiados]    = useState({});
+  const [todoCopiado, setTodoCop]  = useState(false);
+
+  const copiarUno = async (link, idx) => {
+    await navigator.clipboard.writeText(link);
+    setCopiados((prev) => ({ ...prev, [idx]: true }));
+    setTimeout(() => setCopiados((prev) => ({ ...prev, [idx]: false })), 2000);
+  };
+
+  const copiarTodos = async () => {
+    const texto = links
+      .map((l) => `${l.cliente_nombre} <${l.cliente_email}>\n${l.link}`)
+      .join("\n\n");
+    await navigator.clipboard.writeText(texto);
+    setTodoCop(true);
+    setTimeout(() => setTodoCop(false), 2500);
+  };
+
+  const descargarTxt = () => {
+    const lineas = [
+      `Encuesta: ${encuestaTitulo}`,
+      `Fecha: ${new Date().toLocaleString("es-CO")}`,
+      `Total enviados: ${links.length}`,
+      "",
+      ...links.map(
+        (l, i) =>
+          `${i + 1}. ${l.cliente_nombre} <${l.cliente_email}>\n   ${l.link}`
+      ),
+    ].join("\n");
+
+    const blob = new Blob([lineas], { type: "text/plain;charset=utf-8" });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href     = url;
+    a.download = `links-encuesta-${Date.now()}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Resumen */}
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold text-emerald-700 flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4" />
+          {links.length} correo{links.length !== 1 ? "s" : ""} enviado{links.length !== 1 ? "s" : ""}
+        </p>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={copiarTodos}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border
+              ${todoCopiado
+                ? "border-emerald-300 text-emerald-700 bg-emerald-50"
+                : "border-gray-200 text-gray-600 hover:border-emerald-300 hover:text-emerald-700 hover:bg-emerald-50"
+              }`}
+          >
+            {todoCopiado ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+            {todoCopiado ? "¡Copiado!" : "Copiar todos"}
+          </button>
+          <button
+            onClick={descargarTxt}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-700 hover:bg-blue-50 transition-colors"
+          >
+            <Download className="w-3.5 h-3.5" />
+            Descargar TXT
+          </button>
+        </div>
+      </div>
+
+      {/* Aviso correos en cola */}
+      <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+        <Clock className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
+        <p className="text-xs text-amber-700">
+          Los correos se envían en segundo plano. Usa los links de abajo como respaldo si un cliente no lo recibe de inmediato.
+        </p>
+      </div>
+
+      {/* Lista individual */}
+      <ul className="space-y-2 max-h-64 overflow-y-auto pr-1">
+        {links.map((l, i) => (
+          <li key={i} className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-2.5">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-800 truncate">{l.cliente_nombre}</p>
+              <p className="text-xs text-gray-400 truncate">{l.cliente_email}</p>
+              <p className="text-[11px] text-blue-500 truncate font-mono">{l.link}</p>
+            </div>
+            <button
+              onClick={() => copiarUno(l.link, i)}
+              title="Copiar link"
+              className={`shrink-0 p-1.5 rounded-lg transition-colors
+                ${copiados[i] ? "text-emerald-600 bg-emerald-50" : "text-gray-400 hover:text-emerald-600 hover:bg-emerald-50"}`}
+            >
+              {copiados[i] ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+            </button>
+          </li>
+        ))}
+      </ul>
+
+      {/* Clientes excluidos */}
+      {excluidos.length > 0 && (
+        <div className="border border-red-200 rounded-xl overflow-hidden">
+          <div className="bg-red-50 px-4 py-2.5 flex items-center gap-2">
+            <ShoppingCart className="w-4 h-4 text-red-400 shrink-0" />
+            <p className="text-xs font-semibold text-red-600">
+              {excluidos.length} cliente{excluidos.length !== 1 ? "s" : ""} no recibió{excluidos.length !== 1 ? "ron" : ""} la encuesta
+            </p>
+          </div>
+          <ul className="divide-y divide-red-50 max-h-40 overflow-y-auto">
+            {excluidos.map((e, i) => (
+              <li key={i} className="flex items-center justify-between gap-3 px-4 py-2.5 bg-white">
+                <p className="text-sm font-medium text-gray-700">{e.cliente_nombre}</p>
+                <span className="text-xs text-red-400 shrink-0">{e.razon}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <button
+        onClick={onCerrar}
+        className="w-full py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium"
+      >
+        Cerrar
+      </button>
+    </div>
+  );
+}
+
 function ModalEnviar({ encuesta, onClose }) {
   const [seleccionados, setSeleccionados] = useState([]);
-  const [copiados, setCopiados] = useState({});
 
   const { data: clientes = [] } = useQuery({
-    queryKey: ["mis-clientes"],
+    queryKey: ["clientes-para-encuesta"],
     queryFn: async () => {
-      const res = await encuestaService.getMisClientes();
-      return res.data?.data ?? res.data ?? [];
+      const res = await encuestaService.getClientesParaEncuesta();
+      return res.data ?? [];
     },
     staleTime: 5 * 60 * 1000,
   });
 
-  const { enviar, isEnviando, linksGenerados } = useEncuestaEnvios(encuesta.id);
+  const { enviar, isEnviando, linksGenerados, excluidos } = useEncuestaEnvios(encuesta.id);
 
   const toggleCliente = (id) =>
     setSeleccionados((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     );
-
-  const copiarLink = async (link, idx) => {
-    await navigator.clipboard.writeText(link);
-    setCopiados((prev) => ({ ...prev, [idx]: true }));
-    setTimeout(() => setCopiados((prev) => ({ ...prev, [idx]: false })), 2000);
-  };
 
   return (
     <div
@@ -234,38 +361,13 @@ function ModalEnviar({ encuesta, onClose }) {
         </div>
 
         <div className="p-6 space-y-5">
-
-          {/* Links generados */}
-          {linksGenerados.length > 0 ? (
-            <div className="space-y-3">
-              <p className="text-sm font-semibold text-emerald-700 flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4" />
-                Correos enviados — links generados
-              </p>
-              <ul className="space-y-2 max-h-64 overflow-y-auto">
-                {linksGenerados.map((l, i) => (
-                  <li key={i} className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-2.5">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-800 truncate">{l.cliente_nombre}</p>
-                      <p className="text-xs text-gray-400 truncate">{l.link}</p>
-                    </div>
-                    <button
-                      onClick={() => copiarLink(l.link, i)}
-                      className={`shrink-0 p-1.5 rounded-lg transition-colors
-                        ${copiados[i] ? "text-emerald-600 bg-emerald-50" : "text-gray-400 hover:text-emerald-600 hover:bg-emerald-50"}`}
-                    >
-                      {copiados[i] ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-              <button
-                onClick={onClose}
-                className="w-full py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium"
-              >
-                Cerrar
-              </button>
-            </div>
+          {linksGenerados.length > 0 || excluidos.length > 0 ? (
+            <PanelLinks
+              links={linksGenerados}
+              excluidos={excluidos}
+              encuestaTitulo={encuesta.titulo}
+              onCerrar={onClose}
+            />
           ) : (
             <>
               <ListaClientes
@@ -304,7 +406,7 @@ function ModalEnviar({ encuesta, onClose }) {
 }
 
 // ─── Tarjeta de encuesta ──────────────────────────────────────────────────────
-function TarjetaEncuesta({ enc, onEditar, onEnviar, onEliminar, onVerResultados, esAdmin }) {
+function TarjetaEncuesta({ enc, onEditar, onEnviar, onEliminar, onVerResultados, esAdmin, puedeVerResultados }) {
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow space-y-3">
       <div className="flex items-start justify-between gap-3">
@@ -342,12 +444,14 @@ function TarjetaEncuesta({ enc, onEditar, onEnviar, onEliminar, onVerResultados,
         >
           <Send className="w-3.5 h-3.5" /> Enviar
         </button>
-        <button
-          onClick={() => onVerResultados(enc)}
-          className="flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-violet-600 hover:bg-violet-50 transition-colors"
-        >
-          <BarChart2 className="w-3.5 h-3.5" /> Resultados
-        </button>
+        {puedeVerResultados && (
+          <button
+            onClick={() => onVerResultados(enc)}
+            className="flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-violet-600 hover:bg-violet-50 transition-colors"
+          >
+            <BarChart2 className="w-3.5 h-3.5" /> Resultados
+          </button>
+        )}
         {esAdmin && (
           <button
             onClick={() => onEliminar(enc.id)}
@@ -365,7 +469,8 @@ function TarjetaEncuesta({ enc, onEditar, onEnviar, onEliminar, onVerResultados,
 export default function EncuestasPage() {
   const navigate = useNavigate();
   const { user } = useAuth({ middleware: "auth" });
-  const esAdmin = user?.role_id === 1;
+  const esAdmin            = user?.role_id === 1;
+  const puedeVerResultados = user?.role_id === 1 || user?.role_id === 4;
   const { seleccionar } = useEncuestaContext();
   const { encuestas, isLoading, crearEncuesta, actualizarEncuesta, eliminarEncuesta, isCreando, isActualizando } =
     useEncuestas();
@@ -404,12 +509,14 @@ export default function EncuestasPage() {
           </div>
         </div>
         <div className="flex gap-2 shrink-0">
-          <button
-            onClick={() => navigate("/auth/crm/encuestas/resultados")}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-violet-100 hover:bg-violet-200 text-violet-700 text-sm font-medium transition-colors"
-          >
-            <BarChart2 className="w-4 h-4" /> Resultados
-          </button>
+          {puedeVerResultados && (
+            <button
+              onClick={() => navigate("/auth/crm/encuestas/resultados")}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-violet-100 hover:bg-violet-200 text-violet-700 text-sm font-medium transition-colors"
+            >
+              <BarChart2 className="w-4 h-4" /> Resultados
+            </button>
+          )}
           {esAdmin && (
             <button
               onClick={() => { setEditando(null); setModalCrear(true); }}
@@ -452,6 +559,7 @@ export default function EncuestasPage() {
               key={enc.id}
               enc={enc}
               esAdmin={esAdmin}
+              puedeVerResultados={puedeVerResultados}
               onEditar={(e) => { setEditando(e); setModalCrear(true); }}
               onEnviar={setEnviando}
               onEliminar={(id) => eliminarEncuesta(id)}
