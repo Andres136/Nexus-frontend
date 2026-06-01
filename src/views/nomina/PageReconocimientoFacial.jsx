@@ -1,8 +1,8 @@
 import { useState, useMemo } from "react";
+import PropTypes from "prop-types";
 import { Search, Plus, Pencil, Trash2, UserCircle2, ScanFace, Camera } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useGetFotosFaciales } from "../../hooks/nomina/useGetFotosFaciales";
-import { useGetEmpleados } from "../../hooks/nomina/useGetEmpleados";
+import { useGetEmpleadosFotosFaciales } from "../../hooks/nomina/useGetEmpleadosFotosFaciales";
 import { fotoFacialService } from "../../services/nominaService";
 import RegisterFotoFacial from "../../components/nomina/RegisterFotoFacial";
 import { showToast } from "../../helpers/utils/showToast";
@@ -14,6 +14,57 @@ const FILTROS = [
   { value: "con_foto", label: "Con foto" },
   { value: "sin_foto", label: "Sin foto" },
 ];
+
+function Pagination({ meta, page, onPage }) {
+  if (!meta || meta.last_page <= 1) return null;
+
+  const total = meta.last_page;
+  const pages = [];
+
+  if (total <= 7) {
+    for (let i = 1; i <= total; i++) pages.push(i);
+  } else {
+    pages.push(1);
+    if (page > 3) pages.push("...");
+    for (let i = Math.max(2, page - 1); i <= Math.min(total - 1, page + 1); i++) pages.push(i);
+    if (page < total - 2) pages.push("...");
+    pages.push(total);
+  }
+
+  return (
+    <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
+      <p className="text-xs text-gray-500">
+        Mostrando {meta.from ?? 0} a {meta.to ?? 0} de {meta.total} registros
+      </p>
+      <div className="flex items-center gap-1">
+        <button onClick={() => onPage(page - 1)} disabled={page === 1}
+          className="w-7 h-7 flex items-center justify-center rounded border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed text-xs">‹</button>
+        {pages.map((p, i) =>
+          p === "..." ? (
+            <span key={`e${i}`} className="w-7 h-7 flex items-center justify-center text-gray-400 text-xs">…</span>
+          ) : (
+            <button key={p} onClick={() => onPage(p)}
+              className={`w-7 h-7 flex items-center justify-center rounded text-xs font-medium transition-colors ${
+                p === page ? "bg-indigo-600 text-white" : "border border-gray-200 text-gray-600 hover:bg-gray-50"
+              }`}>{p}</button>
+          )
+        )}
+        <button onClick={() => onPage(page + 1)} disabled={page === total}
+          className="w-7 h-7 flex items-center justify-center rounded border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed text-xs">›</button>
+      </div>
+    </div>
+  );
+}
+Pagination.propTypes = {
+  meta: PropTypes.shape({
+    last_page: PropTypes.number,
+    from: PropTypes.number,
+    to: PropTypes.number,
+    total: PropTypes.number,
+  }),
+  page: PropTypes.number.isRequired,
+  onPage: PropTypes.func.isRequired,
+};
 
 function ConfirmDelete({ nombre, onConfirm, onCancel, loading }) {
   return (
@@ -39,6 +90,12 @@ function ConfirmDelete({ nombre, onConfirm, onCancel, loading }) {
     </div>
   );
 }
+ConfirmDelete.propTypes = {
+  nombre: PropTypes.string,
+  onConfirm: PropTypes.func.isRequired,
+  onCancel: PropTypes.func.isRequired,
+  loading: PropTypes.bool,
+};
 
 function Modal({ onClose, children, maxW = "max-w-md" }) {
   return (
@@ -57,12 +114,19 @@ function Modal({ onClose, children, maxW = "max-w-md" }) {
     </div>
   );
 }
+Modal.propTypes = {
+  onClose: PropTypes.func.isRequired,
+  children: PropTypes.node.isRequired,
+  maxW: PropTypes.string,
+};
 
 export default function PageReconocimientoFacial() {
   const queryClient = useQueryClient();
 
   const [search, setSearch]           = useState("");
   const [filtro, setFiltro]           = useState("todos");
+  const [page, setPage]               = useState(1);
+  const [perPage]                     = useState(10);
   const [modalOpen, setModalOpen]     = useState(false);
   const [deleteOpen, setDeleteOpen]   = useState(false);
   const [selectedUuid, setSelectedUuid]       = useState(null);
@@ -70,41 +134,28 @@ export default function PageReconocimientoFacial() {
   const [selectedNombre, setSelectedNombre]   = useState("");
   const [deleting, setDeleting]       = useState(false);
 
-  const { empleados, isLoading: loadingEmpleados } = useGetEmpleados();
-  const { fotos, isLoading: loadingFotos }         = useGetFotosFaciales({});
+  const params = useMemo(() => ({
+    search: search || undefined,
+    foto: filtro,
+    page,
+    per_page: perPage,
+  }), [search, filtro, page, perPage]);
 
-  const isLoading = loadingEmpleados || loadingFotos;
+  const { data, isLoading } = useGetEmpleadosFotosFaciales(params);
 
-  // Mapa uuid_empleado → registro de foto
-  const fotoMap = useMemo(() => {
-    const all = fotos?.data ?? fotos ?? [];
-    return new Map(all.map((f) => [f.users_id, f]));
-  }, [fotos]);
+  const lista = data?.data?.data ?? [];
+  const meta = data?.data ?? null;
+  const stats = data?.stats ?? { total: 0, con_foto: 0, sin_foto: 0 };
 
-  // Lista unificada: todos los empleados con su foto (si tienen)
-  const merged = useMemo(() => {
-    return empleados.map((emp) => ({
-      userId:  emp.value,
-      nombre:  emp.label,
-      foto:    fotoMap.get(emp.value) ?? null,
-    }));
-  }, [empleados, fotoMap]);
+  const handleSearch = (e) => {
+    setSearch(e.target.value);
+    setPage(1);
+  };
 
-  // Filtros de búsqueda y estado
-  const lista = useMemo(() => {
-    let result = merged;
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      result = result.filter((e) => e.nombre.toLowerCase().includes(q));
-    }
-    if (filtro === "con_foto") result = result.filter((e) => e.foto !== null);
-    if (filtro === "sin_foto") result = result.filter((e) => e.foto === null);
-    return result;
-  }, [merged, search, filtro]);
-
-  // Stats
-  const conFoto  = merged.filter((e) => e.foto !== null).length;
-  const sinFoto  = merged.filter((e) => e.foto === null).length;
+  const handleFiltro = (value) => {
+    setFiltro(value);
+    setPage(1);
+  };
 
   const openCreate = (userId = null) => {
     setSelectedUuid(null);
@@ -127,6 +178,7 @@ export default function PageReconocimientoFacial() {
       await fotoFacialService.deleteFoto(selectedUuid);
       showToast("success", "Foto eliminada correctamente");
       queryClient.invalidateQueries(["fotosFaciales"]);
+      queryClient.invalidateQueries(["empleadosFotosFaciales"]);
       closeDelete();
     } catch {
       showToast("error", "Error al eliminar la foto");
@@ -152,7 +204,7 @@ export default function PageReconocimientoFacial() {
       </div>
 
       {/* Stats */}
-      {!isLoading && merged.length > 0 && (
+      {!isLoading && stats.total > 0 && (
         <div className="grid grid-cols-3 gap-3 mb-5">
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-3 flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center">
@@ -160,7 +212,7 @@ export default function PageReconocimientoFacial() {
             </div>
             <div>
               <p className="text-xs text-gray-500">Total empleados</p>
-              <p className="text-lg font-semibold text-gray-800">{merged.length}</p>
+              <p className="text-lg font-semibold text-gray-800">{stats.total}</p>
             </div>
           </div>
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-3 flex items-center gap-3">
@@ -169,7 +221,7 @@ export default function PageReconocimientoFacial() {
             </div>
             <div>
               <p className="text-xs text-gray-500">Con foto</p>
-              <p className="text-lg font-semibold text-green-700">{conFoto}</p>
+              <p className="text-lg font-semibold text-green-700">{stats.con_foto}</p>
             </div>
           </div>
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-3 flex items-center gap-3">
@@ -178,7 +230,7 @@ export default function PageReconocimientoFacial() {
             </div>
             <div>
               <p className="text-xs text-gray-500">Sin foto</p>
-              <p className="text-lg font-semibold text-amber-700">{sinFoto}</p>
+              <p className="text-lg font-semibold text-amber-700">{stats.sin_foto}</p>
             </div>
           </div>
         </div>
@@ -191,14 +243,14 @@ export default function PageReconocimientoFacial() {
           <input
             type="text"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={handleSearch}
             placeholder="Buscar empleado..."
             className="pl-9 pr-4 h-9 w-full text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
         <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1">
           {FILTROS.map((f) => (
-            <button key={f.value} onClick={() => setFiltro(f.value)}
+            <button key={f.value} onClick={() => handleFiltro(f.value)}
               className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
                 filtro === f.value
                   ? "bg-indigo-600 text-white"
@@ -309,11 +361,7 @@ export default function PageReconocimientoFacial() {
         )}
 
         {!isLoading && lista.length > 0 && (
-          <div className="px-4 py-3 border-t border-gray-100">
-            <p className="text-xs text-gray-500">
-              {lista.length} empleado{lista.length !== 1 ? "s" : ""}
-            </p>
-          </div>
+          <Pagination meta={meta} page={page} onPage={setPage} />
         )}
       </div>
 

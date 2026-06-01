@@ -1,5 +1,6 @@
 import axios from "axios";
 import clienteAxios from "../config/axios";
+import { getKioskoFingerprint, getKioskoSession } from "../helpers/nomina/kioskoSession";
 
 
 const apiClient = axios.create({
@@ -8,6 +9,24 @@ const apiClient = axios.create({
     "Content-Type": "application/json",
   },
 });
+
+async function kioskRequestConfig() {
+  const match = window.location.pathname.match(/^\/kiosko\/([^/]+)/);
+  const uuid = match?.[1];
+
+  if (!uuid || uuid === "activar") return null;
+
+  const sessionToken = getKioskoSession(uuid);
+  if (!sessionToken) return null;
+
+  return {
+    headers: {
+      "X-Kiosko-Device": uuid,
+      "X-Kiosko-Session": sessionToken,
+      "X-Kiosko-Fingerprint": await getKioskoFingerprint(),
+    },
+  };
+}
 
 // Interceptor para agregar el token de autorización a cada solicitud
 apiClient.interceptors.request.use(
@@ -133,6 +152,10 @@ export const horarioOperacionService = {
   getHoy(params = {}) {
     return apiClient.get("api/nomina/horario-operacion/hoy", { params });
   },
+  async getKioskoHoy() {
+    const config = await kioskRequestConfig();
+    return apiClient.get("api/nomina/kiosko-horario-operacion/hoy", config ?? undefined);
+  },
   guardarHoy(data) {
     return apiClient.put("api/nomina/horario-operacion/hoy", data);
   },
@@ -206,8 +229,8 @@ export const descuentoService = {
 };
 
 export const contratacionService = {
-  getEmpleados() {
-    return apiClient.get("api/nomina/contratacion/empleados");
+  getEmpleados(params = {}) {
+    return apiClient.get("api/nomina/contratacion/empleados", { params });
   },
   getContratos(params = {}) {
     return apiClient.get("api/nomina/contratacion", { params });
@@ -305,20 +328,59 @@ export const kioskoDeviceService = {
   deleteKiosco(uuid) {
     return apiClient.delete(`api/nomina/kiosko-devices/${uuid}`);
   },
+  generateActivationLink(uuid) {
+    return apiClient.post(`api/nomina/kiosko-devices/${uuid}/activation-link`);
+  },
+  revokeKiosco(uuid) {
+    return apiClient.patch(`api/nomina/kiosko-devices/${uuid}/revoke`);
+  },
+  deactivateKiosco(uuid) {
+    return apiClient.patch(`api/nomina/kiosko-devices/${uuid}/deactivate`);
+  },
+  activateKioscoAdmin(uuid) {
+    return apiClient.patch(`api/nomina/kiosko-devices/${uuid}/activate-admin`);
+  },
+  activateDevice(data) {
+    return apiClient.post("api/nomina/kiosko-devices/activate", data);
+  },
+  validateDeviceSession(data) {
+    return apiClient.post("api/nomina/kiosko-devices/validate-session", data);
+  },
+  bootstrapDevice(data) {
+    return apiClient.post("api/nomina/kiosko-devices/bootstrap", data);
+  },
 };
 
 export const workSessionService = {
   getWorkSessions(params = {}) {
     return apiClient.get("api/nomina/work-sessions", { params });
   },
-  createSession(data) {
+  async createSession(data) {
+    const kioskConfig = await kioskRequestConfig();
+    if (kioskConfig) {
+      return apiClient.post("api/nomina/kiosko-work-sessions", data, kioskConfig);
+    }
+
     return apiClient.post("api/nomina/work-sessions", data);
   },
-  updateSession(uuid, data) {
+  async updateSession(uuid, data) {
+    const kioskConfig = await kioskRequestConfig();
+    if (kioskConfig) {
+      return apiClient.put(`api/nomina/kiosko-work-sessions/${uuid}`, data, kioskConfig);
+    }
+
     return apiClient.put(`api/nomina/work-sessions/${uuid}`, data);
   },
-  getSessionHoy(userId) {
+  async getSessionHoy(userId) {
     const today = new Date().toISOString().split("T")[0];
+    const kioskConfig = await kioskRequestConfig();
+    if (kioskConfig) {
+      return apiClient.get("api/nomina/kiosko-work-sessions", {
+        ...kioskConfig,
+        params: { user_id: userId, fecha: today, per_page: 1 },
+      });
+    }
+
     return apiClient.get("api/nomina/work-sessions", {
       params: { user_id: userId, fecha: today, per_page: 1 },
     });
@@ -399,6 +461,9 @@ export const horaExtraService = {
 export const fotoFacialService = {
   getFotos(params = {}) {
     return apiClient.get("api/nomina/users-face-photos", { params });
+  },
+  getEmpleadosConContrato(params = {}) {
+    return apiClient.get("api/nomina/users-face-photos/empleados-con-contrato", { params });
   },
   getFotoByUuid(uuid) {
     return apiClient.get(`api/nomina/users-face-photos/${uuid}`);

@@ -8,6 +8,10 @@ import { hablar } from "../../../helpers/voz";
 const hhmm = (date) =>
   date.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" });
 
+function mensajeErrorApi(error, fallback = "Error al registrar. Intenta de nuevo.") {
+  return error?.response?.data?.message || error?.message || fallback;
+}
+
 // ── Teclado PIN ───────────────────────────────────────────────────────────────
 function PinModal({ cedulaMap, empleadosMap, jornadaId, jornadaActiva, kioskoInfo, onRefrescarJornada, onReconocido, onEntradaCompleta, onClose }) {
   const [pin, setPin]       = useState("");
@@ -82,11 +86,12 @@ function PinModal({ cedulaMap, empleadosMap, jornadaId, jornadaActiva, kioskoInf
       );
       onEntradaCompleta(info.nombre, hora);
       setTimeout(onClose, 3000);
-    } catch {
+    } catch (error) {
+      const mensaje = mensajeErrorApi(error);
       setEstado("error");
-      setMsg("Error al registrar. Intenta de nuevo.");
-      decir(jornadaActiva, "Error al registrar. Por favor intenta de nuevo.");
-      setTimeout(() => { setEstado("idle"); setMsg(""); setPin(""); }, 2500);
+      setMsg(mensaje);
+      decir(jornadaActiva, mensaje);
+      setTimeout(() => { setEstado("idle"); setMsg(""); setPin(""); }, 3500);
     }
   };
 
@@ -205,6 +210,7 @@ export default function KioskoScanner({
   const [checkingSession, setChecking]  = useState(false);
   const [guardando, setGuardando]       = useState(false);
   const [exitoMsg, setExitoMsg]         = useState("");
+  const [resultadoTipo, setResultadoTipo] = useState("success");
   const [jornadaCerrada, setJornadaCerrada] = useState(false);
   const [showPin, setShowPin]           = useState(false);
   const [reconocimientoFallido, setReconocimientoFallido] = useState(false);
@@ -214,6 +220,7 @@ export default function KioskoScanner({
     setChecking(false);
     setGuardando(false);
     setExitoMsg("");
+    setResultadoTipo("success");
     setJornadaCerrada(false);
     setReconocimientoFallido(false);
     setTimeout(() => { cooldown.current = false; }, 2000);
@@ -274,6 +281,7 @@ export default function KioskoScanner({
         // Jornada ya cerrada → una sola entrada/salida por día
         if (session && session.hora_salida) {
           setJornadaCerrada(true);
+          setResultadoTipo("warning");
           decir(jornadaActiva, `${info.nombre}, tu jornada de hoy ya fue completada. Hasta mañana.`);
           setExitoMsg(`Tu jornada de hoy ya finalizó, ${info.nombre}.`);
           setTimeout(resetear, 4000);
@@ -307,13 +315,16 @@ export default function KioskoScanner({
           ? `${info.nombre}, entrada marcada a las ${hora}. Ingreso tardío.`
           : `¡Bienvenido, ${info.nombre}! Entrada marcada a las ${hora}.`
         );
+        setResultadoTipo("success");
         onEntradaCompleta(info.nombre, hora);
         setTimeout(resetear, 3500);
 
-      } catch {
-        decir(jornadaActiva, "Error al registrar. Por favor intenta de nuevo.");
-        setExitoMsg("Error al registrar la entrada. Intenta de nuevo.");
-        setTimeout(resetear, 3000);
+      } catch (error) {
+        const mensaje = mensajeErrorApi(error, "Error al registrar la entrada. Intenta de nuevo.");
+        setResultadoTipo("error");
+        decir(jornadaActiva, mensaje);
+        setExitoMsg(mensaje);
+        setTimeout(resetear, 4000);
       } finally {
         setChecking(false);
         setGuardando(false);
@@ -409,16 +420,25 @@ export default function KioskoScanner({
       {/* Mensaje */}
       {exitoMsg && (
         <div className={`rounded-xl px-5 py-4 text-center max-w-xs w-full border ${
-          jornadaCerrada
+          resultadoTipo === "error"
+            ? "bg-red-900/40 border-red-500/30"
+            : jornadaCerrada
             ? "bg-amber-900/40 border-amber-500/30"
             : "bg-green-900/40 border-green-500/30"
         }`}>
-          {!jornadaCerrada && (
+          {!jornadaCerrada && resultadoTipo !== "error" && (
             <p className="text-green-400 text-xs font-semibold uppercase tracking-widest mb-1">
               Registro exitoso
             </p>
           )}
-          <p className={`text-sm font-medium ${jornadaCerrada ? "text-amber-300" : "text-green-200"}`}>
+          {resultadoTipo === "error" && (
+            <p className="text-red-300 text-xs font-semibold uppercase tracking-widest mb-1">
+              Marcación no permitida
+            </p>
+          )}
+          <p className={`text-sm font-medium ${
+            resultadoTipo === "error" ? "text-red-200" : jornadaCerrada ? "text-amber-300" : "text-green-200"
+          }`}>
             {exitoMsg}
           </p>
         </div>

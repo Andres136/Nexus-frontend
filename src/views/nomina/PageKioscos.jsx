@@ -1,7 +1,11 @@
 import { useState, useMemo } from "react";
-import { Search, Plus, Pencil, Monitor } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import PropTypes from "prop-types";
+import { Copy, Link2, Monitor, Pencil, Plus, Power, ShieldOff, Search } from "lucide-react";
 import { useGetKioscos } from "../../hooks/nomina/useGetKioscos";
 import RegisterKiosko from "../../components/nomina/RegisterKiosko";
+import { kioskoDeviceService } from "../../services/nominaService";
+import { showToast } from "../../helpers/utils/showToast";
 
 function Pagination({ meta, page, onPage }) {
   if (!meta || meta.last_page <= 1) return null;
@@ -40,12 +44,24 @@ function Pagination({ meta, page, onPage }) {
     </div>
   );
 }
+Pagination.propTypes = {
+  meta: PropTypes.shape({
+    last_page: PropTypes.number,
+    from: PropTypes.number,
+    to: PropTypes.number,
+    total: PropTypes.number,
+  }),
+  page: PropTypes.number.isRequired,
+  onPage: PropTypes.func.isRequired,
+};
 
 export default function PageKioscos() {
+  const queryClient = useQueryClient();
   const [search, setSearch]       = useState("");
   const [page, setPage]           = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedUuid, setSelectedUuid] = useState(null);
+  const [loadingAction, setLoadingAction] = useState(null);
 
   const params = useMemo(
     () => ({ search: search || undefined, page, per_page: 10 }),
@@ -60,6 +76,72 @@ export default function PageKioscos() {
   const openEdit   = (uuid) => { setSelectedUuid(uuid); setModalOpen(true); };
   const closeModal = () => { setModalOpen(false); setSelectedUuid(null); };
   const handleSearch = (e) => { setSearch(e.target.value); setPage(1); };
+
+  const refreshKioscos = () => queryClient.invalidateQueries(["kioscos"]);
+
+  const copyActivationLink = async (item) => {
+    setLoadingAction(`link-${item.uuid}`);
+    try {
+      const response = await kioskoDeviceService.generateActivationLink(item.uuid);
+      const activationUrl = response.data?.data?.activation_url;
+      const url = activationUrl?.startsWith("http")
+        ? activationUrl
+        : `${window.location.origin}${activationUrl}`;
+
+      await navigator.clipboard.writeText(url);
+      showToast("success", "Link de activación copiado");
+      refreshKioscos();
+    } catch (error) {
+      showToast("error", error.response?.data?.message || "No se pudo generar el link");
+    } finally {
+      setLoadingAction(null);
+    }
+  };
+
+  const toggleActive = async (item) => {
+    setLoadingAction(`status-${item.uuid}`);
+    try {
+      const isActive = item.status === "active";
+      const response = isActive
+        ? await kioskoDeviceService.deactivateKiosco(item.uuid)
+        : await kioskoDeviceService.activateKioscoAdmin(item.uuid);
+      showToast("success", response.data?.message || "Estado actualizado");
+      refreshKioscos();
+    } catch (error) {
+      showToast("error", error.response?.data?.message || "No se pudo actualizar el estado");
+    } finally {
+      setLoadingAction(null);
+    }
+  };
+
+  const revokeKiosco = async (item) => {
+    if (!window.confirm(`¿Revocar el acceso de ${item.name}? El dispositivo deberá activarse de nuevo.`)) return;
+
+    setLoadingAction(`revoke-${item.uuid}`);
+    try {
+      const response = await kioskoDeviceService.revokeKiosco(item.uuid);
+      showToast("success", response.data?.message || "Kiosko revocado");
+      refreshKioscos();
+    } catch (error) {
+      showToast("error", error.response?.data?.message || "No se pudo revocar el kiosko");
+    } finally {
+      setLoadingAction(null);
+    }
+  };
+
+  const statusLabel = {
+    pending: "Pendiente",
+    active: "Activo",
+    inactive: "Inactivo",
+    revoked: "Revocado",
+  };
+
+  const statusClass = {
+    pending: "bg-amber-50 text-amber-700",
+    active: "bg-green-50 text-green-700",
+    inactive: "bg-gray-100 text-gray-600",
+    revoked: "bg-red-50 text-red-700",
+  };
 
   return (
     <div className="p-6">
@@ -99,7 +181,7 @@ export default function PageKioscos() {
           <table className="min-w-full divide-y divide-gray-100 text-sm">
             <thead className="bg-gray-50">
               <tr>
-                {["Dispositivo","Código","IP","Sede","Bodega","Tipo registro","Acciones"].map((h) => (
+                {["Dispositivo","Código","Estado","IP","Sede","Bodega","Tipo registro","Acciones"].map((h) => (
                   <th key={h} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
                 ))}
               </tr>
@@ -128,6 +210,17 @@ export default function PageKioscos() {
                     </span>
                   </td>
 
+                  <td className="px-4 py-3.5">
+                    <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${statusClass[item.status] ?? statusClass.pending}`}>
+                      {statusLabel[item.status] ?? "Pendiente"}
+                    </span>
+                    {item.last_seen_at && (
+                      <p className="mt-1 text-[10px] text-gray-400">
+                        Última actividad: {new Date(item.last_seen_at).toLocaleString("es-CO")}
+                      </p>
+                    )}
+                  </td>
+
                   <td className="px-4 py-3.5 font-mono text-xs text-gray-600">{item.ip_adres}</td>
 
                   <td className="px-4 py-3.5 text-gray-600">{item.sede?.nombre ?? item.sede?.name ?? "—"}</td>
@@ -141,10 +234,39 @@ export default function PageKioscos() {
                   </td>
 
                   <td className="px-4 py-3.5">
-                    <button onClick={() => openEdit(item.uuid)}
-                      className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-800 transition-colors">
-                      <Pencil className="h-3.5 w-3.5" /> Editar
-                    </button>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button onClick={() => openEdit(item.uuid)}
+                        className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-800 transition-colors">
+                        <Pencil className="h-3.5 w-3.5" /> Editar
+                      </button>
+                      <button
+                        onClick={() => copyActivationLink(item)}
+                        disabled={loadingAction === `link-${item.uuid}`}
+                        className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800 disabled:opacity-50 transition-colors"
+                      >
+                        {loadingAction === `link-${item.uuid}` ? <Copy className="h-3.5 w-3.5" /> : <Link2 className="h-3.5 w-3.5" />}
+                        Link
+                      </button>
+                      {item.status !== "pending" && item.status !== "revoked" && (
+                        <button
+                          onClick={() => toggleActive(item)}
+                          disabled={loadingAction === `status-${item.uuid}`}
+                          className="inline-flex items-center gap-1 text-xs font-medium text-gray-600 hover:text-gray-900 disabled:opacity-50 transition-colors"
+                        >
+                          <Power className="h-3.5 w-3.5" />
+                          {item.status === "active" ? "Desactivar" : "Activar"}
+                        </button>
+                      )}
+                      {item.status !== "revoked" && (
+                        <button
+                          onClick={() => revokeKiosco(item)}
+                          disabled={loadingAction === `revoke-${item.uuid}`}
+                          className="inline-flex items-center gap-1 text-xs font-medium text-red-500 hover:text-red-700 disabled:opacity-50 transition-colors"
+                        >
+                          <ShieldOff className="h-3.5 w-3.5" /> Revocar
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

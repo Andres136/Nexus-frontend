@@ -7,11 +7,13 @@ import KioskoScanner from "./KioskoScanner";
 import KioskoAcciones from "./KioskoAcciones";
 import {
   kioskoDeviceService,
-  fotoFacialService,
   horarioOperacionService,
-  jornadaLaboralService,
 } from "../../../services/nominaService";
-import { contratacionService } from "../../../services/nominaService";
+import {
+  getKioskoFingerprint,
+  getKioskoSession,
+  removeKioskoSession,
+} from "../../../helpers/nomina/kioskoSession";
 
 const API_URL    = import.meta.env.VITE_API_URL;
 const STORAGE_URL = API_URL + "/storage/";
@@ -28,10 +30,21 @@ async function loadModels() {
 
 // Carga la imagen a través de la API (con auth) para evitar CORS en storage
 async function loadImageViaApi(uuid) {
+  const deviceUuid = window.location.pathname.match(/^\/kiosko\/([^/]+)/)?.[1];
+  const sessionToken = deviceUuid ? getKioskoSession(deviceUuid) : null;
+  const fingerprint = deviceUuid ? await getKioskoFingerprint() : null;
   const token = localStorage.getItem("token");
-  const url   = `${API_URL}/api/nomina/users-face-photos/${uuid}/image`;
+  const url = sessionToken
+    ? `${API_URL}/api/nomina/kiosko-face-photos/${uuid}/image`
+    : `${API_URL}/api/nomina/users-face-photos/${uuid}/image`;
   const res   = await fetch(url, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: sessionToken
+      ? {
+          "X-Kiosko-Device": deviceUuid,
+          "X-Kiosko-Session": sessionToken,
+          "X-Kiosko-Fingerprint": fingerprint,
+        }
+      : { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const blob    = await res.blob();
@@ -155,7 +168,7 @@ export default function PageKiosko() {
   const { data: instruccionOperativa } = useQuery({
     queryKey: ["horarioOperacionKiosko", fechaOperacion],
     queryFn: async () => {
-      const response = await horarioOperacionService.getHoy({ fecha: fechaOperacion });
+      const response = await horarioOperacionService.getKioskoHoy();
       return response.data?.data ?? null;
     },
     enabled: status === "ready" && jornadasLaborales.length > 0,
@@ -176,7 +189,7 @@ export default function PageKiosko() {
     const instruccionDiaria = await queryClient.fetchQuery({
       queryKey: ["horarioOperacionKiosko", fechaOperacion],
       queryFn: async () => {
-        const response = await horarioOperacionService.getHoy({ fecha: fechaOperacion });
+        const response = await horarioOperacionService.getKioskoHoy();
         return response.data?.data ?? null;
       },
       staleTime: 0,
@@ -191,35 +204,43 @@ export default function PageKiosko() {
   useEffect(() => {
     async function init() {
       try {
-        // 1. Cargar modelos
+        // 1. Validar dispositivo activado
+        setLoadMsg("Validando dispositivo...");
+        const sessionToken = getKioskoSession(code);
+        if (!sessionToken) {
+          throw new Error("Este kiosko no está activado en este dispositivo. Usa el link de activación generado por administración.");
+        }
+
+        const fingerprint = await getKioskoFingerprint();
+        const validationPayload = {
+          uuid: code,
+          session_token: sessionToken,
+          fingerprint,
+        };
+        const validation = await kioskoDeviceService.bootstrapDevice(validationPayload);
+        const bootstrap = validation.data?.data;
+        const kiosko = bootstrap?.device;
+        if (!kiosko?.id) throw new Error("No fue posible validar este kiosko.");
+        setKioskoInfo({ id: kiosko.id, uuid: kiosko.uuid, name: kiosko.name });
+
+        // 2. Cargar modelos
         setLoadMsg("Cargando modelos de reconocimiento facial...");
         await loadModels();
 
-        // 2. Obtener info del kiosko por código
-        setLoadMsg("Identificando dispositivo...");
-        const kRes = await kioskoDeviceService.getKioscos({ search: code, per_page: 5 });
-        const kData = kRes.data?.data?.data ?? kRes.data?.data ?? [];
-        const kiosko = kData.find((k) => k.code === code) ?? kData[0];
-        if (!kiosko) throw new Error(`Kiosko con código "${code}" no encontrado.`);
-        setKioskoInfo({ id: kiosko.id, uuid: kiosko.uuid, name: kiosko.name });
-
         // 3. Primera jornada activa (fallback para horario_laboral_id)
         setLoadMsg("Cargando jornadas laborales...");
-        const jRes = await jornadaLaboralService.getJornadas({ per_page: 50 });
-        const jornadas = jRes.data?.data?.data ?? jRes.data?.data ?? [];
+        const jornadas = bootstrap?.jornadas ?? [];
         setJornadasLaborales(jornadas);
         const jornadaBase = jornadas.find((j) => j.status !== false) ?? jornadas[0];
         if (!jornadaBase) throw new Error("No hay jornadas laborales configuradas.");
 
         // 4. Empleados (nombre por userId)
         setLoadMsg("Cargando empleados...");
-        const eRes = await contratacionService.getEmpleados();
-        const empleados = eRes.data ?? [];
+        const empleados = bootstrap?.empleados ?? [];
 
         // 5. Fotos faciales + construir matcher
         setLoadMsg("Cargando fotos faciales...");
-        const fRes = await fotoFacialService.getFotos({});
-        const fotos = fRes.data?.data ?? fRes.data ?? [];
+        const fotos = bootstrap?.fotos ?? [];
 
         // Mapa userId → { nombre, photoUrl }
         const mapa = new Map();
@@ -243,7 +264,10 @@ export default function PageKiosko() {
 
         setStatus("ready");
       } catch (err) {
-        setErrorMsg(err.message || "Error al inicializar el kiosko.");
+        if (err.response?.status === 403) {
+          removeKioskoSession(code);
+        }
+        setErrorMsg(err.response?.data?.message || err.message || "Error al inicializar el kiosko.");
         setStatus("error");
       }
     }

@@ -15,6 +15,7 @@ import {
   Upload,
   X,
 } from "lucide-react";
+import InstruccionOperativaDia from "../../components/nomina/InstruccionOperativaDia";
 import { useGetJornadaLaboral } from "../../hooks/nomina/useGetJornadaLaboral";
 import { configuracionNominaService, horarioOperacionService, jornadaLaboralService } from "../../services/nominaService";
 import { showToast } from "../../helpers/utils/showToast";
@@ -95,6 +96,32 @@ function ajustarTiempo(value, parte, delta, fallback) {
     actual.minuto = (actual.minuto + delta + 60) % 60;
   }
   return `${pad(actual.hora)}:${pad(actual.minuto)}`;
+}
+
+function sumarMinutosHora(value, minutos) {
+  if (!value || !minutos) return "";
+  const { hora, minuto } = separarHora(value);
+  const total = (hora * 60 + minuto + Number(minutos)) % (24 * 60);
+  const normalizado = total < 0 ? total + (24 * 60) : total;
+  return `${pad(Math.floor(normalizado / 60))}:${pad(normalizado % 60)}`;
+}
+
+function aplicarRegresosPorDuracion(data) {
+  const next = { ...data };
+
+  if (next.hora_salida_pausa && next.duracion_pausa_minutos) {
+    next.hora_ingreso_pausa = sumarMinutosHora(next.hora_salida_pausa, next.duracion_pausa_minutos);
+  } else if (!next.hora_salida_pausa) {
+    next.hora_ingreso_pausa = "";
+  }
+
+  if (next.hora_salida_almuerzo && next.duracion_almuerzo_minutos) {
+    next.hora_ingreso_almuerzo = sumarMinutosHora(next.hora_salida_almuerzo, next.duracion_almuerzo_minutos);
+  } else if (!next.hora_salida_almuerzo) {
+    next.hora_ingreso_almuerzo = "";
+  }
+
+  return next;
 }
 
 function prepararForm(jornada) {
@@ -324,12 +351,12 @@ export default function PageConfiguracionNomina() {
   });
 
   const handleTimeChange = (name, value) => {
-    setForm((prev) => ({ ...prev, [name]: value }));
+    setForm((prev) => aplicarRegresosPorDuracion({ ...prev, [name]: value }));
   };
 
   const handleNumber = (event) => {
     const { name, value } = event.target;
-    setForm((prev) => ({ ...prev, [name]: Number(value) }));
+    setForm((prev) => aplicarRegresosPorDuracion({ ...prev, [name]: Number(value) }));
   };
 
   const handleConfig = (event) => {
@@ -339,11 +366,14 @@ export default function PageConfiguracionNomina() {
 
   const handleInstruccion = (event) => {
     const { name, value } = event.target;
-    setInstruccionForm((prev) => ({ ...prev, [name]: value }));
+    setInstruccionForm((prev) => aplicarRegresosPorDuracion({
+      ...prev,
+      [name]: name.includes("duracion") ? Number(value) : value,
+    }));
   };
 
   const handleInstruccionTime = (name, value) => {
-    setInstruccionForm((prev) => ({ ...prev, [name]: value }));
+    setInstruccionForm((prev) => aplicarRegresosPorDuracion({ ...prev, [name]: value }));
   };
 
   const aplicarDefault = () => {
@@ -563,103 +593,16 @@ export default function PageConfiguracionNomina() {
         </div>
       </form>
 
-      <form onSubmit={guardarInstruccion} className="mb-5 rounded-xl border border-gray-200 bg-white shadow-sm">
-        <div className="flex flex-col gap-3 border-b border-gray-100 px-5 py-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h2 className="text-lg font-bold text-gray-900">Instrucción operativa del día</h2>
-            <p className="text-sm text-gray-500">El kiosko usa estos horarios solo para la fecha indicada, por encima de la jornada base.</p>
-          </div>
-          <button
-            type="submit"
-            disabled={loadingInstruccion || instruccionMutation.isPending}
-            className="inline-flex h-10 items-center gap-2 rounded-lg bg-indigo-600 px-4 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
-          >
-            <Save className="h-4 w-4" />
-            {instruccionMutation.isPending ? "Guardando..." : "Guardar instrucción"}
-          </button>
-        </div>
-        <div className="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-4">
-          <label className="block">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Fecha</span>
-            <input
-              type="date"
-              name="fecha"
-              value={instruccionForm.fecha}
-              onChange={handleInstruccion}
-              className="mt-1 h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-800 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
-            />
-          </label>
-
-          <label className="block">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Jornada base</span>
-            <select
-              name="jornada_laboral_id"
-              value={instruccionForm.jornada_laboral_id}
-              onChange={handleInstruccion}
-              className="mt-1 h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-800 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
-            >
-              <option value="">Usar jornada activa del kiosko</option>
-              {lista.map((item) => (
-                <option key={item.uuid} value={item.id}>
-                  {item.nombre} · {item.horas_semanales} h
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <CampoHoraStepper label="Entrada desde" name="hora_entrada" value={instruccionForm.hora_entrada} onChange={handleInstruccionTime} icon={AlarmClock} fallback="07:00" />
-          <CampoHoraStepper label="Tardía después de" name="hora_entrada_limite" value={instruccionForm.hora_entrada_limite} onChange={handleInstruccionTime} icon={AlarmClock} fallback="08:00" />
-          <CampoHoraStepper label="Salida mínima" name="hora_salida" value={instruccionForm.hora_salida} onChange={handleInstruccionTime} icon={CheckCircle2} fallback="17:00" />
-          <CampoHoraStepper label="Salida a pausa" name="hora_salida_pausa" value={instruccionForm.hora_salida_pausa} onChange={handleInstruccionTime} icon={TimerReset} optional fallback="11:00" />
-          <CampoHoraStepper label="Regreso de pausa" name="hora_ingreso_pausa" value={instruccionForm.hora_ingreso_pausa} onChange={handleInstruccionTime} icon={TimerReset} optional fallback="11:15" />
-          <CampoHoraStepper label="Salida a almuerzo" name="hora_salida_almuerzo" value={instruccionForm.hora_salida_almuerzo} onChange={handleInstruccionTime} icon={Coffee} optional fallback="15:00" />
-          <CampoHoraStepper label="Regreso de almuerzo" name="hora_ingreso_almuerzo" value={instruccionForm.hora_ingreso_almuerzo} onChange={handleInstruccionTime} icon={Coffee} optional fallback="16:00" />
-
-          <label className="block">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Duración pausa</span>
-            <div className="mt-1 flex h-11 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3">
-              <input
-                type="number"
-                min="1"
-                max="180"
-                name="duracion_pausa_minutos"
-                value={instruccionForm.duracion_pausa_minutos}
-                onChange={handleInstruccion}
-                className="w-full border-none bg-transparent text-sm text-gray-800 outline-none"
-              />
-              <span className="text-xs text-gray-400">min</span>
-            </div>
-          </label>
-
-          <label className="block">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Duración almuerzo</span>
-            <div className="mt-1 flex h-11 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3">
-              <input
-                type="number"
-                min="1"
-                max="240"
-                name="duracion_almuerzo_minutos"
-                value={instruccionForm.duracion_almuerzo_minutos}
-                onChange={handleInstruccion}
-                className="w-full border-none bg-transparent text-sm text-gray-800 outline-none"
-              />
-              <span className="text-xs text-gray-400">min</span>
-            </div>
-          </label>
-
-          <label className="block md:col-span-2">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Motivo</span>
-            <input
-              type="text"
-              name="motivo"
-              value={instruccionForm.motivo ?? ""}
-              onChange={handleInstruccion}
-              placeholder="Ej: Bodega sale a pausa a las 11:00 por instrucción del líder"
-              className="mt-1 h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-800 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
-            />
-          </label>
-        </div>
-      </form>
+      <InstruccionOperativaDia
+        CampoHoraStepper={CampoHoraStepper}
+        form={instruccionForm}
+        jornadas={lista}
+        loading={loadingInstruccion}
+        saving={instruccionMutation.isPending}
+        onSubmit={guardarInstruccion}
+        onFieldChange={handleInstruccion}
+        onTimeChange={handleInstruccionTime}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-5">
         <aside className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 h-fit">

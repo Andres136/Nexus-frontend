@@ -112,6 +112,7 @@ import DashboardOperativo from "../views/calidad/DashboardOperativo";
 import Contabilidad from "../views/contabilidad/Contabilidad";
 import NominaLayout from "../layouts/NominaLayout";
 import PageKiosko from "../views/nomina/kiosko/PageKiosko";
+import PageKioskoActivacion from "../views/nomina/kiosko/PageKioskoActivacion";
 import PageCreateFacturas from "../views/contabilidad/PageCreateFacturas";
 import PageCosteos from "../views/contabilidad/PageCosteos";
 import CatalogoContable from "../views/contabilidad/CatalogoContable";
@@ -871,6 +872,7 @@ export default function Router() {
       </Route>
 
       {/* 🔹 Kiosko de asistencia (público, sin login) */}
+      <Route path="/kiosko/activar/:token" element={<PageKioskoActivacion />} />
       <Route path="/kiosko/:code" element={<PageKiosko />} />
 
       {/* 🔹 Redirección si la ruta no existe */}

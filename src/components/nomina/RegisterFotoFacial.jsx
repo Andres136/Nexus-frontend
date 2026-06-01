@@ -30,7 +30,7 @@ export default function RegisterFotoFacial({ uuid = null, defaultUsersId = null,
   const [loading, setLoading]           = useState(false);
   const [loadingData, setLoadingData]   = useState(false);
 
-  const { empleados, isLoading: loadingEmpleados } = useGetEmpleados();
+  const { empleados, isLoading: loadingEmpleados } = useGetEmpleados({ con_contrato: true });
   const isEdit = !!uuid;
 
   useEffect(() => {
@@ -49,7 +49,7 @@ export default function RegisterFotoFacial({ uuid = null, defaultUsersId = null,
       })
       .catch(() => showToast("error", "Error al cargar la foto"))
       .finally(() => setLoadingData(false));
-  }, [uuid]);
+  }, [uuid, defaultUsersId]);
 
   const handleFile = (e) => {
     const f = e.target.files?.[0];
@@ -79,6 +79,7 @@ export default function RegisterFotoFacial({ uuid = null, defaultUsersId = null,
 
       showToast("success", res.data.message || (isEdit ? "Actualizada" : "Registrada"));
       queryClient.invalidateQueries(["fotosFaciales"]);
+      queryClient.invalidateQueries(["empleadosFotosFaciales"]);
       onClose?.();
     } catch (error) {
       const data = error.response?.data;
@@ -93,11 +94,6 @@ export default function RegisterFotoFacial({ uuid = null, defaultUsersId = null,
     fieldErrors[field] && (
       <p className="mt-0.5 text-[10px] text-red-500">{fieldErrors[field][0]}</p>
     );
-
-  const inputBase = (field) =>
-    `block w-full h-[34px] px-2.5 rounded-md border text-[0.8125rem] focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-      fieldErrors[field] ? "border-red-400 bg-red-50" : "border-gray-300 bg-white"
-    }`;
 
   if (isEdit && loadingData) {
     return (

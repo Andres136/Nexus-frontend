@@ -6,6 +6,21 @@ import { hablar } from "../../../helpers/voz";
 const hhmm = (date) =>
   date.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" });
 
+function horaServidor(valor) {
+  if (!valor) return null;
+  const match = String(valor).match(/(?:T|\s)(\d{2}):(\d{2})/);
+  if (!match) return null;
+  const hour = Number(match[1]);
+  const minute = match[2];
+  const hour12 = hour % 12 || 12;
+  const suffix = hour >= 12 ? "p. m." : "a. m.";
+  return `${String(hour12).padStart(2, "0")}:${minute} ${suffix}`;
+}
+
+function mensajeErrorApi(error, fallback = "Error al registrar. Intenta de nuevo.") {
+  return error?.response?.data?.message || error?.message || fallback;
+}
+
 const minsToHM = (mins) => {
   if (!mins) return "0 h 0 min";
   const h = Math.floor(mins / 60);
@@ -20,14 +35,15 @@ const tiempoHHMMSS = () => {
 
 function parseTime(str) {
   if (!str) return null;
-  const d = new Date(str);
-  return isNaN(d) ? null : d;
-}
+  const match = String(str).match(/(?:T|\s)(\d{2}):(\d{2})(?::(\d{2}))?/);
+  if (!match) {
+    const d = new Date(str);
+    return isNaN(d) ? null : d;
+  }
 
-function minutosDesde(fechaInicio, fechaFin = new Date()) {
-  const inicio = parseTime(fechaInicio);
-  if (!inicio) return 0;
-  return Math.max(0, Math.round((fechaFin - inicio) / 60000));
+  const d = new Date();
+  d.setHours(Number(match[1]), Number(match[2]), Number(match[3] ?? 0), 0);
+  return isNaN(d) ? null : d;
 }
 
 // Mensajes de voz por acción
@@ -164,10 +180,12 @@ export default function KioskoAcciones({ empleado, kioskoInfo, jornadaActiva, on
       setTipoMensaje("exito");
       setExitoMsg(mensajePantalla);
       setTimeout(() => onDone(empleado.nombre, hhmm(new Date())), 3000);
-    } catch {
-      decir(jornada, "Error al registrar. Por favor intenta de nuevo.");
-      setExitoMsg("Error al registrar. Intenta de nuevo.");
-      setTimeout(onCancelar, 2500);
+    } catch (error) {
+      const mensaje = mensajeErrorApi(error);
+      setTipoMensaje("error");
+      setEsperaMsg(mensaje);
+      decir(jornada, mensaje);
+      setTimeout(onCancelar, 4000);
     } finally {
       setGuardando(false);
     }
@@ -247,6 +265,7 @@ export default function KioskoAcciones({ empleado, kioskoInfo, jornadaActiva, on
     jornadaSincronizada,
     llegadaTarde,
     onCancelar,
+    session?.hora_salida,
     session?.hora_salida_almuerzo,
     session?.hora_salida_brake,
   ]);
@@ -285,7 +304,7 @@ export default function KioskoAcciones({ empleado, kioskoInfo, jornadaActiva, on
             <p className="text-indigo-200 text-sm font-bold mt-0.5">
               {enPausa    ? "En pausa"
                : enAlmuerzo ? "En almuerzo"
-               : entrada  ? `En jornada desde ${hhmm(entrada)}`
+               : entrada  ? `En jornada desde ${horaServidor(session?.hora_entrada) ?? hhmm(entrada)}`
                : "Sesión activa"}
             </p>
             {llegadaTarde && (
@@ -307,11 +326,37 @@ export default function KioskoAcciones({ empleado, kioskoInfo, jornadaActiva, on
             <p className="text-green-200 text-sm font-medium">{exitoMsg}</p>
           </div>
         ) : (
-          <div className={`${tipoMensaje === "alerta" || tipoMensaje === "tarde" ? "bg-amber-900/30 border-amber-500/30" : "bg-indigo-900/30 border-indigo-500/30"} border rounded-xl px-5 py-5 text-center`}>
-            <p className={`${tipoMensaje === "alerta" || tipoMensaje === "tarde" ? "text-amber-300" : "text-indigo-300"} text-xs font-semibold uppercase tracking-widest mb-1`}>
-              {guardando ? "Registrando" : tipoMensaje === "alerta" ? "Salida no permitida" : llegadaTarde ? "Llegada tarde" : "Validando horario"}
+          <div className={`${
+            tipoMensaje === "error"
+              ? "bg-red-900/30 border-red-500/30"
+              : tipoMensaje === "alerta" || tipoMensaje === "tarde"
+              ? "bg-amber-900/30 border-amber-500/30"
+              : "bg-indigo-900/30 border-indigo-500/30"
+          } border rounded-xl px-5 py-5 text-center`}>
+            <p className={`${
+              tipoMensaje === "error"
+                ? "text-red-300"
+                : tipoMensaje === "alerta" || tipoMensaje === "tarde"
+                ? "text-amber-300"
+                : "text-indigo-300"
+            } text-xs font-semibold uppercase tracking-widest mb-1`}>
+              {guardando
+                ? "Registrando"
+                : tipoMensaje === "error"
+                ? "Marcación no permitida"
+                : tipoMensaje === "alerta"
+                ? "Salida no permitida"
+                : llegadaTarde
+                ? "Llegada tarde"
+                : "Validando horario"}
             </p>
-            <p className={`${tipoMensaje === "alerta" || tipoMensaje === "tarde" ? "text-amber-100" : "text-indigo-100"} text-sm font-medium`}>{esperaMsg}</p>
+            <p className={`${
+              tipoMensaje === "error"
+                ? "text-red-100"
+                : tipoMensaje === "alerta" || tipoMensaje === "tarde"
+                ? "text-amber-100"
+                : "text-indigo-100"
+            } text-sm font-medium`}>{esperaMsg}</p>
           </div>
         )}
       </div>

@@ -1,6 +1,8 @@
 import { useState, useMemo } from "react";
+import PropTypes from "prop-types";
 import { Search, Loader2, Clock, Calendar } from "lucide-react";
 import { useGetWorkSessions } from "../../hooks/nomina/useGetWorkSessions";
+import { useSedes } from "../../hooks/useSedes";
 
 function minsToHM(mins) {
   if (!mins && mins !== 0) return "—";
@@ -13,7 +15,16 @@ function minsToHM(mins) {
 
 function fmtHora(dt) {
   if (!dt) return "—";
-  return new Date(dt).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit", hour12: true });
+  const match = String(dt).match(/(?:T|\s)(\d{2}):(\d{2})/);
+  if (!match) {
+    return new Date(dt).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit", hour12: true });
+  }
+
+  const hour = Number(match[1]);
+  const minute = match[2];
+  const hour12 = hour % 12 || 12;
+  const suffix = hour >= 12 ? "p. m." : "a. m.";
+  return `${String(hour12).padStart(2, "0")}:${minute} ${suffix}`;
 }
 
 function fmtFecha(d) {
@@ -75,6 +86,17 @@ function Pagination({ meta, page, onPage }) {
   );
 }
 
+Pagination.propTypes = {
+  meta: PropTypes.shape({
+    last_page: PropTypes.number,
+    from: PropTypes.number,
+    to: PropTypes.number,
+    total: PropTypes.number,
+  }),
+  page: PropTypes.number.isRequired,
+  onPage: PropTypes.func.isRequired,
+};
+
 export default function PageWorkSessions() {
   const today = new Date().toISOString().slice(0, 10);
   const firstDay = today.slice(0, 8) + "01";
@@ -82,23 +104,29 @@ export default function PageWorkSessions() {
   const [search, setSearch]         = useState("");
   const [fechaInicio, setFechaInicio] = useState(firstDay);
   const [fechaFin, setFechaFin]     = useState(today);
+  const [sedeId, setSedeId]         = useState("");
   const [page, setPage]             = useState(1);
+  const { sedes } = useSedes();
+  const sedesLista = Array.isArray(sedes) ? sedes : [];
 
   const params = useMemo(() => ({
     search:       search || undefined,
     fecha_inicio: fechaInicio || undefined,
     fecha_fin:    fechaFin    || undefined,
+    sede_id:      sedeId || undefined,
     page,
     per_page: 15,
-  }), [search, fechaInicio, fechaFin, page]);
+  }), [search, fechaInicio, fechaFin, sedeId, page]);
 
   const { workSessions, isLoading } = useGetWorkSessions(params);
+  console.log(workSessions);
   const lista = workSessions?.data?.data ?? [];
   const meta  = workSessions?.data ?? null;
 
   const handleSearch     = (e) => { setSearch(e.target.value); setPage(1); };
   const handleFechaInicio = (e) => { setFechaInicio(e.target.value); setPage(1); };
   const handleFechaFin   = (e) => { setFechaFin(e.target.value); setPage(1); };
+  const handleSede       = (e) => { setSedeId(e.target.value); setPage(1); };
 
   return (
     <div className="p-6">
@@ -151,6 +179,19 @@ export default function PageWorkSessions() {
         {meta?.total != null && (
           <span className="text-xs text-gray-400 ml-1">{meta.total} registros</span>
         )}
+
+        <select
+          value={sedeId}
+          onChange={handleSede}
+          className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        >
+          <option value="">Todas las sedes</option>
+          {sedesLista.map((sede) => (
+            <option key={sede.id} value={sede.id}>
+              {sede.nombre ?? sede.name}
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* Tabla */}
