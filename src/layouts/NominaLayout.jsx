@@ -42,8 +42,7 @@ import PageVacaciones from "../views/nomina/PageVacaciones";
 import PageLicencias from "../views/nomina/PageLicencias";
 import PageHorasExtras from "../views/nomina/PageHorasExtras";
 import PageReconocimientoFacial from "../views/nomina/PageReconocimientoFacial";
-import PageDesprendibles from "../views/nomina/PageDesprendibles";
-import PageCertificadoLaboral from "../views/nomina/PageCertificadoLaboral";
+
 import PageLlamadosAtencion from "../views/nomina/PageLlamadosAtencion";
 import PageDescargos from "../views/nomina/PageDescargos";
 import PageConfiguracionNomina from "../views/nomina/PageConfiguracionNomina";
@@ -130,33 +129,18 @@ const NAV_ITEMS = [
         icon: Baby,
         component: <PageLicencias />,
       },
-    ],
-  },
-  {
-    id: "portal-empleado",
-    label: "Portal del Empleado",
-    icon: FileBadge,
-    tabs: [
-      {
-        id: "desprendibles",
-        label: "Desprendibles de Pago",
-        icon: FileText,
-        component: <PageDesprendibles />,
-      },
-      {
-        id: "certificado-laboral",
-        label: "Certificado Laboral",
-        icon: FileText,
-        component: <PageCertificadoLaboral />,
-      },
-    ],
-  },
-  {
+        {
     id: "incapacidades",
     label: "Incapacidades",
     icon: Stethoscope,
     component: <PageIncapacidades />,
   },
+    ],
+
+    
+  },
+
+
   {
     id: "asistencia",
     label: "Asistencia",

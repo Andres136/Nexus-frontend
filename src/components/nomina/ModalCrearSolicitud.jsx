@@ -57,10 +57,13 @@ function daysBetween(inicio, fin) {
   return Math.floor((end - start) / 86400000) + 1;
 }
 
-export default function ModalCrearSolicitud({ tipo, onClose, onSubmit, loading }) {
+export default function ModalCrearSolicitud({ tipo, onClose, onSubmit, loading, defaultUserId = null }) {
   const config = CONFIG[tipo];
   const { empleados, isLoading } = useGetEmpleados();
-  const [form, setForm] = useState(config.initial);
+  const [form, setForm] = useState(() => ({
+    ...config.initial,
+    ...(defaultUserId ? { user_id: defaultUserId } : {}),
+  }));
   const [errors, setErrors] = useState({});
 
   const title = useMemo(() => config.title, [config.title]);
@@ -111,17 +114,19 @@ export default function ModalCrearSolicitud({ tipo, onClose, onSubmit, loading }
         </div>
 
         <div className="p-6 space-y-4">
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Empleado</label>
-            <select name="user_id" value={form.user_id} onChange={handleChange} className={fieldClass("user_id")} disabled={isLoading}>
-              <option value="">{isLoading ? "Cargando empleados..." : "Seleccione empleado"}</option>
-              {empleados.map((empleado) => (
-                <option key={empleado.value} value={empleado.value}>{empleado.label}</option>
-              ))}
-            </select>
-            <FieldError name="user_id" />
-            <FieldError name="users" />
-          </div>
+          {!defaultUserId && (
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Empleado</label>
+              <select name="user_id" value={form.user_id} onChange={handleChange} className={fieldClass("user_id")} disabled={isLoading}>
+                <option value="">{isLoading ? "Cargando empleados..." : "Seleccione empleado"}</option>
+                {empleados.map((empleado) => (
+                  <option key={empleado.value} value={empleado.value}>{empleado.label}</option>
+                ))}
+              </select>
+              <FieldError name="user_id" />
+              <FieldError name="users" />
+            </div>
+          )}
 
           {tipo === "permiso" && (
             <>

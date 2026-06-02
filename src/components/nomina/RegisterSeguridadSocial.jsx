@@ -52,6 +52,29 @@ export default function RegisterSeguridadSocial({ uuid = null, onClose }) {
           {fieldErrors.nombre && <p className="mt-1 text-xs text-red-500">{fieldErrors.nombre[0]}</p>}
         </div>
 
+        {/* Tipo */}
+        <div>
+          <label htmlFor="tipo" className="block text-sm font-medium text-gray-700 mb-1">
+            Tipo de entidad <span className="text-red-500">*</span>
+          </label>
+          <select
+            id="tipo"
+            name="tipo"
+            value={formData.tipo}
+            onChange={handleChange}
+            className={`block w-full h-10 px-3 rounded-md border shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
+              fieldErrors.tipo ? "border-red-400 bg-red-50" : "border-gray-300"
+            }`}
+          >
+            <option value="">Selecciona un tipo...</option>
+            <option value="eps">EPS — Entidad Promotora de Salud</option>
+            <option value="arl">ARL — Administradora de Riesgos Laborales</option>
+            <option value="afp">AFP — Fondo de Pensiones</option>
+            <option value="ccf">CCF — Caja de Compensación Familiar</option>
+          </select>
+          {fieldErrors.tipo && <p className="mt-1 text-xs text-red-500">{fieldErrors.tipo[0]}</p>}
+        </div>
+
         {/* NIT */}
         <div>
           <label htmlFor="nit" className="block text-sm font-medium text-gray-700 mb-1">

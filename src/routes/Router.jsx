@@ -124,6 +124,7 @@ import RegisterProductoNoConforme from "../components/calidad/RegisterProductoNo
 import EncuestasPage from "../views/crm/EncuestasPage";
 import ResultadosEncuesta from "../views/crm/ResultadosEncuesta";
 import EncuestaPublica from "../views/crm/EncuestaPublica";
+import PagePortalEmpleado from "../views/nomina/PagePortalEmpleado";
 
 
 export default function Router() {
@@ -638,7 +639,17 @@ export default function Router() {
               </DynamicProtectedRoute>
             }
           />
-       
+
+
+           <Route
+            path="/auth/crm/nomina/portal-empleado"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/nomina/portal-empleado">
+                <PagePortalEmpleado />
+              </DynamicProtectedRoute>
+            }
+          />
+
 
       {/* 🔹Fin de  Rutas para Nomina */}
 

@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as pdfjs from "pdfjs-dist";
 import RegisterIncapacidad from "../../components/nomina/RegisterIncapacidad";
 import { useGetIncapacidades } from "../../hooks/nomina/useGetIncapacidades";
-import { incapacidadService } from "../../services/nominaService";
+import { incapacidadService, portalEmpleadoService } from "../../services/nominaService";
 import { showToast } from "../../helpers/utils/showToast";
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -11,17 +11,30 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   import.meta.url
 ).toString();
 
-export default function PageIncapacidades() {
+export default function PageIncapacidades({ portalMode = false }) {
   const queryClient = useQueryClient();
-  const { incapacidades, isLoading } = useGetIncapacidades();
+
+  const portalQuery = useQuery({
+    queryKey: ["incapacidades-portal"],
+    queryFn: () => portalEmpleadoService.getIncapacidades().then((r) => r.data),
+    enabled: portalMode,
+    staleTime: 1000 * 60 * 2,
+  });
+
+  const { incapacidades, isLoading: isLoadingAdmin } = useGetIncapacidades(
+    portalMode ? { enabled: false } : {}
+  );
+
+  const isLoading = portalMode ? portalQuery.isLoading : isLoadingAdmin;
+  const rawData   = portalMode ? portalQuery.data : incapacidades;
+  const lista = rawData?.data?.data ?? rawData?.data ?? [];
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedUuid, setSelectedUuid] = useState(null);
   const [revisando, setRevisando] = useState(null);
   const [revisionItem, setRevisionItem] = useState(null);
   const [observacionRevision, setObservacionRevision] = useState("");
+  const [soporteItem, setSoporteItem] = useState(null);
   const [soportePreview, setSoportePreview] = useState({ pages: [], imageUrl: null, type: "", loading: false, error: "" });
-
-  const lista = incapacidades?.data?.data ?? [];
 
   const openCreate = () => {
     setSelectedUuid(null);
@@ -59,6 +72,7 @@ export default function PageIncapacidades() {
       });
       showToast("success", res.data.message || "Incapacidad revisada");
       queryClient.invalidateQueries(["incapacidades"]);
+      queryClient.invalidateQueries(["incapacidades-portal"]);
       closeRevision();
     } catch {
       showToast("error", "Error al revisar la incapacidad");
@@ -91,8 +105,10 @@ export default function PageIncapacidades() {
       return pages;
     };
 
+    const activeItem = revisionItem ?? soporteItem;
+
     const cargarSoporte = async () => {
-      if (!revisionItem?.uuid || !revisionItem?.soporte_url) {
+      if (!activeItem?.uuid || !activeItem?.soporte_url) {
         setSoportePreview({ pages: [], imageUrl: null, type: "", loading: false, error: "" });
         return;
       }
@@ -100,7 +116,7 @@ export default function PageIncapacidades() {
       setSoportePreview({ pages: [], imageUrl: null, type: "", loading: true, error: "" });
 
       try {
-        const response = await incapacidadService.soporteIncapacidad(revisionItem.uuid);
+        const response = await incapacidadService.soporteIncapacidad(activeItem.uuid);
         const contentType = response.headers["content-type"] || "";
         const blob = new Blob([response.data], { type: contentType });
 
@@ -147,10 +163,10 @@ export default function PageIncapacidades() {
       cancelled = true;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [revisionItem]);
+  }, [revisionItem, soporteItem]);
 
-  const renderSoportePreview = () => {
-    if (!revisionItem?.soporte_url) {
+  const renderSoportePreview = (item) => {
+    if (!item?.soporte_url) {
       return (
         <div className="flex h-[520px] items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 text-sm text-gray-400">
           Esta incapacidad no tiene soporte adjunto.
@@ -220,7 +236,9 @@ export default function PageIncapacidades() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-semibold text-gray-800">Incapacidades</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Gestiona las incapacidades médicas del personal.</p>
+          <p className="text-sm text-gray-500 mt-0.5">
+            {portalMode ? "Tus incapacidades médicas registradas." : "Gestiona las incapacidades médicas del personal."}
+          </p>
         </div>
         <button
           onClick={openCreate}
@@ -252,15 +270,9 @@ export default function PageIncapacidades() {
             <table className="min-w-full divide-y divide-gray-200 text-sm">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Empleado</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Entidad</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Inicio</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fin</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Soporte</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revisado por</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                  {[...["Empleado","Tipo","Entidad","Inicio","Fin","Estado","Soporte","Revisión"], ...(!portalMode ? ["Revisado por","Acciones"] : [])].map((h) => (
+                    <th key={h} className={`px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap ${h === "Acciones" ? "text-right" : "text-left"}`}>{h}</th>
+                  ))}
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-100">
@@ -282,14 +294,23 @@ export default function PageIncapacidades() {
                     </td>
                     <td className="px-6 py-4">
                       {item.soporte_url ? (
-                        <span className="inline-flex rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700">
-                          Cargado
-                        </span>
+                        portalMode ? (
+                          <button
+                            onClick={() => setSoporteItem(item)}
+                            className="inline-flex rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700 hover:bg-indigo-100 transition-colors"
+                          >
+                            Ver soporte
+                          </button>
+                        ) : (
+                          <span className="inline-flex rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700">
+                            Cargado
+                          </span>
+                        )
                       ) : (
                         <span className="text-gray-400 text-xs">Sin soporte</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-gray-500 text-xs">
+                    <td className="px-6 py-4">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${estadoRevisionClass(item.estado_revision)}`}>
                         {item.estado_revision === "aprobada"
                           ? "Aprobada"
@@ -297,28 +318,34 @@ export default function PageIncapacidades() {
                             ? "Rechazada"
                             : "Pendiente"}
                       </span>
-                      {item.revisor?.name && (
-                        <p className="mt-1 text-gray-400">{item.revisor.name}</p>
-                      )}
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-3">
-                        <button
-                          onClick={() => openEdit(item.uuid)}
-                          className="text-indigo-600 hover:text-indigo-800 text-xs font-medium transition-colors"
-                        >
-                          Editar
-                        </button>
-                        {item.estado_revision !== "aprobada" && (
-                          <button
-                            onClick={() => openRevision(item)}
-                            className="text-emerald-600 hover:text-emerald-800 text-xs font-medium transition-colors disabled:opacity-50"
-                          >
-                            Revisar
-                          </button>
-                        )}
-                      </div>
-                    </td>
+                    {!portalMode && (
+                      <>
+                        <td className="px-6 py-4 text-gray-500 text-xs">
+                          {item.revisor?.name && (
+                            <span className="text-gray-400">{item.revisor.name}</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-3">
+                            <button
+                              onClick={() => openEdit(item.uuid)}
+                              className="text-indigo-600 hover:text-indigo-800 text-xs font-medium transition-colors"
+                            >
+                              Editar
+                            </button>
+                            {item.estado_revision !== "aprobada" && (
+                              <button
+                                onClick={() => openRevision(item)}
+                                className="text-emerald-600 hover:text-emerald-800 text-xs font-medium transition-colors disabled:opacity-50"
+                              >
+                                Revisar
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -367,7 +394,7 @@ export default function PageIncapacidades() {
 
             <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
               <div>
-                {renderSoportePreview()}
+                {renderSoportePreview(revisionItem)}
               </div>
 
               <div className="space-y-4">
@@ -417,6 +444,28 @@ export default function PageIncapacidades() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+      {soporteItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setSoporteItem(null)} />
+          <div className="relative max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-xl bg-white p-6 shadow-xl">
+            <button
+              onClick={() => setSoporteItem(null)}
+              className="absolute right-4 top-4 text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <div className="mb-4 pr-8">
+              <h2 className="text-base font-semibold text-gray-800">Soporte de incapacidad</h2>
+              <p className="text-xs text-gray-500 mt-0.5">
+                {soporteItem.tipo_incapacidad} · {soporteItem.inicio?.slice(0, 10)} – {soporteItem.fin?.slice(0, 10)}
+              </p>
+            </div>
+            {renderSoportePreview(soporteItem)}
           </div>
         </div>
       )}

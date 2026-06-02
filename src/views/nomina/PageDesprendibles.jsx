@@ -26,13 +26,13 @@ function descargarBlob(blob, nombre) {
   URL.revokeObjectURL(url);
 }
 
-export default function PageDesprendibles() {
+export default function PageDesprendibles({ empleado: empleadoProp = null, portalMode = false }) {
   const { user } = useAuth({ middleware: "auth" });
   const hoy  = new Date();
   const [empleados, setEmpleados] = useState([]);
   const [search, setSearch]       = useState("");
   const [showDrop, setShowDrop]   = useState(false);
-  const [empSel, setEmpSel]       = useState(null);
+  const [empSel, setEmpSel]       = useState(empleadoProp);
   const [contrato, setContrato]   = useState(null);
   const [correo, setCorreo]       = useState("");
   const [mes, setMes]             = useState(hoy.getMonth());
@@ -44,15 +44,18 @@ export default function PageDesprendibles() {
   const [error, setError]         = useState("");
 
   useEffect(() => {
+    if (portalMode || empleadoProp) return;
     contratacionService.getEmpleados()
       .then((r) => setEmpleados(r.data ?? []))
       .catch(() => {});
-  }, []);
+  }, [portalMode, empleadoProp]);
 
   useEffect(() => {
+    if (portalMode) { setEmpSel({ id: user?.id, name: user?.name, email: user?.email }); return; }
+    if (empleadoProp) { setEmpSel(empleadoProp); return; }
     if (!user?.id || empSel) return;
     setEmpSel({ id: user.id, name: user.name, email: user.email });
-  }, [user, empSel]);
+  }, [portalMode, empleadoProp, user]);
 
   useEffect(() => {
     if (!empSel) { setContrato(null); setCorreo(""); return; }
@@ -83,12 +86,11 @@ export default function PageDesprendibles() {
   }, [mes, anio, quincena]);
 
   const { data: nominasData, isLoading, isFetching, refetch } = useQuery({
-    queryKey: ["desprendibles", empSel?.id, periodoInicio, periodoFin, quincena],
-    queryFn: () => nominaService.getNominas({
-      user_id:  empSel?.id,
-      per_page: 50,
-    }),
-    enabled: !!empSel,
+    queryKey: ["desprendibles", portalMode ? "me" : empSel?.id, periodoInicio, periodoFin, quincena],
+    queryFn: () => portalMode
+      ? portalEmpleadoService.getNominas({ per_page: 50 })
+      : nominaService.getNominas({ user_id: empSel?.id, per_page: 50 }),
+    enabled: portalMode || !!empSel,
     select: (r) => {
       const lista = r.data?.data?.data ?? r.data?.data ?? [];
       // Filtrar por período en el frontend (el servicio filtra por user_id)
@@ -150,41 +152,43 @@ export default function PageDesprendibles() {
         <p className="text-sm font-medium text-gray-700 mb-4">Selecciona el período</p>
         <div className="flex flex-wrap gap-3">
 
-          {/* Empleado dropdown */}
-          <div className="relative flex-1 min-w-52">
-            <button
-              onClick={() => setShowDrop((v) => !v)}
-              className="w-full flex items-center justify-between h-9 px-3 text-sm border border-gray-200 rounded-lg hover:border-indigo-400 bg-white transition-colors"
-            >
-              <span className={empSel ? "text-gray-800" : "text-gray-400"}>
-                {empSel ? empSel.name : "Seleccionar empleado..."}
-              </span>
-              <ChevronDown className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
-            </button>
-            {showDrop && (
-              <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
-                <div className="p-2 border-b border-gray-100">
-                  <div className="relative">
-                    <Search className="h-3.5 w-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-                    <input autoFocus type="text" placeholder="Buscar..." value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      className="w-full pl-8 pr-3 h-7 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+          {/* Empleado dropdown — oculto en portal y cuando el padre inyecta el empleado */}
+          {!portalMode && !empleadoProp && (
+            <div className="relative flex-1 min-w-52">
+              <button
+                onClick={() => setShowDrop((v) => !v)}
+                className="w-full flex items-center justify-between h-9 px-3 text-sm border border-gray-200 rounded-lg hover:border-indigo-400 bg-white transition-colors"
+              >
+                <span className={empSel ? "text-gray-800" : "text-gray-400"}>
+                  {empSel ? empSel.name : "Seleccionar empleado..."}
+                </span>
+                <ChevronDown className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+              </button>
+              {showDrop && (
+                <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+                  <div className="p-2 border-b border-gray-100">
+                    <div className="relative">
+                      <Search className="h-3.5 w-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                      <input autoFocus type="text" placeholder="Buscar..." value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="w-full pl-8 pr-3 h-7 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+                    </div>
+                  </div>
+                  <div className="max-h-48 overflow-y-auto">
+                    {empFiltrados.length === 0 ? (
+                      <p className="text-xs text-gray-400 text-center py-4">Sin resultados</p>
+                    ) : empFiltrados.map((e) => (
+                      <button key={e.id}
+                        onClick={() => { setEmpSel(e); setShowDrop(false); setSearch(""); setMensaje(""); setError(""); }}
+                        className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors">
+                        {e.name}
+                      </button>
+                    ))}
                   </div>
                 </div>
-                <div className="max-h-48 overflow-y-auto">
-                  {empFiltrados.length === 0 ? (
-                    <p className="text-xs text-gray-400 text-center py-4">Sin resultados</p>
-                  ) : empFiltrados.map((e) => (
-                    <button key={e.id}
-                      onClick={() => { setEmpSel(e); setShowDrop(false); setSearch(""); setMensaje(""); setError(""); }}
-                      className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors">
-                      {e.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
 
           {/* Mes */}
           <div className="relative">

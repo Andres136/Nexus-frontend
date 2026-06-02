@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Search, CheckCircle, XCircle, Loader2, Plus } from "lucide-react";
 import { useGetPermisos } from "../../hooks/nomina/useGetPermisos";
-import { permisoService } from "../../services/nominaService";
+import { permisoService, portalEmpleadoService } from "../../services/nominaService";
 import { showToast } from "../../helpers/utils/showToast";
 import ModalCrearSolicitud from "../../components/nomina/ModalCrearSolicitud";
 
@@ -54,7 +54,7 @@ function ModalGestion({ item, accion, onClose, onConfirm, loading }) {
   );
 }
 
-export default function PagePermisos() {
+export default function PagePermisos({ portalMode = false }) {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [gestion, setGestion] = useState(null); // { item, accion }
@@ -62,8 +62,20 @@ export default function PagePermisos() {
   const [creando, setCreando] = useState(false);
   const [loadingUuid, setLoadingUuid] = useState(null);
 
-  const { permisos, isLoading } = useGetPermisos({ search: search || undefined });
-  const lista = permisos?.data?.data ?? permisos?.data ?? [];
+  const portalQuery = useQuery({
+    queryKey: ["permisos-portal"],
+    queryFn: () => portalEmpleadoService.getPermisos().then((r) => r.data),
+    enabled: portalMode,
+    staleTime: 1000 * 60 * 2,
+  });
+
+  const { permisos, isLoading: isLoadingAdmin } = useGetPermisos(
+    portalMode ? { enabled: false } : { search: search || undefined }
+  );
+
+  const isLoading = portalMode ? portalQuery.isLoading : isLoadingAdmin;
+  const rawData   = portalMode ? portalQuery.data : permisos;
+  const lista     = rawData?.data?.data ?? rawData?.data ?? [];
 
   const handleGestion = async (observacion) => {
     const { item, accion } = gestion;
@@ -105,16 +117,18 @@ export default function PagePermisos() {
           <p className="text-sm text-gray-500 mt-0.5">Gestiona las solicitudes de permiso del personal.</p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="relative">
-            <Search className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar empleado..."
-              className="pl-9 pr-4 h-9 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 w-56"
-            />
-          </div>
+          {!portalMode && (
+            <div className="relative">
+              <Search className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar empleado..."
+                className="pl-9 pr-4 h-9 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 w-56"
+              />
+            </div>
+          )}
           <button onClick={() => setCrear(true)} className="inline-flex items-center gap-2 h-9 px-3 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700">
             <Plus className="h-4 w-4" /> Nueva
           </button>
@@ -132,7 +146,7 @@ export default function PagePermisos() {
           <table className="min-w-full divide-y divide-gray-100 text-sm">
             <thead className="bg-gray-50">
               <tr>
-                {["Empleado","Fecha","Tipo","Horario","Remunerado","Motivo","Estado","Gestionado por","Acciones"].map((h) => (
+                {[...["Empleado","Fecha","Tipo","Horario","Remunerado","Motivo","Estado","Gestionado por"], ...(!portalMode ? ["Acciones"] : [])].map((h) => (
                   <th key={h} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
                 ))}
               </tr>
@@ -160,26 +174,28 @@ export default function PagePermisos() {
                   <td className="px-4 py-3.5 text-gray-500 text-xs whitespace-nowrap">
                     {item.supervisor?.name ?? <span className="text-amber-500">Pendiente</span>}
                   </td>
-                  <td className="px-4 py-3.5">
-                    {item.status === "pendiente" && (
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => setGestion({ item, accion: "aprobar" })}
-                          disabled={!!loadingUuid}
-                          className="inline-flex items-center gap-1 text-xs font-medium text-green-600 hover:text-green-800 disabled:opacity-40"
-                        >
-                          <CheckCircle className="h-3.5 w-3.5" /> Aprobar
-                        </button>
-                        <button
-                          onClick={() => setGestion({ item, accion: "rechazar" })}
-                          disabled={!!loadingUuid}
-                          className="inline-flex items-center gap-1 text-xs font-medium text-red-600 hover:text-red-800 disabled:opacity-40"
-                        >
-                          <XCircle className="h-3.5 w-3.5" /> Rechazar
-                        </button>
-                      </div>
-                    )}
-                  </td>
+                  {!portalMode && (
+                    <td className="px-4 py-3.5">
+                      {item.status === "pendiente" && (
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setGestion({ item, accion: "aprobar" })}
+                            disabled={!!loadingUuid}
+                            className="inline-flex items-center gap-1 text-xs font-medium text-green-600 hover:text-green-800 disabled:opacity-40"
+                          >
+                            <CheckCircle className="h-3.5 w-3.5" /> Aprobar
+                          </button>
+                          <button
+                            onClick={() => setGestion({ item, accion: "rechazar" })}
+                            disabled={!!loadingUuid}
+                            className="inline-flex items-center gap-1 text-xs font-medium text-red-600 hover:text-red-800 disabled:opacity-40"
+                          >
+                            <XCircle className="h-3.5 w-3.5" /> Rechazar
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -202,6 +218,7 @@ export default function PagePermisos() {
           onClose={() => setCrear(false)}
           onSubmit={handleCrear}
           loading={creando}
+          defaultUserId={portalMode}
         />
       )}
     </div>

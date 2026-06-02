@@ -65,10 +65,13 @@ export const useRegisterIncapacidad = ({ uuid = null, onSuccess } = {}) => {
 
       showToast("success", response.data.message || (uuid ? "Actualizado exitosamente" : "Registrado exitosamente"));
       queryClient.invalidateQueries(["incapacidades"]);
+      queryClient.invalidateQueries(["incapacidades-portal"]);
       if (!uuid) setFormData(EMPTY_FORM);
       onSuccess?.();
     } catch (err) {
+      
       const data = err.response?.data;
+    //  console.error("Error en registro de incapacidad:", err);
       if (data?.errors) setFieldErrors(data.errors);
       showToast("error", data?.message || "Ocurrió un error");
     } finally {

@@ -6,11 +6,11 @@ import { useGetSeguridadSocialById } from "./useGetSeguridadSocialById";
 
 const EMPTY_FORM = {
   nombre: "",
+  tipo: "",
   nit: "",
   direccion: "",
   fecha_inicio: "",
   fecha_fin: "",
- 
 };
 
 export const useRegisterSeguridadSocial = ({ uuid = null, onSuccess } = {}) => {
@@ -23,9 +23,10 @@ export const useRegisterSeguridadSocial = ({ uuid = null, onSuccess } = {}) => {
 
   useEffect(() => {
     if (seguridadSocial?.data) {
-      const { nombre, nit, direccion, fecha_inicio, fecha_fin, status } = seguridadSocial.data;
+      const { nombre, tipo, nit, direccion, fecha_inicio, fecha_fin, status } = seguridadSocial.data;
       setFormData({
         nombre: nombre ?? "",
+        tipo: tipo ?? "",
         nit: nit ?? "",
         direccion: direccion ?? "",
         fecha_inicio: fecha_inicio?.slice(0, 10) ?? "",

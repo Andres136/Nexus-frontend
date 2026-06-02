@@ -527,6 +527,7 @@ export const descargoService = {
 };
 
 export const portalEmpleadoService = {
+  // Desprendibles — usa el endpoint original por uuid (el PDF lo genera el admin/nomina)
   desprendiblePdf(nominaUuid) {
     return apiClient.get(`api/nomina/nominas/${nominaUuid}/desprendible`, {
       responseType: "blob",
@@ -535,16 +536,34 @@ export const portalEmpleadoService = {
   enviarDesprendible(nominaUuid, correo = "") {
     return apiClient.post(`api/nomina/nominas/${nominaUuid}/desprendible/enviar`, { correo });
   },
-  certificadoLaboralPdf(contratacionUuid, dirigidoA = "") {
-    return apiClient.get(`api/nomina/contratacion/${contratacionUuid}/certificado`, {
+
+  // Nóminas del portal — siempre del usuario autenticado
+  getNominas(params = {}) {
+    return apiClient.get("api/nomina/portal/nominas", { params });
+  },
+
+  // Certificado — siempre del usuario autenticado
+  certificadoLaboralPdf(dirigidoA = "") {
+    return apiClient.get("api/nomina/portal/certificado", {
       params: { dirigido_a: dirigidoA },
       responseType: "blob",
     });
   },
-  enviarCertificadoLaboral(contratacionUuid, dirigidoA = "", correo = "") {
-    return apiClient.post(`api/nomina/contratacion/${contratacionUuid}/certificado/enviar`, {
-      dirigido_a: dirigidoA,
-      correo,
-    });
+  enviarCertificadoLaboral(dirigidoA = "", correo = "") {
+    return apiClient.post("api/nomina/portal/certificado/enviar", { dirigido_a: dirigidoA, correo });
+  },
+
+  // Vacaciones y permisos — siempre del usuario autenticado
+  getVacaciones(params = {}) {
+    return apiClient.get("api/nomina/portal/vacaciones", { params });
+  },
+  getPermisos(params = {}) {
+    return apiClient.get("api/nomina/portal/permisos", { params });
+  },
+  getIncapacidades(params = {}) {
+    return apiClient.get("api/nomina/portal/incapacidades", { params });
+  },
+  getLicencias(params = {}) {
+    return apiClient.get("api/nomina/portal/licencias", { params });
   },
 };

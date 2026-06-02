@@ -23,12 +23,12 @@ function descargarBlob(blob, nombre) {
   URL.revokeObjectURL(url);
 }
 
-export default function PageCertificadoLaboral() {
+export default function PageCertificadoLaboral({ empleado: empleadoProp = null, portalMode = false }) {
   const { user } = useAuth({ middleware: "auth" });
   const [empleados, setEmpleados]   = useState([]);
   const [search, setSearch]         = useState("");
   const [showDrop, setShowDrop]     = useState(false);
-  const [empSel, setEmpSel]         = useState(null);
+  const [empSel, setEmpSel]         = useState(empleadoProp);
   const [contrato, setContrato]     = useState(null);
   const [loadingCnt, setLoadingCnt] = useState(false);
   const [dirigidoA, setDirigidoA]   = useState("");
@@ -39,15 +39,18 @@ export default function PageCertificadoLaboral() {
   const [error, setError]           = useState("");
 
   useEffect(() => {
+    if (portalMode || empleadoProp) return;
     contratacionService.getEmpleados()
       .then((r) => setEmpleados(r.data ?? []))
       .catch(() => {});
-  }, []);
+  }, [portalMode, empleadoProp]);
 
   useEffect(() => {
+    if (portalMode) { setEmpSel({ id: user?.id, name: user?.name }); return; }
+    if (empleadoProp) { setEmpSel(empleadoProp); return; }
     if (!user?.id || empSel) return;
     setEmpSel({ id: user.id, name: user.name });
-  }, [user, empSel]);
+  }, [portalMode, empleadoProp, user]);
 
   // Cargar contrato al seleccionar empleado
   useEffect(() => {
@@ -71,33 +74,30 @@ export default function PageCertificadoLaboral() {
   );
 
   const handleDescargar = async () => {
-    if (!contrato?.uuid) return;
+    if (!portalMode && !contrato?.uuid) return;
     setDescargando(true);
     setError("");
     try {
-      const res = await portalEmpleadoService.certificadoLaboralPdf(
-        contrato.uuid,
-        dirigidoA.trim()
-      );
-      descargarBlob(res.data, `certificado_${empSel.name.replace(/\s+/g, "_")}.pdf`);
+      const res = portalMode
+        ? await portalEmpleadoService.certificadoLaboralPdf(dirigidoA.trim())
+        : await portalEmpleadoService.certificadoLaboralPdf(contrato.uuid, dirigidoA.trim());
+      descargarBlob(res.data, `certificado_${empSel?.name?.replace(/\s+/g, "_") ?? "empleado"}.pdf`);
     } catch {
-      setError("Error al generar el certificado. Verifica que el empleado tenga contrato activo.");
+      setError("Error al generar el certificado. Verifica que tengas contrato activo.");
     } finally {
       setDescargando(false);
     }
   };
 
   const handleEnviar = async () => {
-    if (!contrato?.uuid) return;
+    if (!portalMode && !contrato?.uuid) return;
     setEnviando(true);
     setError("");
     setMensaje("");
     try {
-      const res = await portalEmpleadoService.enviarCertificadoLaboral(
-        contrato.uuid,
-        dirigidoA.trim(),
-        correo.trim()
-      );
+      const res = portalMode
+        ? await portalEmpleadoService.enviarCertificadoLaboral(dirigidoA.trim(), correo.trim())
+        : await portalEmpleadoService.enviarCertificadoLaboral(contrato.uuid, dirigidoA.trim(), correo.trim());
       setMensaje(res.data?.message || "Certificado enviado correctamente.");
     } catch (err) {
       setError(err.response?.data?.message || "Error al enviar el certificado al correo.");
@@ -120,42 +120,44 @@ export default function PageCertificadoLaboral() {
         {/* Panel izquierdo — selector + contrato */}
         <div className="lg:col-span-2 flex flex-col gap-4">
 
-          {/* Selector empleado */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
-            <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-              <User className="h-3.5 w-3.5" /> Empleado
-            </label>
-            <div className="relative">
-              <button onClick={() => setShowDrop((v) => !v)}
-                className="w-full flex items-center justify-between h-9 px-3 text-sm border border-gray-200 rounded-lg hover:border-indigo-400 bg-white transition-colors">
-                <span className={empSel ? "text-gray-800" : "text-gray-400"}>
-                  {empSel ? empSel.name : "Seleccionar..."}
-                </span>
-                <ChevronDown className="h-4 w-4 text-gray-400 flex-shrink-0" />
-              </button>
-              {showDrop && (
-                <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
-                  <div className="p-2 border-b border-gray-100">
-                    <div className="relative">
-                      <Search className="h-3.5 w-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-                      <input autoFocus type="text" placeholder="Buscar..." value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="w-full pl-8 pr-3 h-7 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+          {/* Selector — oculto en portal y cuando el padre inyecta el empleado */}
+          {!portalMode && !empleadoProp && (
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+              <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                <User className="h-3.5 w-3.5" /> Empleado
+              </label>
+              <div className="relative">
+                <button onClick={() => setShowDrop((v) => !v)}
+                  className="w-full flex items-center justify-between h-9 px-3 text-sm border border-gray-200 rounded-lg hover:border-indigo-400 bg-white transition-colors">
+                  <span className={empSel ? "text-gray-800" : "text-gray-400"}>
+                    {empSel ? empSel.name : "Seleccionar..."}
+                  </span>
+                  <ChevronDown className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                </button>
+                {showDrop && (
+                  <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+                    <div className="p-2 border-b border-gray-100">
+                      <div className="relative">
+                        <Search className="h-3.5 w-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                        <input autoFocus type="text" placeholder="Buscar..." value={search}
+                          onChange={(e) => setSearch(e.target.value)}
+                          className="w-full pl-8 pr-3 h-7 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+                      </div>
+                    </div>
+                    <div className="max-h-48 overflow-y-auto">
+                      {empFiltrados.map((e) => (
+                        <button key={e.id}
+                          onClick={() => { setEmpSel(e); setShowDrop(false); setSearch(""); setError(""); setMensaje(""); }}
+                          className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors">
+                          {e.name}
+                        </button>
+                      ))}
                     </div>
                   </div>
-                  <div className="max-h-48 overflow-y-auto">
-                    {empFiltrados.map((e) => (
-                      <button key={e.id}
-                        onClick={() => { setEmpSel(e); setShowDrop(false); setSearch(""); setError(""); setMensaje(""); }}
-                        className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors">
-                        {e.name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Info contrato */}
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex flex-col gap-3">

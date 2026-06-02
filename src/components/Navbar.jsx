@@ -56,6 +56,7 @@ export default function Navbar() {
     { name: "Entregas ", to: "/auth/entregas", icon: TruckIcon, alwaysVisible: true },
     { name: "CRM", to: "/auth/crm", icon: Building2, alwaysVisible: true },
     {name: "KPIS", to: "dashboard/indicadores", icon: Building2, alwaysVisible: true },
+    {name: "Portal Empleado", to: "/auth/crm/nomina/portal-empleado", icon: User2Icon, alwaysVisible: true },
     { name: "Indicadores", to: "indicadores", icon: BarChart2, allowedRoles: [1,2], onlyIfResponsable: true },
     {
       name: "Home",

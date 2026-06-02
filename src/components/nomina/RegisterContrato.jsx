@@ -6,6 +6,7 @@ import { useEmpresas } from "../../hooks/useEmpresas";
 import { useGetSeguridadSocial } from "../../hooks/nomina/useGetSeguridadSocial";
 import { useGetRegisterContratacion } from "../../hooks/nomina/useGetRegisterContratacion";
 import { useGetEmpleados } from "../../hooks/nomina/useGetEmpleados";
+import { formatCurrencyInput } from "../../helpers"; 
 
 const CENTROS_COSTO = ["Bogotá", "Cali", "Barranquilla", "Medellín", "Girardot", "Bodega", "Administrativo", "Producción"];
 
@@ -130,7 +131,9 @@ export default function RegisterContrato({ uuid = null, onClose }) {
             </div>
             <div>
               {label("Número de documento", true)}
-              <input type="text" name="numero_documento" value={formData.numero_documento} onChange={handleChange} placeholder="Escriba el número de documento" className={inputClass("numero_documento")} />
+              <input type="text" name="numero_documento"
+               value={formData.numero_documento} onChange={handleChange} 
+               placeholder="Escriba el número de documento" className={inputClass("numero_documento")} />
               {err("numero_documento")}
             </div>
           </div>
@@ -186,17 +189,20 @@ export default function RegisterContrato({ uuid = null, onClose }) {
           <div className="grid grid-cols-3 gap-3">
             <div>
               {label("Salario base", true)}
-              <input type="number" name="base_salario" value={formData.base_salario} onChange={handleChange} min="0" placeholder="1300000" className={inputClass("base_salario")} />
+              <input type="text" inputMode="decimal"
+               name="base_salario" value={formatCurrencyInput(formData.base_salario)?? "" }
+                onChange={handleChange} placeholder="1300000" className={inputClass("base_salario")} />
               {err("base_salario")}
             </div>
             <div>
               {label("Auxilio transporte")}
-              <input type="number" name="auxilio_transporte" value={formData.auxilio_transporte} onChange={handleChange} min="0" placeholder="162000" className={inputClass("auxilio_transporte")} />
+              <input type="text" inputMode="decimal"
+               name="auxilio_transporte" value={formatCurrencyInput(formData.auxilio_transporte)} onChange={handleChange} placeholder="162000" className={inputClass("auxilio_transporte")} />
               {err("auxilio_transporte")}
             </div>
             <div>
               {label("Pago no prestacional")}
-              <input type="number" name="no_salarial" value={formData.no_salarial} onChange={handleChange} min="0" placeholder="300000" className={inputClass("no_salarial")} />
+              <input type="text" inputMode="decimal" name="no_salarial" value={formatCurrencyInput(formData.no_salarial)} onChange={handleChange} placeholder="300000" className={inputClass("no_salarial")} />
               {err("no_salarial")}
               <p className="mt-0.5 text-[10px] text-gray-400">Suma al pago, no a seguridad social ni prestaciones.</p>
             </div>

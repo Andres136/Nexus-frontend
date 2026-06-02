@@ -35,5 +35,21 @@ export function formatNumber(value) {
   if (!value) return "0";
   return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
+export const formatCurrencyInput = (value) => {
+  if (value === null || value === undefined || value === "") {
+    return "";
+  }
 
+  const cleaned = String(value).replace(/[^\d,]/g, "");
+
+  const parts = cleaned.split(",");
+  const integerPart = parts[0];
+  const decimalPart = parts[1] || "";
+
+  const formattedInteger = Number(integerPart || 0).toLocaleString("es-CO");
+
+  return decimalPart
+    ? `${formattedInteger},${decimalPart}`
+    : formattedInteger;
+};
 
