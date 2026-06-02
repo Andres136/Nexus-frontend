@@ -49,8 +49,8 @@ export default function useDetallesOrdenTrabajo() {
 
   //Obtener entregas con el numero de orden de trabajo
   // Obtener entregas con el número de orden de trabajo
-useEffect(() => {
-  const fetchEntregas = async () => {
+
+    const fetchEntregas = async () => {
     try {
       const token = localStorage.getItem("token");
       const { data } = await clienteAxios.get(`/api/entregas/${id}`, {
@@ -73,6 +73,8 @@ useEffect(() => {
       toast.error("No se pudo cargar las entregas.");
     }
   };
+
+useEffect(() => {
 
   fetchEntregas();
 }, [id]);
@@ -153,6 +155,8 @@ useEffect(() => {
       });
  
       toast.success(response.data.message || "Orden de Trabajo actualizada");
+      await fetchOrden(); // Refrescar datos de la orden después de guardar
+      await fetchEntregas(); // Refrescar entregas después de guardar
       if (response.data.pdf_url) {
         // Si se generó un PDF, actualizar el estado
         setOrden((prev) => ({ ...prev, pdf_url: response.data.pdf_url }));
