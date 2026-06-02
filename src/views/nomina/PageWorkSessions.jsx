@@ -231,7 +231,7 @@ export default function PageWorkSessions() {
                 <tr>
                   {[
                     "Empleado", "Fecha", "Entrada", "Salida",
-                    "Pausa", "Almuerzo", "Trabajado", "Pausa",
+                    "Pausa", "Almuerzo", "Trabajado", "Pausa", "Min almuerzo",
                     "Tardanza", "Sábado", "Festivo", "Kiosko",
                   ].map((h, i) => (
                     <th key={i} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
@@ -300,6 +300,11 @@ export default function PageWorkSessions() {
                       {/* Min pausa */}
                       <td className="px-4 py-3.5 text-gray-500 whitespace-nowrap">
                         {minsToHM(item.minutos_pausa)}
+                      </td>
+
+                      {/* Min almuerzo */}
+                      <td className="px-4 py-3.5 text-gray-500 whitespace-nowrap">
+                        {minsToHM(item.minutos_almuerzo)}
                       </td>
 
                       {/* Tardanza */}
