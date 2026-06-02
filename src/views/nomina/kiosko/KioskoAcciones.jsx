@@ -4,11 +4,26 @@ import { workSessionService } from "../../../services/nominaService";
 import { hablar } from "../../../helpers/voz";
 
 const hhmm = (date) =>
-  date.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" });
+  date.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit", timeZone: "America/Bogota" });
 
 function horaServidor(valor) {
   if (!valor) return null;
-  const match = String(valor).match(/(?:T|\s)(\d{2}):(\d{2})/);
+  const value = String(valor);
+  const hasTimezone = /(?:Z|[+-]\d{2}:?\d{2})$/.test(value);
+
+  if (hasTimezone) {
+    const date = new Date(value);
+    if (!Number.isNaN(date.getTime())) {
+      return date.toLocaleTimeString("es-CO", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+        timeZone: "America/Bogota",
+      });
+    }
+  }
+
+  const match = value.match(/(?:T|\s)(\d{2}):(\d{2})/);
   if (!match) return null;
   const hour = Number(match[1]);
   const minute = match[2];
@@ -35,15 +50,20 @@ const tiempoHHMMSS = () => {
 
 function parseTime(str) {
   if (!str) return null;
-  const match = String(str).match(/(?:T|\s)(\d{2}):(\d{2})(?::(\d{2}))?/);
-  if (!match) {
-    const d = new Date(str);
-    return isNaN(d) ? null : d;
+  const value = String(str);
+  const hasTimezone = /(?:Z|[+-]\d{2}:?\d{2})$/.test(value);
+
+  if (hasTimezone) {
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? null : d;
   }
+
+  const match = value.match(/(?:T|\s)(\d{2}):(\d{2})(?::(\d{2}))?/);
+  if (!match) return null;
 
   const d = new Date();
   d.setHours(Number(match[1]), Number(match[2]), Number(match[3] ?? 0), 0);
-  return isNaN(d) ? null : d;
+  return Number.isNaN(d.getTime()) ? null : d;
 }
 
 // Mensajes de voz por acción

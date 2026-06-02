@@ -10,6 +10,13 @@ const apiClient = axios.create({
   },
 });
 
+function fechaLocal(date = new Date()) {
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 async function kioskRequestConfig() {
   const match = window.location.pathname.match(/^\/kiosko\/([^/]+)/);
   const uuid = match?.[1];
@@ -372,7 +379,7 @@ export const workSessionService = {
     return apiClient.put(`api/nomina/work-sessions/${uuid}`, data);
   },
   async getSessionHoy(userId) {
-    const today = new Date().toISOString().split("T")[0];
+    const today = fechaLocal();
     const kioskConfig = await kioskRequestConfig();
     if (kioskConfig) {
       return apiClient.get("api/nomina/kiosko-work-sessions", {

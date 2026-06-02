@@ -6,7 +6,7 @@ import { workSessionService } from "../../../services/nominaService";
 import { hablar } from "../../../helpers/voz";
 
 const hhmm = (date) =>
-  date.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" });
+  date.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit", timeZone: "America/Bogota" });
 
 function mensajeErrorApi(error, fallback = "Error al registrar. Intenta de nuevo.") {
   return error?.response?.data?.message || error?.message || fallback;

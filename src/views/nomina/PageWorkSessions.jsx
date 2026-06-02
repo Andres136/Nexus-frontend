@@ -15,16 +15,36 @@ function minsToHM(mins) {
 
 function fmtHora(dt) {
   if (!dt) return "—";
-  const match = String(dt).match(/(?:T|\s)(\d{2}):(\d{2})/);
-  if (!match) {
-    return new Date(dt).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit", hour12: true });
+  const value = String(dt);
+  const hasTimezone = /(?:Z|[+-]\d{2}:?\d{2})$/.test(value);
+
+  if (hasTimezone) {
+    const date = new Date(value);
+    if (!Number.isNaN(date.getTime())) {
+      return date.toLocaleTimeString("es-CO", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+        timeZone: "America/Bogota",
+      });
+    }
   }
+
+  const match = value.match(/(?:T|\s)(\d{2}):(\d{2})/);
+  if (!match) return "—";
 
   const hour = Number(match[1]);
   const minute = match[2];
   const hour12 = hour % 12 || 12;
   const suffix = hour >= 12 ? "p. m." : "a. m.";
   return `${String(hour12).padStart(2, "0")}:${minute} ${suffix}`;
+}
+
+function fechaLocal(date = new Date()) {
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
 }
 
 function fmtFecha(d) {
@@ -98,7 +118,7 @@ Pagination.propTypes = {
 };
 
 export default function PageWorkSessions() {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = fechaLocal();
   const firstDay = today.slice(0, 8) + "01";
 
   const [search, setSearch]         = useState("");
