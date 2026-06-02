@@ -129,11 +129,6 @@ export default function useOrdenCompraForm({ modo, id }) {
           }
         });
       });
-      console.log("=== FORM DATA ===");
-console.log(formData);
-
-console.log("=== DETALLES NORMALIZADOS ===");
-console.log(detallesNormalizados);
 
       const response =
         modo === "edicion"
@@ -150,6 +145,7 @@ console.log(detallesNormalizados);
         setFormData(FORM_INICIAL);
       }
     } catch (error) {
+      //console.error("Error al enviar la orden de compra:", error);
       if (error.response?.data?.errors) {
         const allErrors = error.response.data.errors;
         const errForm = {};
