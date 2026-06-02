@@ -1,6 +1,6 @@
 import axios from "axios";
 import clienteAxios from "../config/axios";
-import { getKioskoFingerprint, getKioskoSession } from "../helpers/nomina/kioskoSession";
+import { getKioskoFingerprint, getKioskoSession, getKioskoGuestSession } from "../helpers/nomina/kioskoSession";
 
 
 const apiClient = axios.create({
@@ -21,7 +21,12 @@ async function kioskRequestConfig() {
   const match = window.location.pathname.match(/^\/kiosko\/([^/]+)/);
   const uuid = match?.[1];
 
-  if (!uuid || uuid === "activar") return null;
+  if (!uuid || uuid === "activar" || uuid === "acceso-temporal") return null;
+
+  const guestToken   = getKioskoGuestSession(uuid);
+  if (guestToken) {
+    return { headers: { "X-Kiosko-Device": uuid, "X-Kiosko-Guest-Token": guestToken } };
+  }
 
   const sessionToken = getKioskoSession(uuid);
   if (!sessionToken) return null;
@@ -337,6 +342,12 @@ export const kioskoDeviceService = {
   },
   generateActivationLink(uuid) {
     return apiClient.post(`api/nomina/kiosko-devices/${uuid}/activation-link`);
+  },
+  generateGuestLink(uuid) {
+    return apiClient.post(`api/nomina/kiosko-devices/${uuid}/guest-link`);
+  },
+  bootstrapGuest(data) {
+    return apiClient.post("api/nomina/kiosko-devices/bootstrap-guest", data);
   },
   revokeKiosco(uuid) {
     return apiClient.patch(`api/nomina/kiosko-devices/${uuid}/revoke`);

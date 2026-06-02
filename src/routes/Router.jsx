@@ -113,6 +113,7 @@ import Contabilidad from "../views/contabilidad/Contabilidad";
 import NominaLayout from "../layouts/NominaLayout";
 import PageKiosko from "../views/nomina/kiosko/PageKiosko";
 import PageKioskoActivacion from "../views/nomina/kiosko/PageKioskoActivacion";
+import PageKioskoAccesoTemporal from "../views/nomina/kiosko/PageKioskoAccesoTemporal";
 import PageCreateFacturas from "../views/contabilidad/PageCreateFacturas";
 import PageCosteos from "../views/contabilidad/PageCosteos";
 import CatalogoContable from "../views/contabilidad/CatalogoContable";
@@ -125,6 +126,7 @@ import EncuestasPage from "../views/crm/EncuestasPage";
 import ResultadosEncuesta from "../views/crm/ResultadosEncuesta";
 import EncuestaPublica from "../views/crm/EncuestaPublica";
 import PagePortalEmpleado from "../views/nomina/PagePortalEmpleado";
+import PageLinkAccesoKioskoTemporal from "../views/nomina/PageLinkAccesoKioskoTemporal";
 
 
 export default function Router() {
@@ -650,6 +652,15 @@ export default function Router() {
             }
           />
 
+          <Route
+            path="/auth/crm/nomina/acceso-temporal"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/nomina/acceso-temporal">
+                <PageLinkAccesoKioskoTemporal />
+              </DynamicProtectedRoute>
+            }
+          />
+
 
       {/* 🔹Fin de  Rutas para Nomina */}
 
@@ -884,6 +895,7 @@ export default function Router() {
 
       {/* 🔹 Kiosko de asistencia (público, sin login) */}
       <Route path="/kiosko/activar/:token" element={<PageKioskoActivacion />} />
+      <Route path="/kiosko/acceso-temporal/:uuid/:token" element={<PageKioskoAccesoTemporal />} />
       <Route path="/kiosko/:code" element={<PageKiosko />} />
 
       {/* 🔹 Redirección si la ruta no existe */}

@@ -17,7 +17,6 @@ import {
   CalendarCheck,
   AlarmClock,
   Palmtree,
-  Monitor,
   FileBadge,
   AlertTriangle,
   FileWarning,
@@ -36,7 +35,6 @@ import PageIncapacidades from "../views/nomina/PageIncapacidades";
 import PageValores from "../views/nomina/PageValores";
 import PageTipoRegistros from "../views/nomina/PageTipoRegistros";
 import PageWorkSessions from "../views/nomina/PageWorkSessions";
-import PageKioscos from "../views/nomina/PageKioscos";
 import PagePermisos from "../views/nomina/PagePermisos";
 import PageVacaciones from "../views/nomina/PageVacaciones";
 import PageLicencias from "../views/nomina/PageLicencias";
@@ -48,6 +46,7 @@ import PageDescargos from "../views/nomina/PageDescargos";
 import PageConfiguracionNomina from "../views/nomina/PageConfiguracionNomina";
 import PageNovedadesRetroactivas from "../views/nomina/PageNovedadesRetroactivas";
 import PageControlContableNomina from "../views/nomina/PageControlContableNomina";
+import BtnAccesoTemporalKiosko from "../components/nomina/BtnAccesoTemporalKiosko";
 
 const NAV_ITEMS = [
   {
@@ -146,17 +145,12 @@ const NAV_ITEMS = [
     label: "Asistencia",
     icon: Clock,
     tabs: [
+ 
       {
-        id: "tipo-registros",
-        label: "Tipos de Registro",
-        icon: ClipboardList,
-        component: <PageTipoRegistros />,
-      },
-      {
-        id: "kioscos",
-        label: "Kioscos",
-        icon: Monitor,
-        component: <PageKioscos />,
+        id: "acceso-temporal",
+        label: "Acceso Temporal",
+        icon: Clock,
+        component: <BtnAccesoTemporalKiosko />,
       },
       {
         id: "work-sessions",

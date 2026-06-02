@@ -57,3 +57,44 @@ export function removeKioskoSession(uuid) {
   delete sessions[uuid];
   setSessionStore(sessions);
 }
+
+// ─── Guest session (acceso temporal sin fingerprint) ──────────────────────────
+const GUEST_STORAGE_KEY = "kiosko_guest_sessions";
+
+function getGuestStore() {
+  try {
+    return JSON.parse(localStorage.getItem(GUEST_STORAGE_KEY) || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function setGuestStore(value) {
+  localStorage.setItem(GUEST_STORAGE_KEY, JSON.stringify(value));
+}
+
+export function saveKioskoGuestSession(uuid, guestToken, expiresAt) {
+  const store = getGuestStore();
+  store[uuid] = { token: guestToken, expiresAt };
+  setGuestStore(store);
+}
+
+export function getKioskoGuestSession(uuid) {
+  const entry = getGuestStore()[uuid];
+  if (!entry) return null;
+  if (entry.expiresAt && new Date(entry.expiresAt) < new Date()) {
+    removeKioskoGuestSession(uuid);
+    return null;
+  }
+  return entry.token;
+}
+
+export function removeKioskoGuestSession(uuid) {
+  const store = getGuestStore();
+  delete store[uuid];
+  setGuestStore(store);
+}
+
+export function isGuestSession(uuid) {
+  return !!getKioskoGuestSession(uuid);
+}

@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { Shield,  UserCheck, Route, Settings, ChevronRight } from "lucide-react";
+import { Shield,  UserCheck, Route, Settings, ChevronRight, ClipboardList, Monitor } from "lucide-react";
 import AsignarPermisos from "./AsignarPermisos";
 import AsignarPermisosUsuario from "./AsignarPermisosUsuario";
 import RegistrarRutas from "./RegistrarRutas";
 import Roles from "./Roles";
+import PageTipoRegistros from "../nomina/PageTipoRegistros";
+import PageKioscos from "../nomina/PageKioscos";
 
 export default function SettingPermissions() {
   const [activeTab, setActiveTab] = useState("rutas");
@@ -48,7 +50,27 @@ export default function SettingPermissions() {
         hoverColor:"hover:from-yellow-600 hover:to-yellow-700",
         component:Roles,
         badge:"Admin"
-    }
+    },
+  {
+  id: "tipo-registros",
+  label: "Tipos de Registro",
+  description: "Administra los tipos de registros",
+  icon: ClipboardList,
+  color: "from-cyan-500 to-blue-600",
+  hoverColor: "hover:from-cyan-600 hover:to-blue-700",
+  component: PageTipoRegistros,
+  badge: "Nómina",
+},
+{
+  id: "kioscos",
+  label: "Kioscos",
+  description: "Configura kioscos del sistema",
+  icon: Monitor,
+  color: "from-slate-500 to-slate-700",
+  hoverColor: "hover:from-slate-600 hover:to-slate-800",
+  component: PageKioscos,
+  badge: "Control",
+},
   ];
 
   const ActiveComponent = tabs.find(tab => tab.id === activeTab)?.component;
