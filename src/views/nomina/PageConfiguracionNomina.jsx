@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import InstruccionOperativaDia from "../../components/nomina/InstruccionOperativaDia";
 import { useGetJornadaLaboral } from "../../hooks/nomina/useGetJornadaLaboral";
+import { useGetKioscos } from "../../hooks/nomina/useGetKioscos";
 import { configuracionNominaService, horarioOperacionService, jornadaLaboralService } from "../../services/nominaService";
 import { showToast } from "../../helpers/utils/showToast";
 
@@ -56,6 +57,7 @@ const hoyLocal = () => {
 
 const INSTRUCCION_DEFAULT = {
   fecha: hoyLocal(),
+  kiosko_device_id: "",
   jornada_laboral_id: "",
   hora_entrada: "07:00",
   hora_entrada_limite: "08:00",
@@ -242,6 +244,7 @@ export default function PageConfiguracionNomina() {
   const [instruccionForm, setInstruccionForm] = useState(INSTRUCCION_DEFAULT);
   const [firmaFile, setFirmaFile] = useState(null);
   const { jornadas, isLoading } = useGetJornadaLaboral({ per_page: 50 });
+  const { kioscos, isLoading: loadingKioscos } = useGetKioscos({ per_page: 100 });
   const { data: configuracionData, isLoading: loadingConfig } = useQuery({
     queryKey: ["configuracionNomina"],
     queryFn: async () => {
@@ -250,14 +253,18 @@ export default function PageConfiguracionNomina() {
     },
   });
   const { data: instruccionData, isLoading: loadingInstruccion } = useQuery({
-    queryKey: ["horarioOperacionHoy", instruccionForm.fecha],
+    queryKey: ["horarioOperacionHoy", instruccionForm.fecha, instruccionForm.kiosko_device_id],
     queryFn: async () => {
-      const response = await horarioOperacionService.getHoy({ fecha: instruccionForm.fecha || hoyLocal() });
+      const response = await horarioOperacionService.getHoy({
+        fecha: instruccionForm.fecha || hoyLocal(),
+        kiosko_device_id: instruccionForm.kiosko_device_id || undefined,
+      });
       return response.data.data;
     },
     enabled: !!instruccionForm.fecha,
   });
   const lista = useMemo(() => jornadas?.data?.data ?? [], [jornadas]);
+  const kioscosLista = useMemo(() => kioscos?.data?.data ?? kioscos?.data ?? [], [kioscos]);
   const [jornadaUuid, setJornadaUuid] = useState("");
   const jornada = lista.find((item) => item.uuid === jornadaUuid) ?? lista[0];
   const [form, setForm] = useState(prepararForm(jornada));
@@ -293,6 +300,7 @@ export default function PageConfiguracionNomina() {
       ...prev,
       ...(instruccionData ?? {}),
       fecha: instruccionData?.fecha ? String(instruccionData.fecha).slice(0, 10) : prev.fecha,
+      kiosko_device_id: instruccionData?.kiosko_device_id ?? prev.kiosko_device_id,
       jornada_laboral_id: instruccionData?.jornada_laboral_id ?? prev.jornada_laboral_id,
       hora_entrada: normalizarHora(instruccionData?.hora_entrada) || prev.hora_entrada,
       hora_entrada_limite: normalizarHora(instruccionData?.hora_entrada_limite) || prev.hora_entrada_limite,
@@ -395,6 +403,7 @@ export default function PageConfiguracionNomina() {
     if (!jornada) return;
     instruccionMutation.mutate({
       fecha: instruccionForm.fecha || hoyLocal(),
+      kiosko_device_id: instruccionForm.kiosko_device_id ? Number(instruccionForm.kiosko_device_id) : null,
       jornada_laboral_id: jornada.id,
       hora_entrada: form.hora_entrada || null,
       hora_entrada_limite: instruccionForm.hora_entrada_limite || form.hora_entrada || null,
@@ -430,6 +439,7 @@ export default function PageConfiguracionNomina() {
     event.preventDefault();
     instruccionMutation.mutate({
       ...instruccionForm,
+      kiosko_device_id: instruccionForm.kiosko_device_id ? Number(instruccionForm.kiosko_device_id) : null,
       jornada_laboral_id: instruccionForm.jornada_laboral_id ? Number(instruccionForm.jornada_laboral_id) : null,
       duracion_pausa_minutos: instruccionForm.duracion_pausa_minutos ? Number(instruccionForm.duracion_pausa_minutos) : null,
       duracion_almuerzo_minutos: instruccionForm.duracion_almuerzo_minutos ? Number(instruccionForm.duracion_almuerzo_minutos) : null,
@@ -597,7 +607,8 @@ export default function PageConfiguracionNomina() {
         CampoHoraStepper={CampoHoraStepper}
         form={instruccionForm}
         jornadas={lista}
-        loading={loadingInstruccion}
+        kioscos={kioscosLista}
+        loading={loadingInstruccion || loadingKioscos}
         saving={instruccionMutation.isPending}
         onSubmit={guardarInstruccion}
         onFieldChange={handleInstruccion}

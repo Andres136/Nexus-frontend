@@ -5,6 +5,7 @@ export default function InstruccionOperativaDia({
   CampoHoraStepper,
   form,
   jornadas,
+  kioscos,
   loading,
   saving,
   onSubmit,
@@ -37,6 +38,23 @@ export default function InstruccionOperativaDia({
             onChange={onFieldChange}
             className="mt-1 h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-800 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
           />
+        </label>
+
+        <label className="block">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Kiosko</span>
+          <select
+            name="kiosko_device_id"
+            value={form.kiosko_device_id}
+            onChange={onFieldChange}
+            className="mt-1 h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-800 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+          >
+            <option value="">Global</option>
+            {kioscos.map((item) => (
+              <option key={item.uuid ?? item.id} value={item.id}>
+                {item.name} · {item.sede?.nombre ?? "Sin sede"} · {item.bodega?.nombre ?? "Sin bodega"}
+              </option>
+            ))}
+          </select>
         </label>
 
         <label className="block">
@@ -116,6 +134,7 @@ InstruccionOperativaDia.propTypes = {
   CampoHoraStepper: PropTypes.elementType.isRequired,
   form: PropTypes.shape({
     fecha: PropTypes.string,
+    kiosko_device_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     jornada_laboral_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     hora_entrada: PropTypes.string,
     hora_entrada_limite: PropTypes.string,
@@ -133,6 +152,13 @@ InstruccionOperativaDia.propTypes = {
     uuid: PropTypes.string,
     nombre: PropTypes.string,
     horas_semanales: PropTypes.number,
+  })).isRequired,
+  kioscos: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.number,
+    uuid: PropTypes.string,
+    name: PropTypes.string,
+    sede: PropTypes.shape({ nombre: PropTypes.string }),
+    bodega: PropTypes.shape({ nombre: PropTypes.string }),
   })).isRequired,
   loading: PropTypes.bool,
   saving: PropTypes.bool,
