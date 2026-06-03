@@ -426,5 +426,18 @@ export const dashboardComercialApi = {
     apiClient.get("/api/estadisticas-comerciales", { params }),
 };
 
+export const reportesBicApi = {
+  getAll: () => apiClient.get("/api/obtener-reportes-bic"),
+  getById: (uuid) => apiClient.get(`/api/obtener-reportes-bic/${uuid}`),
+  create: (data) =>
+    apiClient.post("/api/reportes-bic", data, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }),
+  update: (uuid, data) =>
+    apiClient.put(`/api/reportes-bic/${uuid}`, data, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }),
+  delete: (uuid) => apiClient.delete(`/api/reportes-bic/${uuid}`),
+};
 
 export default apiClient;
