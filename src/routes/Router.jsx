@@ -119,6 +119,7 @@ import RegisterProductoNoConforme from "../components/calidad/RegisterProductoNo
 import EncuestasPage from "../views/crm/EncuestasPage";
 import ResultadosEncuesta from "../views/crm/ResultadosEncuesta";
 import EncuestaPublica from "../views/crm/EncuestaPublica";
+import PageReportesBic from "../views/hseq/PageReportesBic";
 
 
 export default function Router() {
@@ -624,7 +625,10 @@ export default function Router() {
             }
           />
 
-
+          <Route
+            path="/auth/crm/hseq/reportes-bic"
+            element={<PageReportesBic/>}
+          />
 
            {/*   Fin Rutas para  HSEQ */} 
 

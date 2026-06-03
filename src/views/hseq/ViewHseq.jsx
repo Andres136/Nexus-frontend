@@ -35,7 +35,15 @@ export default function ViewHseq() {
         { name: "Tipos de Servicios", to: "/auth/crm/hseq/tipo-servicios", icon: Boxes },
         { name: "Tipos de Residuos", to: "/auth/crm/hseq/tipo-residuos", icon: Recycle },
       ]
+    },
+    {
+      title: "Reportes",
+      items: [
+        { name: "Reportes BIC", to: "/auth/crm/hseq/reportes-bic", icon: LayoutDashboard },
+      ]
     }
+
+
   ];
 
   const isActive = (path) => location.pathname === path;
