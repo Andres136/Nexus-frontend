@@ -127,7 +127,8 @@ import ResultadosEncuesta from "../views/crm/ResultadosEncuesta";
 import EncuestaPublica from "../views/crm/EncuestaPublica";
 import PagePortalEmpleado from "../views/nomina/PagePortalEmpleado";
 import PageLinkAccesoKioskoTemporal from "../views/nomina/PageLinkAccesoKioskoTemporal";
-
+import PageInstruccionOperativa from "../views/nomina/PageInstruccionOperativa";
+import PageSolicitudHoraExtraOperacion from "../views/nomina/PageSolicitudHoraExtraOperacion";
 
 export default function Router() {
   return (
@@ -143,7 +144,7 @@ export default function Router() {
         element={<ProtectedRoute allowedRoles={[1, 2, 3, 4, 5, 6, 7, 8, 9]} />}
       >
         <Route path="/auth" element={<AuthLyout />}>
-           <Route
+          <Route
             path="responsabilidades"
             element={<DynamicProtectedRoute permission="/auth/responsabilidades">
               <Responsabilidades />
@@ -157,12 +158,12 @@ export default function Router() {
             </DynamicProtectedRoute>}
           />
           <Route path="traslado-bodegas" element={<DynamicProtectedRoute permission="/auth/traslado-bodegas">
-              <TrasladoBodegas />
-            </DynamicProtectedRoute>} />
+            <TrasladoBodegas />
+          </DynamicProtectedRoute>} />
 
           <Route path="obtener-traslados" element={<DynamicProtectedRoute permission="/auth/obtener-traslados">
-              <ObtenerTrasladosBodegas   />
-            </DynamicProtectedRoute>} />
+            <ObtenerTrasladosBodegas />
+          </DynamicProtectedRoute>} />
 
           <Route
             path="detalles-traslado/:id"
@@ -170,14 +171,14 @@ export default function Router() {
               <DetallesTraslados />
             </DynamicProtectedRoute>}
           />
-       <Route>
-         <Route
-           path="/auth/crm/estadisticas-ordenes"
-           element={<DynamicProtectedRoute permission="/auth/crm/estadisticas-ordenes">
-        <DashboardOrdenesAnual />
-           </DynamicProtectedRoute>}
-         />
-       </Route>
+          <Route>
+            <Route
+              path="/auth/crm/estadisticas-ordenes"
+              element={<DynamicProtectedRoute permission="/auth/crm/estadisticas-ordenes">
+                <DashboardOrdenesAnual />
+              </DynamicProtectedRoute>}
+            />
+          </Route>
           <Route
             path="editar-traslado/:id"
             element={<DynamicProtectedRoute permission="/auth/editar-traslado/:id">
@@ -193,53 +194,53 @@ export default function Router() {
               </DynamicProtectedRoute>
             }
           />
-{/*Rutas para control de calidad */}
-         <Route path="/auth/control-calidad" element={<DynamicProtectedRoute permission="/auth/control-calidad">
-           <Registros />
-         </DynamicProtectedRoute>} />
-         <Route path="/auth/registro-diario/verificacion" element={<DynamicProtectedRoute permission="/auth/registro-diario/verificacion">
-           <VerificacionDiaria />
-         </DynamicProtectedRoute>} />
-         <Route path="/auth/registro-diario/dashboard" element={<DynamicProtectedRoute permission="/auth/registro-diario/dashboard">
-           <DashboardRegistroDiario />
-         </DynamicProtectedRoute>} />
-         <Route path="/auth/registro-diario" element={<DynamicProtectedRoute permission="/auth/registro-diario">
-           <DashboardProcesosAnuales/>
-         </DynamicProtectedRoute>} />
+          {/*Rutas para control de calidad */}
+          <Route path="/auth/control-calidad" element={<DynamicProtectedRoute permission="/auth/control-calidad">
+            <Registros />
+          </DynamicProtectedRoute>} />
+          <Route path="/auth/registro-diario/verificacion" element={<DynamicProtectedRoute permission="/auth/registro-diario/verificacion">
+            <VerificacionDiaria />
+          </DynamicProtectedRoute>} />
+          <Route path="/auth/registro-diario/dashboard" element={<DynamicProtectedRoute permission="/auth/registro-diario/dashboard">
+            <DashboardRegistroDiario />
+          </DynamicProtectedRoute>} />
+          <Route path="/auth/registro-diario" element={<DynamicProtectedRoute permission="/auth/registro-diario">
+            <DashboardProcesosAnuales />
+          </DynamicProtectedRoute>} />
 
-         <Route path="/auth/novedades" element={<DynamicProtectedRoute permission="/auth/novedades">
-           <NovedadesCalidad />
-         </DynamicProtectedRoute>} />
-
-
-         <Route path="/auth/gestion-calidad/:id" element={<DynamicProtectedRoute permission="/auth/gestion-calidad/:id">
-           <GestionNovedadesCalidad />
-         </DynamicProtectedRoute>} />
-
-         <Route path="/auth/dashboard-semestral" element={<DynamicProtectedRoute permission="/auth/dashboard-semestral">
-           <DashboardSemestral />
-         </DynamicProtectedRoute>} />
-
-         <Route path="/auth/crm/vsm/productividad-individual"
-          element={<DynamicProtectedRoute permission="/auth/crm/vsm/productividad-individual">
-            <DashboardProductividaIndividual />
-          </DynamicProtectedRoute>}
-         />
-
-         <Route
-          path="/auth/crm/control-operativo/dashboard"
-          element={<DynamicProtectedRoute permission="/auth/crm/control-operativo/dashboard">
-            <DashboardOperativo />
-          </DynamicProtectedRoute>}
-         />
+          <Route path="/auth/novedades" element={<DynamicProtectedRoute permission="/auth/novedades">
+            <NovedadesCalidad />
+          </DynamicProtectedRoute>} />
 
 
-{/*Fin de Rutas para control de calidad */}
+          <Route path="/auth/gestion-calidad/:id" element={<DynamicProtectedRoute permission="/auth/gestion-calidad/:id">
+            <GestionNovedadesCalidad />
+          </DynamicProtectedRoute>} />
 
-         {/*Rutas para TIC */}
-         <Route path="/auth/tic" element={<DynamicProtectedRoute permission="/auth/tic">
-           <Asignaciones />
-         </DynamicProtectedRoute>} />
+          <Route path="/auth/dashboard-semestral" element={<DynamicProtectedRoute permission="/auth/dashboard-semestral">
+            <DashboardSemestral />
+          </DynamicProtectedRoute>} />
+
+          <Route path="/auth/crm/vsm/productividad-individual"
+            element={<DynamicProtectedRoute permission="/auth/crm/vsm/productividad-individual">
+              <DashboardProductividaIndividual />
+            </DynamicProtectedRoute>}
+          />
+
+          <Route
+            path="/auth/crm/control-operativo/dashboard"
+            element={<DynamicProtectedRoute permission="/auth/crm/control-operativo/dashboard">
+              <DashboardOperativo />
+            </DynamicProtectedRoute>}
+          />
+
+
+          {/*Fin de Rutas para control de calidad */}
+
+          {/*Rutas para TIC */}
+          <Route path="/auth/tic" element={<DynamicProtectedRoute permission="/auth/tic">
+            <Asignaciones />
+          </DynamicProtectedRoute>} />
 
           <Route
             path="marketing"
@@ -258,7 +259,7 @@ export default function Router() {
               </DynamicProtectedRoute>
             }
           />
-         {/* Fin de Rutas para TIC */}
+          {/* Fin de Rutas para TIC */}
           <Route
             path="entregas"
             element={
@@ -472,9 +473,9 @@ export default function Router() {
               </DynamicProtectedRoute>
             }
           />
-          
 
-         <Route
+
+          <Route
             path="/auth/crm/ordenes-servicio-proveedor"
             element={
               <DynamicProtectedRoute permission="/auth/crm/ordenes-servicio-proveedor">
@@ -482,30 +483,30 @@ export default function Router() {
               </DynamicProtectedRoute>
             }
           />
-        <Route
+          <Route
             path="/auth/crm/ordenes-servicio-proveedor/:id"
             element={
               <DynamicProtectedRoute permission="/auth/crm/ordenes-servicio-proveedor/:id">
-               <RegistrarOs />
+                <RegistrarOs />
               </DynamicProtectedRoute>
             }
           />
-          
+
           {/* Fin de Rutas para Ordenes a proveedores */}
 
-       
-          {/* Rutas para  gestion de cartera */}   
+
+          {/* Rutas para  gestion de cartera */}
 
           <Route
             path="/auth/crm/cartera-clientes"
             element={
               <DynamicProtectedRoute permission="/auth/crm/cartera-clientes">
-                <ObtenerGestionCartera/>
+                <ObtenerGestionCartera />
               </DynamicProtectedRoute>
             }
           />
-  
-  <Route
+
+          <Route
             path="/auth/crm/registrar-cartera"
             element={
               <DynamicProtectedRoute permission="/auth/crm/registrar-cartera">
@@ -526,7 +527,7 @@ export default function Router() {
             path="/auth/crm/gestion-cartera/:id"
             element={
               <DynamicProtectedRoute permission="/auth/crm/gestion-cartera/:id">
-                <GestionarFacturaCartera/>
+                <GestionarFacturaCartera />
               </DynamicProtectedRoute>
             }
           />
@@ -539,11 +540,11 @@ export default function Router() {
               </DynamicProtectedRoute>
             }
           />
-          
-           
-          {/*  Fin Rutas para  gestion de cartera */}  
-            {/*   Rutas para  HSEQ */} 
-            <Route
+
+
+          {/*  Fin Rutas para  gestion de cartera */}
+          {/*   Rutas para  HSEQ */}
+          <Route
             path="/auth/crm/hseq/inspecciones"
             element={
               <DynamicProtectedRoute permission="/auth/crm/hseq/inspecciones">
@@ -627,13 +628,13 @@ export default function Router() {
             path="/auth/crm/hseq/dashboard-generacion-residuos"
             element={
               <DynamicProtectedRoute permission="/auth/crm/hseq/dashboard-generacion-residuos">
-                <DashboardResiduos/>
+                <DashboardResiduos />
               </DynamicProtectedRoute>
             }
           />
 
-   {/* 🔹 Rutas para Nomina */}
-           <Route
+          {/* 🔹 Rutas para Nomina */}
+          <Route
             path="/auth/crm/nomina"
             element={
               <DynamicProtectedRoute permission="/auth/crm/nomina">
@@ -643,7 +644,7 @@ export default function Router() {
           />
 
 
-           <Route
+          <Route
             path="/auth/crm/nomina/portal-empleado"
             element={
               <DynamicProtectedRoute permission="/auth/crm/nomina/portal-empleado">
@@ -660,11 +661,27 @@ export default function Router() {
               </DynamicProtectedRoute>
             }
           />
+          <Route
+            path="/auth/crm/nomina/instruccion-operativa"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/nomina/instruccion-operativa">
+                <PageInstruccionOperativa />
+              </DynamicProtectedRoute>
+            }
+          />
+          <Route
+            path="/auth/crm/nomina/solicitar-horas-extras"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/nomina/solicitar-horas-extras">
+                <PageSolicitudHoraExtraOperacion />
+              </DynamicProtectedRoute>
+            }
+          />
 
 
-      {/* 🔹Fin de  Rutas para Nomina */}
+          {/* 🔹Fin de  Rutas para Nomina */}
 
-           {/*   Fin Rutas para  HSEQ */} 
+          {/*   Fin Rutas para  HSEQ */}
 
           <Route
             path="/auth/crm/producto-no-conforme"
@@ -747,7 +764,7 @@ export default function Router() {
 
 
           {/* Rutas para Contabilidad */}
-            <Route
+          <Route
             path="/auth/crm/contabilidad"
             element={
               <DynamicProtectedRoute permission="/auth/crm/contabilidad">
@@ -755,7 +772,7 @@ export default function Router() {
               </DynamicProtectedRoute>
             }
           />
-          
+
           <Route
             path="/auth/crm/crear-factura"
             element={
@@ -774,13 +791,13 @@ export default function Router() {
             }
           />
 
-          <Route 
-          path="/auth/crm/catalogo-contabilidad"
-          element={
-            <DynamicProtectedRoute permission="/auth/crm/catalogo-contabilidad">
-              <CatalogoContable/>
-            </DynamicProtectedRoute>
-          }
+          <Route
+            path="/auth/crm/catalogo-contabilidad"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/catalogo-contabilidad">
+                <CatalogoContable />
+              </DynamicProtectedRoute>
+            }
           />
 
           <Route
@@ -792,7 +809,7 @@ export default function Router() {
             }
           />
 
-       <Route
+          <Route
             path="/auth/crm/obtener-pagos-factura-compra"
             element={
               <DynamicProtectedRoute permission="/auth/crm/obtener-pagos-factura-compra">
@@ -802,7 +819,7 @@ export default function Router() {
           />
 
 
-        
+
           <Route
             path="/auth/crm/impuestos"
             element={
@@ -856,16 +873,16 @@ export default function Router() {
             path="/auth/crm/vsm/auditoria"
             element={
               <DynamicProtectedRoute permission="/auth/crm/vsm/auditoria">
-                <AlistamientosAuditoria/>
+                <AlistamientosAuditoria />
               </DynamicProtectedRoute>
             }
           />
         </Route>
 
-        
+
       </Route>
 
-   
+
       {/* 🔹 Rutas para Administradores (AdminLayout) */}
       <Route element={<ProtectedRoute allowedRoles={[1]} />}>
         <Route path="/admin" element={<AdminLayout />}>
@@ -880,8 +897,8 @@ export default function Router() {
           />
           <Route path="sedes" element={<Sedes />} />
           <Route path="rendimiento" element={<KpiTareas />} />
-      
-        
+
+
           <Route path="departamentos" element={<DepartatamentosUpdate />} />
           <Route path="indicadores" element={<Indicadores />} />
           <Route

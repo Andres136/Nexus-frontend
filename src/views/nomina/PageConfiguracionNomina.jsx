@@ -603,17 +603,7 @@ export default function PageConfiguracionNomina() {
         </div>
       </form>
 
-      <InstruccionOperativaDia
-        CampoHoraStepper={CampoHoraStepper}
-        form={instruccionForm}
-        jornadas={lista}
-        kioscos={kioscosLista}
-        loading={loadingInstruccion || loadingKioscos}
-        saving={instruccionMutation.isPending}
-        onSubmit={guardarInstruccion}
-        onFieldChange={handleInstruccion}
-        onTimeChange={handleInstruccionTime}
-      />
+ 
 
       <div className="grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-5">
         <aside className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 h-fit">

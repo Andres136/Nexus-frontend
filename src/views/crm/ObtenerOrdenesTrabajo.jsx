@@ -106,6 +106,18 @@ export default function ObtenerOrdenesTrabajo() {
             >
               Acceso Temporal
             </Link>
+            <Link
+             to="/auth/crm/nomina/instruccion-operativa"
+             className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2 sm:px-5 sm:py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 shadow-lg text-sm sm:text-base"
+            >
+             Instrucción Operativa
+            </Link>
+            <Link
+              to="/auth/crm/nomina/solicitar-horas-extras"
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-sky-600 to-cyan-600 hover:from-sky-700 hover:to-cyan-700 text-white px-4 py-2 sm:px-5 sm:py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 shadow-lg text-sm sm:text-base"
+            >
+              Solicitar Horas Extra
+            </Link>
           </div>
       
         </div>

@@ -134,6 +134,12 @@ const NAV_ITEMS = [
     icon: Stethoscope,
     component: <PageIncapacidades />,
   },
+     {
+        id: "horas-extras",
+        label: "Horas Extras Operación",
+        icon: Timer,
+        component: <PageHorasExtras />,
+      },
     ],
 
     
@@ -215,12 +221,7 @@ const NAV_ITEMS = [
         icon: Settings,
         component: <PageConfiguracionNomina />,
       },
-      {
-        id: "horas-extras",
-        label: "Horas Extras Operación",
-        icon: Timer,
-        component: <PageHorasExtras />,
-      },
+   
     ],
   },
 ];
