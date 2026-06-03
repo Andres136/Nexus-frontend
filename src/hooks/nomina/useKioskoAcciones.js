@@ -126,7 +126,7 @@ function decir(jornada, texto) {
 
 const VOZ = {
   salida:              (nombre)          => `Registro exitoso, ${nombre}. Salida laboral registrada. Hasta pronto.`,
-  pausaSalida:         (nombre)          => `Registro exitoso, ${nombre}. Salida a pausa registrada. Que tengas una buena pausa.`,
+  pausaSalida:         (nombre, minutos) => `Salida a break exitosa, ${nombre}. Tu próximo registro será en ${minutos} minutos.`,
   pausaEntrada:        (nombre)          => `Registro exitoso, ${nombre}. Regreso de pausa registrado. Bienvenido de vuelta.`,
   almuerzoSalida:      (nombre)          => `Buen provecho, ${nombre}. Salida a almuerzo registrada correctamente.`,
   almuerzoEntrada:     (nombre)          => `Registro exitoso, ${nombre}. Regreso de almuerzo registrado. Bienvenido de vuelta.`,
@@ -194,6 +194,7 @@ export function useKioskoAcciones({ empleado, jornadaActiva, onRefrescarJornada,
     if (guardando || exitoMsg) return;
 
     const tardanza = minutosTardeContraHora(jornada?.hora_ingreso_almuerzo);
+    const minutosPausa = jornada?.duracion_pausa_minutos ?? 15;
     const acciones = {
       salida: () => ejecutar(
         { hora_salida: tiempoHHMMSS() },
@@ -202,8 +203,8 @@ export function useKioskoAcciones({ empleado, jornadaActiva, onRefrescarJornada,
       ),
       pausaSalida: () => ejecutar(
         { hora_salida_brake: tiempoHHMMSS() },
-        VOZ.pausaSalida(empleado.nombre),
-        `Registro exitoso. Salida a pausa registrada, ${empleado.nombre}.`
+        VOZ.pausaSalida(empleado.nombre, minutosPausa),
+        `Salida a break exitosa, ${empleado.nombre}. Tu próximo registro será en ${minutosPausa} minutos.`
       ),
       pausaEntrada: () => ejecutar(
         { hora_ingreso_brake: tiempoHHMMSS() },
