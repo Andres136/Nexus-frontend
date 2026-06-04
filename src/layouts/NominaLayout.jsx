@@ -247,40 +247,43 @@ export default function NominaLayout() {
   };
 
   return (
-    <div className="min-h-screen w-0 min-w-full max-w-full overflow-hidden bg-gray-50">
-      {/* Top Navigation Bar */}
-      <nav className="w-full min-w-0 max-w-full overflow-hidden bg-white border-b border-gray-200 shadow-sm sticky top-0 z-30">
-        <div className="w-full min-w-0 max-w-full px-4 sm:px-6 box-border">
-          <div className="flex min-w-0 items-center h-14 gap-0.5">
-         
-
-            {/* Nav items */}
-            <div className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto overscroll-x-contain [scrollbar-width:thin]">
-              {NAV_ITEMS.map((item) => {
-                const Icon = item.icon;
-                const isActive = activeNav === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => handleNavChange(item.id)}
-                    className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium whitespace-nowrap transition-colors ${
-                      isActive
-                        ? "bg-indigo-50 text-indigo-700"
-                        : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                    }`}
-                  >
-                    <Icon
-                      className={`h-4 w-4 ${isActive ? "text-indigo-600" : "text-gray-400"}`}
-                      strokeWidth={2}
-                    />
-                    {item.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+    <div className="min-h-screen w-0 min-w-full max-w-full overflow-hidden bg-white">
+      <div className="bg-gray-50 px-4 pb-5 pt-8 sm:px-7 lg:px-7">
+        <div
+          className="relative mx-auto h-[190px] w-full max-w-none overflow-hidden rounded-md bg-slate-900 shadow-sm sm:h-[220px] lg:h-[240px]"
+          aria-label="Nómina"
+        >
+          <img
+            src="/images/Nomina.jpeg"
+            alt="Nómina"
+            className="absolute inset-0 h-full w-full object-cover object-center"
+          />
         </div>
-      </nav>
+
+        <nav className="mx-auto mt-3 grid w-full max-w-none grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-[repeat(7,minmax(0,1fr))]">
+          {NAV_ITEMS.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeNav === item.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => handleNavChange(item.id)}
+                className={`group relative flex h-16 cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-md border px-3 text-sm font-semibold uppercase tracking-wide text-white/85 backdrop-blur-md transition-all duration-200 before:absolute before:left-0 before:top-1/2 before:h-px before:w-full before:-translate-y-1/2 before:bg-[linear-gradient(90deg,transparent,rgba(56,189,248,0.85),transparent)] before:opacity-45 before:shadow-[0_0_14px_rgba(56,189,248,0.9)] after:absolute after:inset-0 after:bg-[radial-gradient(circle_at_88%_18%,rgba(125,211,252,0.45),transparent_12%),linear-gradient(135deg,rgba(255,255,255,0.08),transparent_42%,rgba(56,189,248,0.12))] after:opacity-90 ${
+                  isActive
+                    ? "border-cyan-100/60 bg-[#062a58] shadow-[0_0_22px_rgba(56,189,248,0.35),inset_0_0_20px_rgba(56,189,248,0.16)]"
+                    : "border-cyan-100/25 bg-[#041f45] shadow-[inset_0_0_16px_rgba(56,189,248,0.08)] hover:border-cyan-100/55 hover:bg-[#062a58] hover:text-white hover:shadow-[0_0_20px_rgba(56,189,248,0.28),inset_0_0_18px_rgba(56,189,248,0.14)]"
+                }`}
+              >
+                <Icon className="relative z-10 h-5 w-5 shrink-0 text-white/80 drop-shadow-[0_0_8px_rgba(125,211,252,0.85)]" strokeWidth={1.65} />
+                <span className="relative z-10 truncate text-white/80 drop-shadow-[0_0_8px_rgba(125,211,252,0.72)] group-hover:text-white/95">
+                  {item.label}
+                </span>
+              </button>
+            );
+          })}
+        </nav>
+      </div>
 
       {/* Sub-tabs */}
       {currentNav?.tabs && (
