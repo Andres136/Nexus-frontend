@@ -418,6 +418,16 @@ export const permisoService = {
   rechazar(uuid, data = {}) {
     return apiClient.patch(`api/nomina/permisos/${uuid}/rechazar`, data);
   },
+  async getPermisosAprobadosHoy(userId) {
+    const kioskConfig = await kioskRequestConfig();
+    const params = { user_id: userId };
+    if (kioskConfig) {
+      return apiClient.get("api/nomina/kiosko-permisos", { ...kioskConfig, params });
+    }
+    return apiClient.get("api/nomina/permisos", {
+      params: { ...params, status: "aprobado", fecha_desde: fechaLocal(), fecha_hasta: fechaLocal() },
+    });
+  },
 };
 
 export const vacacionService = {

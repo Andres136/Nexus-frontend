@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import PropTypes from "prop-types";
 import * as faceapi from "face-api.js";
 import { KeyRound, MessageCircle } from "lucide-react";
-import { workSessionService } from "../../../services/nominaService";
+import { workSessionService, permisoService } from "../../../services/nominaService";
 import { hablar } from "../../../helpers/voz";
 
 const hhmm = (date) =>
@@ -59,7 +59,10 @@ function PinModal({ cedulaMap, empleadosMap, jornadaId, jornadaActiva, kioskoInf
       }
 
       const info  = empleadosMap.get(userId) ?? { nombre: "Empleado", photoUrl: null };
-      const jornadaOperativa = await onRefrescarJornada?.() ?? jornadaActiva;
+      const [jornadaOperativa, conPermiso] = await Promise.all([
+        onRefrescarJornada?.() ?? Promise.resolve(jornadaActiva),
+        tienePermisoEntrada(userId),
+      ]);
       const ahora = new Date();
       const yy    = ahora.getFullYear();
       const mm    = String(ahora.getMonth() + 1).padStart(2, "0");
@@ -74,7 +77,7 @@ function PinModal({ cedulaMap, empleadosMap, jornadaId, jornadaActiva, kioskoInf
       });
 
       const hora = hhmm(ahora);
-      const tarde = minutosTardeEntrada(ahora, jornadaOperativa?.hora_entrada_limite ?? jornadaOperativa?.hora_entrada) > 0;
+      const tarde = !conPermiso && minutosTardeEntrada(ahora, jornadaOperativa?.hora_entrada_limite ?? jornadaOperativa?.hora_entrada) > 0;
       decir(jornadaOperativa, tarde
         ? `Registro exitoso. ${info.nombre}, ingreso tarde.`
         : `Bienvenido, ${info.nombre}. Registro exitoso.`
@@ -178,6 +181,16 @@ function minutosTardeEntrada(fecha, horaEntrada = "07:00") {
   const limite = new Date(fecha);
   limite.setHours(Number(hh), Number(mm), 0, 0);
   return Math.max(0, Math.round((fecha - limite) / 60000));
+}
+
+async function tienePermisoEntrada(userId) {
+  try {
+    const res = await permisoService.getPermisosAprobadosHoy(userId);
+    const lista = res.data?.data ?? [];
+    return lista.length > 0;
+  } catch {
+    return false;
+  }
 }
 
 function decir(jornada, texto) {
@@ -291,7 +304,10 @@ export default function KioskoScanner({
         // Sin sesión → registrar entrada
         setChecking(false);
         setGuardando(true);
-        const jornadaOperativa = await onRefrescarJornada?.() ?? jornadaActiva;
+        const [jornadaOperativa, conPermiso] = await Promise.all([
+          onRefrescarJornada?.() ?? Promise.resolve(jornadaActiva),
+          tienePermisoEntrada(userId),
+        ]);
         const ahora = new Date();
         const yy = ahora.getFullYear();
         const mm = String(ahora.getMonth() + 1).padStart(2, "0");
@@ -306,7 +322,7 @@ export default function KioskoScanner({
         });
 
         const hora = hhmm(ahora);
-        const tarde = minutosTardeEntrada(ahora, jornadaOperativa?.hora_entrada_limite ?? jornadaOperativa?.hora_entrada) > 0;
+        const tarde = !conPermiso && minutosTardeEntrada(ahora, jornadaOperativa?.hora_entrada_limite ?? jornadaOperativa?.hora_entrada) > 0;
         decir(jornadaOperativa, tarde
           ? `Registro exitoso. ${info.nombre}, ingreso tarde.`
           : `Bienvenido, ${info.nombre}. Registro exitoso.`
