@@ -89,7 +89,7 @@ export default function PageContratos() {
   const toggleStatus = async (item) => {
     setUpdatingStatusUuid(item.uuid);
     try {
-      const nextStatus = !Boolean(item.status);
+      const nextStatus = !item.status;
       await contratacionService.cambiarEstadoContrato(item.uuid, nextStatus);
       showToast("success", nextStatus ? "Contrato activado" : "Contrato inactivado");
       queryClient.invalidateQueries(["contrataciones"]);
@@ -161,7 +161,7 @@ export default function PageContratos() {
           </div>
         ) : (
           <div className="w-full max-w-full overflow-x-auto overscroll-x-contain">
-          <table className="min-w-[1300px] divide-y divide-gray-100 text-sm">
+          <table className="w-full min-w-[1300px] divide-y divide-gray-100 text-sm">
             <thead className="bg-gray-50">
               <tr>
                 <th className="w-[190px] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Empleado</th>
@@ -199,7 +199,7 @@ export default function PageContratos() {
                     {item.empresa?.nombre ?? "—"}
                   </td>
                   <td className="px-4 py-3 text-gray-600 align-top">
-                    {item.centro_costo ?? "—"}
+                    {item.usuario?.sede?.nombre ?? "—"}
                   </td>
                   <td className="px-4 py-3 text-right font-medium text-gray-800 align-top whitespace-nowrap">
                     {formatCOP(item.base_salario)}

@@ -273,12 +273,19 @@ export default function ModalLiquidarNomina({ onClose, initialData = {} }) {
               <div className="space-y-1.5">
                 <div className="flex justify-between gap-3"><span className="text-gray-500">Salario pendiente</span><span className="font-medium">{formatCOP(preview.salario_pendiente)}</span></div>
                 <div className="flex justify-between gap-3"><span className="text-gray-500">Pago no prestacional pendiente</span><span className="font-medium">{formatCOP(preview.pago_no_prestacional)}</span></div>
+                <div className="flex justify-between gap-3"><span className="text-gray-500">Comisiones pendientes</span><span className="font-medium">{formatCOP(preview.comisiones_pendientes)}</span></div>
                 <div className="flex justify-between gap-3"><span className="text-gray-500">Cesantías ({preview.dias_cesantias} días)</span><span className="font-medium">{formatCOP(preview.cesantias)}</span></div>
                 <div className="flex justify-between gap-3"><span className="text-gray-500">Intereses cesantías</span><span className="font-medium">{formatCOP(preview.intereses_cesantias)}</span></div>
                 <div className="flex justify-between gap-3"><span className="text-gray-500">Prima ({preview.dias_prima} días)</span><span className="font-medium">{formatCOP(preview.prima_servicios)}</span></div>
                 <div className="flex justify-between gap-3"><span className="text-gray-500">Vacaciones ({preview.dias_vacaciones} días base)</span><span className="font-medium">{formatCOP(preview.vacaciones)}</span></div>
                 <div className="flex justify-between gap-3"><span className="text-gray-500">Indemnización</span><span className="font-medium">{formatCOP(preview.indemnizacion)}</span></div>
                 <div className="flex justify-between gap-3"><span className="text-gray-500">Deducciones finales</span><span className="font-medium">{formatCOP(preview.total_deducciones)}</span></div>
+                {(preview.detalle_comisiones ?? []).map((comision) => (
+                  <div key={comision.uuid} className="flex justify-between gap-3 pl-3 text-xs">
+                    <span className="text-gray-400">{comision.concepto}</span>
+                    <span className="font-medium text-gray-600">{formatCOP(comision.valor)}</span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -389,6 +396,20 @@ export default function ModalLiquidarNomina({ onClose, initialData = {} }) {
                       <span className="text-gray-500">Pago no salarial <span className="text-gray-300 text-xs">510548</span></span>
                       <span className="font-medium text-gray-900">{formatCOP(preview.pago_no_prestacional)}</span>
                     </div>
+                  )}
+                  {(preview.total_comisiones ?? 0) > 0 && (
+                    <>
+                      <div className="flex justify-between gap-3">
+                        <span className="text-gray-500">Comisiones salariales</span>
+                        <span className="font-medium text-gray-900">{formatCOP(preview.total_comisiones)}</span>
+                      </div>
+                      {(preview.detalle_comisiones ?? []).map((comision) => (
+                        <div key={comision.uuid} className="flex justify-between gap-3 pl-3 text-xs">
+                          <span className="text-gray-400">{comision.concepto}</span>
+                          <span className="font-medium text-gray-600">{formatCOP(comision.valor)}</span>
+                        </div>
+                      ))}
+                    </>
                   )}
                   <div className="flex justify-between gap-3">
                     <span className="text-gray-500">H. extra diurnas <span className="text-gray-300 text-xs">510530</span></span>

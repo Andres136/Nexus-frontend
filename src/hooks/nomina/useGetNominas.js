@@ -6,7 +6,7 @@ export const useGetNominas = (params = {}) => {
     queryKey: ["nominas", params],
     queryFn: async () => {
       const response = await nominaService.getNominas(params);
-      console.log("Respuesta de getNominas:", response);
+    //  console.log("Respuesta de getNominas:", response);
       return response.data;
     },
     staleTime: 1000 * 60 * 2,

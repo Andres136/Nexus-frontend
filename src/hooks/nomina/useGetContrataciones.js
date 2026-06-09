@@ -6,6 +6,7 @@ export const useGetContrataciones = (params = {}) => {
     queryKey: ["contrataciones", params],
     queryFn: async () => {
       const response = await contratacionService.getContratos(params);
+     // console.log("Contrataciones obtenidas:", response.data);
       return response.data;
     },
     staleTime: 1000 * 60 * 5,

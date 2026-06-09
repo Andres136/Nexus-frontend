@@ -280,11 +280,25 @@ export const nominaService = {
   liquidar(data) {
     return apiClient.post("api/nomina/nominas/liquidar", data);
   },
+  exportarPlano(params = {}) {
+    return apiClient.get("api/nomina/nominas/exportar-plano", {
+      params,
+      responseType: "blob",
+    });
+  },
   preliquidarRetiro(data) {
     return apiClient.post("api/nomina/nominas/preliquidar-retiro", data);
   },
   liquidarRetiro(data) {
     return apiClient.post("api/nomina/nominas/liquidar-retiro", data);
+  },
+  getLiquidacionesRetiro(params = {}) {
+    return apiClient.get("api/nomina/liquidaciones-retiro", { params });
+  },
+  liquidacionRetiroPdf(uuid) {
+    return apiClient.get(`api/nomina/liquidaciones-retiro/${uuid}/pdf`, {
+      responseType: "blob",
+    });
   },
   aprobarContabilidad(uuid) {
     return apiClient.patch(`api/nomina/nominas/${uuid}/aprobar-contabilidad`);
@@ -306,6 +320,21 @@ export const nominaService = {
   },
 };
 
+export const prestacionService = {
+  getAll(params = {}) {
+    return apiClient.get("api/nomina/liquidaciones-prestaciones", { params });
+  },
+  getTipos() {
+    return apiClient.get("api/nomina/liquidaciones-prestaciones/tipos");
+  },
+  preliquidar(data) {
+    return apiClient.post("api/nomina/nominas/preliquidar-prestacion", data);
+  },
+  liquidar(data) {
+    return apiClient.post("api/nomina/nominas/liquidar-prestacion", data);
+  },
+};
+
 export const novedadRetroactivaService = {
   getAll(params = {}) {
     return apiClient.get("api/nomina/novedades-retroactivas", { params });
@@ -321,6 +350,24 @@ export const novedadRetroactivaService = {
   },
   delete(uuid) {
     return apiClient.delete(`api/nomina/novedades-retroactivas/${uuid}`);
+  },
+};
+
+export const comisionService = {
+  getAll(params = {}) {
+    return apiClient.get("api/nomina/comisiones", { params });
+  },
+  create(data) {
+    return apiClient.post("api/nomina/comisiones", data);
+  },
+  aprobar(uuid, data = {}) {
+    return apiClient.patch(`api/nomina/comisiones/${uuid}/aprobar`, data);
+  },
+  rechazar(uuid, data = {}) {
+    return apiClient.patch(`api/nomina/comisiones/${uuid}/rechazar`, data);
+  },
+  delete(uuid) {
+    return apiClient.delete(`api/nomina/comisiones/${uuid}`);
   },
 };
 
@@ -483,6 +530,16 @@ export const horaExtraService = {
   },
   rechazar(uuid, data = {}) {
     return apiClient.patch(`api/nomina/horas-extras/${uuid}/rechazar`, data);
+  },
+  async getHorasExtrasAprobadasHoy(userId) {
+    const kioskConfig = await kioskRequestConfig();
+    const params = { user_id: userId };
+    if (kioskConfig) {
+      return apiClient.get("api/nomina/kiosko-horas-extras", { ...kioskConfig, params });
+    }
+    return apiClient.get("api/nomina/horas-extras", {
+      params: { ...params, status: "aprobada", fecha_desde: fechaLocal(), fecha_hasta: fechaLocal() },
+    });
   },
 };
 

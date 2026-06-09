@@ -17,12 +17,12 @@ import {
   CalendarCheck,
   AlarmClock,
   Palmtree,
-  FileBadge,
   AlertTriangle,
   FileWarning,
   Baby,
   RefreshCcw,
   Landmark,
+  UserMinus,
 } from "lucide-react";
 
 import PageProcesarNomina from "../views/nomina/PageProcesarNomina";
@@ -33,7 +33,7 @@ import PageDescuentos from "../views/nomina/PageDescuentos";
 import PageJornadaLaboral from "../views/nomina/PageJornadaLaboral";
 import PageIncapacidades from "../views/nomina/PageIncapacidades";
 import PageValores from "../views/nomina/PageValores";
-import PageTipoRegistros from "../views/nomina/PageTipoRegistros";
+
 import PageWorkSessions from "../views/nomina/PageWorkSessions";
 import PagePermisos from "../views/nomina/PagePermisos";
 import PageVacaciones from "../views/nomina/PageVacaciones";
@@ -46,6 +46,9 @@ import PageDescargos from "../views/nomina/PageDescargos";
 import PageConfiguracionNomina from "../views/nomina/PageConfiguracionNomina";
 import PageNovedadesRetroactivas from "../views/nomina/PageNovedadesRetroactivas";
 import PageControlContableNomina from "../views/nomina/PageControlContableNomina";
+import PageComisiones from "../views/nomina/PageComisiones";
+import PageLiquidacionesRetiro from "../views/nomina/PageLiquidacionesRetiro";
+import PageLiquidacionesPrestaciones from "../views/nomina/PageLiquidacionesPrestaciones";
 import BtnAccesoTemporalKiosko from "../components/nomina/BtnAccesoTemporalKiosko";
 
 const NAV_ITEMS = [
@@ -59,6 +62,24 @@ const NAV_ITEMS = [
         label: "Liquidación",
         icon: ReceiptText,
         component: <PageProcesarNomina />,
+      },
+      {
+        id: "comisiones",
+        label: "Comisiones",
+        icon: Coins,
+        component: <PageComisiones />,
+      },
+      {
+        id: "liquidaciones-retiro",
+        label: "Liquidaciones de Retiro",
+        icon: UserMinus,
+        component: <PageLiquidacionesRetiro />,
+      },
+      {
+        id: "prestaciones",
+        label: "Prestaciones Sociales",
+        icon: Landmark,
+        component: <PageLiquidacionesPrestaciones />,
       },
       {
         id: "descuentos",
@@ -85,6 +106,12 @@ const NAV_ITEMS = [
     label: "Contratación",
     icon: FileSignature,
     tabs: [
+         {
+        id: "contratos",
+        label: "Contrataciones",
+        icon: UserCheck,
+        component: <PageContratos />,
+      },
       {
         id: "tipo-contrato",
         label: "Tipos de Contrato",
@@ -97,12 +124,7 @@ const NAV_ITEMS = [
         icon: ShieldCheck,
         component: <PageSeguridadSocial />,
       },
-      {
-        id: "contratos",
-        label: "Contrataciones",
-        icon: UserCheck,
-        component: <PageContratos />,
-      },
+   
     ],
   },
   {

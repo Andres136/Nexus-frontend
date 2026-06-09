@@ -6,9 +6,22 @@ import { useEmpresas } from "../../hooks/useEmpresas";
 import { useGetSeguridadSocial } from "../../hooks/nomina/useGetSeguridadSocial";
 import { useGetRegisterContratacion } from "../../hooks/nomina/useGetRegisterContratacion";
 import { useGetEmpleados } from "../../hooks/nomina/useGetEmpleados";
-import { formatCurrencyInput } from "../../helpers"; 
 
-const CENTROS_COSTO = ["Bogotá", "Cali", "Barranquilla", "Medellín", "Girardot", "Bodega", "Administrativo", "Producción"];
+const MONEY_FIELDS = new Set(["base_salario", "auxilio_transporte", "no_salarial"]);
+
+function formatMoneyValue(value) {
+  if (value === null || value === undefined || value === "") return "";
+  const [integerPart, decimalPart] = String(value).split(".");
+  const formattedInteger = Number(integerPart || 0).toLocaleString("es-CO");
+  return decimalPart ? `${formattedInteger},${decimalPart}` : formattedInteger;
+}
+
+function normalizeMoneyValue(value) {
+  const normalized = String(value).replace(/[^\d,.]/g, "").replace(/\./g, "").replace(",", ".");
+  const [integerPart = "", ...decimalParts] = normalized.split(".");
+  const decimalPart = decimalParts.join("").slice(0, 2);
+  return decimalPart ? `${integerPart || "0"}.${decimalPart}` : integerPart;
+}
 
 const selectStyles = (hasError) => ({
   control: (base, state) => ({
@@ -56,6 +69,20 @@ export default function RegisterContrato({ uuid = null, onClose }) {
 
   const handleSelectChange = (name) => (option) =>
     handleChange({ target: { name, value: option ? option.value : "" } });
+
+  const handleInputChange = (event) => {
+    if (!MONEY_FIELDS.has(event.target.name)) {
+      handleChange(event);
+      return;
+    }
+
+    handleChange({
+      target: {
+        name: event.target.name,
+        value: normalizeMoneyValue(event.target.value),
+      },
+    });
+  };
 
   const inputClass = (field) =>
     `block w-full h-[34px] px-2.5 rounded-md border text-[0.8125rem] focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
@@ -162,14 +189,7 @@ export default function RegisterContrato({ uuid = null, onClose }) {
               </select>
               {err("empresa_id")}
             </div>
-            <div>
-              {label("Centro de costo")}
-              <select name="centro_costo" value={formData.centro_costo} onChange={handleChange} className={inputClass("centro_costo")}>
-                <option value="">Seleccionar...</option>
-                {CENTROS_COSTO.map((centro) => <option key={centro} value={centro}>{centro}</option>)}
-              </select>
-              {err("centro_costo")}
-            </div>
+       
             <div>
               {label("Tipo de contrato", true)}
               <select name="id_contrato" value={formData.id_contrato} onChange={handleChange} className={inputClass("id_contrato")}>
@@ -190,19 +210,19 @@ export default function RegisterContrato({ uuid = null, onClose }) {
             <div>
               {label("Salario base", true)}
               <input type="text" inputMode="decimal"
-               name="base_salario" value={formatCurrencyInput(formData.base_salario)?? "" }
-                onChange={handleChange} placeholder="1300000" className={inputClass("base_salario")} />
+               name="base_salario" value={formatMoneyValue(formData.base_salario)}
+                onChange={handleInputChange} placeholder="1300000" className={inputClass("base_salario")} />
               {err("base_salario")}
             </div>
             <div>
               {label("Auxilio transporte")}
               <input type="text" inputMode="decimal"
-               name="auxilio_transporte" value={formatCurrencyInput(formData.auxilio_transporte)} onChange={handleChange} placeholder="162000" className={inputClass("auxilio_transporte")} />
+               name="auxilio_transporte" value={formatMoneyValue(formData.auxilio_transporte)} onChange={handleInputChange} placeholder="162000" className={inputClass("auxilio_transporte")} />
               {err("auxilio_transporte")}
             </div>
             <div>
               {label("Pago no prestacional")}
-              <input type="text" inputMode="decimal" name="no_salarial" value={formatCurrencyInput(formData.no_salarial)} onChange={handleChange} placeholder="300000" className={inputClass("no_salarial")} />
+              <input type="text" inputMode="decimal" name="no_salarial" value={formatMoneyValue(formData.no_salarial)} onChange={handleInputChange} placeholder="300000" className={inputClass("no_salarial")} />
               {err("no_salarial")}
               <p className="mt-0.5 text-[10px] text-gray-400">Suma al pago, no a seguridad social ni prestaciones.</p>
             </div>

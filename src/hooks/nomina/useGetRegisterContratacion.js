@@ -26,6 +26,16 @@ const EMPTY_FORM = {
   caja_penciones_id: "",
 };
 
+function normalizeMoneyValue(value) {
+  if (value === null || value === undefined || value === "") return value;
+  const text = String(value).replace(/[^\d,.-]/g, "");
+  if (text.includes(",")) return text.replace(/\./g, "").replace(",", ".");
+  if ((text.match(/\./g) ?? []).length > 1 || /\.\d{3}$/.test(text)) {
+    return text.replace(/\./g, "");
+  }
+  return text;
+}
+
 const useGetContratacionById = (uuid) => {
   return useQuery({
     queryKey: ["contratacion", uuid],
@@ -92,9 +102,15 @@ export const useGetRegisterContratacion = ({ uuid = null, onSuccess } = {}) => {
     setLoading(true);
     setFieldErrors({});
     try {
+      const payload = {
+        ...formData,
+        base_salario: normalizeMoneyValue(formData.base_salario),
+        auxilio_transporte: normalizeMoneyValue(formData.auxilio_transporte),
+        no_salarial: normalizeMoneyValue(formData.no_salarial),
+      };
       const response = uuid
-        ? await contratacionService.updateContrato(uuid, formData)
-        : await contratacionService.createContrato(formData);
+        ? await contratacionService.updateContrato(uuid, payload)
+        : await contratacionService.createContrato(payload);
 
       showToast("success", response.data.message || (uuid ? "Actualizado exitosamente" : "Registrado exitosamente"));
       queryClient.invalidateQueries(["contratacion"]);

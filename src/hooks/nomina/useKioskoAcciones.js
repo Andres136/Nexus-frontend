@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { workSessionService } from "../../services/nominaService";
+import { horaExtraService, workSessionService } from "../../services/nominaService";
 import { hablar } from "../../helpers/voz";
 
 export const hhmm = (date) =>
@@ -125,7 +125,9 @@ function decir(jornada, texto) {
 }
 
 const VOZ = {
-  salida:              (nombre)          => `Registro exitoso, ${nombre}. Salida laboral registrada. Hasta pronto.`,
+  salida:              (nombre, horas)   => horas > 0
+    ? `Registro exitoso, ${nombre}. Salida laboral registrada con ${horas} hora(s) extra autorizada(s). Hasta pronto.`
+    : `Registro exitoso, ${nombre}. Salida laboral registrada. Hasta pronto.`,
   pausaSalida:         (nombre, minutos) => `Salida a break exitosa, ${nombre}. Tu próximo registro será en ${minutos} minutos.`,
   pausaEntrada:        (nombre)          => `Registro exitoso, ${nombre}. Regreso de pausa registrado. Bienvenido de vuelta.`,
   almuerzoSalida:      (nombre)          => `Buen provecho, ${nombre}. Salida a almuerzo registrada correctamente.`,
@@ -142,6 +144,7 @@ export function useKioskoAcciones({ empleado, jornadaActiva, onRefrescarJornada,
   const [tipoMensaje, setTipoMensaje]           = useState("info");
   const [jornadaSincronizada, setJornadaSincronizada] = useState(false);
   const [jornadaOperativa, setJornadaOperativa] = useState(null);
+  const [horasExtraAprobadas, setHorasExtraAprobadas] = useState(0);
 
   const jornada        = useMemo(() => obtenerJornada(session, jornadaOperativa ?? jornadaActiva), [session, jornadaActiva, jornadaOperativa]);
   const accionDetectada = useMemo(() => detectarAccion(session, jornada), [session, jornada]);
@@ -155,9 +158,18 @@ export function useKioskoAcciones({ empleado, jornadaActiva, onRefrescarJornada,
     let mounted = true;
     setJornadaSincronizada(false);
     setEsperaMsg("Actualizando horario operativo del día...");
-    Promise.resolve(onRefrescarJornada?.())
-      .then((jornadaActualizada) => {
+    Promise.all([
+      Promise.resolve(onRefrescarJornada?.()),
+      horaExtraService.getHorasExtrasAprobadasHoy(empleado.userId),
+    ])
+      .then(([jornadaActualizada, horasExtraResponse]) => {
         if (mounted && jornadaActualizada) setJornadaOperativa(jornadaActualizada);
+        if (mounted) {
+          const data = horasExtraResponse.data?.data;
+          const total = data?.total_horas
+            ?? (data?.data ?? []).reduce((sum, item) => sum + Number(item.horas ?? 0), 0);
+          setHorasExtraAprobadas(Number(total || 0));
+        }
       })
       .catch(() => {
         if (mounted) setJornadaOperativa(jornadaActiva ?? null);
@@ -166,17 +178,18 @@ export function useKioskoAcciones({ empleado, jornadaActiva, onRefrescarJornada,
         if (mounted) setJornadaSincronizada(true);
       });
     return () => { mounted = false; };
-  }, [jornadaActiva, onRefrescarJornada]);
+  }, [empleado.userId, jornadaActiva, onRefrescarJornada]);
 
   const ejecutar = useCallback(async (payload, textoVoz, mensajePantalla) => {
     setGuardando(true);
     setTipoMensaje("info");
     setEsperaMsg("Registrando marcación...");
     try {
-      await workSessionService.updateSession(session.uuid, payload);
-      decir(jornada, textoVoz);
+      const response = await workSessionService.updateSession(session.uuid, payload);
+      const avisoKiosko = response.data?.data?.aviso_kiosko;
+      decir(jornada, avisoKiosko || textoVoz);
       setTipoMensaje("exito");
-      setExitoMsg(mensajePantalla);
+      setExitoMsg(avisoKiosko || mensajePantalla);
       setTimeout(() => onDone(empleado.nombre, hhmm(new Date()), empleado.userId), 3000);
     } catch (error) {
       const mensaje = mensajeErrorApi(error);
@@ -198,8 +211,10 @@ export function useKioskoAcciones({ empleado, jornadaActiva, onRefrescarJornada,
     const acciones = {
       salida: () => ejecutar(
         { hora_salida: tiempoHHMMSS() },
-        VOZ.salida(empleado.nombre),
-        `Registro exitoso. Salida laboral registrada, ${empleado.nombre}.`
+        VOZ.salida(empleado.nombre, horasExtraAprobadas),
+        horasExtraAprobadas > 0
+          ? `Registro exitoso. Salida laboral registrada con ${horasExtraAprobadas} hora(s) extra autorizada(s), ${empleado.nombre}.`
+          : `Registro exitoso. Salida laboral registrada, ${empleado.nombre}.`
       ),
       pausaSalida: () => ejecutar(
         { hora_salida_brake: tiempoHHMMSS() },
@@ -237,15 +252,27 @@ export function useKioskoAcciones({ empleado, jornadaActiva, onRefrescarJornada,
       const minutosParaSalida = salidaMins - minutosDia();
       if (minutosParaSalida <= 60) {
         setTipoMensaje("alerta");
-        setEsperaMsg(llegadaTarde ? "Llegada tarde registrada. Aún no es hora de salida." : "Aún no es hora de salida.");
-        decir(jornada, llegadaTarde
-          ? `${empleado.nombre}, llegada tarde registrada. Aún no es hora de salida.`
-          : `${empleado.nombre}, aún no es hora de salida.`
+        setEsperaMsg(horasExtraAprobadas > 0
+          ? `Tienes ${horasExtraAprobadas} hora(s) extra autorizada(s). Aún no es hora de salida.`
+          : llegadaTarde ? "Llegada tarde registrada. Aún no es hora de salida." : "Aún no es hora de salida."
+        );
+        decir(jornada, horasExtraAprobadas > 0
+          ? `${empleado.nombre}, tienes ${horasExtraAprobadas} hora(s) extra autorizada(s). Aún no es hora de salida.`
+          : llegadaTarde
+            ? `${empleado.nombre}, llegada tarde registrada. Aún no es hora de salida.`
+            : `${empleado.nombre}, aún no es hora de salida.`
         );
       } else {
         setTipoMensaje(llegadaTarde ? "tarde" : "info");
-        setEsperaMsg(llegadaTarde ? "Llegada tarde registrada." : "Marcación registrada. Jornada en curso.");
-        if (llegadaTarde) decir(jornada, `${empleado.nombre}, llegada tarde registrada.`);
+        setEsperaMsg(horasExtraAprobadas > 0
+          ? `Tienes ${horasExtraAprobadas} hora(s) extra autorizada(s) para hoy.`
+          : llegadaTarde ? "Llegada tarde registrada." : "Marcación registrada. Jornada en curso."
+        );
+        if (horasExtraAprobadas > 0) {
+          decir(jornada, `${empleado.nombre}, tienes ${horasExtraAprobadas} hora(s) extra autorizada(s) para hoy.`);
+        } else if (llegadaTarde) {
+          decir(jornada, `${empleado.nombre}, llegada tarde registrada.`);
+        }
       }
     } else {
       setTipoMensaje("info");
@@ -259,6 +286,7 @@ export function useKioskoAcciones({ empleado, jornadaActiva, onRefrescarJornada,
     empleado.nombre,
     exitoMsg,
     guardando,
+    horasExtraAprobadas,
     ejecutar,
     jornada,
     jornadaSincronizada,

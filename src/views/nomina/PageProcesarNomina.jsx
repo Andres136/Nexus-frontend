@@ -1,12 +1,7 @@
-import { useState, useMemo, useCallback } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useGetNominas } from "../../hooks/nomina/useGetNominas";
-import { useGetNominaSummary } from "../../hooks/nomina/useGetNominaSummary";
-import { useGetContrataciones } from "../../hooks/nomina/useGetContrataciones";
-import { useGetJornadaLaboral } from "../../hooks/nomina/useGetJornadaLaboral";
+import PropTypes from "prop-types";
 import ModalLiquidarNomina from "../../components/nomina/ModalLiquidarNomina";
-import { nominaService } from "../../services/nominaService";
-import { showToast } from "../../helpers/utils/showToast";
+import { CENTROS_COSTO, useProcesarNomina } from "../../hooks/nomina/useProcesarNomina";
+import { Building2, Download, History, LayoutDashboard, ReceiptText } from "lucide-react";
 
 const MESES = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -14,8 +9,6 @@ const MESES = [
 ];
 
 const YEARS = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i);
-const CENTROS_COSTO = ["Bogotá", "Cali", "Barranquilla", "Medellín", "Girardot"];
-
 function formatCOP(value) {
   if (!value && value !== 0) return "$ 0";
   return "$ " + Number(value).toLocaleString("es-CO", { maximumFractionDigits: 0 });
@@ -46,55 +39,6 @@ function avatarColor(name = "") {
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
 }
 
-function normalizarTexto(value = "") {
-  return String(value)
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
-}
-
-function getCentroCosto(item = {}) {
-  if (item.centro_costo) return item.centro_costo;
-  if (item.contratacion?.centro_costo) return item.contratacion.centro_costo;
-  const sede = item.usuario?.sede?.nombre ?? item.empleado?.sede?.nombre ?? "";
-  const empresa = item.empresa?.nombre ?? item.contratacion?.empresa?.nombre ?? "";
-  const texto = normalizarTexto(`${sede} ${empresa}`);
-  const centro = CENTROS_COSTO.find((nombre) => texto.includes(normalizarTexto(nombre)));
-  return centro ?? "Sin sede";
-}
-
-function diasPeriodo(inicio, fin) {
-  const desde = new Date(`${inicio}T00:00:00`);
-  const hasta = new Date(`${fin}T00:00:00`);
-  return Math.max(1, Math.round((hasta - desde) / 86400000) + 1);
-}
-
-function estimarNominaContrato(item = {}, periodoInicio, periodoFin) {
-  const dias = Math.min(30, diasPeriodo(periodoInicio, periodoFin));
-  const frecuencia = Number(item.pago_frecuencia ?? 30);
-  const salarioPeriodo = (Number(item.base_salario ?? 0) / 30) * dias;
-  const auxilioPeriodo = Number(item.auxilio_transporte ?? 0) * (dias / 30);
-  const noSalarialBase = Number(item.no_salarial ?? 0);
-  const noSalarialPeriodo = frecuencia === 15
-    ? noSalarialBase * (dias > 15 ? 2 : 1)
-    : noSalarialBase * (dias / 30);
-  const deducciones = salarioPeriodo * 0.08;
-  const devengado = salarioPeriodo + auxilioPeriodo + noSalarialPeriodo;
-
-  return {
-    devengado: Math.round(devengado),
-    deducciones: Math.round(deducciones),
-    neto: Math.round(devengado - deducciones),
-  };
-}
-
-function buildNominaByUser(nominas = []) {
-  return nominas.reduce((acc, nomina) => {
-    if (nomina?.user_id && nomina.liquidada) acc[nomina.user_id] = nomina;
-    return acc;
-  }, {});
-}
-
 function KpiCard({ label, value, sub, icon, valueColor = "text-gray-900" }) {
   return (
     <div className="min-w-0 bg-white rounded-xl border border-gray-200 p-4 flex items-start justify-between">
@@ -107,6 +51,14 @@ function KpiCard({ label, value, sub, icon, valueColor = "text-gray-900" }) {
     </div>
   );
 }
+
+KpiCard.propTypes = {
+  label: PropTypes.string.isRequired,
+  value: PropTypes.node.isRequired,
+  sub: PropTypes.string.isRequired,
+  icon: PropTypes.node.isRequired,
+  valueColor: PropTypes.string,
+};
 
 function Pagination({ meta, page, onPage }) {
   if (!meta || meta.last_page <= 1) return null;
@@ -165,250 +117,39 @@ function Pagination({ meta, page, onPage }) {
   );
 }
 
+Pagination.propTypes = {
+  meta: PropTypes.shape({
+    last_page: PropTypes.number,
+    from: PropTypes.number,
+    to: PropTypes.number,
+    total: PropTypes.number,
+  }),
+  page: PropTypes.number.isRequired,
+  onPage: PropTypes.func.isRequired,
+};
+
 export default function PageProcesarNomina() {
-  const now = new Date();
-  const queryClient = useQueryClient();
-  const [mes, setMes] = useState(now.getMonth());
-  const [anio, setAnio] = useState(now.getFullYear());
-  const [quincena, setQuincena] = useState("0");           // "0"=mes completo, "1"=primera, "2"=segunda
-  const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
-  const [perPage] = useState(10);
-  const [activeTab, setActiveTab] = useState("resumen");
-  const [showLiquidarModal, setShowLiquidarModal] = useState(false);
-  const [liquidarInitialData, setLiquidarInitialData] = useState({});
-  const [openActions, setOpenActions] = useState(null);
-
-  // ── Lote ───────────────────────────────────────────────────────────
-  const [showBatch, setShowBatch] = useState(false);
-  const [batchJornada, setBatchJornada] = useState("");
-  const [batchRunning, setBatchRunning] = useState(false);
-  const [batchResults, setBatchResults] = useState([]);
-
-  const { jornadas } = useGetJornadaLaboral();
-  const jornadasList = jornadas?.data?.data ?? [];
-
-  const periodoInicio = useMemo(() => {
-    if (quincena === "2") return `${anio}-${String(mes + 1).padStart(2, "0")}-16`;
-    return `${anio}-${String(mes + 1).padStart(2, "0")}-01`;
-  }, [mes, anio, quincena]);
-  const periodoFin = useMemo(() => {
-    const m = String(mes + 1).padStart(2, "0");
-    if (quincena === "1") return `${anio}-${m}-15`;
-    const ultimo = new Date(anio, mes + 1, 0).getDate();
-    return `${anio}-${m}-${ultimo}`;
-  }, [mes, anio, quincena]);
-
-  const nominaParams = useMemo(
-    () => ({ periodo_inicio: periodoInicio, periodo_fin: periodoFin, search: search || undefined, page, per_page: perPage }),
-    [periodoInicio, periodoFin, search, page, perPage]
-  );
-
-  const contratacionParams = useMemo(
-    () => ({ search: search || undefined, page, per_page: perPage, status: 1 }),
-    [search, page, perPage]
-  );
-
-  const summaryParams = useMemo(
-    () => ({ periodo_inicio: periodoInicio, periodo_fin: periodoFin }),
-    [periodoInicio, periodoFin]
-  );
-
-  const { nominas, isLoading: loadingNominas } = useGetNominas(nominaParams);
-  const { contrataciones, isLoading } = useGetContrataciones(contratacionParams);
-  const { summary, isLoading: loadingSummary } = useGetNominaSummary(summaryParams);
-
-  const lista = contrataciones?.data?.data ?? [];
-  const meta  = contrataciones?.data ?? null;
-  const nominasLista = nominas?.data?.data ?? [];
-  const nominaByUser = useMemo(() => buildNominaByUser(nominasLista), [nominasLista]);
-
-  const conceptos = useMemo(() => {
-    return nominasLista.reduce((acc, item) => {
-      acc.salario += Number(item.salario_base_devengado ?? 0);
-      acc.auxilio += Number(item.auxilio_transporte ?? 0);
-      acc.extras += Number(item.valor_horas_extras_diurnas ?? 0)
-        + Number(item.valor_horas_extras_nocturnas ?? 0)
-        + Number(item.valor_horas_festivas ?? 0)
-        + Number(item.valor_horas_nocturnas_festivas ?? 0);
-      acc.salud += Number(item.deduccion_salud ?? 0);
-      acc.pension += Number(item.deduccion_pension ?? 0);
-      acc.descuentos += Number(item.total_descuentos_adicionales ?? 0);
-      acc.devengado += Number(item.total_devengado ?? 0);
-      acc.deducciones += Number(item.total_deducciones ?? 0);
-      acc.neto += Number(item.salario_neto ?? 0);
-      return acc;
-    }, {
-      salario: 0,
-      auxilio: 0,
-      extras: 0,
-      salud: 0,
-      pension: 0,
-      descuentos: 0,
-      devengado: 0,
-      deducciones: 0,
-      neto: 0,
-    });
-  }, [nominasLista]);
-
-  const centrosCosto = useMemo(() => {
-    const base = CENTROS_COSTO.reduce((acc, nombre) => {
-      acc[nombre] = { nombre, empleados: 0, liquidados: 0, devengado: 0, deducciones: 0, neto: 0 };
-      return acc;
-    }, {});
-
-    lista.forEach((contrato) => {
-      const centro = getCentroCosto(contrato);
-      if (!base[centro]) base[centro] = { nombre: centro, empleados: 0, liquidados: 0, devengado: 0, deducciones: 0, neto: 0 };
-      const nomina = nominaByUser[contrato.users_id];
-      base[centro].empleados += 1;
-      if (nomina) {
-        base[centro].liquidados += 1;
-        base[centro].devengado += Number(nomina.total_devengado ?? 0);
-        base[centro].deducciones += Number(nomina.total_deducciones ?? 0);
-        base[centro].neto += Number(nomina.salario_neto ?? 0);
-      }
-    });
-
-    return Object.values(base);
-  }, [lista, nominaByUser]);
-
-  const handleMes = (e) => { setMes(Number(e.target.value)); setPage(1); };
-  const handleAnio = (e) => { setAnio(Number(e.target.value)); setPage(1); };
-  const handleSearch = (e) => { setSearch(e.target.value); setPage(1); };
-
-  // Liquidación en lote de todos los empleados pendientes
-  const handleBatchLiquidar = useCallback(async () => {
-    if (!batchJornada) { showToast("error", "Selecciona una jornada laboral."); return; }
-    const pendientes = lista.filter((item) => !nominaByUser[item.users_id]);
-    if (pendientes.length === 0) { showToast("success", "Todos los empleados ya están liquidados."); return; }
-
-    setBatchRunning(true);
-    setBatchResults([]);
-    const results = [];
-
-    for (const item of pendientes) {
-      const nombre = item.usuario?.name ?? `Contrato #${item.id}`;
-      try {
-        const res = await nominaService.liquidar({
-          user_id: item.users_id,
-          jornada_laboral_id: Number(batchJornada),
-          periodo_inicio: periodoInicio,
-          periodo_fin: periodoFin,
-        });
-        results.push({
-          nombre,
-          status: "ok",
-          neto: res.data.data?.salario_neto,
-          advertencias: res.data.advertencias ?? [],
-        });
-      } catch (err) {
-        results.push({
-          nombre,
-          status: "error",
-          message: err.response?.data?.message ?? "Error al liquidar",
-        });
-      }
-    }
-
-    setBatchResults(results);
-    setBatchRunning(false);
-    queryClient.invalidateQueries(["nominas"]);
-    queryClient.invalidateQueries(["nominaSummary"]);
-    queryClient.invalidateQueries(["contrataciones"]);
-  }, [batchJornada, lista, nominaByUser, periodoInicio, periodoFin, queryClient]);
-
-  const periodoContrato = (item = {}) => {
-    if (Number(item.pago_frecuencia) !== 15) {
-      return { inicio: periodoInicio, fin: periodoFin };
-    }
-
-    const seleccionadoEsMesActual = mes === now.getMonth() && anio === now.getFullYear();
-    const usaSegundaQuincena = seleccionadoEsMesActual && now.getDate() > 15;
-    const mesTexto = String(mes + 1).padStart(2, "0");
-
-    return {
-      inicio: `${anio}-${mesTexto}-${usaSegundaQuincena ? "16" : "01"}`,
-      fin: usaSegundaQuincena ? periodoFin : `${anio}-${mesTexto}-15`,
-    };
-  };
-
-  const abrirLiquidacion = (item = {}) => {
-    const periodo = periodoContrato(item);
-    setLiquidarInitialData({
-      user_id: item.users_id ? String(item.users_id) : "",
-      periodo_inicio: periodo.inicio,
-      periodo_fin: periodo.fin,
-    });
-    setShowLiquidarModal(true);
-    setOpenActions(null);
-  };
-
-  const descargarDesprendible = async (nomina) => {
-    if (!nomina?.uuid) {
-      showToast("error", "Primero debes liquidar esta nómina.");
-      return;
-    }
-
-    try {
-      const response = await nominaService.desprendiblePdf(nomina.uuid);
-      const url = window.URL.createObjectURL(new Blob([response.data], { type: "application/pdf" }));
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", `desprendible_${nomina.uuid}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-      setOpenActions(null);
-    } catch {
-      showToast("error", "No se pudo descargar el desprendible.");
-    }
-  };
-
-  const enviarDesprendible = async (nomina) => {
-    if (!nomina?.uuid) {
-      showToast("error", "Primero debes liquidar esta nómina.");
-      return;
-    }
-
-    try {
-      const response = await nominaService.enviarDesprendible(nomina.uuid);
-      showToast("success", response.data?.message || "Desprendible enviado.");
-      setOpenActions(null);
-    } catch (error) {
-      showToast("error", error.response?.data?.message || "No se pudo enviar el desprendible.");
-    }
-  };
-
-  const deleteMutation = useMutation({
-    mutationFn: (uuid) => nominaService.deleteNomina(uuid),
-    onSuccess: () => {
-      showToast("success", "Nómina eliminada. Ya puedes re-liquidar el período.");
-      queryClient.invalidateQueries(["nominas"]);
-      queryClient.invalidateQueries(["nominaSummary"]);
-      setOpenActions(null);
-    },
-    onError: (error) => {
-      showToast("error", error.response?.data?.message || "No se pudo eliminar la nómina.");
-    },
-  });
-
-  const eliminarNomina = (nomina) => {
-    if (!nomina?.uuid) return;
-    if (!window.confirm(`¿Eliminar la nómina de ${nomina.empleado?.name ?? "este empleado"}? No se puede deshacer.`)) return;
-    deleteMutation.mutate(nomina.uuid);
-  };
+  const {
+    mes, anio, quincena, search, page, setPage, activeTab, setActiveTab,
+    showLiquidarModal, setShowLiquidarModal, liquidarInitialData,
+    openActions, setOpenActions, showBatch, batchJornada, setBatchJornada,
+    batchRunning, batchResults, jornadasList, periodoInicio, periodoFin,
+    lista, meta, nominasLista, nominaByUser, conceptos, centrosCosto,
+    summary, isLoading, loadingNominas, loadingSummary, deleteMutation, exportandoPlano,
+    handleMes, handleAnio, handleQuincena, handleSearch, toggleBatch, closeBatch,
+    handleBatchLiquidar, abrirLiquidacion, descargarDesprendible,
+    enviarDesprendible, descargarArchivoPlano, eliminarNomina, estimarNominaContrato,
+  } = useProcesarNomina();
 
   const TABS = [
-    { id: "resumen", label: "Resumen de Nómina", icon: "📋" },
-    { id: "historial", label: "Historial de Nóminas", icon: "🗂" },
-    { id: "conceptos", label: "Conceptos", icon: "📑" },
-    { id: "costos", label: "Centros de Costo", icon: "🏢" },
+    { id: "resumen", label: "Resumen de Nómina", icon: LayoutDashboard },
+    { id: "historial", label: "Historial de Nóminas", icon: History },
+    { id: "conceptos", label: "Conceptos", icon: ReceiptText },
+    { id: "costos", label: "Centros de Costo", icon: Building2 },
   ];
 
   return (
-    <div className="w-0 min-w-full max-w-full overflow-hidden box-border p-4 sm:p-6">
+    <div className="w-full min-w-0 max-w-full overflow-hidden box-border p-4 sm:p-6">
       {/* Encabezado */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between mb-6">
         <div className="min-w-0">
@@ -438,7 +179,7 @@ export default function PageProcesarNomina() {
             </select>
             <select
               value={quincena}
-              onChange={(e) => { setQuincena(e.target.value); setPage(1); }}
+              onChange={handleQuincena}
               className="text-sm text-gray-700 bg-transparent border-none outline-none cursor-pointer ml-1"
             >
               <option value="0">Mes completo</option>
@@ -452,7 +193,16 @@ export default function PageProcesarNomina() {
 
           <button
             type="button"
-            onClick={() => { setShowBatch((v) => !v); setBatchResults([]); }}
+            onClick={descargarArchivoPlano}
+            disabled={exportandoPlano}
+            className="h-9 px-4 inline-flex items-center gap-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            <Download className="h-4 w-4" />
+            {exportandoPlano ? "Preparando..." : "Descargar archivo plano"}
+          </button>
+          <button
+            type="button"
+            onClick={toggleBatch}
             className="h-9 px-4 text-sm font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-colors"
           >
             Liquidar todos
@@ -546,7 +296,7 @@ export default function PageProcesarNomina() {
                 {lista.filter((i) => !nominaByUser[i.users_id]).length} empleado(s) sin liquidar
               </p>
             </div>
-            <button onClick={() => { setShowBatch(false); setBatchResults([]); }}
+            <button onClick={closeBatch}
               className="text-gray-400 hover:text-gray-600 text-lg leading-none">✕</button>
           </div>
 
@@ -610,20 +360,25 @@ export default function PageProcesarNomina() {
       {/* Tabs internos */}
       <div className="min-w-0 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <div className="border-b border-gray-100 px-4 flex min-w-0 items-center gap-0.5 overflow-x-auto">
-          {TABS.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-                activeTab === tab.id
-                  ? "border-indigo-600 text-indigo-700"
-                  : "border-transparent text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              <span className="text-base leading-none">{tab.icon}</span>
-              {tab.label}
-            </button>
-          ))}
+
+{TABS.map((tab) => {
+  const Icon = tab.icon;
+
+  return (
+    <button
+      key={tab.id}
+      onClick={() => setActiveTab(tab.id)}
+      className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+        activeTab === tab.id
+          ? "border-indigo-600 text-indigo-700"
+          : "border-transparent text-gray-500 hover:text-gray-700"
+      }`}
+    >
+      <Icon size={18} strokeWidth={2} />
+      <span>{tab.label}</span>
+    </button>
+  );
+})}
         </div>
 
         {activeTab === "resumen" && (
@@ -675,7 +430,7 @@ export default function PageProcesarNomina() {
               </div>
             ) : (
               <div className="w-full max-w-full overflow-x-auto">
-              <table className="min-w-[980px] divide-y divide-gray-100 text-sm">
+              <table className="w-full min-w-[980px] divide-y divide-gray-100 text-sm">
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
@@ -694,7 +449,7 @@ export default function PageProcesarNomina() {
                     const cargo     = item.cargo ?? "—";
                     const tipoDoc   = item.tipo_documento ?? "CC";
                     const numDoc    = item.numero_documento ?? "";
-                    const estimado  = estimarNominaContrato(item, periodoInicio, periodoFin);
+                    const estimado  = estimarNominaContrato(item);
 
                     // ¿ya tiene nómina liquidada en este período?
                     const nominaExiste = nominaByUser[item.users_id];
@@ -826,7 +581,7 @@ export default function PageProcesarNomina() {
               <div className="text-center py-20 text-sm text-gray-400">No hay nóminas liquidadas para este período.</div>
             ) : (
               <div className="w-full max-w-full overflow-x-auto">
-              <table className="min-w-[920px] divide-y divide-gray-100 text-sm">
+              <table className="w-full min-w-[920px] divide-y divide-gray-100 text-sm">
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comprobante</th>
@@ -903,7 +658,7 @@ export default function PageProcesarNomina() {
             </div>
 
             <div className="w-full max-w-full overflow-x-auto">
-            <table className="min-w-[760px] divide-y divide-gray-100 text-sm">
+            <table className="w-full min-w-[760px] divide-y divide-gray-100 text-sm">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
@@ -915,6 +670,7 @@ export default function PageProcesarNomina() {
                 {[
                   ["Devengado", "Salario base", conceptos.salario],
                   ["Devengado", "Auxilio de transporte", conceptos.auxilio],
+                  ["Devengado", "Comisiones", conceptos.comisiones],
                   ["Devengado", "Horas extras / recargos", conceptos.extras],
                   ["Deducción", "Salud empleado", conceptos.salud],
                   ["Deducción", "Pensión empleado", conceptos.pension],
@@ -964,7 +720,7 @@ export default function PageProcesarNomina() {
             </div>
 
             <div className="w-full max-w-full overflow-x-auto">
-            <table className="min-w-[820px] divide-y divide-gray-100 text-sm">
+            <table className="w-full min-w-[820px] divide-y divide-gray-100 text-sm">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sede</th>
