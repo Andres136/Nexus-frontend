@@ -177,7 +177,7 @@ export function useKioskoAcciones({ empleado, jornadaActiva, onRefrescarJornada,
       decir(jornada, textoVoz);
       setTipoMensaje("exito");
       setExitoMsg(mensajePantalla);
-      setTimeout(() => onDone(empleado.nombre, hhmm(new Date())), 3000);
+      setTimeout(() => onDone(empleado.nombre, hhmm(new Date()), empleado.userId), 3000);
     } catch (error) {
       const mensaje = mensajeErrorApi(error);
       setTipoMensaje("error");
@@ -187,7 +187,7 @@ export function useKioskoAcciones({ empleado, jornadaActiva, onRefrescarJornada,
     } finally {
       setGuardando(false);
     }
-  }, [empleado.nombre, jornada, onCancelar, onDone, session.uuid]);
+  }, [empleado.nombre, empleado.userId, jornada, onCancelar, onDone, session.uuid]);
 
   useEffect(() => {
     if (!jornadaSincronizada) return;

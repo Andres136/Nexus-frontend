@@ -59,9 +59,9 @@ function PinModal({ cedulaMap, empleadosMap, jornadaId, jornadaActiva, kioskoInf
       }
 
       const info  = empleadosMap.get(userId) ?? { nombre: "Empleado", photoUrl: null };
-      const [jornadaOperativa, conPermiso] = await Promise.all([
+      const [jornadaOperativa, permisoEntrada] = await Promise.all([
         onRefrescarJornada?.() ?? Promise.resolve(jornadaActiva),
-        tienePermisoEntrada(userId),
+        obtenerPermisoEntrada(userId),
       ]);
       const ahora = new Date();
       const yy    = ahora.getFullYear();
@@ -77,17 +77,11 @@ function PinModal({ cedulaMap, empleadosMap, jornadaId, jornadaActiva, kioskoInf
       });
 
       const hora = hhmm(ahora);
-      const tarde = !conPermiso && minutosTardeEntrada(ahora, jornadaOperativa?.hora_entrada_limite ?? jornadaOperativa?.hora_entrada) > 0;
-      decir(jornadaOperativa, tarde
-        ? `Registro exitoso. ${info.nombre}, ingreso tarde.`
-        : `Bienvenido, ${info.nombre}. Registro exitoso.`
-      );
+      const tarde = !permisoEntrada && minutosTardeEntrada(ahora, jornadaOperativa?.hora_entrada_limite ?? jornadaOperativa?.hora_entrada) > 0;
+      decir(jornadaOperativa, mensajeVozEntrada(info.nombre, tarde, permisoEntrada));
       setEstado("exito");
-      setMsg(tarde
-        ? `${info.nombre}, entrada registrada a las ${hora}. Ingreso tardío.`
-        : `¡Bienvenido, ${info.nombre}! Entrada registrada a las ${hora}.`
-      );
-      onEntradaCompleta(info.nombre, hora);
+      setMsg(mensajeVisualEntrada(info.nombre, hora, tarde, permisoEntrada));
+      onEntradaCompleta(info.nombre, hora, userId);
       setTimeout(onClose, 3000);
     } catch (error) {
       const mensaje = mensajeErrorApi(error);
@@ -183,20 +177,44 @@ function minutosTardeEntrada(fecha, horaEntrada = "07:00") {
   return Math.max(0, Math.round((fecha - limite) / 60000));
 }
 
-async function tienePermisoEntrada(userId) {
+async function obtenerPermisoEntrada(userId) {
   try {
     const res = await permisoService.getPermisosAprobadosHoy(userId);
     const lista = res.data?.data ?? [];
-    const ahora = tiempoHHMMSS(new Date());
+    const ahora = tiempoHHMMSS(new Date()).slice(0, 5);
 
-    return lista.some((permiso) =>
+    return lista.find((permiso) =>
       ["llegada_tarde", "ausencia_parcial"].includes(permiso.tipo)
-      && permiso.hora_inicio <= ahora
-      && permiso.hora_fin >= ahora
-    );
+      && permiso.hora_inicio?.slice(0, 5) <= ahora
+      && permiso.hora_fin?.slice(0, 5) >= ahora
+    ) ?? null;
   } catch {
-    return false;
+    return null;
   }
+}
+
+function nombreTipoPermiso(tipo) {
+  return tipo === "llegada_tarde" ? "llegada tarde" : "ausencia parcial";
+}
+
+function mensajeVozEntrada(nombre, tarde, permiso) {
+  if (permiso) {
+    return `Bienvenido, ${nombre}. Permiso de ${nombreTipoPermiso(permiso.tipo)} aprobado. Registro exitoso.`;
+  }
+
+  return tarde
+    ? `Registro exitoso. ${nombre}, ingreso tarde.`
+    : `Bienvenido, ${nombre}. Registro exitoso.`;
+}
+
+function mensajeVisualEntrada(nombre, hora, tarde, permiso) {
+  if (permiso) {
+    return `¡Bienvenido, ${nombre}! Entrada registrada a las ${hora}. Permiso de ${nombreTipoPermiso(permiso.tipo)} aprobado.`;
+  }
+
+  return tarde
+    ? `${nombre}, entrada registrada a las ${hora}. Ingreso tardío.`
+    : `¡Bienvenido, ${nombre}! Entrada registrada a las ${hora}.`;
 }
 
 function decir(jornada, texto) {
@@ -222,6 +240,8 @@ export default function KioskoScanner({
   const autoPinRef = useRef(null);
   const cooldown   = useRef(false);
   const detecting  = useRef(false);
+  const usuarioBloqueado = useRef(ultimaMarca?.userId ?? null);
+  const sinRostroDesde = useRef(null);
   const detOptions = useRef(new faceapi.SsdMobilenetv1Options({ minConfidence: 0.3 }));
 
   const [camError, setCamError]         = useState("");
@@ -274,14 +294,26 @@ export default function KioskoScanner({
         .withFaceLandmarks()
         .withFaceDescriptor();
 
-      if (!det) return;
+      if (!det) {
+        if (usuarioBloqueado.current) {
+          sinRostroDesde.current ??= Date.now();
+          if (Date.now() - sinRostroDesde.current >= 2000) {
+            usuarioBloqueado.current = null;
+            sinRostroDesde.current = null;
+          }
+        }
+        return;
+      }
 
       const match = faceMatcher.findBestMatch(det.descriptor);
       if (match.label === "unknown") return;
 
+      const userId = Number(match.label);
+      sinRostroDesde.current = null;
+      if (usuarioBloqueado.current === userId) return;
+
       cooldown.current = true;
       setReconocimientoFallido(false);
-      const userId = Number(match.label);
       const info   = empleadosMap.get(userId) ?? { nombre: "Empleado", photoUrl: null };
       setCandidato({ userId, nombre: info.nombre, photoUrl: info.photoUrl });
 
@@ -293,6 +325,7 @@ export default function KioskoScanner({
 
         // Sesión abierta → pantalla de acciones (salida / pausa / almuerzo)
         if (session && !session.hora_salida) {
+          usuarioBloqueado.current = userId;
           onReconocido(userId, session);
           return;
         }
@@ -310,9 +343,9 @@ export default function KioskoScanner({
         // Sin sesión → registrar entrada
         setChecking(false);
         setGuardando(true);
-        const [jornadaOperativa, conPermiso] = await Promise.all([
+        const [jornadaOperativa, permisoEntrada] = await Promise.all([
           onRefrescarJornada?.() ?? Promise.resolve(jornadaActiva),
-          tienePermisoEntrada(userId),
+          obtenerPermisoEntrada(userId),
         ]);
         const ahora = new Date();
         const yy = ahora.getFullYear();
@@ -328,16 +361,11 @@ export default function KioskoScanner({
         });
 
         const hora = hhmm(ahora);
-        const tarde = !conPermiso && minutosTardeEntrada(ahora, jornadaOperativa?.hora_entrada_limite ?? jornadaOperativa?.hora_entrada) > 0;
-        decir(jornadaOperativa, tarde
-          ? `Registro exitoso. ${info.nombre}, ingreso tarde.`
-          : `Bienvenido, ${info.nombre}. Registro exitoso.`
-        );
-        setExitoMsg(tarde
-          ? `${info.nombre}, entrada marcada a las ${hora}. Ingreso tardío.`
-          : `¡Bienvenido, ${info.nombre}! Entrada marcada a las ${hora}.`
-        );
+        const tarde = !permisoEntrada && minutosTardeEntrada(ahora, jornadaOperativa?.hora_entrada_limite ?? jornadaOperativa?.hora_entrada) > 0;
+        decir(jornadaOperativa, mensajeVozEntrada(info.nombre, tarde, permisoEntrada));
+        setExitoMsg(mensajeVisualEntrada(info.nombre, hora, tarde, permisoEntrada));
         setResultadoTipo("success");
+        usuarioBloqueado.current = userId;
         onEntradaCompleta(info.nombre, hora);
         setTimeout(resetear, 3500);
 
@@ -388,8 +416,17 @@ export default function KioskoScanner({
           jornadaActiva={jornadaActiva}
           onRefrescarJornada={onRefrescarJornada}
           kioskoInfo={kioskoInfo}
-          onReconocido={(userId, session) => { setShowPin(false); onReconocido(userId, session); }}
-          onEntradaCompleta={(nombre, hora) => { setShowPin(false); setReconocimientoFallido(false); onEntradaCompleta(nombre, hora); }}
+          onReconocido={(userId, session) => {
+            usuarioBloqueado.current = userId;
+            setShowPin(false);
+            onReconocido(userId, session);
+          }}
+          onEntradaCompleta={(nombre, hora, userId) => {
+            usuarioBloqueado.current = userId;
+            setShowPin(false);
+            setReconocimientoFallido(false);
+            onEntradaCompleta(nombre, hora, userId);
+          }}
           onClose={() => setShowPin(false)}
         />
       )}
@@ -530,7 +567,7 @@ KioskoScanner.propTypes = {
   jornadaId:         PropTypes.number,
   jornadaActiva:     PropTypes.object,
   onRefrescarJornada: PropTypes.func,
-  ultimaMarca:       PropTypes.shape({ nombre: PropTypes.string, hora: PropTypes.string }),
+  ultimaMarca:       PropTypes.shape({ nombre: PropTypes.string, hora: PropTypes.string, userId: PropTypes.number }),
   onReconocido:      PropTypes.func.isRequired,
   onEntradaCompleta: PropTypes.func.isRequired,
 };

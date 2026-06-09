@@ -12,7 +12,6 @@ import {
   removeKioskoSession,
   getKioskoGuestSession,
   removeKioskoGuestSession,
-  isGuestSession,
 } from "../../helpers/nomina/kioskoSession";
 
 const API_URL     = import.meta.env.VITE_API_URL;
@@ -259,8 +258,8 @@ export function useKiosko() {
     setStep("acciones");
   }, [empleadosMap]);
 
-  const handleAccionCompleta = useCallback((nombre, hora) => {
-    setUltimaMarca({ nombre, hora });
+  const handleAccionCompleta = useCallback((nombre, hora, userId) => {
+    setUltimaMarca({ nombre, hora, userId });
     setEmpleadoActual(null);
     setStep("scanner");
   }, []);
