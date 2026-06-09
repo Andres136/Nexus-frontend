@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Check, X, Trash2 } from "lucide-react";
+import Select from "react-select";
 import { novedadRetroactivaService } from "../../services/nominaService";
 import { useGetEmpleados } from "../../hooks/nomina/useGetEmpleados";
 import { showToast } from "../../helpers/utils/showToast";
@@ -32,7 +33,7 @@ function badge(status) {
 
 export default function PageNovedadesRetroactivas() {
   const queryClient = useQueryClient();
-  const { empleados } = useGetEmpleados();
+  const { empleados, isLoading: loadingEmpleados } = useGetEmpleados();
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(EMPTY);
   const [search, setSearch] = useState("");
@@ -44,6 +45,7 @@ export default function PageNovedadesRetroactivas() {
   });
 
   const items = data?.data ?? [];
+  const empleadoSeleccionado = empleados.find((empleado) => empleado.value === Number(form.user_id)) ?? null;
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["novedadesRetroactivas"] });
@@ -77,6 +79,10 @@ export default function PageNovedadesRetroactivas() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!form.user_id) {
+      showToast("error", "Seleccione un empleado.");
+      return;
+    }
     createMutation.mutate(form);
   };
 
@@ -87,7 +93,7 @@ export default function PageNovedadesRetroactivas() {
           <h1 className="text-xl font-semibold text-gray-800">Novedades Retroactivas</h1>
           <p className="text-sm text-gray-500">Registra ajustes aprobables para períodos posteriores.</p>
         </div>
-        <button onClick={() => setShowForm(true)} className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700">
+        <button type="button" onClick={() => setShowForm(true)} className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700">
           <Plus className="h-4 w-4" /> Nueva
         </button>
       </div>
@@ -99,10 +105,16 @@ export default function PageNovedadesRetroactivas() {
       {showForm && (
         <form onSubmit={handleSubmit} className="mb-5 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
           <div className="grid gap-3 md:grid-cols-3">
-            <select required value={form.user_id} onChange={(e) => setForm((p) => ({ ...p, user_id: e.target.value }))} className="h-10 rounded-md border border-gray-300 px-3 text-sm">
-              <option value="">Empleado...</option>
-              {empleados.map((e) => <option key={e.value} value={e.value}>{e.label}</option>)}
-            </select>
+            <Select
+              options={empleados}
+              value={empleadoSeleccionado}
+              onChange={(option) => setForm((p) => ({ ...p, user_id: option?.value ?? "" }))}
+              isLoading={loadingEmpleados}
+              isClearable
+              placeholder={loadingEmpleados ? "Cargando empleados..." : "Buscar empleado..."}
+              noOptionsMessage={() => "Sin resultados"}
+              classNamePrefix="react-select"
+            />
             <select value={form.tipo} onChange={(e) => setForm((p) => ({ ...p, tipo: e.target.value }))} className="h-10 rounded-md border border-gray-300 px-3 text-sm">
               <option value="devengo">Devengo</option>
               <option value="deduccion">Deducción</option>
