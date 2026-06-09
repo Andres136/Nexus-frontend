@@ -160,7 +160,7 @@ function PinModal({ cedulaMap, empleadosMap, jornadaId, jornadaActiva, kioskoInf
 PinModal.propTypes = {
   cedulaMap:         PropTypes.instanceOf(Map).isRequired,
   empleadosMap:      PropTypes.instanceOf(Map).isRequired,
-  jornadaId:         PropTypes.number.isRequired,
+  jornadaId:         PropTypes.number,
   jornadaActiva:     PropTypes.object,
   onRefrescarJornada: PropTypes.func,
   kioskoInfo:        PropTypes.shape({ id: PropTypes.number, name: PropTypes.string }).isRequired,
@@ -187,7 +187,13 @@ async function tienePermisoEntrada(userId) {
   try {
     const res = await permisoService.getPermisosAprobadosHoy(userId);
     const lista = res.data?.data ?? [];
-    return lista.length > 0;
+    const ahora = tiempoHHMMSS(new Date());
+
+    return lista.some((permiso) =>
+      ["llegada_tarde", "ausencia_parcial"].includes(permiso.tipo)
+      && permiso.hora_inicio <= ahora
+      && permiso.hora_fin >= ahora
+    );
   } catch {
     return false;
   }
@@ -521,7 +527,7 @@ KioskoScanner.propTypes = {
   empleadosMap:      PropTypes.instanceOf(Map).isRequired,
   cedulaMap:         PropTypes.instanceOf(Map).isRequired,
   kioskoInfo:        PropTypes.shape({ id: PropTypes.number, name: PropTypes.string }).isRequired,
-  jornadaId:         PropTypes.number.isRequired,
+  jornadaId:         PropTypes.number,
   jornadaActiva:     PropTypes.object,
   onRefrescarJornada: PropTypes.func,
   ultimaMarca:       PropTypes.shape({ nombre: PropTypes.string, hora: PropTypes.string }),

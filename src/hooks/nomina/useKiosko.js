@@ -142,8 +142,13 @@ export function useKiosko() {
   const { data: instruccionOperativa } = useQuery({
     queryKey: ["horarioOperacionKiosko", fechaOperacion],
     queryFn: async () => {
-      const response = await horarioOperacionService.getKioskoHoy();
-      return response.data?.data ?? null;
+      try {
+        const response = await horarioOperacionService.getKioskoHoy();
+        return response.data?.data ?? null;
+      } catch (error) {
+        if (error.response?.status === 403) throw error;
+        return null;
+      }
     },
     enabled: status === "ready" && jornadasLaborales.length > 0,
     refetchInterval: 5000,
@@ -162,8 +167,13 @@ export function useKiosko() {
     const instruccionDiaria = await queryClient.fetchQuery({
       queryKey: ["horarioOperacionKiosko", fechaOperacion],
       queryFn: async () => {
-        const response = await horarioOperacionService.getKioskoHoy();
-        return response.data?.data ?? null;
+        try {
+          const response = await horarioOperacionService.getKioskoHoy();
+          return response.data?.data ?? null;
+        } catch (error) {
+          if (error.response?.status === 403) throw error;
+          return null;
+        }
       },
       staleTime: 0,
     });

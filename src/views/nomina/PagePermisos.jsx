@@ -96,12 +96,17 @@ export default function PagePermisos({ portalMode = false }) {
   const handleCrear = async (form) => {
     setCreando(true);
     try {
-      const payload = { ...form, es_remunerado: !!form.es_remunerado };
+      const { user_id: _userId, ...payloadBase } = form;
+      const payload = {
+        ...payloadBase,
+        es_remunerado: !!form.es_remunerado,
+      };
       const res = await permisoService.createPermiso(payload);
       showToast("success", res.data.message || "Permiso registrado");
-      queryClient.invalidateQueries(["permisos"]);
+      queryClient.invalidateQueries({ queryKey: [portalMode ? "permisos-portal" : "permisos"] });
       setCrear(false);
     } catch (error) {
+      console.error("Error al crear permiso:", error);  
       showToast("error", error.response?.data?.message || "Error al registrar el permiso");
       throw error;
     } finally {
@@ -129,7 +134,10 @@ export default function PagePermisos({ portalMode = false }) {
               />
             </div>
           )}
-          <button onClick={() => setCrear(true)} className="inline-flex items-center gap-2 h-9 px-3 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700">
+          <button
+            onClick={() => setCrear(true)}
+            className="inline-flex items-center gap-2 h-9 px-3 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700"
+          >
             <Plus className="h-4 w-4" /> Nueva
           </button>
         </div>
@@ -218,7 +226,7 @@ export default function PagePermisos({ portalMode = false }) {
           onClose={() => setCrear(false)}
           onSubmit={handleCrear}
           loading={creando}
-          defaultUserId={portalMode}
+          defaultUserId
         />
       )}
     </div>
