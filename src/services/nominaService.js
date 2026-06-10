@@ -286,6 +286,15 @@ export const nominaService = {
       responseType: "blob",
     });
   },
+  desprendiblePdf(nominaUuid) {
+    return apiClient.get(`api/nomina/nominas/${nominaUuid}/desprendible`, {
+      responseType: "blob",
+    });
+  },
+  enviarDesprendible(nominaUuid, correo = "") {
+    const data = correo ? { correo } : {};
+    return apiClient.post(`api/nomina/nominas/${nominaUuid}/desprendible/enviar`, data);
+  },
   preliquidarRetiro(data) {
     return apiClient.post("api/nomina/nominas/preliquidar-retiro", data);
   },
@@ -618,7 +627,8 @@ export const portalEmpleadoService = {
     });
   },
   enviarDesprendible(nominaUuid, correo = "") {
-    return apiClient.post(`api/nomina/nominas/${nominaUuid}/desprendible/enviar`, { correo });
+    const data = correo ? { correo } : {};
+    return apiClient.post(`api/nomina/nominas/${nominaUuid}/desprendible/enviar`, data);
   },
 
   // Nóminas del portal — siempre del usuario autenticado
