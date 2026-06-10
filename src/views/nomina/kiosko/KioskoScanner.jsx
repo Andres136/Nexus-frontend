@@ -193,13 +193,9 @@ async function obtenerPermisoEntrada(userId) {
   }
 }
 
-function nombreTipoPermiso(tipo) {
-  return tipo === "llegada_tarde" ? "llegada tarde" : "ausencia parcial";
-}
-
 function mensajeVozEntrada(nombre, tarde, permiso) {
   if (permiso) {
-    return `Bienvenido, ${nombre}. Permiso de ${nombreTipoPermiso(permiso.tipo)} aprobado. Registro exitoso.`;
+    return `${nombre}, tu llegada de permiso ha sido registrada exitosamente.`;
   }
 
   return tarde
@@ -209,7 +205,7 @@ function mensajeVozEntrada(nombre, tarde, permiso) {
 
 function mensajeVisualEntrada(nombre, hora, tarde, permiso) {
   if (permiso) {
-    return `¡Bienvenido, ${nombre}! Entrada registrada a las ${hora}. Permiso de ${nombreTipoPermiso(permiso.tipo)} aprobado.`;
+    return `${nombre}, tu llegada de permiso ha sido registrada exitosamente. Entrada registrada a las ${hora}.`;
   }
 
   return tarde

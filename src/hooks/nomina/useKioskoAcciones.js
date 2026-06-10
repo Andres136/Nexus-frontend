@@ -97,13 +97,7 @@ function detectarAccion(session, jornada, ahora = new Date()) {
 
 function entradaTieneTardanza(session, jornada) {
   if ((session?.minutos_tardanza ?? 0) > 0) return true;
-  const entrada = parseTime(session?.hora_entrada);
-  const limite  = jornada?.hora_entrada_limite ?? jornada?.hora_entrada;
-  if (!entrada || !limite) return false;
-  const [hh = "0", mm = "0"] = String(limite).split(":");
-  const programada = new Date(entrada);
-  programada.setHours(Number(hh), Number(mm), 0, 0);
-  return entrada > programada;
+  return false;
 }
 
 function entradaOperativa(session, jornada) {
