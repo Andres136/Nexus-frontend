@@ -2,8 +2,11 @@ import { useState } from "react";
 import { Search, Filter, AlertCircle } from "lucide-react";
 import { useGetCosteos } from "../../hooks/contabilidad/useGetCosteos";
 import { useExportCosteos } from "../../hooks/contabilidad/useExportCosteos";
+import { useEmpresas } from "../../hooks/useEmpresas";
+import Select from "react-select";
 
 const FILTERS_EMPTY = {
+    empresa_id: "",
     producto_id: "",
     search: "",
     fecha_inicio: "",
@@ -26,6 +29,7 @@ const formatNumber = (value) =>
 export default function PageCosteos() {
     const [filters, setFilters] = useState(FILTERS_EMPTY);
     const [page, setPage] = useState(1);
+    const { empresas, loading: empresasLoading } = useEmpresas();
 
     const {
         data: costeos,
@@ -53,6 +57,7 @@ export default function PageCosteos() {
     };
 
     const hayFiltros =
+        filters.empresa_id ||
         filters.producto_id ||
         filters.search ||
         filters.fecha_inicio ||
@@ -108,7 +113,32 @@ export default function PageCosteos() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                
+                    <Select
+                        isClearable
+                        isLoading={empresasLoading}
+                        placeholder="Todas las empresas"
+                        options={empresas.map((empresa) => ({
+                            value: empresa.id,
+                            label: empresa.nombre,
+                        }))}
+                        value={
+                            empresas
+                                .filter((empresa) => Number(empresa.id) === Number(filters.empresa_id))
+                                .map((empresa) => ({
+                                    value: empresa.id,
+                                    label: empresa.nombre,
+                                }))[0] || null
+                        }
+                        onChange={(option) => {
+                            setFilters((prev) => ({
+                                ...prev,
+                                empresa_id: option?.value || "",
+                            }));
+                            setPage(1);
+                        }}
+                        className="text-sm"
+                        classNamePrefix="costeos-empresa"
+                    />
 
                     <input
                         type="date"

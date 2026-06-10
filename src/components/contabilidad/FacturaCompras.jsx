@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import { useParams } from "react-router-dom";
 import { useSedes } from "../../hooks/useSedes";
@@ -9,6 +9,7 @@ import { useEmpresas } from "../../hooks/useEmpresas";
 import Select from "react-select";
 import DetallesFacturaCompras from "./DetallesFacturaCompras";
 import { useGetAllProveedores } from "../../hooks/crm/useGetAllProveedores";
+import { facturasService } from "../../services/contabilidadService";
 
 FacturaCompras.propTypes = {
   modo: PropTypes.oneOf(["creacion", "edicion"]),
@@ -31,9 +32,15 @@ export default function FacturaCompras({ modo = "creacion" }) {
     addDetalle,
     updateDetalle,
     removeDetalle,
+    replaceDetalles,
     handleSubmitFactura,
     error,
   } = useRegisterFacturaCompras({ id: id ? Number(id) : null, modo });
+  const [ordenesProveedor, setOrdenesProveedor] = useState([]);
+  const [ordenesSeleccionadas, setOrdenesSeleccionadas] = useState([]);
+  const [loadingOrdenes, setLoadingOrdenes] = useState(false);
+  const [ordenModalId, setOrdenModalId] = useState(null);
+  const [itemsModalSeleccionados, setItemsModalSeleccionados] = useState([]);
 
   const getError = (field) => error?.[field]?.[0] || null;
 
@@ -141,8 +148,154 @@ export default function FacturaCompras({ modo = "creacion" }) {
   }, [factura.impuestos, impuestos]);
 
   const esEdicion = modo === "edicion";
-// EL PROBLEMA YA NO ES LA DATA.
-// EL PROBLEMA ESTÁ EN react-select VALUE MATCHING.
+
+  useEffect(() => {
+    const proveedorId = factura.factura.proveedor_id;
+    if (!proveedorId) {
+      setOrdenesProveedor([]);
+      return;
+    }
+
+    let activo = true;
+    setLoadingOrdenes(true);
+
+    facturasService.getOrdenesProveedor(proveedorId)
+      .then((response) => {
+        if (!activo) return;
+        setOrdenesProveedor(response.data?.ordenes?.data ?? []);
+      })
+      .catch(() => {
+        if (activo) setOrdenesProveedor([]);
+      })
+      .finally(() => {
+        if (activo) setLoadingOrdenes(false);
+      });
+
+    return () => {
+      activo = false;
+    };
+  }, [factura.factura.proveedor_id]);
+
+  useEffect(() => {
+    const ordenIds = factura.ordenes_compra_proveedor_ids ?? [];
+    const idsCargados = ordenesSeleccionadas.map((orden) => Number(orden.id)).sort().join(",");
+    const idsRequeridos = ordenIds.map(Number).sort().join(",");
+    if (!idsRequeridos || idsCargados === idsRequeridos) return;
+
+    Promise.all(ordenIds.map((ordenId) => facturasService.getOrdenProveedorById(ordenId)))
+      .then((responses) => setOrdenesSeleccionadas(responses.map((response) => response.data)))
+      .catch(() => setOrdenesSeleccionadas([]));
+  }, [factura.ordenes_compra_proveedor_ids, ordenesSeleccionadas]);
+
+  const seleccionarOrdenesCompra = async (options) => {
+    const ordenIds = (options ?? []).map((option) => option.value);
+    handleFacturaChange({
+      target: { name: "ordenes_compra_proveedor_ids", value: ordenIds },
+    });
+
+    if (ordenIds.length === 0) {
+      setOrdenesSeleccionadas([]);
+      replaceDetalles(factura.detalles.filter((detalle) => !detalle.orden_compra_proveedor_detalle_id));
+      return;
+    }
+
+    setLoadingOrdenes(true);
+    try {
+      const responses = await Promise.all(
+        ordenIds.map((ordenId) => facturasService.getOrdenProveedorById(ordenId))
+      );
+      const ordenes = responses.map((response) => response.data);
+      setOrdenesSeleccionadas(ordenes);
+
+      const primeraOrden = ordenes[0];
+      if (primeraOrden?.empresa?.id) {
+        handleFacturaChange({ target: { name: "empresa_id", value: primeraOrden.empresa.id } });
+      }
+      if (primeraOrden?.sede_id) {
+        handleFacturaChange({ target: { name: "sede_id", value: primeraOrden.sede_id } });
+      }
+
+      const detallesPermitidos = new Set(
+        ordenes.flatMap((orden) => (orden.productos ?? []).map((producto) => String(producto.id)))
+      );
+
+      replaceDetalles(
+        factura.detalles.filter(
+          (detalle) =>
+            !detalle.orden_compra_proveedor_detalle_id ||
+            detallesPermitidos.has(String(detalle.orden_compra_proveedor_detalle_id))
+        )
+      );
+    } finally {
+      setLoadingOrdenes(false);
+    }
+  };
+
+  const ordenOptions = ordenesProveedor.map((orden) => ({
+    value: orden.id,
+    label: `${orden.numero_orden} - ${orden.sede?.nombre || orden.sede_nombre || "Sin sede"}`,
+  }));
+
+  const ordenModal = ordenesSeleccionadas.find(
+    (orden) => Number(orden.id) === Number(ordenModalId)
+  );
+
+  const abrirModalOrden = (orden) => {
+    const idsOrden = new Set((orden.productos ?? []).map((producto) => String(producto.id)));
+    setItemsModalSeleccionados(
+      factura.detalles
+        .filter((detalle) => idsOrden.has(String(detalle.orden_compra_proveedor_detalle_id)))
+        .map((detalle) => String(detalle.orden_compra_proveedor_detalle_id))
+    );
+    setOrdenModalId(orden.id);
+  };
+
+  const cerrarModalOrden = () => {
+    setOrdenModalId(null);
+    setItemsModalSeleccionados([]);
+  };
+
+  const alternarItemModal = (productoId) => {
+    const id = String(productoId);
+    setItemsModalSeleccionados((anteriores) =>
+      anteriores.includes(id)
+        ? anteriores.filter((itemId) => itemId !== id)
+        : [...anteriores, id]
+    );
+  };
+
+  const aplicarItemsOrden = () => {
+    if (!ordenModal) return;
+
+    const idsOrden = new Set((ordenModal.productos ?? []).map((producto) => String(producto.id)));
+    const existentes = new Map(
+      factura.detalles.map((detalle) => [
+        String(detalle.orden_compra_proveedor_detalle_id),
+        detalle,
+      ])
+    );
+    const detallesOtrasOrdenes = factura.detalles.filter(
+      (detalle) => !idsOrden.has(String(detalle.orden_compra_proveedor_detalle_id))
+    );
+    const detallesSeleccionados = (ordenModal.productos ?? [])
+      .filter(
+        (producto) =>
+          producto.producto_id && itemsModalSeleccionados.includes(String(producto.id))
+      )
+      .map((producto) =>
+        existentes.get(String(producto.id)) ?? {
+          producto_id: producto.producto_id,
+          puck_id: null,
+          cantidad: producto.cantidad_solicitada || 1,
+          precio_unitario: 0,
+          impuestos: [],
+          orden_compra_proveedor_detalle_id: producto.id,
+        }
+      );
+
+    replaceDetalles([...detallesOtrasOrdenes, ...detallesSeleccionados]);
+    cerrarModalOrden();
+  };
 
   return (
     <div className="min-h-screen bg-slate-100 p-3 md:p-6">
@@ -169,12 +322,51 @@ export default function FacturaCompras({ modo = "creacion" }) {
                 className="text-sm"
                 options={proveedores?.map((p) => ({ value: p.id, label: p.nombre }))}
                 value={selectValue(proveedores, factura.factura.proveedor_id)}
-                onChange={(s) =>
-                  handleFacturaChange({ target: { name: "proveedor_id", value: s?.value ?? null } })
-                }
+                onChange={(s) => {
+                  handleFacturaChange({ target: { name: "proveedor_id", value: s?.value ?? null } });
+                  handleFacturaChange({ target: { name: "ordenes_compra_proveedor_ids", value: [] } });
+                  setOrdenesSeleccionadas([]);
+                  replaceDetalles(factura.detalles.filter((detalle) => !detalle.orden_compra_proveedor_detalle_id));
+                }}
               />
               {getError("factura.proveedor_id") && (
                 <p className="text-red-500 text-xs mt-1">{getError("factura.proveedor_id")}</p>
+              )}
+            </div>
+
+            <div>
+              <label className={labelClass}>Órdenes de compra proveedor</label>
+              <Select
+                classNamePrefix="nexus-select"
+                className="text-sm"
+                isMulti
+                isClearable
+                isDisabled={!factura.factura.proveedor_id}
+                isLoading={loadingOrdenes}
+                options={ordenOptions}
+                value={(factura.ordenes_compra_proveedor_ids ?? []).map((ordenId) => {
+                  const option = ordenOptions.find((orden) => Number(orden.value) === Number(ordenId));
+                  const ordenCargada = ordenesSeleccionadas.find(
+                    (orden) => Number(orden.id) === Number(ordenId)
+                  );
+                  return option ?? (
+                    ordenCargada
+                      ? { value: ordenCargada.id, label: ordenCargada.numero_orden }
+                      : null
+                  );
+                }).filter(Boolean)}
+                onChange={seleccionarOrdenesCompra}
+                placeholder={
+                  factura.factura.proveedor_id
+                    ? "Seleccionar una o varias órdenes..."
+                    : "Seleccione proveedor primero"
+                }
+                noOptionsMessage={() => "El proveedor no tiene órdenes disponibles"}
+              />
+              {getError("ordenes_compra_proveedor_ids") && (
+                <p className="text-red-500 text-xs mt-1">
+                  {getError("ordenes_compra_proveedor_ids")}
+                </p>
               )}
             </div>
 
@@ -356,6 +548,44 @@ export default function FacturaCompras({ modo = "creacion" }) {
           </div>
         </form>
 
+        {ordenesSeleccionadas.length > 0 && (
+          <section className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {ordenesSeleccionadas.map((ordenSeleccionada) => (
+              <div
+                key={ordenSeleccionada.id}
+                className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h2 className="text-sm font-semibold text-slate-800">
+                      {ordenSeleccionada.numero_orden}
+                    </h2>
+                    <p className="text-xs text-slate-500">
+                      {(ordenSeleccionada.productos ?? []).length} ítems disponibles
+                    </p>
+                  </div>
+                  <span className="rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700">
+                    {factura.detalles.filter((detalle) =>
+                      (ordenSeleccionada.productos ?? []).some(
+                        (producto) =>
+                          String(producto.id) ===
+                          String(detalle.orden_compra_proveedor_detalle_id)
+                      )
+                    ).length} seleccionados
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => abrirModalOrden(ordenSeleccionada)}
+                  className="mt-3 w-full rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800"
+                >
+                  Seleccionar ítems y ver entregas
+                </button>
+              </div>
+            ))}
+          </section>
+        )}
+
         <div className="bg-white rounded-2xl border border-slate-200 p-3 md:p-4 shadow-sm">
           <DetallesFacturaCompras
             detalles={factura.detalles}
@@ -387,6 +617,141 @@ export default function FacturaCompras({ modo = "creacion" }) {
             >
               Ver PDF de la Factura
             </a>
+          </div>
+        )}
+
+        {ordenModal && (
+          <div
+            className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 p-3"
+            onClick={cerrarModalOrden}
+          >
+            <div
+              className="flex max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+                <div>
+                  <h2 className="text-base font-semibold text-slate-800">
+                    Seleccionar ítems de {ordenModal.numero_orden}
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    Marca únicamente los productos que incluirá esta factura.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={cerrarModalOrden}
+                  className="rounded-lg px-3 py-1 text-xl text-slate-500 hover:bg-slate-100"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="overflow-auto p-4">
+                <div className="mb-3 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setItemsModalSeleccionados(
+                        (ordenModal.productos ?? [])
+                          .filter((producto) => producto.producto_id)
+                          .map((producto) => String(producto.id))
+                      )
+                    }
+                    className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-100"
+                  >
+                    Seleccionar todos
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setItemsModalSeleccionados([])}
+                    className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100"
+                  >
+                    Limpiar selección
+                  </button>
+                </div>
+                <table className="min-w-full divide-y divide-slate-200 text-xs">
+                  <thead className="sticky top-0 bg-slate-100 text-left uppercase text-slate-500">
+                    <tr>
+                      <th className="px-3 py-2 text-center">Incluir</th>
+                      <th className="px-3 py-2">Producto</th>
+                      <th className="px-3 py-2 text-right">Solicitado</th>
+                      <th className="px-3 py-2 text-right">Entregado</th>
+                      <th className="px-3 py-2 text-right">Pendiente</th>
+                      <th className="px-3 py-2">Historial de entregas</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {(ordenModal.productos ?? []).map((producto) => {
+                      const pendiente = Math.max(
+                        0,
+                        Number(producto.cantidad_solicitada) - Number(producto.cantidad_entregada)
+                      );
+                      return (
+                        <tr key={producto.id} className="align-top hover:bg-slate-50">
+                          <td className="px-3 py-3 text-center">
+                            <input
+                              type="checkbox"
+                              checked={itemsModalSeleccionados.includes(String(producto.id))}
+                              disabled={!producto.producto_id}
+                              onChange={() => alternarItemModal(producto.id)}
+                              className="h-4 w-4 rounded border-slate-300 text-blue-600"
+                            />
+                          </td>
+                          <td className="px-3 py-3">
+                            <div className="font-medium text-slate-700">
+                              {producto.code || "Sin código"} - {producto.producto_nombre || producto.descripcion}
+                            </div>
+                            <div className="text-slate-400">{producto.estado_producto}</div>
+                          </td>
+                          <td className="px-3 py-3 text-right">{producto.cantidad_solicitada}</td>
+                          <td className="px-3 py-3 text-right text-emerald-700">
+                            {producto.cantidad_entregada}
+                          </td>
+                          <td className="px-3 py-3 text-right text-amber-700">{pendiente}</td>
+                          <td className="px-3 py-3">
+                            {producto.entregas?.length ? (
+                              <div className="space-y-1">
+                                {producto.entregas.map((entrega) => (
+                                  <div key={entrega.id} className="rounded bg-slate-100 px-2 py-1 text-slate-600">
+                                    {entrega.fecha_entrega || entrega.created_at}: {entrega.cantidad_entregada}
+                                    {entrega.bodega_nombre ? ` en ${entrega.bodega_nombre}` : ""}
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <span className="text-slate-400">Sin entregas registradas</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-4 py-3">
+                <span className="text-xs text-slate-500">
+                  {itemsModalSeleccionados.length} ítems seleccionados
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={cerrarModalOrden}
+                    className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                  >
+                    Cerrar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={aplicarItemsOrden}
+                    className="rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700"
+                  >
+                    Aplicar ítems a la factura
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
