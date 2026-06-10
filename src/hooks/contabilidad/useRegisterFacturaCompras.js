@@ -19,6 +19,7 @@ const ESTADO_INICIAL = {
     observaciones: "",
     numero_factura_proveedor: "",
   },
+  ordenes_compra_proveedor_ids: [],
   detalles: [],
   pagos: [],
   gastos: [],
@@ -40,9 +41,11 @@ const mapDataToState = (data) => ({
     observaciones: data.observaciones ?? "",
     numero_factura_proveedor: data.numero_factura_proveedor ?? "",
   },
+  ordenes_compra_proveedor_ids: (data.ordenes_compra_proveedor ?? []).map((orden) => orden.id),
   detalles: (data.detalles ?? []).map((d) => ({
     id: d.id,
     producto_id: d.producto_id ?? null,
+    orden_compra_proveedor_detalle_id: d.orden_compra_proveedor_detalle_id ?? null,
     puck_id: d.puck_id ?? null,
     cantidad: d.cantidad ?? 1,
     precio_unitario: d.precio_unitario ?? 0,
@@ -89,6 +92,10 @@ export const useRegisterFacturaCompras = ({ id = null, modo = "creacion" } = {})
 
   const handleFacturaChange = (e) => {
     const { name, value } = e.target;
+    if (name === "ordenes_compra_proveedor_ids") {
+      setFactura((prev) => ({ ...prev, ordenes_compra_proveedor_ids: value }));
+      return;
+    }
     if (name === "impuestos") {
       setFactura((prev) => ({ ...prev, impuestos: value }));
       return;
@@ -123,6 +130,13 @@ export const useRegisterFacturaCompras = ({ id = null, modo = "creacion" } = {})
     }));
   };
 
+  const replaceDetalles = (detalles) => {
+    setFactura((prev) => ({
+      ...prev,
+      detalles,
+    }));
+  };
+
   const handleSubmitFactura = async (e) => {
     e.preventDefault();
     try {
@@ -131,6 +145,7 @@ export const useRegisterFacturaCompras = ({ id = null, modo = "creacion" } = {})
 
       const payload = {
         factura: factura.factura,
+        ordenes_compra_proveedor_ids: factura.ordenes_compra_proveedor_ids,
         detalles: factura.detalles,
         pagos: factura.pagos,
         gastos: factura.gastos,
@@ -253,6 +268,7 @@ const anularFactura = async (facturaId) => {
     addDetalle,
     updateDetalle,
     removeDetalle,
+    replaceDetalles,
     handleSubmitFactura,
     loading: loading || isLoadingFactura,
     error,
