@@ -40,8 +40,15 @@ apiClient.interceptors.response.use(
 );
 
 export const clienteService = {
-  getClientes(page = 1, search = "") {
-    return apiClient.get(`api/clientes?page=${page}&search=${search}`);
+  getClientes(page = 1, search = "", userId = "", estadoId = "") {
+    return apiClient.get("api/clientes", {
+      params: {
+        page,
+        search,
+        user_id: userId || undefined,
+        estado_id: estadoId || undefined,
+      },
+    });
   },
   getCliente(id) {
     return apiClient.get(`api/clientes/${id}`);

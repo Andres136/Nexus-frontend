@@ -13,7 +13,8 @@ import { useQuery } from "@tanstack/react-query";
 import { encuestaService } from "../../services/encuestaService";
 import {
   ClipboardList, X, CheckCircle2, Copy, Check, Loader2, Send,
-  Download, ShoppingCart, Clock, AlertTriangle,
+  Download, ShoppingCart, Clock, AlertTriangle, Users, UserCheck,
+  UserRoundSearch, ListChecks, BarChart3,
 } from "lucide-react";
 
 function ModalSeleccionarEncuesta({ clienteIds, onClose }) {
@@ -280,9 +281,18 @@ export default function ClientesList({ onClose }) {
     paginaActual,
     totalPaginas,
     busqueda,
+    usuarioFiltro,
+    estadoFiltro,
+    estadisticas,
+    resumenMensualUsuarios,
+    filtrosDisponibles,
     setBusqueda,
+    setPaginaActual,
+    setUsuarioFiltro,
+    setEstadoFiltro,
     obtenerClientes,
     cambiarEstadoCliente,
+    consultarHistorialCliente,
   } = useClientes();
 
   const debouncedBusqueda = useDebounce(busqueda, 400);
@@ -291,7 +301,6 @@ export default function ClientesList({ onClose }) {
   const [isGestionarModalOpen, setGestionarModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const { formatearFecha } = useFormatoFecha();
-  const { consultarHistorialCliente } = useClientes();
   const [clienteHistorial, setClienteHistorial] = useState(null);
   const [seleccionados, setSeleccionados] = useState([]);
   const [modalEncuesta, setModalEncuesta] = useState(false);
@@ -324,15 +333,23 @@ export default function ClientesList({ onClose }) {
       cancelButtonColor: "#3085d6",
       confirmButtonText: isActivo ? "Sí, desactivar" : "Sí, activar",
       cancelButtonText: "Cancelar",
-    }).then((result) => {
+    }).then(async (result) => {
       if (result.isConfirmed) {
-        cambiarEstadoCliente(cliente.id);
-        Swal.fire({
-          title: isActivo ? "Cliente desactivado" : "Cliente activado",
-          icon: "success",
-          timer: 2000,
-          showConfirmButton: false,
-        });
+        try {
+          await cambiarEstadoCliente(cliente.id);
+          Swal.fire({
+            title: isActivo ? "Cliente desactivado" : "Cliente activado",
+            icon: "success",
+            timer: 2000,
+            showConfirmButton: false,
+          });
+        } catch (error) {
+          Swal.fire({
+            title: "No se pudo cambiar el estado",
+            text: error.response?.data?.message || "Ocurrió un error al cambiar el estado del cliente.",
+            icon: "warning",
+          });
+        }
       }
     });
   };
@@ -381,18 +398,140 @@ export default function ClientesList({ onClose }) {
     <>
       <div className="p-4 space-y-6">
         <div className="grid grid-cols-1">
-        {/* Buscador */}
-        <div className="relative max-w-md">
-          <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
-          <input
-            type="text"
-            placeholder="Buscar cliente por nombre, email o NIT..."
-            className="w-full border border-gray-200 rounded-lg pl-10 pr-10 py-2.5 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-          />
-          {loading && (
-            <FaSpinner className="absolute right-3.5 top-1/2 -translate-y-1/2 text-blue-500 animate-spin" size={14} />
+        {/* Estadísticas de cumplimiento */}
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 mb-5">
+          {[
+            { label: "Clientes activos", value: estadisticas.clientes_activos, icon: Users, iconClass: "bg-blue-50 text-blue-600" },
+            { label: "Listos para desactivar", value: estadisticas.clientes_listos, icon: UserCheck, iconClass: "bg-emerald-50 text-emerald-600" },
+            { label: "Clientes pendientes", value: estadisticas.clientes_pendientes, icon: UserRoundSearch, iconClass: "bg-amber-50 text-amber-600" },
+            { label: "Gestiones faltantes", value: estadisticas.gestiones_faltantes, icon: ListChecks, iconClass: "bg-red-50 text-red-600" },
+          ].map(({ label, value, icon: Icon, iconClass }) => (
+            <div key={label} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm flex items-center gap-3">
+              <div className={`p-2.5 rounded-lg ${iconClass}`}>
+                <Icon className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">{label}</p>
+                <p className="text-xl font-semibold text-gray-900">{value}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Gestión comercial del mes */}
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm mb-5 overflow-hidden">
+          <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
+            <BarChart3 className="w-4 h-4 text-blue-600" />
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900">Gestión comercial del mes</h3>
+              <p className="text-xs text-gray-500">Actividad de cada responsable durante el mes actual</p>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[850px] text-sm">
+              <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+                <tr>
+                  {["Responsable", "Cobertura clientes", "Gestiones", "Cotizaciones", "Órdenes", "Ventas", "Conversión"].map((titulo) => (
+                    <th key={titulo} className="px-4 py-3 text-left font-semibold">{titulo}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {resumenMensualUsuarios.length > 0 ? (
+                  resumenMensualUsuarios.map((resumen) => (
+                    <tr key={resumen.user_id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 font-medium text-gray-900">{resumen.usuario}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-24 h-2 rounded-full bg-gray-100 overflow-hidden">
+                            <div
+                              className="h-full bg-blue-500 rounded-full"
+                              style={{ width: `${Math.min(100, resumen.cobertura_clientes_pct)}%` }}
+                            />
+                          </div>
+                          <span className="text-xs text-gray-600 whitespace-nowrap">
+                            {resumen.clientes_gestionados}/{resumen.clientes_activos} ({resumen.cobertura_clientes_pct}%)
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-gray-700">{resumen.gestiones}</td>
+                      <td className="px-4 py-3 text-gray-700">{resumen.cotizaciones}</td>
+                      <td className="px-4 py-3 text-gray-700">{resumen.ordenes}</td>
+                      <td className="px-4 py-3 font-medium text-emerald-700">
+                        {Number(resumen.valor_ventas).toLocaleString("es-CO", {
+                          style: "currency",
+                          currency: "COP",
+                          maximumFractionDigits: 0,
+                        })}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="inline-flex px-2 py-1 rounded-md bg-violet-50 text-violet-700 text-xs font-semibold">
+                          {resumen.conversion_pct}%
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="7" className="px-4 py-8 text-center text-sm text-gray-400">
+                      No hay usuarios con clientes asignados.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Buscador y filtros */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">
+          <div className="relative">
+            <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+            <input
+              type="text"
+              placeholder="Buscar cliente por nombre, email o NIT..."
+              className="w-full border border-gray-200 rounded-lg pl-10 pr-10 py-2.5 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+              value={busqueda}
+              onChange={(e) => {
+                setPaginaActual(1);
+                setBusqueda(e.target.value);
+              }}
+            />
+            {loading && (
+              <FaSpinner className="absolute right-3.5 top-1/2 -translate-y-1/2 text-blue-500 animate-spin" size={14} />
+            )}
+          </div>
+
+          {filtrosDisponibles.puede_filtrar_usuarios && (
+            <select
+              value={usuarioFiltro}
+              onChange={(e) => {
+                setPaginaActual(1);
+                setUsuarioFiltro(e.target.value);
+              }}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-700 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            >
+              <option value="">Todos los responsables</option>
+              {filtrosDisponibles.usuarios.map((usuario) => (
+                <option key={usuario.id} value={usuario.id}>{usuario.name}</option>
+              ))}
+            </select>
+          )}
+
+          {filtrosDisponibles.puede_filtrar_usuarios && (
+            <select
+              value={estadoFiltro}
+              onChange={(e) => {
+                setPaginaActual(1);
+                setEstadoFiltro(e.target.value);
+              }}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-700 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            >
+              <option value="">Todos los estados</option>
+              {filtrosDisponibles.estados.map((estado) => (
+                <option key={estado.id} value={estado.id}>{estado.nombre}</option>
+              ))}
+            </select>
           )}
         </div>
 
@@ -410,7 +549,7 @@ export default function ClientesList({ onClose }) {
                       className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
                     />
                   </th>
-                  {["#", "Nombre", "Email", "Teléfono", "Nit / Cédula", "Última gestión", "Fecha creación"].map((h) => (
+                  {["#", "Nombre", "Email", "Teléfono", "Nit / Cédula", "Gestiones", "Última gestión", "Fecha creación"].map((h) => (
                     <th key={h} className="px-6 py-3.5 text-xs font-semibold uppercase tracking-wider whitespace-nowrap">
                       {h}
                     </th>
@@ -451,6 +590,15 @@ export default function ClientesList({ onClose }) {
                       <td className="px-6 py-4 text-gray-500">{cliente.email}</td>
                       <td className="px-6 py-4 text-gray-500 whitespace-nowrap">{cliente.telefono}</td>
                       <td className="px-6 py-4 text-gray-500 font-mono text-xs">{cliente.nit}</td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex px-2 py-1 rounded-md text-xs font-semibold ${
+                          cliente.gestiones_usuario_count >= 3
+                            ? "bg-emerald-50 text-emerald-700"
+                            : "bg-amber-50 text-amber-700"
+                        }`}>
+                          {cliente.gestiones_usuario_count}/3
+                        </span>
+                      </td>
                       <td className="px-6 py-4">
                         {cliente.ultima_gestion ? (
                           <div className="flex flex-col gap-1">
@@ -506,7 +654,7 @@ export default function ClientesList({ onClose }) {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="9" className="py-16 text-center">
+                    <td colSpan="10" className="py-16 text-center">
                       <div className="flex flex-col items-center justify-center gap-3 text-gray-400">
                         <div className="p-3 bg-gray-50 rounded-full">
                            <FaSearch size={20} className="text-gray-400" />
@@ -575,6 +723,13 @@ export default function ClientesList({ onClose }) {
                   <div><span className="font-medium text-gray-500">NIT: </span>{cliente.nit}</div>
 
                   <div className="col-span-2"><span className="font-medium text-gray-500">Creado: </span>{formatearFecha(cliente.created_at)}</div>
+
+                  <div className="col-span-2">
+                    <span className="font-medium text-gray-500">Gestiones para desactivar: </span>
+                    <span className={cliente.gestiones_usuario_count >= 3 ? "text-emerald-600 font-semibold" : "text-amber-600 font-semibold"}>
+                      {cliente.gestiones_usuario_count}/3
+                    </span>
+                  </div>
 
                 </div>
 
