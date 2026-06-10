@@ -264,6 +264,21 @@ export const contratacionService = {
   },
 };
 
+export const ajusteSalarialService = {
+  getAjustes(params = {}) {
+    return apiClient.get("api/nomina/ajustes-salariales", { params });
+  },
+  getAjuste(uuid) {
+    return apiClient.get(`api/nomina/ajustes-salariales/${uuid}`);
+  },
+  createAjuste(data) {
+    return apiClient.post("api/nomina/ajustes-salariales", data);
+  },
+  deleteAjuste(uuid) {
+    return apiClient.delete(`api/nomina/ajustes-salariales/${uuid}`);
+  },
+};
+
 export const nominaService = {
   getNominas(params = {}) {
     return apiClient.get("api/nomina/nominas", { params });
