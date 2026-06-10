@@ -298,15 +298,15 @@ export function useProcesarNomina() {
         periodo_inicio: periodoInicio,
         periodo_fin: periodoFin,
       });
-      const url = window.URL.createObjectURL(new Blob([response.data], { type: "text/csv;charset=utf-8" }));
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", `nomina_liquidada_${periodoInicio}_${periodoFin}.csv`);
+      link.setAttribute("download", `nomina_liquidada_${periodoInicio}_${periodoFin}.xlsx`);
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-      showToast("success", "Archivo plano descargado.");
+      showToast("success", "Excel de nómina descargado.");
     } catch (error) {
       let message = "No se pudo descargar el archivo plano.";
       if (error.response?.data instanceof Blob) {

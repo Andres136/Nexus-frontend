@@ -309,6 +309,12 @@ export const nominaService = {
   exportarPuc(params = {}) {
     return apiClient.get("api/nomina/nominas/exportar-puc", { params });
   },
+  exportarPucExcel(params = {}) {
+    return apiClient.get("api/nomina/nominas/exportar-puc/excel", {
+      params,
+      responseType: "blob",
+    });
+  },
   exportarPucPdf(params = {}) {
     return apiClient.get("api/nomina/nominas/exportar-puc/pdf", {
       params,

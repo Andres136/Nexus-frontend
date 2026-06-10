@@ -1,8 +1,5 @@
-import { useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, FileDown, Lock } from "lucide-react";
-import { nominaService } from "../../services/nominaService";
-import { showToast } from "../../helpers/utils/showToast";
+import { useControlContableNomina } from "../../hooks/nomina/useControlContableNomina";
 
 const MESES = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -23,104 +20,22 @@ function estadoClass(estado) {
   return map[estado] ?? "bg-gray-100 text-gray-700";
 }
 
-function descargarCsv(lineas = [], periodoInicio, periodoFin) {
-  const header = ["cuenta", "concepto", "tercero", "centro_costo", "debito", "credito"];
-  const rows = lineas.map((linea) => header.map((key) => `"${String(linea[key] ?? "").replaceAll('"', '""')}"`).join(";"));
-  const blob = new Blob([[header.join(";"), ...rows].join("\n")], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `puc_nomina_${periodoInicio}_${periodoFin}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-function descargarPdf(blobData, periodoInicio, periodoFin) {
-  const url = URL.createObjectURL(new Blob([blobData], { type: "application/pdf" }));
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `puc_nomina_${periodoInicio}_${periodoFin}.pdf`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
 export default function PageControlContableNomina() {
-  const now = new Date();
-  const queryClient = useQueryClient();
-  const [mes, setMes] = useState(now.getMonth());
-  const [anio, setAnio] = useState(now.getFullYear());
-  const [quincena, setQuincena] = useState("1");
-  const [exportData, setExportData] = useState(null);
-
-  const periodoInicio = useMemo(() => {
-    const m = String(mes + 1).padStart(2, "0");
-    return quincena === "2" ? `${anio}-${m}-16` : `${anio}-${m}-01`;
-  }, [mes, anio, quincena]);
-
-  const periodoFin = useMemo(() => {
-    const m = String(mes + 1).padStart(2, "0");
-    if (quincena === "1") return `${anio}-${m}-15`;
-    return `${anio}-${m}-${new Date(anio, mes + 1, 0).getDate()}`;
-  }, [mes, anio, quincena]);
-
-  const params = useMemo(() => ({ periodo_inicio: periodoInicio, periodo_fin: periodoFin, per_page: 100 }), [periodoInicio, periodoFin]);
-  const { data, isLoading } = useQuery({
-    queryKey: ["nominasControlContable", params],
-    queryFn: async () => (await nominaService.getNominas(params)).data.data,
-  });
-
-  const nominas = data?.data ?? [];
-  const totals = nominas.reduce((acc, n) => {
-    acc.devengado += Number(n.total_devengado || 0);
-    acc.deducciones += Number(n.total_deducciones || 0);
-    acc.neto += Number(n.salario_neto || 0);
-    return acc;
-  }, { devengado: 0, deducciones: 0, neto: 0 });
-
-  const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: ["nominasControlContable"] });
-    queryClient.invalidateQueries({ queryKey: ["nominas"] });
-    queryClient.invalidateQueries({ queryKey: ["nominaSummary"] });
-  };
-
-  const approveMutation = useMutation({
-    mutationFn: (uuid) => nominaService.aprobarContabilidad(uuid),
-    onSuccess: () => {
-      showToast("success", "Nómina aprobada");
-      invalidate();
-    },
-    onError: (err) => showToast("error", err.response?.data?.message || "No se pudo aprobar"),
-  });
-
-  const closeMutation = useMutation({
-    mutationFn: () => nominaService.cerrarPeriodo({ periodo_inicio: periodoInicio, periodo_fin: periodoFin }),
-    onSuccess: () => {
-      showToast("success", "Período cerrado");
-      invalidate();
-    },
-    onError: (err) => showToast("error", err.response?.data?.message || "No se pudo cerrar"),
-  });
-
-  const exportMutation = useMutation({
-    mutationFn: async () => (await nominaService.exportarPuc({ periodo_inicio: periodoInicio, periodo_fin: periodoFin })).data.data,
-    onSuccess: (data) => {
-      setExportData(data);
-      descargarCsv(data.lineas, periodoInicio, periodoFin);
-      showToast("success", "PUC exportado");
-      invalidate();
-    },
-    onError: (err) => showToast("error", err.response?.data?.message || "No se pudo exportar"),
-  });
-
-  const exportPdfMutation = useMutation({
-    mutationFn: async () => (await nominaService.exportarPucPdf({ periodo_inicio: periodoInicio, periodo_fin: periodoFin })).data,
-    onSuccess: (data) => {
-      descargarPdf(data, periodoInicio, periodoFin);
-      showToast("success", "PUC exportado en PDF");
-      invalidate();
-    },
-    onError: (err) => showToast("error", err.response?.data?.message || "No se pudo exportar el PDF"),
-  });
+  const {
+    mes,
+    setMes,
+    anio,
+    setAnio,
+    quincena,
+    setQuincena,
+    nominas,
+    totals,
+    isLoading,
+    approveMutation,
+    closeMutation,
+    exportExcelMutation,
+    exportPdfMutation,
+  } = useControlContableNomina();
 
   return (
     <div className="w-full min-w-0 max-w-full overflow-hidden p-4 sm:p-6">
@@ -144,8 +59,8 @@ export default function PageControlContableNomina() {
           <button onClick={() => exportPdfMutation.mutate()} disabled={exportPdfMutation.isPending || nominas.length === 0} className="inline-flex h-9 items-center gap-2 rounded-lg border border-indigo-200 bg-white px-3 text-sm font-medium text-indigo-700 disabled:opacity-50">
             <FileDown className="h-4 w-4" /> PDF PUC
           </button>
-          <button onClick={() => exportMutation.mutate()} disabled={exportMutation.isPending || nominas.length === 0} className="inline-flex h-9 items-center gap-2 rounded-lg bg-indigo-600 px-3 text-sm font-medium text-white disabled:opacity-50">
-            <FileDown className="h-4 w-4" /> CSV PUC
+          <button onClick={() => exportExcelMutation.mutate()} disabled={exportExcelMutation.isPending || nominas.length === 0} className="inline-flex h-9 items-center gap-2 rounded-lg bg-indigo-600 px-3 text-sm font-medium text-white disabled:opacity-50">
+            <FileDown className="h-4 w-4" /> Excel PUC
           </button>
         </div>
       </div>
@@ -214,15 +129,6 @@ export default function PageControlContableNomina() {
           </div>
         )}
       </div>
-
-      {exportData && (
-        <div className="mt-4 rounded-lg border border-gray-200 bg-white p-4">
-          <p className="text-sm font-semibold text-gray-800">Última exportación</p>
-          <p className="mt-1 text-xs text-gray-500">
-            Débito {formatCOP(exportData.totales?.debito)} · Crédito {formatCOP(exportData.totales?.credito)} · {exportData.lineas?.length ?? 0} líneas
-          </p>
-        </div>
-      )}
     </div>
   );
 }
