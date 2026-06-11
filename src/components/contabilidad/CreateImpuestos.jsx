@@ -67,8 +67,8 @@ export default function CreateImpuestos({ forma = null, onClose }) {
             <input
               type="number"
               name="porcentaje"
-              placeholder="0.00"
-              step="0.01"
+              placeholder="0.000000"
+              step="0.000001"
               className={`w-full pl-3 pr-8 py-2 bg-gray-50 border rounded-lg text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20 ${
                 error?.porcentaje ? "border-red-400" : "border-gray-200 focus:border-blue-500"
               }`}
