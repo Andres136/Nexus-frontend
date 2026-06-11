@@ -74,7 +74,7 @@ export default function PageCosteos() {
             Costeo y Utilidad por Producto
         </h1>
         <p className="text-sm text-gray-500">
-            Análisis de ingresos, costos y margen bruto
+            Análisis de ingresos, costos y margen bruto sin IVA
         </p>
     </div>
 
@@ -205,7 +205,7 @@ export default function PageCosteos() {
 
         <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-4">
             <p className="text-xs text-gray-500 uppercase font-semibold">
-                Ingreso Total
+                Ingreso Total sin IVA
             </p>
             <p className="text-xl font-bold text-green-600 mt-1">
                 {formatCOP(resumen.total_ingreso)}
@@ -214,7 +214,7 @@ export default function PageCosteos() {
 
         <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-4">
             <p className="text-xs text-gray-500 uppercase font-semibold">
-                Costo Total
+                Costo Total sin IVA
             </p>
             <p className="text-xl font-bold text-red-600 mt-1">
                 {formatCOP(resumen.total_costo)}
@@ -223,7 +223,7 @@ export default function PageCosteos() {
 
         <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-4">
             <p className="text-xs text-gray-500 uppercase font-semibold">
-                Utilidad Global
+                Utilidad Global sin IVA
             </p>
             <p className="text-xl font-bold text-blue-600 mt-1">
                 {formatCOP(resumen.total_utilidad)}
@@ -248,16 +248,16 @@ export default function PageCosteos() {
                                     KG Vendidos
                                 </th>
                                 <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">
-                                    Ingreso
+                                    Ingreso sin IVA
                                 </th>
                                 <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">
-                                    Costo Promedio
+                                    Costo Promedio/KG sin IVA
                                 </th>
                                 <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">
-                                    Costo Total
+                                    Costo Total sin IVA
                                 </th>
                                 <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">
-                                    Utilidad
+                                    Utilidad sin IVA
                                 </th>
                                 <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">
                                     Margen %
