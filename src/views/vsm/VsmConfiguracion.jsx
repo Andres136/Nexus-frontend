@@ -8,7 +8,7 @@ import {
   useRestaurarVsmConfiguracion,
 } from "../../hooks/vsm/useVsmConfiguracion"
 
-const FORM_VACIO = { meta_unidades_hora: "", descripcion: "" }
+const FORM_VACIO = { meta_unidades_hora: "", descripcion: "", horas_semanales: "" }
 
 export default function VsmConfiguracion() {
   const [form, setForm]           = useState(FORM_VACIO)
@@ -32,7 +32,7 @@ export default function VsmConfiguracion() {
 
   const abrirEdicion = (item) => {
     setEditando(item)
-    setForm({ meta_unidades_hora: item.meta_unidades_hora, descripcion: item.descripcion ?? "" })
+    setForm({ meta_unidades_hora: item.meta_unidades_hora, descripcion: item.descripcion ?? "",horas_semanales: item.horas_semanales ?? "" })
     setError("")
   }
 
@@ -51,6 +51,7 @@ export default function VsmConfiguracion() {
     const payload = {
       meta_unidades_hora: parseFloat(form.meta_unidades_hora),
       descripcion: form.descripcion || null,
+      horas_semanales: form.horas_semanales ? parseFloat(form.horas_semanales) : null,
     }
 
     if (editando) {
@@ -137,6 +138,19 @@ export default function VsmConfiguracion() {
                 className="border rounded p-2 w-full focus:outline-none focus:ring-2 focus:ring-green-400"
               />
             </div>
+
+            <div className="flex flex-col gap-1 flex-1 min-w-[200px]">
+              <label className="text-sm font-medium text-gray-700">Horas semanales (opcional)</label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="Ej: 40"
+                value={form.horas_semanales}
+                onChange={(e) => setForm({ ...form, horas_semanales: e.target.value })}
+                className="border rounded p-2 w-full focus:outline-none focus:ring-2 focus:ring-green-400"
+              />
+            </div>
           </div>
 
           {error && <p className="text-red-600 text-sm">{error}</p>}
@@ -176,7 +190,9 @@ export default function VsmConfiguracion() {
                 <tr className="border-b text-left text-gray-500">
                   <th className="py-2 pr-3">Meta (u/h)</th>
                   <th className="py-2 pr-3">Descripción</th>
+                  <th className="py-2 pr-3">Horas semanales</th>
                   <th className="py-2 pr-3">Definida por</th>
+
                   <th className="py-2 pr-3">Fecha</th>
                   <th className="py-2 pr-3">Estado</th>
                   <th className="py-2 text-right">Acciones</th>
@@ -187,6 +203,7 @@ export default function VsmConfiguracion() {
                   <tr key={item.id} className="border-t align-middle">
                     <td className="py-2 pr-3 font-semibold">{item.meta_unidades_hora}</td>
                     <td className="py-2 pr-3 text-gray-500">{item.descripcion ?? "—"}</td>
+                    <td className="py-2 pr-3">{item.horas_semanales ?? "—"}</td>
                     <td className="py-2 pr-3">{item.creado_por ?? "sistema"}</td>
                     <td className="py-2 pr-3 text-gray-400 whitespace-nowrap">{item.creado_en}</td>
                     <td className="py-2 pr-3">
