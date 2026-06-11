@@ -1,5 +1,7 @@
 import  { useState, useMemo } from "react";
 import useVSMForecast from "../../hooks/vsm/useVSMForecast";
+import VsmSupplyCoverage from "./VsmSupplyCoverage";
+import VsmCapacityPanel from "./VsmCapacityPanel";
 import {
   BarChart,
   Bar,
@@ -56,7 +58,7 @@ export default function VsmDashboard() {
       name: `OT ${ot.orden_trabajo_id}`,
       shortName: `${ot.orden_trabajo_id}`, // Nombre corto para gráficos
       horas: ot.horas_estimadas,
-      horasUsuario: parseFloat((ot.horas_estimadas / usuarios).toFixed(2)),
+      horasUsuario: ot.horas_estimadas,
       segundos: ot.segundos_estimados,
       cliente: ot.cliente,
       index: index + 1
@@ -238,6 +240,8 @@ export default function VsmDashboard() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        <VsmCapacityPanel usuarios={usuarios} />
+        <VsmSupplyCoverage />
         
         {/* Métricas principales sin cambios */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
@@ -286,7 +290,7 @@ export default function VsmDashboard() {
               <div>
                 <p className="text-sm font-medium text-gray-600">Horas / Usuario</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {(totalHoras / usuarios).toFixed(2)}h
+                  {totalHoras.toFixed(2)}h
                 </p>
               </div>
             </div>
@@ -549,7 +553,7 @@ export default function VsmDashboard() {
                       </td>
                       <td className="px-4 py-3 text-center">
                         <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-sm font-medium">
-                          {(ot.horas_estimadas / usuarios).toFixed(2)}h
+                          {ot.horas_estimadas.toFixed(2)}h
                         </span>
                       </td>
                     </tr>

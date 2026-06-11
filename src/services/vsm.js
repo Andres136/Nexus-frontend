@@ -110,8 +110,12 @@ export const vsmForecastService = {
   pronosticoGlobal: (usuarios = 1) =>
     apiClient.get(`/api/vsm/pronostico?usuarios=${usuarios}`),
 
-  vsmFlow : () =>
-    apiClient.get('/api/vsm/flujo'),
+  vsmFlow : (params) =>
+    apiClient.get('/api/vsm/flujo', { params }),
+  coberturaAbastecimiento: (params) =>
+    apiClient.get('/api/vsm/cobertura-abastecimiento', { params }),
+  capacidad: (params) =>
+    apiClient.get('/api/vsm/capacidad', { params }),
   pronostico:()=>
     apiClient.get('/api/vsm/pronostico'),
 }
