@@ -120,6 +120,8 @@ import EncuestasPage from "../views/crm/EncuestasPage";
 import ResultadosEncuesta from "../views/crm/ResultadosEncuesta";
 import EncuestaPublica from "../views/crm/EncuestaPublica";
 import PageReportesBic from "../views/hseq/PageReportesBic";
+import { VenusAndMarsIcon } from "lucide-react";
+import VsmConfiguracion from "../views/vsm/VsmConfiguracion";
 
 
 export default function Router() {
@@ -226,6 +228,12 @@ export default function Router() {
           </DynamicProtectedRoute>}
          />
 
+     <Route
+          path="/auth/crm/vsm/configuracion"
+          element={<DynamicProtectedRoute permission="/auth/crm/vsm/configuracion">
+            <VsmConfiguracion />
+          </DynamicProtectedRoute>}
+         />
 
 {/*Fin de Rutas para control de calidad */}
 

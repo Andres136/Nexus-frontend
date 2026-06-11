@@ -3,21 +3,27 @@ import { useAlistamientosActivos } from "../../hooks/vsm/useAlistamientoActivos"
 import { vsmProduccionService, vsmService } from "../../services/vsm";
 import { toast } from "react-toastify";
 import { useAlistamientos } from "../../hooks/vsm/useAlistamiento";
-import { 
-  Clock,  Package,Play, Pause, 
-  Square, Timer,  Plus, ChevronDown, ChevronUp, CheckCircle2, 
+import {
+  Clock,  Package,Play, Pause,
+  Square, Timer,  Plus, ChevronDown, ChevronUp, CheckCircle2,
   Trash2
 } from "lucide-react";
 import Swal from "sweetalert2";
 import { useState } from "react";
 import Select from "react-select";
-import {useSedes} from "../../hooks/useSedes";
+import { useSedes } from "../../hooks/useSedes";
+import { useAuth } from "../../hooks/useAuth";
+
+const ROLES_MULTISEDE = [1, 4]; // ADMINISTRADOR y ADMINISTRATIVO
 
 export default function AlistamientosActivos() {
   const { alistamientos, loading, refresh,  } = useAlistamientosActivos();
   const { pausar, reanudar, finalizar } = useAlistamientos();
   const { sedes } = useSedes();
-const [sedeSeleccionada, setSedeSeleccionada] = useState("");
+  const { user } = useAuth({ middleware: 'auth' });
+  const [sedeSeleccionada, setSedeSeleccionada] = useState("");
+
+  const puedeVerTodasSedes = ROLES_MULTISEDE.includes(user?.role_id);
 
   const handlePausa = async (alistId) => {
     const { value: razon } = await Swal.fire({
@@ -142,37 +148,44 @@ const handleReanudarSede = async () => {
       {alistamientos.length}
     </span>
   </div>
-<button
-  onClick={handlePausaSede}
-  className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-700"
->
-  ⛔ Pausar toda la sede
-</button>
+{puedeVerTodasSedes && (
+  <button
+    onClick={handlePausaSede}
+    className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-700"
+  >
+    ⛔ Pausar toda la sede
+  </button>
+)}
 
-<button
-  onClick={handleReanudarSede}
-  className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-green-700"
->
-  ▶️ Reanudar toda la sede
-</button>
-  {/* 🔥 SELECT SEDE */}
-  <div className="flex items-center gap-2">
-    <select
-      value={sedeSeleccionada}
-      onChange={(e) => {
-        setSedeSeleccionada(e.target.value);
-        refresh({ sede_id: e.target.value }); // 🔥 aquí llamas filtro
-      }}
-      className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
-    >
-      <option value="">Mi sede</option>
-      {sedes?.map(s => (
-        <option key={s.id} value={s.id}>
-          {s.nombre}
-        </option>
-      ))}
-    </select>
-  </div>
+{puedeVerTodasSedes && (
+  <button
+    onClick={handleReanudarSede}
+    className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-green-700"
+  >
+    ▶️ Reanudar toda la sede
+  </button>
+)}
+
+  {/* Selector de sede solo para roles con acceso multisede */}
+  {puedeVerTodasSedes && (
+    <div className="flex items-center gap-2">
+      <select
+        value={sedeSeleccionada}
+        onChange={(e) => {
+          setSedeSeleccionada(e.target.value);
+          refresh({ sede_id: e.target.value });
+        }}
+        className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+      >
+        <option value="">Mi sede</option>
+        {sedes?.map(s => (
+          <option key={s.id} value={s.id}>
+            {s.nombre}
+          </option>
+        ))}
+      </select>
+    </div>
+  )}
 
 </div>
 
@@ -234,8 +247,8 @@ function AlistamientoCard({ alist, onUpdate, onPausa, onReanudar, onFinalizar })
       toast.success("Usuario agregado");
       setModalOpen(false);
       onUpdate();
-    } catch {
-      toast.error("Error al agregar usuario");
+    } catch (e) {
+      toast.error(e?.response?.data?.message || "Error al agregar usuario");
     } finally {
       setGuardando(false);
     }

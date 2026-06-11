@@ -1,43 +1,37 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Select from "react-select";
 import { useAlistamientos } from "../../hooks/vsm/useAlistamiento";
 import { usersApi } from "../../services/api";
 import { toast } from "react-toastify";
 import { otAlistamientoService, vsmService } from "../../services/vsm";
 import AlistamientosActivos from "../../components/vsm/AlistamientosActivos";
-import { 
-  Package, 
-  Users, 
-  Play, 
+import {
+  Package,
+  Users,
+  Play,
   ClipboardList,
   AlertCircle,
   User,
-
 } from "lucide-react";
-import { Link, useLocation,  } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
 
 
 export default function AlistamientoPanel() {
   const { loading } = useAlistamientos();
+  const { user: authUser } = useAuth({ middleware: 'auth' });
 
   const [selectedOT, setSelectedOT] = useState(null);
   const [users, setUsers] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [errors, setErrors] = useState({});
   const [ordenesTrabajo, setOrdenesTrabajo] = useState([]);
-const location = useLocation();
+  const location = useLocation();
 
-
-  // Cargar usuarios para el Multiselect
   const fetchUsers = async () => {
     try {
       const res = await usersApi.getUsers();
-      setUsers(
-        res.data.map((u) => ({
-          value: u.id,
-          label: `${u.name}`,
-        }))
-      );
+      setUsers(res.data);
     } catch (e) {
       console.log(e);
       toast.error("No se pudieron cargar los usuarios");
@@ -47,6 +41,15 @@ const location = useLocation();
   useEffect(() => {
     fetchUsers();
   }, []);
+
+  // Filtra por sede del usuario autenticado en el render, sin bloquear la carga inicial
+  const userOptions = useMemo(() => {
+    const sedeId = authUser?.sede_id ? Number(authUser.sede_id) : null;
+    const fuente = sedeId
+      ? users.filter((u) => Number(u.sede_id) === sedeId)
+      : users;
+    return fuente.map((u) => ({ value: u.id, label: u.name }));
+  }, [users, authUser?.sede_id]);
 
   // Obtener órdenes de trabajo para alistamiento
   useEffect(() => {
@@ -185,6 +188,18 @@ const location = useLocation();
           Productividad Individual
         </Link>
 
+        {/* CONFIGURACIÓN VSM */}
+        <Link
+          to="/auth/crm/vsm/configuracion"
+          className={`text-sm font-medium transition-all ${
+            location.pathname === "/auth/crm/vsm/configuracion"
+              ? "text-blue-600 border-b-2 border-blue-600 pb-1"
+              : "text-gray-600 hover:text-gray-900"
+          }`}
+        >
+          Configuración VSM
+        </Link>
+
       </div>
 
     </div>
@@ -266,7 +281,7 @@ const location = useLocation();
               
               <Select
                 isMulti
-                options={users}
+                options={userOptions}
                 placeholder="Seleccione usuarios..."
                 onChange={setSelectedUsers}
                 value={selectedUsers}
