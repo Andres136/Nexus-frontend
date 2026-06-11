@@ -41,6 +41,7 @@ export default function FacturaCompras({ modo = "creacion" }) {
   const [loadingOrdenes, setLoadingOrdenes] = useState(false);
   const [ordenModalId, setOrdenModalId] = useState(null);
   const [itemsModalSeleccionados, setItemsModalSeleccionados] = useState([]);
+  const [busquedaProductosOrden, setBusquedaProductosOrden] = useState("");
 
   const getError = (field) => error?.[field]?.[0] || null;
 
@@ -240,6 +241,24 @@ export default function FacturaCompras({ modo = "creacion" }) {
     (orden) => Number(orden.id) === Number(ordenModalId)
   );
 
+  const productosOrdenFiltrados = useMemo(() => {
+    const productos = ordenModal?.productos ?? [];
+    const termino = busquedaProductosOrden.trim().toLocaleLowerCase("es");
+
+    if (!termino) return productos;
+
+    return productos.filter((producto) =>
+      [
+        producto.code,
+        producto.producto_nombre,
+        producto.descripcion,
+        producto.estado_producto,
+      ].some((valor) =>
+        String(valor ?? "").toLocaleLowerCase("es").includes(termino)
+      )
+    );
+  }, [ordenModal, busquedaProductosOrden]);
+
   const abrirModalOrden = (orden) => {
     const idsOrden = new Set((orden.productos ?? []).map((producto) => String(producto.id)));
     setItemsModalSeleccionados(
@@ -247,12 +266,14 @@ export default function FacturaCompras({ modo = "creacion" }) {
         .filter((detalle) => idsOrden.has(String(detalle.orden_compra_proveedor_detalle_id)))
         .map((detalle) => String(detalle.orden_compra_proveedor_detalle_id))
     );
+    setBusquedaProductosOrden("");
     setOrdenModalId(orden.id);
   };
 
   const cerrarModalOrden = () => {
     setOrdenModalId(null);
     setItemsModalSeleccionados([]);
+    setBusquedaProductosOrden("");
   };
 
   const alternarItemModal = (productoId) => {
@@ -648,19 +669,35 @@ export default function FacturaCompras({ modo = "creacion" }) {
               </div>
 
               <div className="overflow-auto p-4">
-                <div className="mb-3 flex justify-end gap-2">
+                <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="w-full sm:max-w-md">
+                    <input
+                      type="search"
+                      value={busquedaProductosOrden}
+                      onChange={(event) => setBusquedaProductosOrden(event.target.value)}
+                      placeholder="Buscar por código, producto, descripción o estado..."
+                      className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                    />
+                    <p className="mt-1 text-[11px] text-slate-400">
+                      {productosOrdenFiltrados.length} de {(ordenModal.productos ?? []).length} productos visibles
+                    </p>
+                  </div>
+                  <div className="flex justify-end gap-2">
                   <button
                     type="button"
                     onClick={() =>
                       setItemsModalSeleccionados(
-                        (ordenModal.productos ?? [])
-                          .filter((producto) => producto.producto_id)
-                          .map((producto) => String(producto.id))
+                        Array.from(new Set([
+                          ...itemsModalSeleccionados,
+                          ...productosOrdenFiltrados
+                            .filter((producto) => producto.producto_id)
+                            .map((producto) => String(producto.id)),
+                        ]))
                       )
                     }
                     className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-100"
                   >
-                    Seleccionar todos
+                    Seleccionar visibles
                   </button>
                   <button
                     type="button"
@@ -669,6 +706,7 @@ export default function FacturaCompras({ modo = "creacion" }) {
                   >
                     Limpiar selección
                   </button>
+                  </div>
                 </div>
                 <table className="min-w-full divide-y divide-slate-200 text-xs">
                   <thead className="sticky top-0 bg-slate-100 text-left uppercase text-slate-500">
@@ -682,7 +720,7 @@ export default function FacturaCompras({ modo = "creacion" }) {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {(ordenModal.productos ?? []).map((producto) => {
+                    {productosOrdenFiltrados.map((producto) => {
                       const pendiente = Math.max(
                         0,
                         Number(producto.cantidad_solicitada) - Number(producto.cantidad_entregada)
@@ -726,6 +764,13 @@ export default function FacturaCompras({ modo = "creacion" }) {
                         </tr>
                       );
                     })}
+                    {productosOrdenFiltrados.length === 0 && (
+                      <tr>
+                        <td colSpan="6" className="px-3 py-10 text-center text-sm text-slate-400">
+                          No se encontraron productos con esa búsqueda.
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>

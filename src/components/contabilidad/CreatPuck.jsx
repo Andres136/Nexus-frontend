@@ -2,13 +2,13 @@ import { useEffect } from "react";
 import { useGetByIdPuck } from "../../hooks/contabilidad/useGetByIdPuck";
 import { useRegisterPuck } from "../../hooks/contabilidad/useRegisterPuck";
 import { Loader2, Hash, BookOpen } from "lucide-react";
+import PropTypes from "prop-types";
 
 export default function CreatPuck({ puck = null, onClose }) {
   const {
     puck: puckState,
     setPuck,
     loading,
-    error,
     handleChange,
     handleSubmit,
     handleUpdate,
@@ -21,27 +21,30 @@ export default function CreatPuck({ puck = null, onClose }) {
       setPuck({
         nombre: puckById.nombre,
         numero: puckById.numero,
+        naturaleza: puckById.naturaleza ?? "",
+        descripcion: puckById.descripcion ?? "",
+        dinamica: puckById.dinamica ?? "",
+        permite_movimiento: puckById.permite_movimiento,
+        activo: puckById.activo,
       });
     }
   }, [puck, puckById, setPuck]);
 
   const handleSubmitForm = async (e) => {
     e.preventDefault();
-    let success = false;
+    let success;
     if (puck?.id) {
       success = await handleUpdate(puck.id);
     } else {
       success = await handleSubmit(e);
     }
     
-    // Si la operación fue exitosa (asumiendo que tus hooks devuelven éxito o no lanzan error)
-    // Cerramos el modal
-    if (onClose) onClose();
+    if (success && onClose) onClose();
   };
 
   return (
   // Contenedor principal: p-5 en lugar de p-6 o p-8
-<div className="w-full max-w-sm mx-auto bg-white p-5 ">
+<div className="w-full mx-auto bg-white p-5 ">
   
   {/* Header: margen inferior reducido */}
   <div className="mb-4">
@@ -89,6 +92,70 @@ export default function CreatPuck({ puck = null, onClose }) {
       />
     </div>
 
+    <div>
+      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
+        Naturaleza
+      </label>
+      <select
+        name="naturaleza"
+        className="w-full px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:border-blue-500"
+        value={puckState.naturaleza}
+        onChange={handleChange}
+      >
+        <option value="">Sin definir</option>
+        <option value="debito">Débito</option>
+        <option value="credito">Crédito</option>
+      </select>
+    </div>
+
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div>
+        <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
+          Descripción
+        </label>
+        <textarea
+          name="descripcion"
+          rows="3"
+          className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:border-blue-500 resize-none"
+          value={puckState.descripcion}
+          onChange={handleChange}
+        />
+      </div>
+      <div>
+        <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
+          Dinámica
+        </label>
+        <textarea
+          name="dinamica"
+          rows="3"
+          className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:border-blue-500 resize-none"
+          value={puckState.dinamica}
+          onChange={handleChange}
+        />
+      </div>
+    </div>
+
+    <div className="flex flex-wrap gap-5 rounded-lg bg-gray-50 border border-gray-100 px-3 py-2">
+      <label className="flex items-center gap-2 text-xs font-medium text-gray-600">
+        <input
+          type="checkbox"
+          name="permite_movimiento"
+          checked={puckState.permite_movimiento}
+          onChange={handleChange}
+        />
+        Permite movimiento
+      </label>
+      <label className="flex items-center gap-2 text-xs font-medium text-gray-600">
+        <input
+          type="checkbox"
+          name="activo"
+          checked={puckState.activo}
+          onChange={handleChange}
+        />
+        Cuenta activa
+      </label>
+    </div>
+
     {/* Acciones: mt-2 para pegarlo más al contenido */}
     <div className="pt-2 flex items-center gap-2">
       <button
@@ -111,3 +178,10 @@ export default function CreatPuck({ puck = null, onClose }) {
 </div>
   );
 }
+
+CreatPuck.propTypes = {
+  puck: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  }),
+  onClose: PropTypes.func,
+};

@@ -8,17 +8,22 @@ export const useRegisterPuck = () => {
     const[puck, setPuck] = useState({
         nombre: "",
         numero: "",
+        naturaleza: "",
+        descripcion: "",
+        dinamica: "",
+        permite_movimiento: true,
+        activo: true,
     });
     const[loading, setLoading] = useState(false);
     const[error, setError] = useState(null);
     const queryClient = useQueryClient();
 
    const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
 
     setPuck({
       ...puck,
-      [name]: value,
+      [name]: type === "checkbox" ? checked : value,
     });
 
     if (error?.[name]) {
@@ -40,7 +45,13 @@ export const useRegisterPuck = () => {
        setPuck({
          nombre: "",
          numero: "",
+         naturaleza: "",
+         descripcion: "",
+         dinamica: "",
+         permite_movimiento: true,
+         activo: true,
        });
+       return true;
 
     } catch (err) {
     
@@ -51,6 +62,7 @@ export const useRegisterPuck = () => {
   setError({ general: ["Ocurrió un error al crear el puck"] });
   showToast("error", "Ocurrió un error al crear el puck");
 }
+      return false;
     } finally {
 
       setLoading(false);
@@ -66,6 +78,7 @@ export const useRegisterPuck = () => {
     
     showToast("success", response.data.message || "Puck actualizado exitosamente");
     queryClient.invalidateQueries(["pucks"]);
+    return true;
     } catch (err) {
         console.error("Error al actualizar el puck:", err);
         if (err.response && err.response.data && err.response.data.message) {
@@ -75,6 +88,7 @@ export const useRegisterPuck = () => {
             setError({ general: ["Ocurrió un error al actualizar el puck"] });
             showToast("error", "Ocurrió un error al actualizar el puck");
         }
+        return false;
     } finally {
         setLoading(false);
     }

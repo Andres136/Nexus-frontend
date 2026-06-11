@@ -56,6 +56,14 @@ export const impuestosService = {
 export const cuentasContablesService = {
   getCuentasContables: () => apiClient.get("/api/cuentas-contables"),
   createCuentaContable: (data) => apiClient.post("/api/cuentas-contables", data),
+  importCuentasContables: (file) => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    return apiClient.post("/api/cuentas-contables/importar", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
   getCuentaContableById: (id) => apiClient.get(`/api/cuentas-contables/${id}`),
   updateCuentaContable: (id, data) => apiClient.put(`/api/cuentas-contables/${id}`, data),
   deleteCuentaContable: (id) => apiClient.delete(`/api/cuentas-contables/${id}`),
