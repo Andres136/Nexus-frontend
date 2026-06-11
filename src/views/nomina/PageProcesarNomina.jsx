@@ -152,10 +152,7 @@ export default function PageProcesarNomina() {
     <div className="w-full min-w-0 max-w-full overflow-hidden box-border p-4 sm:p-6">
       {/* Encabezado */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between mb-6">
-        <div className="min-w-0">
-          <h1 className="text-2xl font-bold text-gray-900">Nómina</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Gestión y control de la nómina empresarial</p>
-        </div>
+      
         <div className="flex flex-wrap items-center gap-3">
           {/* Selector de período */}
           <div className="flex items-center gap-1 border border-gray-200 rounded-lg bg-white px-3 h-9 shadow-sm">
