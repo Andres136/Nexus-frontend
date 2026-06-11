@@ -7,6 +7,17 @@ import { useGetImpuesto } from "../../hooks/contabilidad/useGetImpuesto";
 import { useRegisterFacturaCompras } from "../../hooks/contabilidad/useRegisterFacturaCompras";
 import { useEmpresas } from "../../hooks/useEmpresas";
 import Select from "react-select";
+
+const impuestoSigno = (impuesto) => impuesto?.operacion === "resta" ? -1 : 1;
+const impuestoLabel = (impuesto) =>
+  `${impuesto.nombre} (${impuesto.operacion === "resta" ? "−" : "+"}${Number(impuesto.porcentaje).toFixed(2)}%)`;
+const formatCOP = (value) =>
+  Number(value || 0).toLocaleString("es-CO", {
+    style: "currency",
+    currency: "COP",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 import DetallesFacturaCompras from "./DetallesFacturaCompras";
 import { useGetAllProveedores } from "../../hooks/crm/useGetAllProveedores";
 import { facturasService } from "../../services/contabilidadService";
@@ -108,12 +119,17 @@ export default function FacturaCompras({ modo = "creacion" }) {
       (det.impuestos || []).forEach((i) => {
         const imp = impuestos.find((x) => x.id === i.impuesto_id);
         const porcentaje = Number(imp?.porcentaje || 0);
-        const monto = base * (porcentaje / 100);
+        const monto = base * (porcentaje / 100) * impuestoSigno(imp);
         totalImpuestos += monto;
         if (impuestosDetalleMap[i.impuesto_id]) {
           impuestosDetalleMap[i.impuesto_id].monto += monto;
         } else {
-          impuestosDetalleMap[i.impuesto_id] = { nombre: imp?.nombre, porcentaje, monto };
+          impuestosDetalleMap[i.impuesto_id] = {
+            nombre: imp?.nombre,
+            porcentaje,
+            operacion: imp?.operacion || "suma",
+            monto,
+          };
         }
       });
     });
@@ -123,12 +139,29 @@ export default function FacturaCompras({ modo = "creacion" }) {
     const impuestosGenerales = factura.impuestos.map((i) => {
       const imp = impuestos.find((x) => x.id === i.impuesto_id);
       const porcentaje = Number(imp?.porcentaje || 0);
-      const monto = subtotal * (porcentaje / 100);
+      const monto = subtotal * (porcentaje / 100) * impuestoSigno(imp);
       totalImpuestos += monto;
-      return { nombre: imp?.nombre, porcentaje, monto };
+      return { nombre: imp?.nombre, porcentaje, operacion: imp?.operacion || "suma", monto };
     });
 
-    return { subtotal, impuestosDetalle, impuestosGenerales, totalImpuestos, total: subtotal + totalImpuestos };
+    const totalCargos = [...impuestosDetalle, ...impuestosGenerales]
+      .filter((impuesto) => impuesto.monto > 0)
+      .reduce((total, impuesto) => total + impuesto.monto, 0);
+    const totalRetenciones = Math.abs(
+      [...impuestosDetalle, ...impuestosGenerales]
+        .filter((impuesto) => impuesto.monto < 0)
+        .reduce((total, impuesto) => total + impuesto.monto, 0)
+    );
+
+    return {
+      subtotal,
+      impuestosDetalle,
+      impuestosGenerales,
+      totalImpuestos,
+      totalCargos,
+      totalRetenciones,
+      total: subtotal + totalImpuestos,
+    };
   }, [factura.detalles, factura.impuestos, impuestos]);
 
   // Helpers para el valor controlado de react-select
@@ -143,7 +176,7 @@ export default function FacturaCompras({ modo = "creacion" }) {
     return factura.impuestos.map((i) => {
       const imp = impuestos.find((x) => x.id === i.impuesto_id);
       return imp
-        ? { value: imp.id, label: `${imp.nombre} (${Number(imp.porcentaje).toFixed(2)}%)`, porcentaje: imp.porcentaje }
+        ? { value: imp.id, label: impuestoLabel(imp), porcentaje: imp.porcentaje }
         : null;
     }).filter(Boolean);
   }, [factura.impuestos, impuestos]);
@@ -508,7 +541,7 @@ export default function FacturaCompras({ modo = "creacion" }) {
                 isMulti
                 options={impuestos?.map((i) => ({
                   value: i.id,
-                  label: `${i.nombre} (${Number(i.porcentaje).toFixed(2)}%)`,
+                  label: impuestoLabel(i),
                   porcentaje: i.porcentaje,
                 }))}
                 value={impuestosGeneralesValue}
@@ -544,26 +577,45 @@ export default function FacturaCompras({ modo = "creacion" }) {
             <div className="bg-slate-900 text-slate-100 rounded-xl p-3 flex flex-col space-y-1.5">
               <div className="flex justify-between text-sm">
                 <span className="text-slate-300">Subtotal</span>
-                <span className="font-medium">${resumen.subtotal.toFixed(2)}</span>
+                <span className="font-medium">{formatCOP(resumen.subtotal)}</span>
               </div>
 
               {resumen.impuestosDetalle.map((imp, index) => (
                 <div key={`det-${index}`} className="flex justify-between text-sm text-slate-300">
-                  <span>{imp.nombre} ({imp.porcentaje}%)</span>
-                  <span>${imp.monto.toFixed(2)}</span>
+                  <span>Detalle: {imp.nombre} ({imp.operacion === "resta" ? "−" : "+"}{imp.porcentaje}%)</span>
+                  <span className={imp.monto < 0 ? "text-red-300" : "text-emerald-300"}>
+                    {imp.monto < 0 ? "−" : "+"}{formatCOP(Math.abs(imp.monto))}
+                  </span>
                 </div>
               ))}
 
               {resumen.impuestosGenerales.map((imp, index) => (
                 <div key={`gen-${index}`} className="flex justify-between text-sm text-slate-400">
-                  <span>{imp.nombre} ({imp.porcentaje}%)</span>
-                  <span>${imp.monto.toFixed(2)}</span>
+                  <span>General: {imp.nombre} ({imp.operacion === "resta" ? "−" : "+"}{imp.porcentaje}%)</span>
+                  <span className={imp.monto < 0 ? "text-red-300" : "text-emerald-300"}>
+                    {imp.monto < 0 ? "−" : "+"}{formatCOP(Math.abs(imp.monto))}
+                  </span>
                 </div>
               ))}
 
+              <div className="mt-1 border-t border-slate-700 pt-2 space-y-1">
+                <div className="flex justify-between text-xs text-emerald-300">
+                  <span>Total cargos</span>
+                  <span>+{formatCOP(resumen.totalCargos)}</span>
+                </div>
+                <div className="flex justify-between text-xs text-red-300">
+                  <span>Total retenciones/descuentos</span>
+                  <span>−{formatCOP(resumen.totalRetenciones)}</span>
+                </div>
+                <div className="flex justify-between text-xs text-slate-300">
+                  <span>Efecto neto</span>
+                  <span>{resumen.totalImpuestos < 0 ? "−" : "+"}{formatCOP(Math.abs(resumen.totalImpuestos))}</span>
+                </div>
+              </div>
+
               <div className="flex justify-between text-base border-t border-slate-700 pt-2 font-semibold text-white">
-                <span>Total</span>
-                <span>${resumen.total.toFixed(2)}</span>
+                <span>Total final</span>
+                <span>{formatCOP(resumen.total)}</span>
               </div>
             </div>
           </div>

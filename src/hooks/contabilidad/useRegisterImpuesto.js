@@ -8,6 +8,7 @@ export const useRegisterImpuesto = ()=>{
 const [impuesto, setImpuesto] = useState({
     "nombre": "",
     "porcentaje": "",
+    "operacion": "suma",
 
 });
 const [loading, setLoading] = useState(false);
@@ -41,7 +42,7 @@ const handleSubmit = async (e) => {
        setImpuesto({
          nombre: "",
          porcentaje: "",
-         descripcion: "",
+         operacion: "suma",
        });
 
     } catch (err) {

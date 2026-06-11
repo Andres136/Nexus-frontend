@@ -19,6 +19,26 @@ export default function DetallesFacturaCompras({
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedProducts, setSelectedProducts] = useState([]);
   const { products,isLoading, isEmpty, isFetching } = useProducts({ search: searchTerm });
+  const calcularTotalDetalle = (detalle) => {
+    const base = Number(detalle.cantidad || 0) * Number(detalle.precio_unitario || 0);
+    const efectoImpuestos = (detalle.impuestos || []).reduce((total, impuestoSeleccionado) => {
+      const impuesto = impuestos.find(
+        (item) => Number(item.id) === Number(impuestoSeleccionado.impuesto_id)
+      );
+      const monto = base * (Number(impuesto?.porcentaje || 0) / 100);
+
+      return total + (impuesto?.operacion === "resta" ? -monto : monto);
+    }, 0);
+
+    return base + efectoImpuestos;
+  };
+  const formatCOP = (value) =>
+    Number(value || 0).toLocaleString("es-CO", {
+      style: "currency",
+      currency: "COP",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
 
   const safeProducts = useMemo(
     () =>
@@ -109,6 +129,7 @@ export default function DetallesFacturaCompras({
               {/*   <th className="px-3 py-2">Bodega Destino</th>*/}
             
               <th className="px-3 py-2 w-40">Precio Unitario</th>
+              <th className="px-3 py-2 w-40 text-right">Total línea</th>
               <th className="px-3 py-2 w-10 text-center">Acción</th>
             </tr>
           </thead>
@@ -181,13 +202,13 @@ export default function DetallesFacturaCompras({
     styles={selectStyles}
     options={impuestos?.map(i => ({
       value: i.id,
-      label: `${i.nombre} (${i.porcentaje}%)`
+      label: `${i.nombre} (${i.operacion === "resta" ? "−" : "+"}${i.porcentaje}%)`
     }))}
 
     value={det.impuestos?.map(i => {
       const imp = impuestos.find(x => x.id === i.impuesto_id);
       return imp
-        ? { value: imp.id, label: `${imp.nombre} (${imp.porcentaje}%)` }
+        ? { value: imp.id, label: `${imp.nombre} (${imp.operacion === "resta" ? "−" : "+"}${imp.porcentaje}%)` }
         : null;
     }).filter(Boolean) || []}
 
@@ -259,6 +280,9 @@ export default function DetallesFacturaCompras({
                       </p>
                     )}
                   </div>
+                </td>
+                <td className="px-2 py-2 text-right text-xs font-semibold text-gray-700">
+                  {formatCOP(calcularTotalDetalle(det))}
                 </td>
                 <td className="px-2 py-2 text-center">
                   <button
