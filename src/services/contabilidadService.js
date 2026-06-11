@@ -74,6 +74,8 @@ export const cuentasContablesService = {
   getFacturaById: (id) => apiClient.get(`/api/facturas-compra/${id}`),
   updateFactura: (id, data) => apiClient.put(`/api/facturas-compra/${id}`, data),
   deleteFactura: (id) => apiClient.delete(`/api/facturas-compra/${id}`),
+  deleteFacturaDefinitivamente: (id) =>
+    apiClient.delete(`/api/facturas-compra/${id}/eliminar-definitivamente`),
   getOrdenesProveedor: (proveedorId) =>
     apiClient.get("/api/ordenes-compra-proveedor", {
       params: { proveedor_id: proveedorId, per_page: 100 },
