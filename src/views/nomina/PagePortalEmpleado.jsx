@@ -1,4 +1,4 @@
-import { FileBadge, Receipt, Palmtree, AlarmClock, Baby, Stethoscope } from "lucide-react";
+import { CreditCard, FileBadge, Receipt, Palmtree, AlarmClock, Baby, Stethoscope } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import PageDesprendibles from "./PageDesprendibles";
@@ -7,6 +7,7 @@ import PageVacaciones from "./PageVacaciones";
 import PagePermisos from "./PagePermisos";
 import PageLicencias from "./PageLicencias";
 import PageIncapacidades from "./PageIncapacidades";
+import PagePrestamosPortal from "./PagePrestamosPortal";
 
 const TABS = [
   { id: "desprendibles",       label: "Desprendibles", icon: Receipt     },
@@ -15,6 +16,7 @@ const TABS = [
   { id: "permisos",            label: "Permisos",      icon: AlarmClock  },
   { id: "licencias",           label: "Licencias",     icon: Baby        },
   { id: "incapacidades",       label: "Incapacidades", icon: Stethoscope },
+  { id: "prestamos",           label: "Préstamos",     icon: CreditCard  },
 ];
 
 export default function PagePortalEmpleado() {
@@ -38,7 +40,7 @@ export default function PagePortalEmpleado() {
             />
           </div>
 
-          <div className="mt-3 grid w-full grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+          <div className="mt-3 grid w-full grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-7">
             {TABS.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -72,6 +74,7 @@ export default function PagePortalEmpleado() {
         {activeTab === "permisos"            && <PagePermisos portalMode />}
         {activeTab === "licencias"           && <PageLicencias portalMode />}
         {activeTab === "incapacidades"       && <PageIncapacidades portalMode />}
+        {activeTab === "prestamos"           && <PagePrestamosPortal />}
       </main>
     </div>
   );

@@ -275,6 +275,18 @@ export const descuentoService = {
   },
 };
 
+export const solicitudPrestamoService = {
+  getSolicitudes(params = {}) {
+    return apiClient.get("api/nomina/solicitudes-prestamos", { params });
+  },
+  aprobar(uuid, data = {}) {
+    return apiClient.patch(`api/nomina/solicitudes-prestamos/${uuid}/aprobar`, data);
+  },
+  rechazar(uuid, data = {}) {
+    return apiClient.patch(`api/nomina/solicitudes-prestamos/${uuid}/rechazar`, data);
+  },
+};
+
 export const contratacionService = {
   getEmpleados(params = {}) {
     return apiClient.get("api/nomina/contratacion/empleados", { params });
@@ -712,5 +724,11 @@ export const portalEmpleadoService = {
   },
   getLicencias(params = {}) {
     return apiClient.get("api/nomina/portal/licencias", { params });
+  },
+  getPrestamos(params = {}) {
+    return apiClient.get("api/nomina/portal/prestamos", { params });
+  },
+  createPrestamo(data) {
+    return apiClient.post("api/nomina/portal/prestamos", data);
   },
 };
