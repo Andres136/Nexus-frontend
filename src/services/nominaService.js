@@ -144,6 +144,21 @@ export const valorService = {
   },
 };
 
+export const nominaParametroLaboralService = {
+  getParametros(params = {}) {
+    return apiClient.get("api/nomina/parametros-laborales", { params });
+  },
+  getVigente(params = {}) {
+    return apiClient.get("api/nomina/parametros-laborales/vigente", { params });
+  },
+  createParametro(data) {
+    return apiClient.post("api/nomina/parametros-laborales", data);
+  },
+  updateParametro(uuid, data) {
+    return apiClient.put(`api/nomina/parametros-laborales/${uuid}`, data);
+  },
+};
+
 export const configuracionNominaService = {
   getConfiguracion() {
     return apiClient.get("api/nomina/configuracion");
@@ -156,6 +171,26 @@ export const configuracionNominaService = {
     form.append("firma", file);
     return apiClient.post("api/nomina/configuracion/firma", form, {
       headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+};
+
+export const nominaConceptoContableService = {
+  getConceptos(params = {}) {
+    return apiClient.get("api/nomina/conceptos-contables", { params });
+  },
+  getConcepto(uuid) {
+    return apiClient.get(`api/nomina/conceptos-contables/${uuid}`);
+  },
+  updateConcepto(uuid, data) {
+    return apiClient.put(`api/nomina/conceptos-contables/${uuid}`, data);
+  },
+  sincronizarPuc() {
+    return apiClient.post("api/nomina/conceptos-contables/sincronizar-puc");
+  },
+  plantillaPucFaltante() {
+    return apiClient.get("api/nomina/conceptos-contables/plantilla-puc-faltante", {
+      responseType: "blob",
     });
   },
 };
@@ -309,6 +344,9 @@ export const nominaService = {
   enviarDesprendible(nominaUuid, correo = "") {
     const data = correo ? { correo } : {};
     return apiClient.post(`api/nomina/nominas/${nominaUuid}/desprendible/enviar`, data);
+  },
+  pucPayload(nominaUuid) {
+    return apiClient.get(`api/nomina/nominas/${nominaUuid}/puc-payload`);
   },
   preliquidarRetiro(data) {
     return apiClient.post("api/nomina/nominas/preliquidar-retiro", data);

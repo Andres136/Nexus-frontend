@@ -1,3 +1,4 @@
+import { useState } from "react";
 import PropTypes from "prop-types";
 import ModalLiquidarNomina from "../../components/nomina/ModalLiquidarNomina";
 import { CENTROS_COSTO, useProcesarNomina } from "../../hooks/nomina/useProcesarNomina";
@@ -32,6 +33,9 @@ const AVATAR_COLORS = [
   "bg-yellow-100 text-yellow-700",
   "bg-red-100 text-red-700",
 ];
+
+const ACTION_MENU_HEIGHT = 164;
+const ACTION_MENU_GAP = 6;
 
 function avatarColor(name = "") {
   let hash = 0;
@@ -129,6 +133,7 @@ Pagination.propTypes = {
 };
 
 export default function PageProcesarNomina() {
+  const [actionMenuPosition, setActionMenuPosition] = useState(null);
   const {
     mes, anio, quincena, search, page, setPage, activeTab, setActiveTab,
     showLiquidarModal, setShowLiquidarModal, liquidarInitialData,
@@ -147,6 +152,25 @@ export default function PageProcesarNomina() {
     { id: "conceptos", label: "Conceptos", icon: ReceiptText },
     { id: "costos", label: "Centros de Costo", icon: Building2 },
   ];
+
+  const toggleActionMenu = (event, uuid) => {
+    if (openActions === uuid) {
+      setOpenActions(null);
+      setActionMenuPosition(null);
+      return;
+    }
+
+    const rect = event.currentTarget.getBoundingClientRect();
+    setOpenActions(uuid);
+    const opensDown = rect.bottom + ACTION_MENU_GAP + ACTION_MENU_HEIGHT <= window.innerHeight;
+
+    setActionMenuPosition({
+      top: opensDown
+        ? rect.bottom + ACTION_MENU_GAP
+        : Math.max(ACTION_MENU_GAP, rect.top - ACTION_MENU_HEIGHT - ACTION_MENU_GAP),
+      right: window.innerWidth - rect.right,
+    });
+  };
 
   return (
     <div className="w-full min-w-0 max-w-full overflow-hidden box-border p-4 sm:p-6">
@@ -355,7 +379,7 @@ export default function PageProcesarNomina() {
       )}
 
       {/* Tabs internos */}
-      <div className="min-w-0 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="min-w-0 bg-white rounded-xl border border-gray-200 shadow-sm overflow-visible">
         <div className="border-b border-gray-100 px-4 flex min-w-0 items-center gap-0.5 overflow-x-auto">
 
 {TABS.map((tab) => {
@@ -426,7 +450,7 @@ export default function PageProcesarNomina() {
                 No hay nóminas procesadas para este período.
               </div>
             ) : (
-              <div className="w-full max-w-full overflow-x-auto">
+              <div className="w-full max-w-full overflow-x-auto overflow-y-visible">
               <table className="w-full min-w-[980px] divide-y divide-gray-100 text-sm">
                 <thead className="bg-gray-50">
                   <tr>
@@ -488,18 +512,24 @@ export default function PageProcesarNomina() {
                             </span>
                           )}
                         </td>
-                        <td className="px-4 py-3.5 text-right relative">
+                        <td className="px-4 py-3.5 text-right">
                           <button
                             type="button"
-                            onClick={() => setOpenActions(openActions === item.uuid ? null : item.uuid)}
+                            onClick={(event) => toggleActionMenu(event, item.uuid)}
                             className="w-7 h-7 flex items-center justify-center rounded-md border border-gray-200 hover:bg-gray-100 transition-colors ml-auto text-gray-500"
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
                               <circle cx="5" cy="12" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="19" cy="12" r="1.5" />
                             </svg>
                           </button>
-                          {openActions === item.uuid && (
-                            <div className="absolute right-4 top-11 z-20 w-48 rounded-md border border-gray-200 bg-white shadow-lg text-left">
+                          {openActions === item.uuid && actionMenuPosition && (
+                            <div
+                              className="fixed z-[9999] w-48 rounded-md border border-gray-200 bg-white shadow-xl text-left"
+                              style={{
+                                top: `${actionMenuPosition.top}px`,
+                                right: `${actionMenuPosition.right}px`,
+                              }}
+                            >
                               <button
                                 type="button"
                                 onClick={() => abrirLiquidacion(item)}

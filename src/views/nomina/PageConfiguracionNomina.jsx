@@ -9,6 +9,7 @@ import {
   Clock3,
   Coffee,
   Coins,
+  Download,
   RotateCcw,
   Save,
   ShieldCheck,
@@ -17,14 +18,16 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import InstruccionOperativaDia from "../../components/nomina/InstruccionOperativaDia";
 import { useDeleteAjusteSalarial } from "../../hooks/nomina/useDeleteAjusteSalarial";
 import { useGetAjustesSalariales } from "../../hooks/nomina/useGetAjustesSalariales";
 import { useGetContrataciones } from "../../hooks/nomina/useGetContrataciones";
 import { useGetJornadaLaboral } from "../../hooks/nomina/useGetJornadaLaboral";
-import { useGetKioscos } from "../../hooks/nomina/useGetKioscos";
+import { useGetNominaConceptosContables } from "../../hooks/nomina/useGetNominaConceptosContables";
 import { useRegisterAjusteSalarial } from "../../hooks/nomina/useRegisterAjusteSalarial";
-import { configuracionNominaService, horarioOperacionService, jornadaLaboralService } from "../../services/nominaService";
+import { useSincronizarNominaConceptosPuc } from "../../hooks/nomina/useSincronizarNominaConceptosPuc";
+import { useUpdateNominaConceptoContable } from "../../hooks/nomina/useUpdateNominaConceptoContable";
+import { cuentasContablesService } from "../../services/contabilidadService";
+import { configuracionNominaService, horarioOperacionService, jornadaLaboralService, nominaConceptoContableService, nominaParametroLaboralService } from "../../services/nominaService";
 import { showToast } from "../../helpers/utils/showToast";
 
 const HORARIO_DEFAULT = {
@@ -91,6 +94,15 @@ const AJUSTE_SALARIAL_DEFAULT = {
   status: true,
 };
 
+const PARAMETRO_LABORAL_DEFAULT = {
+  uuid: "",
+  anio: new Date().getFullYear(),
+  fecha_vigencia: `${new Date().getFullYear()}-01-01`,
+  salario_minimo: "",
+  auxilio_transporte: "",
+  activo: true,
+};
+
 const TIPOS_AJUSTE_SALARIAL = [
   { value: "salario_minimo", label: "Salario mínimo anual" },
   { value: "aumento_porcentual", label: "Aumento porcentual" },
@@ -106,6 +118,15 @@ function formatCOP(value) {
     currency: "COP",
     maximumFractionDigits: 0,
   }).format(Number(value || 0));
+}
+
+function descargarArchivo(blobData, filename) {
+  const url = URL.createObjectURL(blobData);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 function normalizarHora(value) {
@@ -277,13 +298,18 @@ Switch.propTypes = {
 
 export default function PageConfiguracionNomina() {
   const queryClient = useQueryClient();
+  const [activeConfigTab, setActiveConfigTab] = useState("laboral");
   const [instruccionForm, setInstruccionForm] = useState(INSTRUCCION_DEFAULT);
   const [ajusteForm, setAjusteForm] = useState(AJUSTE_SALARIAL_DEFAULT);
+  const [parametroLaboralForm, setParametroLaboralForm] = useState(PARAMETRO_LABORAL_DEFAULT);
   const [firmaFile, setFirmaFile] = useState(null);
+  const [descargandoPlantillaPuc, setDescargandoPlantillaPuc] = useState(false);
   const { jornadas, isLoading } = useGetJornadaLaboral({ per_page: 50 });
-  const { kioscos, isLoading: loadingKioscos } = useGetKioscos({ per_page: 100 });
   const { contrataciones } = useGetContrataciones({ per_page: 100, status: 1 });
   const { ajustesSalariales, isLoading: loadingAjustes } = useGetAjustesSalariales({ per_page: 8 });
+  const { conceptosContables, isLoading: loadingConceptos } = useGetNominaConceptosContables({ per_page: 100 });
+  const updateConceptoMutation = useUpdateNominaConceptoContable();
+  const sincronizarConceptosMutation = useSincronizarNominaConceptosPuc();
   const ajusteMutation = useRegisterAjusteSalarial({
     onSuccess: () => setAjusteForm(AJUSTE_SALARIAL_DEFAULT),
   });
@@ -295,7 +321,14 @@ export default function PageConfiguracionNomina() {
       return response.data.data;
     },
   });
-  const { data: instruccionData, isLoading: loadingInstruccion } = useQuery({
+  const { data: parametrosLaboralesData } = useQuery({
+    queryKey: ["nomina-parametros-laborales", { per_page: 5 }],
+    queryFn: async () => {
+      const response = await nominaParametroLaboralService.getParametros({ per_page: 5 });
+      return response.data.data;
+    },
+  });
+  const { data: instruccionData } = useQuery({
     queryKey: ["horarioOperacionHoy", instruccionForm.fecha, instruccionForm.kiosko_device_id],
     queryFn: async () => {
       const response = await horarioOperacionService.getHoy({
@@ -306,10 +339,23 @@ export default function PageConfiguracionNomina() {
     },
     enabled: !!instruccionForm.fecha,
   });
+  const { data: cuentasData, isLoading: loadingCuentas } = useQuery({
+    queryKey: ["cuentas-contables"],
+    queryFn: async () => {
+      const response = await cuentasContablesService.getCuentasContables();
+      return response.data.data ?? [];
+    },
+    staleTime: 1000 * 60 * 5,
+  });
   const lista = useMemo(() => jornadas?.data?.data ?? [], [jornadas]);
-  const kioscosLista = useMemo(() => kioscos?.data?.data ?? kioscos?.data ?? [], [kioscos]);
   const contratosLista = useMemo(() => contrataciones?.data?.data ?? contrataciones?.data ?? [], [contrataciones]);
   const ajustesLista = useMemo(() => ajustesSalariales?.data?.data ?? ajustesSalariales?.data ?? [], [ajustesSalariales]);
+  const parametrosLaboralesLista = useMemo(() => parametrosLaboralesData?.data ?? [], [parametrosLaboralesData]);
+  const conceptosLista = useMemo(() => conceptosContables?.data?.data ?? [], [conceptosContables]);
+  const cuentasMovimiento = useMemo(
+    () => (cuentasData ?? []).filter((cuenta) => cuenta.activo && cuenta.permite_movimiento),
+    [cuentasData]
+  );
   const contratoSeleccionado = useMemo(
     () => contratosLista.find((item) => String(item.id) === String(ajusteForm.contratacion_id)),
     [ajusteForm.contratacion_id, contratosLista]
@@ -318,6 +364,12 @@ export default function PageConfiguracionNomina() {
   const jornada = lista.find((item) => item.uuid === jornadaUuid) ?? lista[0];
   const [form, setForm] = useState(prepararForm(jornada));
   const [configForm, setConfigForm] = useState(CONFIG_DEFAULT);
+  const configTabs = [
+    { id: "laboral", label: "Parámetros laborales", icon: Coins },
+    { id: "contable", label: "PUC contable", icon: ShieldCheck },
+    { id: "horarios", label: "Horarios", icon: Clock3 },
+    { id: "documentos", label: "Documentos", icon: Upload },
+  ];
 
   useEffect(() => {
     if (!jornadaUuid && lista[0]?.uuid) {
@@ -342,6 +394,20 @@ export default function PageConfiguracionNomina() {
       status: configuracionData.status ?? true,
     });
   }, [configuracionData]);
+
+  useEffect(() => {
+    const vigente = parametrosLaboralesLista[0];
+    if (!vigente || parametroLaboralForm.uuid) return;
+
+    setParametroLaboralForm({
+      uuid: vigente.uuid ?? "",
+      anio: vigente.anio ?? new Date().getFullYear(),
+      fecha_vigencia: vigente.fecha_vigencia ? String(vigente.fecha_vigencia).slice(0, 10) : `${new Date().getFullYear()}-01-01`,
+      salario_minimo: vigente.salario_minimo ?? "",
+      auxilio_transporte: vigente.auxilio_transporte ?? "",
+      activo: vigente.activo ?? true,
+    });
+  }, [parametrosLaboralesLista, parametroLaboralForm.uuid]);
 
   useEffect(() => {
     if (!contratoSeleccionado) return;
@@ -395,6 +461,30 @@ export default function PageConfiguracionNomina() {
     },
   });
 
+  const parametroLaboralMutation = useMutation({
+    mutationFn: (payload) => {
+      const data = {
+        ...payload,
+        anio: Number(payload.anio),
+        salario_minimo: Number(payload.salario_minimo || 0),
+        auxilio_transporte: Number(payload.auxilio_transporte || 0),
+        activo: true,
+      };
+
+      return payload.uuid
+        ? nominaParametroLaboralService.updateParametro(payload.uuid, data)
+        : nominaParametroLaboralService.createParametro(data);
+    },
+    onSuccess: (response) => {
+      showToast("success", response.data?.message || "Parámetro laboral guardado");
+      queryClient.invalidateQueries({ queryKey: ["nomina-parametros-laborales"] });
+      queryClient.invalidateQueries({ queryKey: ["nomina-parametro-laboral-vigente"] });
+    },
+    onError: (error) => {
+      showToast("error", error.response?.data?.message || "No fue posible guardar el parámetro laboral");
+    },
+  });
+
   const instruccionMutation = useMutation({
     mutationFn: (payload) => horarioOperacionService.guardarHoy(payload),
     onSuccess: (response) => {
@@ -429,6 +519,11 @@ export default function PageConfiguracionNomina() {
   const handleConfig = (event) => {
     const { name, value } = event.target;
     setConfigForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleParametroLaboral = (event) => {
+    const { name, value } = event.target;
+    setParametroLaboralForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleAjuste = (event) => {
@@ -517,6 +612,17 @@ export default function PageConfiguracionNomina() {
     });
   };
 
+  const guardarParametroLaboral = (event) => {
+    event.preventDefault();
+
+    if (!parametroLaboralForm.salario_minimo) {
+      showToast("error", "Ingresa el salario mínimo vigente.");
+      return;
+    }
+
+    parametroLaboralMutation.mutate(parametroLaboralForm);
+  };
+
   const guardarAjusteSalarial = (event) => {
     event.preventDefault();
     if (!ajusteForm.contratacion_id) {
@@ -535,28 +641,49 @@ export default function PageConfiguracionNomina() {
     });
   };
 
+  const actualizarCuentaConcepto = (concepto, puckId) => {
+    updateConceptoMutation.mutate(
+      {
+        uuid: concepto.uuid,
+        data: { puck_id: puckId ? Number(puckId) : null },
+      },
+      {
+        onSuccess: () => showToast("success", "Cuenta PUC actualizada"),
+        onError: (error) => showToast("error", error.response?.data?.message || "No fue posible actualizar la cuenta PUC"),
+      }
+    );
+  };
+
+  const sincronizarCuentasPuc = () => {
+    sincronizarConceptosMutation.mutate(undefined, {
+      onSuccess: (response) => {
+        const data = response.data?.data ?? {};
+        const enlazados = data.enlazados?.length ?? 0;
+        const faltantes = data.faltantes?.length ?? 0;
+        showToast("success", `PUC sincronizado: ${enlazados} enlazados, ${faltantes} pendientes.`);
+      },
+      onError: (error) => showToast("error", error.response?.data?.message || "No fue posible sincronizar el PUC"),
+    });
+  };
+
+  const descargarPlantillaPucFaltante = async () => {
+    try {
+      setDescargandoPlantillaPuc(true);
+      const response = await nominaConceptoContableService.plantillaPucFaltante();
+      descargarArchivo(
+        response.data,
+        `plantilla_puc_nomina_faltante_${hoyLocal()}.xlsx`
+      );
+    } catch (error) {
+      showToast("error", error.response?.data?.message || "No fue posible descargar la plantilla PUC.");
+    } finally {
+      setDescargandoPlantillaPuc(false);
+    }
+  };
+
   const eliminarAjuste = (uuid) => {
     if (!window.confirm("¿Eliminar este ajuste salarial?")) return;
     deleteAjusteMutation.mutate(uuid);
-  };
-
-  const guardarInstruccion = (event) => {
-    event.preventDefault();
-    instruccionMutation.mutate({
-      ...instruccionForm,
-      kiosko_device_id: instruccionForm.kiosko_device_id ? Number(instruccionForm.kiosko_device_id) : null,
-      jornada_laboral_id: instruccionForm.jornada_laboral_id ? Number(instruccionForm.jornada_laboral_id) : null,
-      duracion_pausa_minutos: instruccionForm.duracion_pausa_minutos ? Number(instruccionForm.duracion_pausa_minutos) : null,
-      duracion_almuerzo_minutos: instruccionForm.duracion_almuerzo_minutos ? Number(instruccionForm.duracion_almuerzo_minutos) : null,
-      hora_entrada: instruccionForm.hora_entrada || null,
-      hora_entrada_limite: instruccionForm.hora_entrada_limite || null,
-      hora_salida_pausa: instruccionForm.hora_salida_pausa || null,
-      hora_ingreso_pausa: instruccionForm.hora_ingreso_pausa || null,
-      hora_salida_almuerzo: instruccionForm.hora_salida_almuerzo || null,
-      hora_ingreso_almuerzo: instruccionForm.hora_ingreso_almuerzo || null,
-      hora_salida: instruccionForm.hora_salida || null,
-      status: true,
-    });
   };
 
   const guardarFirma = (event) => {
@@ -573,9 +700,9 @@ export default function PageConfiguracionNomina() {
       <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="text-xs font-semibold text-indigo-600 uppercase tracking-widest mb-1">Configuración</p>
-          <h1 className="text-2xl font-bold text-gray-900">Horarios operativos de nómina</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Configuración de nómina</h1>
           <p className="text-sm text-gray-500 mt-1">
-            Define las horas que usará el kiosko para marcar entradas, almuerzos, pausas y salidas.
+            Organiza parámetros laborales, contabilidad, horarios y documentos del módulo.
           </p>
         </div>
 
@@ -588,6 +715,32 @@ export default function PageConfiguracionNomina() {
         </div>
       </div>
 
+      <div className="mb-5 overflow-x-auto rounded-xl border border-gray-200 bg-white px-2 py-2 shadow-sm">
+        <div className="flex min-w-max gap-1">
+          {configTabs.map((tab) => {
+            const Icon = tab.icon;
+            const active = activeConfigTab === tab.id;
+
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveConfigTab(tab.id)}
+                className={`inline-flex h-10 items-center gap-2 rounded-lg px-4 text-sm font-semibold transition-colors ${
+                  active
+                    ? "bg-indigo-600 text-white shadow-sm"
+                    : "text-gray-600 hover:bg-gray-50"
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {activeConfigTab === "documentos" && (
       <form onSubmit={guardarFirma} className="mb-5 rounded-xl border border-gray-200 bg-white shadow-sm">
         <div className="flex flex-col gap-3 border-b border-gray-100 px-5 py-4 md:flex-row md:items-center md:justify-between">
           <div>
@@ -618,6 +771,73 @@ export default function PageConfiguracionNomina() {
               {firmaFile.name}
             </p>
           )}
+        </div>
+      </form>
+      )}
+
+      {activeConfigTab === "laboral" && (
+      <>
+      <form onSubmit={guardarParametroLaboral} className="mb-5 rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div className="flex flex-col gap-3 border-b border-gray-100 px-5 py-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-gray-900">Salario mínimo y auxilio vigente</h2>
+            <p className="text-sm text-gray-500">Define el valor global que se puede llamar desde contratación sin cambiar los cálculos existentes.</p>
+          </div>
+          <button
+            type="submit"
+            disabled={parametroLaboralMutation.isPending}
+            className="inline-flex h-10 items-center gap-2 rounded-lg bg-indigo-600 px-4 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+          >
+            <Save className="h-4 w-4" />
+            {parametroLaboralMutation.isPending ? "Guardando..." : "Guardar parámetro"}
+          </button>
+        </div>
+        <div className="grid gap-4 p-5 md:grid-cols-4">
+          <label className="block">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Año</span>
+            <input
+              type="number"
+              name="anio"
+              min="2000"
+              value={parametroLaboralForm.anio}
+              onChange={handleParametroLaboral}
+              className="mt-1 h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-800 outline-none focus:border-indigo-300"
+            />
+          </label>
+          <label className="block">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Vigente desde</span>
+            <input
+              type="date"
+              name="fecha_vigencia"
+              value={parametroLaboralForm.fecha_vigencia}
+              onChange={handleParametroLaboral}
+              className="mt-1 h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-800 outline-none focus:border-indigo-300"
+            />
+          </label>
+          <label className="block">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Salario mínimo</span>
+            <input
+              type="number"
+              name="salario_minimo"
+              min="0"
+              step="1"
+              value={parametroLaboralForm.salario_minimo}
+              onChange={handleParametroLaboral}
+              className="mt-1 h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-800 outline-none focus:border-indigo-300"
+            />
+          </label>
+          <label className="block">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Auxilio transporte</span>
+            <input
+              type="number"
+              name="auxilio_transporte"
+              min="0"
+              step="1"
+              value={parametroLaboralForm.auxilio_transporte}
+              onChange={handleParametroLaboral}
+              className="mt-1 h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-800 outline-none focus:border-indigo-300"
+            />
+          </label>
         </div>
       </form>
 
@@ -893,9 +1113,101 @@ export default function PageConfiguracionNomina() {
           </div>
         </div>
       </form>
+      </>
+      )}
+
+      {activeConfigTab === "contable" && (
+      <section className="mb-5 rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div className="flex flex-col gap-3 border-b border-gray-100 px-5 py-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-gray-900">Cuentas PUC por concepto</h2>
+            <p className="text-sm text-gray-500">Asigna cada concepto de nómina a una cuenta del catálogo contable existente.</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={sincronizarCuentasPuc}
+              disabled={sincronizarConceptosMutation.isPending}
+              className="inline-flex h-9 items-center gap-2 rounded-lg border border-indigo-200 bg-white px-3 text-sm font-semibold text-indigo-700 disabled:opacity-50"
+            >
+              <RotateCcw className="h-4 w-4" />
+              Sincronizar PUC
+            </button>
+            <button
+              type="button"
+              onClick={descargarPlantillaPucFaltante}
+              disabled={descargandoPlantillaPuc}
+              className="inline-flex h-9 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700 disabled:opacity-50"
+            >
+              <Download className="h-4 w-4" />
+              Plantilla faltantes
+            </button>
+            <div className="rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700">
+              {conceptosLista.filter((item) => !item.puck_id).length} sin cuenta
+            </div>
+          </div>
+        </div>
+
+        {loadingConceptos || loadingCuentas ? (
+          <div className="p-5 text-sm text-gray-500">Cargando conceptos contables...</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-[860px] w-full text-sm">
+              <thead className="bg-gray-50 text-xs uppercase tracking-wider text-gray-500">
+                <tr>
+                  <th className="px-4 py-3 text-left">Concepto</th>
+                  <th className="px-4 py-3 text-left">Tipo</th>
+                  <th className="px-4 py-3 text-left">Naturaleza</th>
+                  <th className="px-4 py-3 text-left">Cuenta PUC</th>
+                  <th className="px-4 py-3 text-left">Estado</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {conceptosLista.map((concepto) => (
+                  <tr key={concepto.uuid} className="hover:bg-gray-50">
+                    <td className="px-4 py-3">
+                      <p className="font-semibold text-gray-800">{concepto.nombre}</p>
+                      <p className="text-xs text-gray-400">
+                        {concepto.codigo}
+                        {concepto.puck_numero_sugerido ? ` · PUC sugerido ${concepto.puck_numero_sugerido}` : ""}
+                      </p>
+                    </td>
+                    <td className="px-4 py-3 text-gray-600 capitalize">{concepto.tipo}</td>
+                    <td className="px-4 py-3 text-gray-600 capitalize">{concepto.naturaleza}</td>
+                    <td className="px-4 py-3">
+                      <select
+                        value={concepto.puck_id ?? ""}
+                        disabled={updateConceptoMutation.isPending}
+                        onChange={(event) => actualizarCuentaConcepto(concepto, event.target.value)}
+                        className="h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none focus:border-indigo-300"
+                      >
+                        <option value="">Sin cuenta asignada</option>
+                        {cuentasMovimiento.map((cuenta) => (
+                          <option key={cuenta.id} value={cuenta.id}>
+                            {cuenta.numero} - {cuenta.nombre}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="px-4 py-3">
+                      {concepto.puck_id ? (
+                        <span className="inline-flex rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-700">Configurado</span>
+                      ) : (
+                        <span className="inline-flex rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-700">Pendiente</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+      )}
 
  
 
+      {activeConfigTab === "horarios" && (
       <div className="grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-5">
         <aside className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 h-fit">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Jornada a configurar</p>
@@ -1041,6 +1353,7 @@ export default function PageConfiguracionNomina() {
           </div>
         </form>
       </div>
+      )}
     </div>
   );
 }

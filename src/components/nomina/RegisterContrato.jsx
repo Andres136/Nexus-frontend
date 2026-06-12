@@ -6,6 +6,7 @@ import { useEmpresas } from "../../hooks/useEmpresas";
 import { useGetSeguridadSocial } from "../../hooks/nomina/useGetSeguridadSocial";
 import { useGetRegisterContratacion } from "../../hooks/nomina/useGetRegisterContratacion";
 import { useGetEmpleados } from "../../hooks/nomina/useGetEmpleados";
+import { useGetNominaParametroLaboralVigente } from "../../hooks/nomina/useGetNominaParametroLaboralVigente";
 
 const MONEY_FIELDS = new Set(["base_salario", "auxilio_transporte", "no_salarial"]);
 
@@ -56,8 +57,9 @@ SectionTitle.propTypes = { children: PropTypes.node };
 
 export default function RegisterContrato({ uuid = null, onClose }) {
   const { empleados: users } = useGetEmpleados();
-  const { formData, handleChange, handleSubmit, fieldErrors, loading, isLoadingData } =
+  const { formData, setFormData, handleChange, handleSubmit, fieldErrors, loading, isLoadingData } =
     useGetRegisterContratacion({ uuid, onSuccess: onClose });
+  const { parametroLaboralVigente, isLoading: loadingParametroLaboral } = useGetNominaParametroLaboralVigente(formData.inicio_contratacion);
   const { tipoContratos } = useGetTipoContrato();
   const { empresas } = useEmpresas();
   const { seguridadSociales } = useGetSeguridadSocial();
@@ -66,6 +68,7 @@ export default function RegisterContrato({ uuid = null, onClose }) {
   const seguridadSocialLista = seguridadSociales?.data?.data ?? [];
   const empresasLista = Array.isArray(empresas) ? empresas : [];
   const isEdit = !!uuid;
+  const auxilioTransporteConfigurado = parametroLaboralVigente?.auxilio_transporte ?? "";
 
   const handleSelectChange = (name) => (option) =>
     handleChange({ target: { name, value: option ? option.value : "" } });
@@ -82,6 +85,42 @@ export default function RegisterContrato({ uuid = null, onClose }) {
         value: normalizeMoneyValue(event.target.value),
       },
     });
+  };
+
+  const aplicarSalarioMinimo = (pagarAuxilio = true) => {
+    if (!parametroLaboralVigente) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      tipo_salario: "salario_minimo",
+      parametro_laboral_id: parametroLaboralVigente.id,
+      base_salario: parametroLaboralVigente.salario_minimo,
+      auxilio_transporte: pagarAuxilio ? parametroLaboralVigente.auxilio_transporte : 0,
+    }));
+  };
+
+  const cambiarTipoSalario = (event) => {
+    const value = event.target.value;
+
+    if (value === "salario_minimo" && parametroLaboralVigente) {
+      aplicarSalarioMinimo(Number(formData.auxilio_transporte || 0) > 0);
+      return;
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      tipo_salario: value,
+      parametro_laboral_id: "",
+    }));
+  };
+
+  const cambiarAuxilio = (event) => {
+    const checked = event.target.checked;
+
+    setFormData((prev) => ({
+      ...prev,
+      auxilio_transporte: checked ? auxilioTransporteConfigurado : 0,
+    }));
   };
 
   const inputClass = (field) =>
@@ -205,6 +244,38 @@ export default function RegisterContrato({ uuid = null, onClose }) {
         <div className="space-y-3">
           <SectionTitle>Condiciones económicas</SectionTitle>
 
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
+            <div>
+              {label("Origen del salario")}
+              <select
+                name="tipo_salario"
+                value={formData.tipo_salario}
+                onChange={cambiarTipoSalario}
+                className={inputClass("tipo_salario")}
+              >
+                <option value="personalizado">Salario personalizado</option>
+                <option value="salario_minimo">Salario mínimo vigente</option>
+              </select>
+              {err("tipo_salario")}
+            </div>
+            <button
+              type="button"
+              onClick={() => aplicarSalarioMinimo(true)}
+              disabled={!parametroLaboralVigente || loadingParametroLaboral}
+              className="h-[34px] self-end rounded-md border border-indigo-200 bg-indigo-50 px-3 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 disabled:opacity-50"
+            >
+              Usar mínimo vigente
+            </button>
+          </div>
+
+          {formData.tipo_salario === "salario_minimo" && parametroLaboralVigente && (
+            <p className="rounded-md border border-indigo-100 bg-indigo-50 px-3 py-2 text-[11px] text-indigo-700">
+              Vigente desde {String(parametroLaboralVigente.fecha_vigencia || "").slice(0, 10)}:
+              {" "}salario {formatMoneyValue(parametroLaboralVigente.salario_minimo)}
+              {" "}y auxilio {formatMoneyValue(parametroLaboralVigente.auxilio_transporte)}.
+            </p>
+          )}
+
           {/* Salario + Auxilio + Pago no prestacional */}
           <div className="grid grid-cols-3 gap-3">
             <div>
@@ -219,6 +290,19 @@ export default function RegisterContrato({ uuid = null, onClose }) {
               <input type="text" inputMode="decimal"
                name="auxilio_transporte" value={formatMoneyValue(formData.auxilio_transporte)} onChange={handleInputChange} placeholder="162000" className={inputClass("auxilio_transporte")} />
               {err("auxilio_transporte")}
+              <label className="mt-1 inline-flex items-center gap-1.5 text-[10px] font-medium text-gray-500">
+                <input
+                  type="checkbox"
+                  checked={Number(formData.auxilio_transporte || 0) > 0}
+                  onChange={cambiarAuxilio}
+                  disabled={!auxilioTransporteConfigurado}
+                  className="h-3.5 w-3.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                />
+                Pagar auxilio
+              </label>
+              {!auxilioTransporteConfigurado && (
+                <p className="mt-0.5 text-[10px] text-amber-600">Configura primero el auxilio vigente.</p>
+              )}
             </div>
             <div>
               {label("Pago no prestacional")}

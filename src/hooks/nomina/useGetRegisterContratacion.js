@@ -12,6 +12,8 @@ const EMPTY_FORM = {
   numero_documento: "",
   correo: "",
   cargo: "",
+  tipo_salario: "personalizado",
+  parametro_laboral_id: "",
   no_salarial: 0,
   base_salario: "",
   salario_integral: false,
@@ -60,7 +62,7 @@ export const useGetRegisterContratacion = ({ uuid = null, onSuccess } = {}) => {
     if (contratacion?.data) {
       const {
         id_contrato, users_id, empresa_id, centro_costo, tipo_documento, numero_documento, correo, cargo,
-        no_salarial, base_salario, salario_integral, auxilio_transporte, pago_frecuencia,
+        tipo_salario, parametro_laboral_id, no_salarial, base_salario, salario_integral, auxilio_transporte, pago_frecuencia,
         inicio_contratacion, fin_contrato, status, eps_id, arl_id,
         fondo_pensiones_id, caja_penciones_id,
       } = contratacion.data;
@@ -73,6 +75,8 @@ export const useGetRegisterContratacion = ({ uuid = null, onSuccess } = {}) => {
         numero_documento: numero_documento ?? "",
         correo: correo ?? "",
         cargo: cargo ?? "",
+        tipo_salario: tipo_salario ?? "personalizado",
+        parametro_laboral_id: parametro_laboral_id ?? "",
         no_salarial: no_salarial ?? 0,
         base_salario: base_salario ?? "",
         salario_integral: Boolean(salario_integral),
@@ -105,8 +109,10 @@ export const useGetRegisterContratacion = ({ uuid = null, onSuccess } = {}) => {
       const payload = {
         ...formData,
         base_salario: normalizeMoneyValue(formData.base_salario),
-        auxilio_transporte: normalizeMoneyValue(formData.auxilio_transporte),
-        no_salarial: normalizeMoneyValue(formData.no_salarial),
+        auxilio_transporte: normalizeMoneyValue(formData.auxilio_transporte) || 0,
+        no_salarial: normalizeMoneyValue(formData.no_salarial) || 0,
+        parametro_laboral_id: formData.parametro_laboral_id || null,
+        tipo_salario: formData.tipo_salario || "personalizado",
       };
       const response = uuid
         ? await contratacionService.updateContrato(uuid, payload)
@@ -127,6 +133,7 @@ export const useGetRegisterContratacion = ({ uuid = null, onSuccess } = {}) => {
   };
 
   return { formData,
+     setFormData,
      handleChange,
       handleSubmit,
        fieldErrors,

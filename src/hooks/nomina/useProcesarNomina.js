@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import Swal from "sweetalert2";
 import { showToast } from "../../helpers/utils/showToast";
 import { nominaService } from "../../services/nominaService";
 import { useGetContrataciones } from "./useGetContrataciones";
@@ -335,9 +336,24 @@ export function useProcesarNomina() {
     },
   });
 
-  const eliminarNomina = useCallback((nomina) => {
+  const eliminarNomina = useCallback(async (nomina) => {
     if (!nomina?.uuid) return;
-    if (!window.confirm(`¿Eliminar la nómina de ${nomina.empleado?.name ?? "este empleado"}? No se puede deshacer.`)) return;
+
+    const empleado = nomina.empleado?.name ?? "este empleado";
+    const result = await Swal.fire({
+      title: "¿Eliminar nómina?",
+      text: `Se eliminará la nómina de ${empleado}. Esta acción no se puede deshacer.`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar",
+      confirmButtonColor: "#dc2626",
+      cancelButtonColor: "#6b7280",
+      reverseButtons: true,
+    });
+
+    if (!result.isConfirmed) return;
+
     deleteMutation.mutate(nomina.uuid);
   }, [deleteMutation]);
 
