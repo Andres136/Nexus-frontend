@@ -78,7 +78,9 @@ const Dashboard = () => {
  const {
   entregadas_a_tiempo = 0,
   entregadas_tarde = 0,
-  pendientes_vencidas = 0
+  pendientes_vencidas = 0,
+  cumplimiento_ot_pct = 0,
+  total_ordenes = 0,
 } = monthly || {};
 
   return (
@@ -220,6 +222,40 @@ const Dashboard = () => {
                 </option>
               ))}
             </select>
+          </div>
+
+          {/* KPI % Cumplimiento OT */}
+          <div className="bg-white p-4 rounded shadow w-full mb-2">
+            <h3 className="font-semibold mb-1">% Cumplimiento OT — {month}/{year}</h3>
+            <p className="text-xs text-gray-500 mb-3">
+              Órdenes no vencidas / Total órdenes · Meta: 80% · Total mes: {total_ordenes}
+            </p>
+            <div className="flex items-center gap-4">
+              <div className="flex-1 bg-gray-200 rounded-full h-5 relative">
+                <div
+                  className="h-5 rounded-full transition-all duration-500"
+                  style={{
+                    width: `${Math.min(cumplimiento_ot_pct, 100)}%`,
+                    backgroundColor: cumplimiento_ot_pct >= 80 ? '#16a34a' : '#dc2626',
+                  }}
+                />
+                {/* línea meta 80% */}
+                <div
+                  className="absolute top-0 bottom-0 w-0.5 bg-yellow-500"
+                  style={{ left: '80%' }}
+                  title="Meta 80%"
+                />
+              </div>
+              <span
+                className="text-2xl font-bold w-20 text-right"
+                style={{ color: cumplimiento_ot_pct >= 80 ? '#16a34a' : '#dc2626' }}
+              >
+                {cumplimiento_ot_pct}%
+              </span>
+            </div>
+            <p className="text-xs text-gray-400 mt-1">
+              Vencidas: {pendientes_vencidas} · No vencidas: {total_ordenes - pendientes_vencidas}
+            </p>
           </div>
 
           <div className="bg-white p-4 rounded shadow w-full overflow-x-auto mb-6">

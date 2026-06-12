@@ -1,499 +1,350 @@
-import useVSMFlow from "../../hooks/vsm/useVSMFlow";
+import { useState } from "react";
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
-  LineChart,
-  Line,
-  Area,
-  AreaChart
-} from 'recharts';
-import {
+  Activity,
+  AlertTriangle,
+  ArrowRight,
+  CheckCircle2,
   Clock,
   Package,
-  TrendingUp,
-  Users,
-  Truck,
-  AlertCircle,
-  CheckCircle2,
   Play,
-  ArrowRight,
-  BarChart3,
-  Activity,
-  ChevronDown, // ✅ Para colapsar
-  ChevronUp,   // ✅ Para expandir
-  Eye,         // ✅ Para ver más
-  EyeOff       // ✅ Para ver menos
+  ShoppingCart,
+  Truck,
+  Warehouse,
 } from "lucide-react";
-import { useState } from "react"; // ✅ Para manejar estados de agrupación
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import useVSMFlow from "../../hooks/vsm/useVSMFlow";
+
+const ETAPA_CONFIG = {
+  pendientes: {
+    icon: ShoppingCart,
+    color: "bg-red-50 border-red-200",
+    iconColor: "text-red-600 bg-red-100",
+    chartColor: "#ef4444",
+  },
+  inventario: {
+    icon: Warehouse,
+    color: "bg-orange-50 border-orange-200",
+    iconColor: "text-orange-600 bg-orange-100",
+    chartColor: "#f97316",
+  },
+  alistando: {
+    icon: Play,
+    color: "bg-blue-50 border-blue-200",
+    iconColor: "text-blue-600 bg-blue-100",
+    chartColor: "#3b82f6",
+  },
+  finalizadas: {
+    icon: Package,
+    color: "bg-emerald-50 border-emerald-200",
+    iconColor: "text-emerald-600 bg-emerald-100",
+    chartColor: "#10b981",
+  },
+  delivery: {
+    icon: Truck,
+    color: "bg-yellow-50 border-yellow-200",
+    iconColor: "text-yellow-600 bg-yellow-100",
+    chartColor: "#eab308",
+  },
+  entregadas: {
+    icon: CheckCircle2,
+    color: "bg-green-50 border-green-200",
+    iconColor: "text-green-600 bg-green-100",
+    chartColor: "#22c55e",
+  },
+};
+
+const formatHours = (seconds = 0) => `${(Number(seconds) / 3600).toFixed(2)} h`;
 
 export default function VsmFlowDashboard() {
-  const { data, loading } = useVSMFlow();
-  
-  // ✅ Estados para controlar la agrupación por columna
-  const [expandedColumns, setExpandedColumns] = useState({
-    pendientes: false,
-    alistando: false,
-    finalizadas: false,
-    delivery: false
-  });
-
-  // ✅ Número máximo de items a mostrar por defecto
-  const MAX_ITEMS_VISIBLE = 5;
+  const [umbralHoras, setUmbralHoras] = useState(24);
+  const { data, loading } = useVSMFlow({ umbral_horas: umbralHoras });
+  const [expanded, setExpanded] = useState({});
+  const resumen = data.resumen ?? {};
+  const etapas = data.etapas ?? [];
+  const analisis = data.analisis ?? {};
+  const procesos = analisis.procesos ?? [];
+  const ordenesDetenidas = analisis.ordenes_detenidas ?? [];
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 flex items-center justify-center">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-          <span className="text-lg text-gray-600">Cargando flujo VSM...</span>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="flex items-center gap-3 text-gray-600">
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+          Cargando flujo VSM...
         </div>
       </div>
     );
   }
 
-  // ✅ Configuración de columnas mejorada
-  const columns = [
-    { 
-      title: "Pendientes", 
-      key: "pendientes", 
-      color: "bg-red-50", 
-      borderColor: "border-red-200",
-      iconBg: "bg-red-100",
-      iconColor: "text-red-600",
-      icon: AlertCircle
-    },
-    { 
-      title: "Alistando", 
-      key: "alistando", 
-      color: "bg-blue-50", 
-      borderColor: "border-blue-200",
-      iconBg: "bg-blue-100",
-      iconColor: "text-blue-600",
-      icon: Play
-    },
-    { 
-      title: "Finalizadas", 
-      key: "finalizadas", 
-      color: "bg-green-50", 
-      borderColor: "border-green-200",
-      iconBg: "bg-green-100",
-      iconColor: "text-green-600",
-      icon: CheckCircle2
-    },
-    { 
-      title: "En Ruta", 
-      key: "delivery", 
-      color: "bg-yellow-50", 
-      borderColor: "border-yellow-200",
-      iconBg: "bg-yellow-100",
-      iconColor: "text-yellow-600",
-      icon: Truck
-    },
-  ];
-
-  // ✅ Función para alternar expansión de columna
-  const toggleExpanded = (columnKey) => {
-    setExpandedColumns(prev => ({
-      ...prev,
-      [columnKey]: !prev[columnKey]
-    }));
-  };
-
-  // ✅ Función para obtener items visibles
-  const getVisibleItems = (items, columnKey) => {
-    const isExpanded = expandedColumns[columnKey];
-    if (isExpanded || items.length <= MAX_ITEMS_VISIBLE) {
-      return items;
-    }
-    return items.slice(0, MAX_ITEMS_VISIBLE);
-  };
-
-  // ✅ Función para agrupar items si son muchos
-  const getGroupedItems = (items, columnKey) => {
-    const visibleItems = getVisibleItems(items, columnKey);
-    const hiddenCount = items.length - visibleItems.length;
-    
-    return {
-      visible: visibleItems,
-      hiddenCount,
-      hasMore: hiddenCount > 0
-    };
-  };
-
-  // ✅ Datos para gráficos (sin cambios)
-  const chartData = columns.map(col => ({
-    name: col.title,
-    value: data[col.key].length,
-    color: col.key === 'pendientes' ? '#ef4444' : 
-           col.key === 'alistando' ? '#3b82f6' :
-           col.key === 'finalizadas' ? '#10b981' : '#f59e0b'
+  const chartData = etapas.map((etapa) => ({
+    name: etapa.nombre,
+    cantidad: etapa.cantidad,
+    horas: etapa.tiempo_promedio_horas,
+    color: ETAPA_CONFIG[etapa.codigo]?.chartColor ?? "#64748b",
   }));
-
-  // ✅ Datos para flujo (sin cambios)
-  const flowData = [
-    { step: 'Pendientes', cantidad: data.pendientes.length, tiempo: 0 },
-    { step: 'Alistando', cantidad: data.alistando.length, tiempo: 2.5 },
-    { step: 'Finalizadas', cantidad: data.finalizadas.length, tiempo: 4.8 },
-    { step: 'En Ruta', cantidad: data.delivery.length, tiempo: 6.2 }
-  ];
-
-  const colors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b'];
-
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
-          <p className="font-semibold text-gray-900">{label}</p>
-          <p style={{ color: payload[0].color }}>
-            Cantidad: {payload[0].value}
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
-
-  // ✅ Calcular métricas (sin cambios)
-  const totalOT = Object.values(data).flat().length;
-  const enProceso = data.alistando.length;
-  const completadas = data.finalizadas.length + data.delivery.length;
-  const eficiencia = totalOT > 0 ? ((completadas / totalOT) * 100).toFixed(1) : 0;
+  const processChartData = procesos.map((proceso) => ({
+    name: proceso.nombre,
+    horas: proceso.tiempo_promedio_horas,
+    muestras: proceso.muestras_total,
+    color: proceso.tipo === "valor_agregado"
+      ? "#22c55e"
+      : proceso.tipo === "espera"
+        ? "#ef4444"
+        : "#f59e0b",
+  }));
+  const cuelloBotella = analisis.cuello_botella;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50">
-      
-      {/* Header con métricas (sin cambios) */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-3 rounded-xl">
-                <Activity className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-                   Flujo VSM
-                </h1>
-                <p className="text-sm sm:text-base text-gray-600">
-                  Visualización del flujo de órdenes de trabajo
-                </p>
-              </div>
+      <header className="bg-white border-b shadow-sm">
+        <div className="max-w-[1600px] mx-auto px-5 py-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="bg-blue-600 p-3 rounded-xl">
+              <Activity className="w-7 h-7 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Flujo VSM</h1>
+              <p className="text-gray-500">
+                Estado actual calculado desde la orden del cliente hasta la entrega
+              </p>
             </div>
           </div>
 
-          {/* Métricas principales (sin cambios) */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center gap-3">
-                <div className="bg-blue-100 p-3 rounded-lg">
-                  <Package className="w-6 h-6 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total OT</p>
-                  <p className="text-2xl font-bold text-gray-900">{totalOT}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center gap-3">
-                <div className="bg-yellow-100 p-3 rounded-lg">
-                  <Clock className="w-6 h-6 text-yellow-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600">En Proceso</p>
-                  <p className="text-2xl font-bold text-gray-900">{enProceso}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center gap-3">
-                <div className="bg-green-100 p-3 rounded-lg">
-                  <CheckCircle2 className="w-6 h-6 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Completadas</p>
-                  <p className="text-2xl font-bold text-gray-900">{completadas}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center gap-3">
-                <div className="bg-purple-100 p-3 rounded-lg">
-                  <TrendingUp className="w-6 h-6 text-purple-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Eficiencia</p>
-                  <p className="text-2xl font-bold text-gray-900">{eficiencia}%</p>
-                </div>
-              </div>
-            </div>
+          <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
+            <Kpi title="Órdenes analizadas" value={resumen.total_ordenes ?? 0} />
+            <Kpi title="En proceso" value={resumen.en_proceso ?? 0} />
+            <Kpi title="Entregadas" value={resumen.entregadas ?? 0} />
+            <Kpi title="Lead Time promedio" value={`${resumen.lead_time_promedio_horas ?? 0} h`} />
+            <Kpi title="Tiempo sin valor agregado" value={`${resumen.tiempo_no_valor_agregado_promedio_horas ?? 0} h`} />
+            <Kpi title="PCE" value={`${resumen.pce_porcentaje ?? 0}%`} />
           </div>
         </div>
-      </div>
+      </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-
-        {/* Gráficos analíticos (sin cambios) */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <BarChart3 className="w-5 h-5 text-blue-600" />
-              <h3 className="text-lg font-semibold text-gray-900">
-                Distribución por Estado
-              </h3>
-            </div>
-            
-            <ResponsiveContainer width="100%" height={300}>
+      <main className="max-w-[1600px] mx-auto px-5 py-6 space-y-6">
+        <div className="grid lg:grid-cols-2 gap-6">
+          <ChartCard title="Órdenes por etapa">
+            <ResponsiveContainer width="100%" height={280}>
               <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="value" fill="#3b82f6" radius={[4, 4, 0, 0]}>
-                  {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                <YAxis allowDecimals={false} />
+                <Tooltip />
+                <Bar dataKey="cantidad" radius={[4, 4, 0, 0]}>
+                  {chartData.map((item) => <Cell key={item.name} fill={item.color} />)}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
-          </div>
+          </ChartCard>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Activity className="w-5 h-5 text-green-600" />
-              <h3 className="text-lg font-semibold text-gray-900">
-                Proporción del Flujo
-              </h3>
-            </div>
-            
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={chartData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => 
-                    percent > 0 ? `${name} ${(percent * 100).toFixed(0)}%` : ''
-                  }
-                  outerRadius={90}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value) => [value, 'OT']} />
-                <Legend wrapperStyle={{ fontSize: '12px' }} iconSize={12} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 xl:col-span-2">
-            <div className="flex items-center gap-2 mb-4">
-              <TrendingUp className="w-5 h-5 text-purple-600" />
-              <h3 className="text-lg font-semibold text-gray-900">
-                Flujo de Proceso VSM
-              </h3>
-            </div>
-            
-            <ResponsiveContainer width="100%" height={250}>
-              <AreaChart data={flowData}>
+          <ChartCard title="Tiempo promedio en etapa">
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="step" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip 
-                  formatter={(value, name) => [
-                    name === 'cantidad' ? `${value} OT` : `${value}h`,
-                    name === 'cantidad' ? 'Cantidad' : 'Tiempo Est.'
-                  ]}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="cantidad" 
-                  stroke="#8b5cf6" 
-                  fill="#8b5cf6" 
-                  fillOpacity={0.3}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="tiempo" 
-                  stroke="#f59e0b" 
-                  strokeWidth={3}
-                  dot={{ fill: '#f59e0b', strokeWidth: 2, r: 4 }}
-                />
-              </AreaChart>
+                <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                <YAxis unit="h" />
+                <Tooltip formatter={(value) => [`${value} h`, "Tiempo promedio"]} />
+                <Bar dataKey="horas" radius={[4, 4, 0, 0]}>
+                  {chartData.map((item) => <Cell key={item.name} fill={item.color} />)}
+                </Bar>
+              </BarChart>
             </ResponsiveContainer>
-          </div>
+          </ChartCard>
         </div>
 
-        {/* ✅ Columnas VSM mejoradas con agrupación */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="bg-gradient-to-r from-gray-50 to-slate-50 px-6 py-4 border-b border-gray-200">
-            <div className="flex items-center gap-2">
-              <Activity className="w-5 h-5 text-gray-600" />
-              <h2 className="text-lg font-semibold text-gray-900">
-                Tablero VSM - Flujo de Órdenes
-              </h2>
-            </div>
+        <div className="grid lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <ChartCard title="Tiempos promedio por tramo">
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={processChartData} layout="vertical" margin={{ left: 35 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis type="number" unit="h" />
+                  <YAxis dataKey="name" type="category" width={150} tick={{ fontSize: 11 }} />
+                  <Tooltip
+                    formatter={(value, name, item) => [
+                      `${value} h (${item.payload.muestras} muestras)`,
+                      "Tiempo promedio",
+                    ]}
+                  />
+                  <Bar dataKey="horas" radius={[0, 4, 4, 0]}>
+                    {processChartData.map((item) => <Cell key={item.name} fill={item.color} />)}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartCard>
           </div>
 
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              {columns.map((col, colIndex) => {
-                const Icon = col.icon;
-                const groupedItems = getGroupedItems(data[col.key], col.key);
-                
-                return (
-                  <div key={col.key} className="relative">
-                    
-                    {/* ✅ Header de columna con indicador de cantidad */}
-                    <div className={`${col.color} ${col.borderColor} border-2 rounded-xl p-4 mb-4`}>
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <div className={`${col.iconBg} p-2 rounded-lg`}>
-                            <Icon className={`w-4 h-4 ${col.iconColor}`} />
-                          </div>
-                          <h3 className="font-bold text-gray-900">{col.title}</h3>
+          <section className="bg-white border rounded-xl shadow-sm p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <AlertTriangle className="w-5 h-5 text-red-600" />
+              <h2 className="font-semibold">Cuello de botella observado</h2>
+            </div>
+            {cuelloBotella?.muestras_total > 0 ? (
+              <>
+                <div className="text-xl font-bold text-gray-900">{cuelloBotella.nombre}</div>
+                <div className="text-3xl font-bold text-red-600 mt-3">
+                  {cuelloBotella.tiempo_promedio_horas} h
+                </div>
+                <div className="text-sm text-gray-500 mt-2">
+                  Promedio calculado con {cuelloBotella.muestras_total} órdenes.
+                </div>
+              </>
+            ) : (
+              <div className="text-sm text-gray-500">No hay suficientes hitos para calcularlo.</div>
+            )}
+          </section>
+        </div>
+
+        <section className="bg-white border rounded-xl shadow-sm overflow-hidden">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 py-4 border-b">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-amber-600" />
+              <h2 className="font-semibold">Órdenes detenidas</h2>
+            </div>
+            <label className="flex items-center gap-2 text-xs text-gray-500">
+              Sin cambiar de etapa por más de
+              <select
+                value={umbralHoras}
+                onChange={(event) => setUmbralHoras(Number(event.target.value))}
+                className="border rounded-lg px-2 py-1 text-gray-700"
+              >
+                <option value={8}>8 horas</option>
+                <option value={24}>24 horas</option>
+                <option value={48}>48 horas</option>
+                <option value={72}>72 horas</option>
+                <option value={168}>7 días</option>
+              </select>
+            </label>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead className="bg-gray-50 text-xs uppercase text-gray-500">
+                <tr>
+                  <th className="text-left px-5 py-3">OT</th>
+                  <th className="text-left px-5 py-3">Cliente</th>
+                  <th className="text-left px-5 py-3">Etapa</th>
+                  <th className="text-right px-5 py-3">Tiempo detenido</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {ordenesDetenidas.map((item) => (
+                  <tr key={item.orden_trabajo_id}>
+                    <td className="px-5 py-3 font-semibold">OT #{item.orden_trabajo_id}</td>
+                    <td className="px-5 py-3">{item.cliente}</td>
+                    <td className="px-5 py-3 capitalize">{item.etapa}</td>
+                    <td className="px-5 py-3 text-right font-semibold text-red-600">
+                      {formatHours(item.tiempo_detenido_segundos)}
+                    </td>
+                  </tr>
+                ))}
+                {ordenesDetenidas.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="px-5 py-8 text-center text-gray-500">
+                      No hay órdenes detenidas con el umbral actual.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section className="bg-white border rounded-xl shadow-sm p-5 overflow-x-auto">
+          <div className="flex items-center gap-2 mb-5">
+            <Activity className="w-5 h-5 text-blue-600" />
+            <h2 className="font-semibold text-lg">Mapa del estado actual</h2>
+          </div>
+
+          <div className="flex min-w-[1450px] gap-4">
+            {etapas.map((etapa, index) => {
+              const config = ETAPA_CONFIG[etapa.codigo] ?? ETAPA_CONFIG.pendientes;
+              const Icon = config.icon;
+              const items = expanded[etapa.codigo] ? etapa.items : etapa.items.slice(0, 5);
+
+              return (
+                <div key={etapa.codigo} className="relative flex-1 min-w-[220px]">
+                  <div className={`border-2 rounded-xl p-4 mb-3 ${config.color}`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className={`p-2 rounded-lg ${config.iconColor}`}>
+                          <Icon className="w-4 h-4" />
                         </div>
-                        <span className={`${col.iconBg} ${col.iconColor} px-2 py-1 rounded-full text-sm font-bold`}>
-                          {data[col.key].length}
-                        </span>
+                        <span className="font-bold text-sm">{etapa.nombre}</span>
                       </div>
-                      
-                      {/* ✅ Mostrar si hay items ocultos */}
-                      {groupedItems.hasMore && (
-                        <div className="text-xs text-gray-600 mt-1">
-                          Mostrando {groupedItems.visible.length} de {data[col.key].length}
-                        </div>
-                      )}
+                      <span className="font-bold">{etapa.cantidad}</span>
                     </div>
-
-                    {/* Flecha de flujo (sin cambios) */}
-                    {colIndex < columns.length - 1 && (
-                      <div className="hidden md:block absolute top-8 -right-3 z-10">
-                        <div className="bg-blue-600 p-1 rounded-full shadow-lg">
-                          <ArrowRight className="w-4 h-4 text-white" />
-                        </div>
-                      </div>
-                    )}
-
-                    {/* ✅ Items de la columna con agrupación */}
-                    <div className="space-y-3 min-h-[300px]">
-                      {data[col.key].length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-8 text-gray-400">
-                          <Package className="w-8 h-8 mb-2 opacity-50" />
-                          <p className="text-sm">Sin registros</p>
-                        </div>
-                      ) : (
-                        <>
-                          {/* ✅ Items visibles */}
-                          {groupedItems.visible.map(item => (
-                            <div 
-                              key={item.id} 
-                              className="bg-white border-2 border-gray-200 hover:border-gray-300 p-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
-                            >
-                              <div className="flex items-center justify-between mb-2">
-                                <span className="font-bold text-gray-900">OT #{item.id}</span>
-                                <div className={`w-3 h-3 rounded-full ${
-                                  col.key === 'pendientes' ? 'bg-red-400' :
-                                  col.key === 'alistando' ? 'bg-blue-400 animate-pulse' :
-                                  col.key === 'finalizadas' ? 'bg-green-400' : 'bg-yellow-400'
-                                }`}></div>
-                              </div>
-
-                              {item.cliente?.nombre && (
-                                <p className="text-sm text-gray-600 mb-2 truncate" title={item.cliente.nombre}>
-                                  👤 {item.cliente.nombre}
-                                </p>
-                              )}
-
-                              {/* Estados contextuales (sin cambios) */}
-                              {col.key === "alistando" && (
-                                <div className="flex items-center gap-1 text-blue-700 text-xs font-medium">
-                                  <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></div>
-                                  En progreso...
-                                </div>
-                              )}
-
-                              {col.key === "delivery" && (
-                                <div className="flex items-center gap-1 text-yellow-700 text-xs font-medium">
-                                  <Truck className="w-3 h-3" />
-                                  Listo para entregar
-                                </div>
-                              )}
-
-                              {col.key === "finalizadas" && (
-                                <div className="flex items-center gap-1 text-green-700 text-xs font-medium">
-                                  <CheckCircle2 className="w-3 h-3" />
-                                  Completado
-                                </div>
-                              )}
-
-                              {col.key === "pendientes" && (
-                                <div className="flex items-center gap-1 text-red-700 text-xs font-medium">
-                                  <Clock className="w-3 h-3" />
-                                  Esperando inicio
-                                </div>
-                              )}
-                            </div>
-                          ))}
-
-                          {/* ✅ Botón para mostrar/ocultar más items */}
-                          {groupedItems.hasMore && (
-                            <button
-                              onClick={() => toggleExpanded(col.key)}
-                              className={`w-full p-3 rounded-lg border-2 border-dashed ${col.borderColor} ${col.color} hover:bg-opacity-80 transition-all duration-200 flex items-center justify-center gap-2 text-sm font-medium ${col.iconColor}`}
-                            >
-                              {expandedColumns[col.key] ? (
-                                <>
-                                  <EyeOff className="w-4 h-4" />
-                                  Ver menos
-                                  <ChevronUp className="w-4 h-4" />
-                                </>
-                              ) : (
-                                <>
-                                  <Eye className="w-4 h-4" />
-                                  Ver {groupedItems.hiddenCount} más
-                                  <ChevronDown className="w-4 h-4" />
-                                </>
-                              )}
-                            </button>
-                          )}
-
-                          {/* ✅ Resumen cuando está colapsado */}
-                          {groupedItems.hasMore && !expandedColumns[col.key] && (
-                            <div className={`p-3 rounded-lg ${col.color} ${col.borderColor} border text-center`}>
-                              <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
-                                <Package className="w-4 h-4" />
-                                <span>+{groupedItems.hiddenCount} órdenes más...</span>
-                              </div>
-                            </div>
-                          )}
-                        </>
-                      )}
+                    <div className="text-xs text-gray-600 mt-2">
+                      Tiempo promedio: <strong>{formatHours(etapa.tiempo_promedio_segundos)}</strong>
                     </div>
                   </div>
-                );
-              })}
-            </div>
+
+                  {index < etapas.length - 1 && (
+                    <div className="absolute top-8 -right-3 z-10 rounded-full bg-blue-600 p-1">
+                      <ArrowRight className="w-4 h-4 text-white" />
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    {items.map((item) => (
+                      <div key={item.orden_trabajo_id} className="border rounded-lg p-3 bg-white shadow-sm">
+                        <div className="font-semibold text-sm">OT #{item.orden_trabajo_id}</div>
+                        <div className="text-xs text-gray-500 truncate">{item.cliente?.nombre}</div>
+                        <div className="flex items-center gap-1 text-xs text-blue-700 mt-2">
+                          <Clock className="w-3 h-3" />
+                          {formatHours(item.tiempo_etapa_segundos)}
+                        </div>
+                      </div>
+                    ))}
+
+                    {etapa.items.length === 0 && (
+                      <div className="text-center text-sm text-gray-400 py-8">Sin órdenes</div>
+                    )}
+
+                    {etapa.items.length > 5 && (
+                      <button
+                        onClick={() => setExpanded((current) => ({
+                          ...current,
+                          [etapa.codigo]: !current[etapa.codigo],
+                        }))}
+                        className="w-full text-xs text-blue-600 border border-dashed rounded-lg py-2"
+                      >
+                        {expanded[etapa.codigo] ? "Ver menos" : `Ver ${etapa.items.length - 5} más`}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        </div>
-      </div>
+        </section>
+      </main>
+    </div>
+  );
+}
+
+function Kpi({ title, value }) {
+  return (
+    <div className="bg-white border rounded-xl p-4 shadow-sm">
+      <div className="text-xs text-gray-500">{title}</div>
+      <div className="text-2xl font-bold text-gray-900 mt-1">{value}</div>
+    </div>
+  );
+}
+
+function ChartCard({ title, children }) {
+  return (
+    <div className="bg-white border rounded-xl shadow-sm p-5">
+      <h3 className="font-semibold text-gray-800 mb-4">{title}</h3>
+      {children}
     </div>
   );
 }

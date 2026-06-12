@@ -115,7 +115,7 @@ export default function OrdenCompraMultiItem({ onDetallesChange, errores = {}, v
   };
 
   const getProductDisplayName = (row) => {
-    if (!row.product_id) return row.descripcion || "";
+if (!row.product_id) return "";
 
     const product = allProducts.find((p) => String(p.id) === String(row.product_id));
     return product?.name || row.product?.name || row.descripcion || "";
@@ -155,6 +155,7 @@ export default function OrdenCompraMultiItem({ onDetallesChange, errores = {}, v
                   placeholder="Sin producto seleccionado"
                   className="flex-1 cursor-pointer rounded border border-gray-200 bg-gray-50 px-2 py-1.5 text-xs text-gray-700 hover:border-blue-400"
                 />
+                {errSpan(errores[idx]?.product_id)}
               </div>
 
               <div className="grid grid-cols-3 gap-1.5">
@@ -283,6 +284,7 @@ export default function OrdenCompraMultiItem({ onDetallesChange, errores = {}, v
                     className="w-full min-w-[140px] cursor-pointer rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-xs text-gray-700 hover:border-blue-400"
                     title="Clic para cambiar"
                   />
+                  {errSpan(errores[idx]?.product_id)}
                 </td>
                 <td className="px-2 py-1.5">
                   <div className="space-y-1">

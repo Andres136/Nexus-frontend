@@ -125,10 +125,16 @@ import RegisterProductoNoConforme from "../components/calidad/RegisterProductoNo
 import EncuestasPage from "../views/crm/EncuestasPage";
 import ResultadosEncuesta from "../views/crm/ResultadosEncuesta";
 import EncuestaPublica from "../views/crm/EncuestaPublica";
+
 import PagePortalEmpleado from "../views/nomina/PagePortalEmpleado";
 import PageLinkAccesoKioskoTemporal from "../views/nomina/PageLinkAccesoKioskoTemporal";
 import PageInstruccionOperativa from "../views/nomina/PageInstruccionOperativa";
 import PageSolicitudHoraExtraOperacion from "../views/nomina/PageSolicitudHoraExtraOperacion";
+
+import PageReportesBic from "../views/hseq/PageReportesBic";
+
+import VsmConfiguracion from "../views/vsm/VsmConfiguracion";
+
 
 export default function Router() {
   return (
@@ -234,6 +240,12 @@ export default function Router() {
             </DynamicProtectedRoute>}
           />
 
+     <Route
+          path="/auth/crm/vsm/configuracion"
+          element={<DynamicProtectedRoute permission="/auth/crm/vsm/configuracion">
+            <VsmConfiguracion />
+          </DynamicProtectedRoute>}
+         />
 
           {/*Fin de Rutas para control de calidad */}
 
@@ -651,6 +663,11 @@ export default function Router() {
                 <PagePortalEmpleado />
               </DynamicProtectedRoute>
             }
+          />
+
+          <Route
+            path="/auth/crm/hseq/reportes-bic"
+            element={<PageReportesBic/>}
           />
 
           <Route

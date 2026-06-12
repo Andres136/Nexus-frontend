@@ -35,18 +35,22 @@ const [error, setErrores] = useState({});
 const [paginaActual, setPaginaActual] = useState(1);
 const [totalPaginas, setTotalPaginas] = useState(1);
 const[busqueda, setBusqueda]=useState('');
+const [usuarioFiltro, setUsuarioFiltro] = useState("");
+const [estadoFiltro, setEstadoFiltro] = useState("");
 const [historialCliente, setHistorialCliente] = useState([]);
 const[clientesTodos, setClientesTodos]=useState([]);
 
 
-// Verifica si el usuario es admin (rol 1, 4 o 7)
-const esAdmin = user?.role_id === 1 || user?.role_id === 7 || user?.role_id === 4;
+// El backend aplica los filtros según el rol y retorna las relaciones de gestión.
+const query = new URLSearchParams({
+  page: paginaActual,
+  search: busqueda,
+});
 
-// Define la ruta base según el rol
-const rutaBase = esAdmin ? "/api/clientes" : "/api/clientes-registro-user";
+if (usuarioFiltro) query.set("user_id", usuarioFiltro);
+if (estadoFiltro) query.set("estado_id", estadoFiltro);
 
-// Arma la URL final con paginación y búsqueda
-const url = user ? `${rutaBase}?page=${paginaActual}&search=${busqueda}` : null;
+const url = user ? `/api/clientes?${query.toString()}` : null;
 
 // SWR se ejecuta solo si `url` no es null
 const { data, mutate, isLoading } = useSWR(url, fetcher, {
@@ -55,6 +59,25 @@ const { data, mutate, isLoading } = useSWR(url, fetcher, {
 
 // Extraer los datos si están disponibles
 const clientes = data?.data || [];
+const estadisticas = data?.estadisticas || {
+  clientes_activos: 0,
+  clientes_listos: 0,
+  clientes_pendientes: 0,
+  gestiones_faltantes: 0,
+};
+const resumenMensualUsuarios = data?.resumen_mensual_usuarios || [];
+const filtrosDisponibles = data?.filtros || {
+  puede_filtrar_usuarios: false,
+  usuarios: [],
+  estados: [],
+};
+
+useEffect(() => {
+  if (data) {
+    setPaginaActual(data.current_page);
+    setTotalPaginas(data.last_page);
+  }
+}, [data]);
  // usar data.data porque así lo devuelve tu API
 
 
@@ -112,15 +135,19 @@ async function registrarCliente(e) {
 
 
 // Obtener los clientes de la API
-const obtenerClientes = async (page = 1, search = "") => {
+const obtenerClientes = async (
+  page = 1,
+  search = "",
+  userId = usuarioFiltro,
+  estadoId = estadoFiltro
+) => {
 
 
 
   try {
 
-    const response = await  clienteService.getClientes(page, search);
+    const response = await clienteService.getClientes(page, search, userId, estadoId);
     
- // console.log(response.data);
     setPaginaActual(response.data.current_page);
     setTotalPaginas(response.data.last_page);
 
@@ -153,7 +180,6 @@ useEffect(() => {
 
  if(user && user.role_id){
      obtenerClientes();
-     consultarHistorialCliente();
      obtenerTodosClientes();
 
     
@@ -193,11 +219,12 @@ async function cambiarEstadoCliente(id){
     try {
         const response = await clienteService.cambiarEstado(id) // Cambia el estado a 2 para marcarlo como eliminado
         toast.success(response.data.message);
-        console.log(response.data);
         // Actualizar el estado de clientes usando mutate de SWR
-        mutate();
+        await mutate();
+        return response.data;
     } catch (error) {
         console.error('Error al cambiar el estado del cliente:', error);
+        throw error;
     }
 }
 
@@ -254,10 +281,18 @@ async function consultarHistorialCliente(clienteId){
         paginaActual,
         totalPaginas,
         busqueda,
+        usuarioFiltro,
+        estadoFiltro,
+        estadisticas,
+        resumenMensualUsuarios,
+        filtrosDisponibles,
         historialCliente,
         clientesTodos,
         setHistorialCliente,
         setBusqueda,
+        setPaginaActual,
+        setUsuarioFiltro,
+        setEstadoFiltro,
         registrarCliente,
         obtenerClientes,
         obtenerTodosClientes,

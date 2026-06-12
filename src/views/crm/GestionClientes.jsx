@@ -1,4 +1,5 @@
 import { useClientes } from "../../hooks/useClientes";
+import { useAuth } from "../../hooks/useAuth";
 import * as XLSX from "xlsx";
 import ClientesList from "./ClientesList";
 import { useState } from "react";
@@ -22,6 +23,8 @@ import {
 import { showToast } from "../../helpers/utils/showToast";
 
 export default function GestionClientes() {
+  const { user } = useAuth({ middleware: "auth" });
+  const puedeVerResultados = user?.role_id === 1 || user?.role_id === 4;
   const [excelError, setExcelError] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
@@ -106,13 +109,15 @@ export default function GestionClientes() {
         Mis Encuestas
       </button>
 
-      <button
-        onClick={() => navigate("/auth/crm/encuestas/resultados")}
-        className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 active:bg-violet-800 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors shadow-sm"
-      >
-        <BarChart2 className="w-4 h-4" />
-        Resultados
-      </button>
+      {puedeVerResultados && (
+        <button
+          onClick={() => navigate("/auth/crm/encuestas/resultados")}
+          className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 active:bg-violet-800 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors shadow-sm"
+        >
+          <BarChart2 className="w-4 h-4" />
+          Resultados
+        </button>
+      )}
 
       <button
         onClick={() => setIsModalOpen(true)}

@@ -3,6 +3,7 @@ import { showToast } from "../../helpers/utils/showToast";
 import { facturasService } from "../../services/contabilidadService";
 import { useGetByIdFacturas } from "../calidad/useGetByIdFacturas";
 import Swal from "sweetalert2";
+import { useQueryClient } from "@tanstack/react-query";
 
 const ESTADO_INICIAL = {
   factura: {
@@ -19,6 +20,7 @@ const ESTADO_INICIAL = {
     observaciones: "",
     numero_factura_proveedor: "",
   },
+  ordenes_compra_proveedor_ids: [],
   detalles: [],
   pagos: [],
   gastos: [],
@@ -40,9 +42,11 @@ const mapDataToState = (data) => ({
     observaciones: data.observaciones ?? "",
     numero_factura_proveedor: data.numero_factura_proveedor ?? "",
   },
+  ordenes_compra_proveedor_ids: (data.ordenes_compra_proveedor ?? []).map((orden) => orden.id),
   detalles: (data.detalles ?? []).map((d) => ({
     id: d.id,
     producto_id: d.producto_id ?? null,
+    orden_compra_proveedor_detalle_id: d.orden_compra_proveedor_detalle_id ?? null,
     puck_id: d.puck_id ?? null,
     cantidad: d.cantidad ?? 1,
     precio_unitario: d.precio_unitario ?? 0,
@@ -60,6 +64,7 @@ const mapDataToState = (data) => ({
 });
 
 export const useRegisterFacturaCompras = ({ id = null, modo = "creacion" } = {}) => {
+  const queryClient = useQueryClient();
   const [factura, setFactura] = useState(ESTADO_INICIAL);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -89,6 +94,10 @@ export const useRegisterFacturaCompras = ({ id = null, modo = "creacion" } = {})
 
   const handleFacturaChange = (e) => {
     const { name, value } = e.target;
+    if (name === "ordenes_compra_proveedor_ids") {
+      setFactura((prev) => ({ ...prev, ordenes_compra_proveedor_ids: value }));
+      return;
+    }
     if (name === "impuestos") {
       setFactura((prev) => ({ ...prev, impuestos: value }));
       return;
@@ -123,6 +132,13 @@ export const useRegisterFacturaCompras = ({ id = null, modo = "creacion" } = {})
     }));
   };
 
+  const replaceDetalles = (detalles) => {
+    setFactura((prev) => ({
+      ...prev,
+      detalles,
+    }));
+  };
+
   const handleSubmitFactura = async (e) => {
     e.preventDefault();
     try {
@@ -131,6 +147,7 @@ export const useRegisterFacturaCompras = ({ id = null, modo = "creacion" } = {})
 
       const payload = {
         factura: factura.factura,
+        ordenes_compra_proveedor_ids: factura.ordenes_compra_proveedor_ids,
         detalles: factura.detalles,
         pagos: factura.pagos,
         gastos: factura.gastos,
@@ -213,10 +230,8 @@ const anularFactura = async (facturaId) => {
             response.data.message ||
                 "Factura anulada exitosamente"
         );
-
-        // Opcional:
-        // navigate("/auth/crm/contabilidad");
-        // refetch();
+        queryClient.invalidateQueries({ queryKey: ["facturasCompras"] });
+        queryClient.invalidateQueries({ queryKey: ["registro-pago-factura"] });
 
     } catch (err) {
         console.error(err);
@@ -243,6 +258,66 @@ const anularFactura = async (facturaId) => {
         setLoading(false);
     }
 };
+
+const eliminarFacturaDefinitivamente = async (facturaId) => {
+    const result = await Swal.fire({
+        title: "¿Eliminar definitivamente?",
+        html: "Esta acción eliminará la factura, sus detalles y pagos.<br><strong>No se puede deshacer.</strong>",
+        icon: "error",
+        input: "text",
+        inputPlaceholder: "Escribe ELIMINAR para confirmar",
+        showCancelButton: true,
+        confirmButtonColor: "#991b1b",
+        cancelButtonColor: "#6b7280",
+        confirmButtonText: "Eliminar definitivamente",
+        cancelButtonText: "Cancelar",
+        reverseButtons: true,
+        focusCancel: true,
+        preConfirm: (value) => {
+            if (value !== "ELIMINAR") {
+                Swal.showValidationMessage("Debes escribir ELIMINAR para confirmar.");
+                return false;
+            }
+
+            return true;
+        },
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+        setLoading(true);
+        setError(null);
+
+        const response = await facturasService.deleteFacturaDefinitivamente(facturaId);
+
+        await Swal.fire({
+            title: "Factura eliminada",
+            text: response.data.message || "La factura fue eliminada definitivamente.",
+            icon: "success",
+            confirmButtonColor: "#2563eb",
+        });
+
+        queryClient.invalidateQueries({ queryKey: ["facturasCompras"] });
+        queryClient.invalidateQueries({ queryKey: ["registro-pago-factura"] });
+    } catch (err) {
+        const backendMessage =
+            err.response?.data?.message ||
+            "No fue posible eliminar definitivamente la factura.";
+
+        setError({ general: [backendMessage] });
+
+        Swal.fire({
+            title: "Error",
+            text: backendMessage,
+            icon: "error",
+            confirmButtonColor: "#d33",
+        });
+    } finally {
+        setLoading(false);
+    }
+};
+
   return {
     factura,
     setFactura,
@@ -253,9 +328,11 @@ const anularFactura = async (facturaId) => {
     addDetalle,
     updateDetalle,
     removeDetalle,
+    replaceDetalles,
     handleSubmitFactura,
     loading: loading || isLoadingFactura,
     error,
     anularFactura,
+    eliminarFacturaDefinitivamente,
   };
 };

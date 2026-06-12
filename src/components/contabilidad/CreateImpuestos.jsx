@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import PropTypes from "prop-types";
 import { useGetByIdImpuesto } from "../../hooks/contabilidad/useGetByIdImpuesto";
 import { useRegisterImpuesto } from "../../hooks/contabilidad/useRegisterImpuesto";
 
@@ -11,6 +12,7 @@ export default function CreateImpuestos({ forma = null, onClose }) {
       setImpuesto({
         nombre: impuestoById.nombre,
         porcentaje: impuestoById.porcentaje,
+        operacion: impuestoById.operacion || "suma",
       });
     }
   }, [impuestoById, setImpuesto]);
@@ -67,8 +69,8 @@ export default function CreateImpuestos({ forma = null, onClose }) {
             <input
               type="number"
               name="porcentaje"
-              placeholder="0.00"
-              step="0.01"
+              placeholder="0.000000"
+              step="0.000001"
               className={`w-full pl-3 pr-8 py-2 bg-gray-50 border rounded-lg text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20 ${
                 error?.porcentaje ? "border-red-400" : "border-gray-200 focus:border-blue-500"
               }`}
@@ -80,6 +82,26 @@ export default function CreateImpuestos({ forma = null, onClose }) {
           </div>
           {error?.porcentaje && (
             <p className="mt-1 text-[10px] text-red-500 font-medium">{error.porcentaje[0]}</p>
+          )}
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">
+            Operación en la factura
+          </label>
+          <select
+            name="operacion"
+            value={impuesto.operacion}
+            onChange={handleChange}
+            className={`w-full px-3 py-2 bg-gray-50 border rounded-lg text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20 ${
+              error?.operacion ? "border-red-400" : "border-gray-200 focus:border-blue-500"
+            }`}
+          >
+            <option value="suma">Suma al total</option>
+            <option value="resta">Resta del total</option>
+          </select>
+          {error?.operacion && (
+            <p className="mt-1 text-[10px] text-red-500 font-medium">{error.operacion[0]}</p>
           )}
         </div>
 
@@ -114,3 +136,10 @@ export default function CreateImpuestos({ forma = null, onClose }) {
     </div>
   );
 }
+
+CreateImpuestos.propTypes = {
+  forma: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  }),
+  onClose: PropTypes.func,
+};

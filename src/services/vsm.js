@@ -110,8 +110,12 @@ export const vsmForecastService = {
   pronosticoGlobal: (usuarios = 1) =>
     apiClient.get(`/api/vsm/pronostico?usuarios=${usuarios}`),
 
-  vsmFlow : () =>
-    apiClient.get('/api/vsm/flujo'),
+  vsmFlow : (params) =>
+    apiClient.get('/api/vsm/flujo', { params }),
+  coberturaAbastecimiento: (params) =>
+    apiClient.get('/api/vsm/cobertura-abastecimiento', { params }),
+  capacidad: (params) =>
+    apiClient.get('/api/vsm/capacidad', { params }),
   pronostico:()=>
     apiClient.get('/api/vsm/pronostico'),
 }
@@ -123,13 +127,29 @@ export const alistamientosFinalizadosService = {
 }
 
 export const vsmProduccionService = {
-registerProduccion: (data) =>
-  apiClient.post('/api/alistamiento/produccion', data),
-getRendimiento: (params) =>
-  apiClient.get('/api/kpi-productividad', { params }),
-postPausarProduccion: (data) =>
-  apiClient.post('/api/pausar-ordenes-sedes', data),
+  registerProduccion: (data) =>
+    apiClient.post('/api/alistamiento/produccion', data),
+  getRendimiento: (params) =>
+    apiClient.get('/api/kpi-productividad', { params }),
+  getRendimientoPorPeriodo: (params) =>
+    apiClient.get('/api/vsm/rendimiento', { params }),
+  postPausarProduccion: (data) =>
+    apiClient.post('/api/pausar-ordenes-sedes', data),
+  postReanudarProduccion: () =>
+    apiClient.post('/api/reanudar-ordenes-sedes'),
+}
 
-postReanudarProduccion: () =>
-  apiClient.post('/api/reanudar-ordenes-sedes'),
+export const vsmConfiguracionService = {
+  vigente: () =>
+    apiClient.get('/api/vsm/configuracion'),
+  historial: () =>
+    apiClient.get('/api/vsm/configuracion/historial'),
+  crear: (data) =>
+    apiClient.post('/api/vsm/configuracion', data),
+  actualizar: (id, data) =>
+    apiClient.put(`/api/vsm/configuracion/${id}`, data),
+  eliminar: (id) =>
+    apiClient.delete(`/api/vsm/configuracion/${id}`),
+  restaurar: (id) =>
+    apiClient.post(`/api/vsm/configuracion/${id}/restaurar`),
 }

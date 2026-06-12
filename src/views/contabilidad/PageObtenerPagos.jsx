@@ -28,10 +28,9 @@ const contabilidadLinks = [
 
 const ESTADO_COLORS = {
     1: "bg-yellow-50 text-yellow-700",
-    2: "bg-green-50 text-green-700",
-    3: "bg-blue-50 text-blue-700",
-    4: "bg-red-50 text-red-700",
-    5: "bg-purple-50 text-purple-700",
+    101: "bg-green-50 text-green-700",
+    102: "bg-purple-50 text-purple-700",
+    103: "bg-red-50 text-red-700",
 };
 
 const formatCOP = (value) =>
@@ -195,10 +194,9 @@ const [selectedPago, setSelectedPago] = useState(null);
                         >
                             <option value="">Todos los estados</option>
                             <option value="1">Pendiente</option>
-                            <option value="2">Pagada</option>
-                            <option value="3">Parcial</option>
-                            <option value="4">Vencida</option>
-                            <option value="5">Entrega Parcial</option>
+                            <option value="101">Pagada</option>
+                            <option value="102">Pago parcial</option>
+                            <option value="103">Anulada</option>
                         </select>
                     </div>
                 </div>

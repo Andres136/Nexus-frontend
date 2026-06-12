@@ -14,8 +14,13 @@ import {
   Pencil,
   Banknote,
   Trash2,
+  ShieldAlert,
+  Ban,
 } from "lucide-react";
 import { useRegisterFacturaCompras } from "../../hooks/contabilidad/useRegisterFacturaCompras";
+import { useAuth } from "../../hooks/useAuth";
+
+const ADMINISTRADOR_ROLE_ID = 1;
 
 const contabilidadLinks = [
  
@@ -31,12 +36,14 @@ const contabilidadLinks = [
 // ─── Vista principal ───────────────────────────────────────────────────────────
 export default function ObtenerFacturas() {
   const navigate = useNavigate();
+  const { user } = useAuth({ middleware: "auth" });
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFacturaId, setSelectedFacturaId] = useState(null);
 
   const { facturas, pagination, error, isLoading,resumen } = useGetFacturasCompras(page, searchTerm);
-  const { anularFactura } = useRegisterFacturaCompras();
+  const { anularFactura, eliminarFacturaDefinitivamente } = useRegisterFacturaCompras();
+  const esAdministrador = user?.role_id === ADMINISTRADOR_ROLE_ID;
 
   return (
     <>
@@ -251,11 +258,20 @@ export default function ObtenerFacturas() {
                           </button>
                           <button
                             onClick={() => anularFactura(factura.id)}
-                            title="Eliminar"
+                            title="Anular factura"
                             className="p-1.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
                           >
-                            <Trash2 size={15} />
+                            <Ban size={15} />
                           </button>
+                          {esAdministrador && (
+                            <button
+                              onClick={() => eliminarFacturaDefinitivamente(factura.id)}
+                              title="Eliminar factura definitivamente"
+                              className="p-1.5 text-red-800 hover:text-white hover:bg-red-800 rounded-lg transition-colors"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

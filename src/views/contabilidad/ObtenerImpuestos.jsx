@@ -51,6 +51,7 @@ export default function ObtenerImpuestos() {
             <tr className="bg-gray-50/50 border-b border-gray-100">
               <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Nombre</th>
               <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Porcentaje</th>
+              <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Operación</th>
               <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Acciones</th>
             </tr>
           </thead>
@@ -60,6 +61,7 @@ export default function ObtenerImpuestos() {
               [...Array(3)].map((_, i) => (
                 <tr key={i} className="animate-pulse">
                   <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-24"></div></td>
+                  <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-12"></div></td>
                   <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-12"></div></td>
                   <td className="px-6 py-4 flex justify-end gap-2"><div className="h-8 bg-gray-200 rounded w-20"></div></td>
                 </tr>
@@ -71,6 +73,15 @@ export default function ObtenerImpuestos() {
                   <td className="px-6 py-4 text-sm text-gray-600">
                     <span className="bg-gray-100 px-2 py-1 rounded-md font-mono text-xs">
                       {impuesto.porcentaje}%
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-sm">
+                    <span className={`px-2 py-1 rounded-md text-xs font-semibold ${
+                      impuesto.operacion === "resta"
+                        ? "bg-red-50 text-red-700"
+                        : "bg-green-50 text-green-700"
+                    }`}>
+                      {impuesto.operacion === "resta" ? "Resta" : "Suma"}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right space-x-2">
@@ -91,7 +102,7 @@ export default function ObtenerImpuestos() {
               ))
             ) : (
               <tr>
-                <td colSpan="3" className="px-6 py-12 text-center text-gray-400 text-sm">
+                <td colSpan="4" className="px-6 py-12 text-center text-gray-400 text-sm">
                   No hay impuestos registrados.
                 </td>
               </tr>

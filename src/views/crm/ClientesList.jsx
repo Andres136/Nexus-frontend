@@ -13,14 +13,19 @@ import { useQuery } from "@tanstack/react-query";
 import { encuestaService } from "../../services/encuestaService";
 import {
   ClipboardList, X, CheckCircle2, Copy, Check, Loader2, Send,
+  Download, ShoppingCart, Clock, AlertTriangle, Users, UserCheck,
+  UserRoundSearch, ListChecks, BarChart3,
 } from "lucide-react";
 
 function ModalSeleccionarEncuesta({ clienteIds, onClose }) {
   const [encuestaId, setEncuestaId] = useState(null);
   const [links, setLinks]           = useState([]);
+  const [excluidos, setExcluidos]   = useState([]);
   const [copiados, setCopiados]     = useState({});
+  const [todoCopiado, setTodoCop]   = useState(false);
   const [enviando, setEnviando]     = useState(false);
   const [error, setError]           = useState(null);
+  const enviado = links.length > 0 || excluidos.length > 0;
 
   const { data: encuestas = [], isLoading } = useQuery({
     queryKey: ["encuestas"],
@@ -37,7 +42,8 @@ function ModalSeleccionarEncuesta({ clienteIds, onClose }) {
     setError(null);
     try {
       const res = await encuestaService.enviar(encuestaId, clienteIds);
-      setLinks(res.data.links ?? []);
+      setLinks(res.data.links     ?? []);
+      setExcluidos(res.data.excluidos ?? []);
     } catch {
       setError("Ocurrió un error al enviar la encuesta.");
     } finally {
@@ -49,6 +55,39 @@ function ModalSeleccionarEncuesta({ clienteIds, onClose }) {
     await navigator.clipboard.writeText(link);
     setCopiados((prev) => ({ ...prev, [idx]: true }));
     setTimeout(() => setCopiados((prev) => ({ ...prev, [idx]: false })), 2000);
+  };
+
+  const copiarTodos = async () => {
+    const encuesta = encuestas.find((e) => e.id === encuestaId);
+    const texto = links
+      .map((l) => `${l.cliente_nombre} <${l.cliente_email}>\n${l.link}`)
+      .join("\n\n");
+    await navigator.clipboard.writeText(texto);
+    setTodoCop(true);
+    setTimeout(() => setTodoCop(false), 2500);
+  };
+
+  const descargarTxt = () => {
+    const enc   = encuestas.find((e) => e.id === encuestaId);
+    const lineas = [
+      `Encuesta: ${enc?.titulo ?? ""}`,
+      `Fecha: ${new Date().toLocaleString("es-CO")}`,
+      `Enviados: ${links.length}  |  No enviados: ${excluidos.length}`,
+      "",
+      "── ENVIADOS ──",
+      ...links.map((l, i) => `${i + 1}. ${l.cliente_nombre} <${l.cliente_email}>\n   ${l.link}`),
+    ];
+    if (excluidos.length > 0) {
+      lineas.push("", "── NO ENVIADOS ──");
+      excluidos.forEach((e, i) => lineas.push(`${i + 1}. ${e.cliente_nombre} — ${e.razon}`));
+    }
+    const blob = new Blob([lineas.join("\n")], { type: "text/plain;charset=utf-8" });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href     = url;
+    a.download = `links-encuesta-${Date.now()}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -76,35 +115,106 @@ function ModalSeleccionarEncuesta({ clienteIds, onClose }) {
         </div>
 
         <div className="p-6 space-y-4">
-          {links.length > 0 ? (
-            <div className="space-y-3">
-              <p className="text-sm font-semibold text-emerald-700 flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4" />
-                Enviada — {links.length} link{links.length !== 1 ? "s" : ""} generado{links.length !== 1 ? "s" : ""}
-              </p>
-              <ul className="space-y-2 max-h-56 overflow-y-auto">
-                {links.map((l, i) => (
-                  <li key={i} className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-2.5">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-800 truncate">{l.cliente_nombre}</p>
-                      <p className="text-xs text-gray-400 truncate">{l.link}</p>
-                    </div>
+          {/* ── Resultado del envío ── */}
+          {enviado ? (
+            <div className="space-y-4">
+
+              {/* Resumen */}
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-emerald-700 flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4" />
+                  {links.length} correo{links.length !== 1 ? "s" : ""} enviado{links.length !== 1 ? "s" : ""}
+                  {excluidos.length > 0 && (
+                    <span className="text-red-500 font-semibold ml-1">
+                      · {excluidos.length} excluido{excluidos.length !== 1 ? "s" : ""}
+                    </span>
+                  )}
+                </p>
+                {links.length > 0 && (
+                  <div className="flex items-center gap-2">
                     <button
-                      onClick={() => copiarLink(l.link, i)}
-                      className={`shrink-0 p-1.5 rounded-lg transition-colors ${
-                        copiados[i] ? "text-emerald-600 bg-emerald-50" : "text-gray-400 hover:text-emerald-600 hover:bg-emerald-50"
-                      }`}
+                      onClick={copiarTodos}
+                      className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors
+                        ${todoCopiado ? "border-emerald-300 text-emerald-700 bg-emerald-50" : "border-gray-200 text-gray-600 hover:border-emerald-300 hover:text-emerald-700 hover:bg-emerald-50"}`}
                     >
-                      {copiados[i] ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                      {todoCopiado ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                      {todoCopiado ? "¡Copiado!" : "Copiar todos"}
                     </button>
-                  </li>
-                ))}
-              </ul>
+                    <button
+                      onClick={descargarTxt}
+                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-700 hover:bg-blue-50 transition-colors"
+                    >
+                      <Download className="w-3.5 h-3.5" /> TXT
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Aviso cola */}
+              {links.length > 0 && (
+                <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5">
+                  <Clock className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
+                  <p className="text-xs text-amber-700">
+                    Los correos se envían en segundo plano. Usa los links como respaldo.
+                  </p>
+                </div>
+              )}
+
+              {/* Links enviados */}
+              {links.length > 0 && (
+                <ul className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                  {links.map((l, i) => (
+                    <li key={i} className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-2.5">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-800 truncate">{l.cliente_nombre}</p>
+                        <p className="text-xs text-gray-400 truncate">{l.cliente_email}</p>
+                        <p className="text-[11px] text-blue-500 truncate font-mono">{l.link}</p>
+                      </div>
+                      <button
+                        onClick={() => copiarLink(l.link, i)}
+                        className={`shrink-0 p-1.5 rounded-lg transition-colors ${
+                          copiados[i] ? "text-emerald-600 bg-emerald-50" : "text-gray-400 hover:text-emerald-600 hover:bg-emerald-50"
+                        }`}
+                      >
+                        {copiados[i] ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {/* Excluidos con nombre específico */}
+              {excluidos.length > 0 && (
+                <div className="border border-red-200 rounded-xl overflow-hidden">
+                  <div className="bg-red-50 px-4 py-2.5 flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+                    <p className="text-xs font-semibold text-red-600">
+                      No recibieron la encuesta
+                    </p>
+                  </div>
+                  <ul className="divide-y divide-red-50 max-h-44 overflow-y-auto">
+                    {excluidos.map((e, i) => (
+                      <li key={i} className="flex items-center justify-between gap-3 px-4 py-3 bg-white">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-gray-800">{e.cliente_nombre}</p>
+                          <p className="text-xs text-red-400 mt-0.5 flex items-center gap-1">
+                            <ShoppingCart className="w-3 h-3 shrink-0" />
+                            {e.razon}
+                          </p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               <button onClick={onClose} className="w-full py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium">
                 Cerrar
               </button>
             </div>
+
           ) : (
+            /* ── Selección de encuesta ── */
             <>
               {isLoading ? (
                 <div className="flex justify-center py-10">
@@ -171,9 +281,18 @@ export default function ClientesList({ onClose }) {
     paginaActual,
     totalPaginas,
     busqueda,
+    usuarioFiltro,
+    estadoFiltro,
+    estadisticas,
+    resumenMensualUsuarios,
+    filtrosDisponibles,
     setBusqueda,
+    setPaginaActual,
+    setUsuarioFiltro,
+    setEstadoFiltro,
     obtenerClientes,
     cambiarEstadoCliente,
+    consultarHistorialCliente,
   } = useClientes();
 
   const debouncedBusqueda = useDebounce(busqueda, 400);
@@ -182,7 +301,6 @@ export default function ClientesList({ onClose }) {
   const [isGestionarModalOpen, setGestionarModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const { formatearFecha } = useFormatoFecha();
-  const { consultarHistorialCliente } = useClientes();
   const [clienteHistorial, setClienteHistorial] = useState(null);
   const [seleccionados, setSeleccionados] = useState([]);
   const [modalEncuesta, setModalEncuesta] = useState(false);
@@ -215,15 +333,23 @@ export default function ClientesList({ onClose }) {
       cancelButtonColor: "#3085d6",
       confirmButtonText: isActivo ? "Sí, desactivar" : "Sí, activar",
       cancelButtonText: "Cancelar",
-    }).then((result) => {
+    }).then(async (result) => {
       if (result.isConfirmed) {
-        cambiarEstadoCliente(cliente.id);
-        Swal.fire({
-          title: isActivo ? "Cliente desactivado" : "Cliente activado",
-          icon: "success",
-          timer: 2000,
-          showConfirmButton: false,
-        });
+        try {
+          await cambiarEstadoCliente(cliente.id);
+          Swal.fire({
+            title: isActivo ? "Cliente desactivado" : "Cliente activado",
+            icon: "success",
+            timer: 2000,
+            showConfirmButton: false,
+          });
+        } catch (error) {
+          Swal.fire({
+            title: "No se pudo cambiar el estado",
+            text: error.response?.data?.message || "Ocurrió un error al cambiar el estado del cliente.",
+            icon: "warning",
+          });
+        }
       }
     });
   };
@@ -272,18 +398,140 @@ export default function ClientesList({ onClose }) {
     <>
       <div className="p-4 space-y-6">
         <div className="grid grid-cols-1">
-        {/* Buscador */}
-        <div className="relative max-w-md">
-          <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
-          <input
-            type="text"
-            placeholder="Buscar cliente por nombre, email o NIT..."
-            className="w-full border border-gray-200 rounded-lg pl-10 pr-10 py-2.5 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-          />
-          {loading && (
-            <FaSpinner className="absolute right-3.5 top-1/2 -translate-y-1/2 text-blue-500 animate-spin" size={14} />
+        {/* Estadísticas de cumplimiento */}
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 mb-5">
+          {[
+            { label: "Clientes activos", value: estadisticas.clientes_activos, icon: Users, iconClass: "bg-blue-50 text-blue-600" },
+            { label: "Listos para desactivar", value: estadisticas.clientes_listos, icon: UserCheck, iconClass: "bg-emerald-50 text-emerald-600" },
+            { label: "Clientes pendientes", value: estadisticas.clientes_pendientes, icon: UserRoundSearch, iconClass: "bg-amber-50 text-amber-600" },
+            { label: "Gestiones faltantes", value: estadisticas.gestiones_faltantes, icon: ListChecks, iconClass: "bg-red-50 text-red-600" },
+          ].map(({ label, value, icon: Icon, iconClass }) => (
+            <div key={label} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm flex items-center gap-3">
+              <div className={`p-2.5 rounded-lg ${iconClass}`}>
+                <Icon className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">{label}</p>
+                <p className="text-xl font-semibold text-gray-900">{value}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Gestión comercial del mes */}
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm mb-5 overflow-hidden">
+          <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
+            <BarChart3 className="w-4 h-4 text-blue-600" />
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900">Gestión comercial del mes</h3>
+              <p className="text-xs text-gray-500">Actividad de cada responsable durante el mes actual</p>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[850px] text-sm">
+              <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+                <tr>
+                  {["Responsable", "Cobertura clientes", "Gestiones", "Cotizaciones", "Órdenes", "Ventas", "Conversión"].map((titulo) => (
+                    <th key={titulo} className="px-4 py-3 text-left font-semibold">{titulo}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {resumenMensualUsuarios.length > 0 ? (
+                  resumenMensualUsuarios.map((resumen) => (
+                    <tr key={resumen.user_id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 font-medium text-gray-900">{resumen.usuario}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-24 h-2 rounded-full bg-gray-100 overflow-hidden">
+                            <div
+                              className="h-full bg-blue-500 rounded-full"
+                              style={{ width: `${Math.min(100, resumen.cobertura_clientes_pct)}%` }}
+                            />
+                          </div>
+                          <span className="text-xs text-gray-600 whitespace-nowrap">
+                            {resumen.clientes_gestionados}/{resumen.clientes_activos} ({resumen.cobertura_clientes_pct}%)
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-gray-700">{resumen.gestiones}</td>
+                      <td className="px-4 py-3 text-gray-700">{resumen.cotizaciones}</td>
+                      <td className="px-4 py-3 text-gray-700">{resumen.ordenes}</td>
+                      <td className="px-4 py-3 font-medium text-emerald-700">
+                        {Number(resumen.valor_ventas).toLocaleString("es-CO", {
+                          style: "currency",
+                          currency: "COP",
+                          maximumFractionDigits: 0,
+                        })}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="inline-flex px-2 py-1 rounded-md bg-violet-50 text-violet-700 text-xs font-semibold">
+                          {resumen.conversion_pct}%
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="7" className="px-4 py-8 text-center text-sm text-gray-400">
+                      No hay usuarios con clientes asignados.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Buscador y filtros */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">
+          <div className="relative">
+            <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+            <input
+              type="text"
+              placeholder="Buscar cliente por nombre, email o NIT..."
+              className="w-full border border-gray-200 rounded-lg pl-10 pr-10 py-2.5 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+              value={busqueda}
+              onChange={(e) => {
+                setPaginaActual(1);
+                setBusqueda(e.target.value);
+              }}
+            />
+            {loading && (
+              <FaSpinner className="absolute right-3.5 top-1/2 -translate-y-1/2 text-blue-500 animate-spin" size={14} />
+            )}
+          </div>
+
+          {filtrosDisponibles.puede_filtrar_usuarios && (
+            <select
+              value={usuarioFiltro}
+              onChange={(e) => {
+                setPaginaActual(1);
+                setUsuarioFiltro(e.target.value);
+              }}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-700 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            >
+              <option value="">Todos los responsables</option>
+              {filtrosDisponibles.usuarios.map((usuario) => (
+                <option key={usuario.id} value={usuario.id}>{usuario.name}</option>
+              ))}
+            </select>
+          )}
+
+          {filtrosDisponibles.puede_filtrar_usuarios && (
+            <select
+              value={estadoFiltro}
+              onChange={(e) => {
+                setPaginaActual(1);
+                setEstadoFiltro(e.target.value);
+              }}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-700 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            >
+              <option value="">Todos los estados</option>
+              {filtrosDisponibles.estados.map((estado) => (
+                <option key={estado.id} value={estado.id}>{estado.nombre}</option>
+              ))}
+            </select>
           )}
         </div>
 
@@ -301,7 +549,7 @@ export default function ClientesList({ onClose }) {
                       className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
                     />
                   </th>
-                  {["#", "Nombre", "Email", "Teléfono", "Nit / Cédula", "Última gestión", "Fecha creación"].map((h) => (
+                  {["#", "Nombre", "Email", "Teléfono", "Nit / Cédula", "Gestiones", "Última gestión", "Fecha creación"].map((h) => (
                     <th key={h} className="px-6 py-3.5 text-xs font-semibold uppercase tracking-wider whitespace-nowrap">
                       {h}
                     </th>
@@ -342,6 +590,15 @@ export default function ClientesList({ onClose }) {
                       <td className="px-6 py-4 text-gray-500">{cliente.email}</td>
                       <td className="px-6 py-4 text-gray-500 whitespace-nowrap">{cliente.telefono}</td>
                       <td className="px-6 py-4 text-gray-500 font-mono text-xs">{cliente.nit}</td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex px-2 py-1 rounded-md text-xs font-semibold ${
+                          cliente.gestiones_usuario_count >= 3
+                            ? "bg-emerald-50 text-emerald-700"
+                            : "bg-amber-50 text-amber-700"
+                        }`}>
+                          {cliente.gestiones_usuario_count}/3
+                        </span>
+                      </td>
                       <td className="px-6 py-4">
                         {cliente.ultima_gestion ? (
                           <div className="flex flex-col gap-1">
@@ -397,7 +654,7 @@ export default function ClientesList({ onClose }) {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="9" className="py-16 text-center">
+                    <td colSpan="10" className="py-16 text-center">
                       <div className="flex flex-col items-center justify-center gap-3 text-gray-400">
                         <div className="p-3 bg-gray-50 rounded-full">
                            <FaSearch size={20} className="text-gray-400" />
@@ -466,6 +723,13 @@ export default function ClientesList({ onClose }) {
                   <div><span className="font-medium text-gray-500">NIT: </span>{cliente.nit}</div>
 
                   <div className="col-span-2"><span className="font-medium text-gray-500">Creado: </span>{formatearFecha(cliente.created_at)}</div>
+
+                  <div className="col-span-2">
+                    <span className="font-medium text-gray-500">Gestiones para desactivar: </span>
+                    <span className={cliente.gestiones_usuario_count >= 3 ? "text-emerald-600 font-semibold" : "text-amber-600 font-semibold"}>
+                      {cliente.gestiones_usuario_count}/3
+                    </span>
+                  </div>
 
                 </div>
 

@@ -1,12 +1,21 @@
 import { useState, useEffect, useRef } from "react";
 import { vsmForecastService } from "../../services/vsm";
 
-export default function useVSMFlow() {
+export default function useVSMFlow(params = {}) {
   const [data, setData] = useState({
+    resumen: {},
+    etapas: [],
+    analisis: {
+      procesos: [],
+      cuello_botella: null,
+      ordenes_detenidas: [],
+    },
     pendientes: [],
+    inventario: [],
     alistando: [],
     finalizadas: [],
-    delivery: []
+    delivery: [],
+    entregadas: [],
   });
 
   const [loading, setLoading] = useState(true);
@@ -19,7 +28,7 @@ export default function useVSMFlow() {
 
   const fetchFlow = async () => {
     try {
-      const res = await vsmForecastService.vsmFlow();
+      const res = await vsmForecastService.vsmFlow(params);
    //   console.log("Flujo VSM cargado:", res.data);
       const newData = res.data;
 
@@ -33,6 +42,7 @@ export default function useVSMFlow() {
 
     } catch (error) {
       console.log("Error cargando flujo VSM", error);
+      setLoading(false);
     }
   };
 
@@ -41,7 +51,7 @@ export default function useVSMFlow() {
 
     const interval = setInterval(fetchFlow, 10000);
     return () => clearInterval(interval);
-  }, []);
+  }, [params.umbral_horas]);
 
   return { data, loading };
 }
