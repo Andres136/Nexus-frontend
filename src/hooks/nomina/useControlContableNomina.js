@@ -14,6 +14,22 @@ function descargarArchivo(blobData, filename, type) {
   URL.revokeObjectURL(url);
 }
 
+async function getErrorMessage(err, fallback) {
+  const data = err?.response?.data;
+
+  if (data instanceof Blob) {
+    try {
+      const text = await data.text();
+      const parsed = JSON.parse(text);
+      return parsed?.message || fallback;
+    } catch {
+      return fallback;
+    }
+  }
+
+  return data?.message || fallback;
+}
+
 export function useControlContableNomina() {
   const now = useMemo(() => new Date(), []);
   const queryClient = useQueryClient();
@@ -82,7 +98,7 @@ export function useControlContableNomina() {
       showToast("success", "PUC exportado en Excel");
       invalidate();
     },
-    onError: (err) => showToast("error", err.response?.data?.message || "No se pudo exportar el Excel"),
+    onError: async (err) => showToast("error", await getErrorMessage(err, "No se pudo exportar el Excel")),
   });
 
   const exportPdfMutation = useMutation({
@@ -92,7 +108,7 @@ export function useControlContableNomina() {
       showToast("success", "PUC exportado en PDF");
       invalidate();
     },
-    onError: (err) => showToast("error", err.response?.data?.message || "No se pudo exportar el PDF"),
+    onError: async (err) => showToast("error", await getErrorMessage(err, "No se pudo exportar el PDF")),
   });
 
   return {
