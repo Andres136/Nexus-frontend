@@ -75,13 +75,14 @@ const Dashboard = () => {
     { name: 'Entrega Parcial', value: data.entrega_parcial, clientes: data.entrega_parcial_detalle || [] },
   ];
 
- const {
-  entregadas_a_tiempo = 0,
-  entregadas_tarde = 0,
-  pendientes_vencidas = 0,
-  cumplimiento_ot_pct = 0,
-  total_ordenes = 0,
-} = monthly || {};
+  const {
+    entregadas_a_tiempo = 0,
+    entregadas_tarde = 0,
+    pendientes_vencidas = 0,
+    ordenes_vencidas = entregadas_tarde + pendientes_vencidas,
+    cumplimiento_ot_pct = 0,
+    total_ordenes = 0,
+  } = monthly || {};
 
   return (
     <>
@@ -228,7 +229,7 @@ const Dashboard = () => {
           <div className="bg-white p-4 rounded shadow w-full mb-2">
             <h3 className="font-semibold mb-1">% Cumplimiento OT — {month}/{year}</h3>
             <p className="text-xs text-gray-500 mb-3">
-              Órdenes no vencidas / Total órdenes · Meta: 80% · Total mes: {total_ordenes}
+              Órdenes entregadas a tiempo / Total órdenes · Meta: 80% · Total mes: {total_ordenes}
             </p>
             <div className="flex items-center gap-4">
               <div className="flex-1 bg-gray-200 rounded-full h-5 relative">
@@ -254,50 +255,8 @@ const Dashboard = () => {
               </span>
             </div>
             <p className="text-xs text-gray-400 mt-1">
-              Vencidas: {pendientes_vencidas} · No vencidas: {total_ordenes - pendientes_vencidas}
+              A tiempo: {entregadas_a_tiempo} · Vencidas: {ordenes_vencidas} · Pendientes vencidas: {pendientes_vencidas}
             </p>
-          </div>
-
-          <div className="bg-white p-4 rounded shadow w-full overflow-x-auto mb-6">
-            <h3 className="font-semibold mb-4">Estadísticas {month}/{year}</h3>
-            <Link
-              to="/auth/crm/ordenes-compra-auditor"
-              className="inline-flex items-center px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded shadow hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
-            >
-              Ver detalles
-            </Link>
-            <ApexChart
-              type="donut"
-              height={300}
-            series={[
-  entregadas_a_tiempo,
-  entregadas_tarde,
-  pendientes_vencidas
-]}
-              options={{
-         labels: [
-  'Entregadas a tiempo',
-  'Entregadas tarde',
-  'Pendientes vencidas'
-],
-                legend: { position: 'bottom' },
-                colors: ['#16a34a', '#dc2626', '#f59e0b'],
-                plotOptions: {
-                  pie: {
-                    donut: {
-                      labels: {
-                        show: true,
-                        total: {
-                          show: true,
-                          label: 'Órdenes',
-                          formatter: (w) => w.globals.seriesTotals.reduce((a, b) => a + b, 0),
-                        },
-                      },
-                    },
-                  },
-                },
-              }}
-            />
           </div>
 
         </div>
