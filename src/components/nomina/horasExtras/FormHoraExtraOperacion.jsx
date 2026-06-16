@@ -9,7 +9,6 @@ const initialForm = {
   kiosko_device_id: "",
   fecha: "",
   horas: "",
-  tipo: "diurna",
   motivo: "",
 };
 
@@ -172,7 +171,7 @@ export default function FormHoraExtraOperacion({
             <FieldError name="users" />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Fecha</label>
               <input type="date" name="fecha" value={form.fecha} onChange={(event) => update("fecha", event.target.value)} className={fieldClass("fecha")} />
@@ -182,16 +181,6 @@ export default function FormHoraExtraOperacion({
               <label className="block text-xs font-medium text-gray-600 mb-1">Horas</label>
               <input type="number" min="0.5" max="24" step="0.5" name="horas" value={form.horas} onChange={(event) => update("horas", event.target.value)} className={fieldClass("horas")} />
               <FieldError name="horas" />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Tipo</label>
-              <select name="tipo" value={form.tipo} onChange={(event) => update("tipo", event.target.value)} className={fieldClass("tipo")}>
-                <option value="diurna">Diurna</option>
-                <option value="nocturna">Nocturna</option>
-                <option value="festiva">Festiva</option>
-                <option value="nocturna_festiva">Nocturna festiva</option>
-              </select>
-              <FieldError name="tipo" />
             </div>
           </div>
 
