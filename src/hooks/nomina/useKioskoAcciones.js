@@ -76,6 +76,12 @@ function minutosTardeContraHora(horaProgramada, fecha = new Date()) {
   return Math.max(0, minutosDia(fecha) - limite);
 }
 
+function minutosTardeConTolerancia(horaProgramada, tolerancia = 15, fecha = new Date()) {
+  const base = minutosHora(horaProgramada);
+  if (base === null) return 0;
+  return Math.max(0, minutosDia(fecha) - (base + tolerancia));
+}
+
 function detectarAccion(session, jornada, ahora = new Date()) {
   const actual        = minutosDia(ahora);
   const salida        = minutosHora(jornada?.hora_salida);
