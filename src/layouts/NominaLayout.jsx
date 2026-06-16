@@ -252,7 +252,7 @@ const NAV_ITEMS = [
 export default function NominaLayout() {
   const [activeNav, setActiveNav] = useState("procesar");
   const [activeTab, setActiveTab] = useState({});
-  const { totalPendientes, pendientesPorTab } = useSolicitudesPendientesCount();
+  const { totalPendientes, totalNominaPendientes, pendientesPorTab } = useSolicitudesPendientesCount();
 
   const currentNav = NAV_ITEMS.find((n) => n.id === activeNav);
   const currentTabId = currentNav?.tabs
@@ -307,6 +307,11 @@ export default function NominaLayout() {
                       {formatBadge(totalPendientes)}
                     </span>
                   )}
+                  {item.id === "procesar" && totalNominaPendientes > 0 && (
+                    <span className="absolute right-2 top-2 z-20 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 text-[10px] font-bold leading-none text-white shadow-[0_2px_8px_rgba(220,38,38,0.45)] ring-2 ring-white">
+                      {formatBadge(totalNominaPendientes)}
+                    </span>
+                  )}
                   <Icon className="relative z-10 h-5 w-5 shrink-0 text-white/80 drop-shadow-[0_0_8px_rgba(125,211,252,0.85)]" strokeWidth={1.65} />
                   <span className="relative z-10 truncate text-white/80 drop-shadow-[0_0_8px_rgba(125,211,252,0.72)] group-hover:text-white/95">
                     {item.label}
@@ -325,7 +330,7 @@ export default function NominaLayout() {
             {currentNav.tabs.map((tab) => {
               const TabIcon = tab.icon;
               const isActive = currentTabId === tab.id;
-              const pendientesTab = activeNav === "solicitudes" ? (pendientesPorTab[tab.id] ?? 0) : 0;
+              const pendientesTab = ["solicitudes", "procesar"].includes(activeNav) ? (pendientesPorTab[tab.id] ?? 0) : 0;
               return (
                 <button
                   key={tab.id}

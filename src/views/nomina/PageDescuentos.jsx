@@ -2,6 +2,7 @@ import { useState } from "react";
 import PropTypes from "prop-types";
 import { CheckCircle, Loader2, XCircle } from "lucide-react";
 import RegisterDescuento from "../../components/nomina/RegisterDescuento";
+import { showToast } from "../../helpers/utils/showToast";
 import { useGetDescuentos } from "../../hooks/nomina/useGetDescuentos";
 import { useGestionSolicitudPrestamo, useGetSolicitudesPrestamos } from "../../hooks/nomina/useSolicitudesPrestamos";
 
@@ -24,7 +25,6 @@ function ModalGestionPrestamo({ solicitud, accion, onClose, onConfirm, loading }
   const [form, setForm] = useState(() => ({
     ...EMPTY_GESTION,
     monto_aprobado: solicitud?.monto_solicitado ?? "",
-    numero_cuotas_aprobadas: solicitud?.numero_cuotas_solicitadas ?? "",
     frecuencia_pago_aprobada: solicitud?.frecuencia_pago_solicitada ?? "quincenal",
   }));
 
@@ -38,6 +38,15 @@ function ModalGestionPrestamo({ solicitud, accion, onClose, onConfirm, loading }
   const handleChange = (event) => {
     const { name, value } = event.target;
     setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleConfirm = () => {
+    if (accion === "aprobar" && (!form.numero_cuotas_aprobadas || !form.inicio_descuento)) {
+      showToast("warning", "Indica el plazo en cuotas y la fecha de inicio.");
+      return;
+    }
+
+    onConfirm(form);
   };
 
   return (
@@ -63,8 +72,8 @@ function ModalGestionPrestamo({ solicitud, accion, onClose, onConfirm, loading }
                 <input id="tasa_interes_porcentaje" name="tasa_interes_porcentaje" type="number" min="0" max="100" step="0.01" value={form.tasa_interes_porcentaje} onChange={handleChange} className="h-10 w-full rounded-md border border-gray-300 px-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
               </div>
               <div>
-                <label htmlFor="numero_cuotas_aprobadas" className="mb-1 block text-sm font-medium text-gray-700">Cuotas</label>
-                <input id="numero_cuotas_aprobadas" name="numero_cuotas_aprobadas" type="number" min="1" max="60" value={form.numero_cuotas_aprobadas} onChange={handleChange} className="h-10 w-full rounded-md border border-gray-300 px-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                <label htmlFor="numero_cuotas_aprobadas" className="mb-1 block text-sm font-medium text-gray-700">Plazo en cuotas</label>
+                <input id="numero_cuotas_aprobadas" name="numero_cuotas_aprobadas" type="number" min="1" max="60" value={form.numero_cuotas_aprobadas} onChange={handleChange} className="h-10 w-full rounded-md border border-gray-300 px-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500" required />
               </div>
               <div>
                 <label htmlFor="frecuencia_pago_aprobada" className="mb-1 block text-sm font-medium text-gray-700">Frecuencia</label>
@@ -75,7 +84,7 @@ function ModalGestionPrestamo({ solicitud, accion, onClose, onConfirm, loading }
               </div>
               <div>
                 <label htmlFor="inicio_descuento" className="mb-1 block text-sm font-medium text-gray-700">Inicio descuento</label>
-                <input id="inicio_descuento" name="inicio_descuento" type="date" value={form.inicio_descuento} onChange={handleChange} className="h-10 w-full rounded-md border border-gray-300 px-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                <input id="inicio_descuento" name="inicio_descuento" type="date" value={form.inicio_descuento} onChange={handleChange} className="h-10 w-full rounded-md border border-gray-300 px-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500" required />
               </div>
             </div>
             <div className="grid gap-3 rounded-md border border-indigo-100 bg-indigo-50 p-4 text-sm text-indigo-800 md:grid-cols-3">
@@ -97,7 +106,7 @@ function ModalGestionPrestamo({ solicitud, accion, onClose, onConfirm, loading }
           </button>
           <button
             type="button"
-            onClick={() => onConfirm(form)}
+            onClick={handleConfirm}
             disabled={loading}
             className={`inline-flex h-9 items-center gap-2 rounded-md px-4 text-sm font-medium text-white disabled:opacity-60 ${accion === "aprobar" ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"}`}
           >
@@ -113,7 +122,6 @@ function ModalGestionPrestamo({ solicitud, accion, onClose, onConfirm, loading }
 ModalGestionPrestamo.propTypes = {
   solicitud: PropTypes.shape({
     monto_solicitado: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    numero_cuotas_solicitadas: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     frecuencia_pago_solicitada: PropTypes.string,
     empleado: PropTypes.shape({
       name: PropTypes.string,
@@ -219,7 +227,7 @@ export default function PageDescuentos() {
                 <tr>
                   <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Empleado</th>
                   <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Monto</th>
-                  <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Cuotas</th>
+                  <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Frecuencia</th>
                   <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Motivo</th>
                   <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Estado</th>
                   <th className="px-5 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Acciones</th>
@@ -230,7 +238,7 @@ export default function PageDescuentos() {
                   <tr key={item.uuid} className="hover:bg-gray-50">
                     <td className="px-5 py-4 font-medium text-gray-800">{item.empleado?.name ?? "—"}</td>
                     <td className="px-5 py-4 text-gray-600">{formatCurrency(item.monto_solicitado)}</td>
-                    <td className="px-5 py-4 text-gray-600">{item.numero_cuotas_solicitadas} {item.frecuencia_pago_solicitada}</td>
+                    <td className="px-5 py-4 capitalize text-gray-600">{item.frecuencia_pago_solicitada}</td>
                     <td className="max-w-xs truncate px-5 py-4 text-gray-500">{item.motivo || "—"}</td>
                     <td className="px-5 py-4">
                       <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_BADGE[item.status] ?? "bg-gray-100 text-gray-600"}`}>

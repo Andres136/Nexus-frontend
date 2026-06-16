@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { CreditCard, Loader2, Plus } from "lucide-react";
 import { useCreatePortalPrestamo, useGetPortalPrestamos } from "../../hooks/nomina/useSolicitudesPrestamos";
 
@@ -10,7 +10,6 @@ const STATUS_BADGE = {
 
 const EMPTY_FORM = {
   monto_solicitado: "",
-  numero_cuotas_solicitadas: "",
   frecuencia_pago_solicitada: "quincenal",
   motivo: "",
 };
@@ -27,11 +26,6 @@ export default function PagePrestamosPortal() {
   const [showForm, setShowForm] = useState(false);
 
   const lista = prestamos?.data?.data ?? [];
-  const valorCuotaSolicitada = useMemo(() => {
-    const monto = Number(form.monto_solicitado);
-    const cuotas = Number(form.numero_cuotas_solicitadas);
-    return monto > 0 && cuotas > 0 ? monto / cuotas : 0;
-  }, [form.monto_solicitado, form.numero_cuotas_solicitadas]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -64,7 +58,7 @@ export default function PagePrestamosPortal() {
 
       {showForm && (
         <form onSubmit={handleSubmit} className="mb-6 rounded-md border border-gray-200 bg-white p-5 shadow-sm">
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2">
             <div>
               <label htmlFor="monto_solicitado" className="mb-1 block text-sm font-medium text-gray-700">
                 Monto solicitado
@@ -75,22 +69,6 @@ export default function PagePrestamosPortal() {
                 type="number"
                 min="1"
                 value={form.monto_solicitado}
-                onChange={handleChange}
-                className="h-10 w-full rounded-md border border-gray-300 px-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                required
-              />
-            </div>
-            <div>
-              <label htmlFor="numero_cuotas_solicitadas" className="mb-1 block text-sm font-medium text-gray-700">
-                Cuotas solicitadas
-              </label>
-              <input
-                id="numero_cuotas_solicitadas"
-                name="numero_cuotas_solicitadas"
-                type="number"
-                min="1"
-                max="60"
-                value={form.numero_cuotas_solicitadas}
                 onChange={handleChange}
                 className="h-10 w-full rounded-md border border-gray-300 px-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 required
@@ -126,12 +104,6 @@ export default function PagePrestamosPortal() {
               className="w-full resize-none rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
-
-          {valorCuotaSolicitada > 0 && (
-            <div className="mt-4 rounded-md border border-indigo-100 bg-indigo-50 px-4 py-3 text-sm text-indigo-700">
-              Cuota estimada sin interés: <span className="font-semibold">{formatCOP(valorCuotaSolicitada)}</span>
-            </div>
-          )}
 
           <div className="mt-5 flex justify-end gap-2">
             <button
@@ -180,7 +152,9 @@ export default function PagePrestamosPortal() {
                 <tr key={item.uuid} className="hover:bg-gray-50">
                   <td className="px-5 py-4 font-medium text-gray-800">{formatCOP(item.monto_solicitado)}</td>
                   <td className="px-5 py-4 text-gray-600">
-                    {item.numero_cuotas_aprobadas ?? item.numero_cuotas_solicitadas} {item.frecuencia_pago_aprobada ?? item.frecuencia_pago_solicitada}
+                    {item.numero_cuotas_aprobadas
+                      ? `${item.numero_cuotas_aprobadas} ${item.frecuencia_pago_aprobada ?? item.frecuencia_pago_solicitada}`
+                      : "Pendiente de aprobación"}
                   </td>
                   <td className="px-5 py-4 text-gray-600">{Number(item.tasa_interes_porcentaje ?? 0)}%</td>
                   <td className="px-5 py-4 text-gray-600">{formatCOP(item.total_a_descontar ?? item.monto_solicitado)}</td>
