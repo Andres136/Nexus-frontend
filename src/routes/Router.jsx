@@ -120,7 +120,7 @@ import EncuestasPage from "../views/crm/EncuestasPage";
 import ResultadosEncuesta from "../views/crm/ResultadosEncuesta";
 import EncuestaPublica from "../views/crm/EncuestaPublica";
 import PageReportesBic from "../views/hseq/PageReportesBic";
-import { VenusAndMarsIcon } from "lucide-react";
+
 import VsmConfiguracion from "../views/vsm/VsmConfiguracion";
 
 
@@ -543,6 +543,7 @@ export default function Router() {
           
            
           {/*  Fin Rutas para  gestion de cartera */}  
+          
             {/*   Rutas para  HSEQ */} 
             <Route
             path="/auth/crm/hseq/inspecciones"
@@ -648,10 +649,12 @@ export default function Router() {
               </DynamicProtectedRoute>
             }
           />
-
+       {/*   ORDENES COMPRA PROVEEDOR*/} 
           <Route
             path="proveedores-ordenes-compra"
-            element={<FormOrdenesProveedores />}
+            element={<DynamicProtectedRoute permission="proveedores-ordenes-compra">
+              <FormOrdenesProveedores />
+            </DynamicProtectedRoute>}  
           />
           <Route
             path="ordenes-compra-proveedor"
@@ -671,11 +674,15 @@ export default function Router() {
           />
           <Route
             path="/auth/crm/oc-provedor-update/:id"
-            element={<UpdateOcProvedor />}
+            element={<DynamicProtectedRoute permission="/auth/crm/oc-provedor-update/:id">
+              <UpdateOcProvedor />
+            </DynamicProtectedRoute>}
           />
           <Route
             path="/auth/crm/ordenes-proveedor/dividir-orden/:id"
-            element={<DividirOcProveedor />}
+            element={<DynamicProtectedRoute permission="/auth/crm/ordenes-proveedor/dividir-orden/:id">
+              <DividirOcProveedor />
+            </DynamicProtectedRoute>}
           />
           <Route path="cotizaciones" element={<CotizacionForm />} />
           <Route path="mis-ordenes" element={<MisOrdenesComerciales />} />

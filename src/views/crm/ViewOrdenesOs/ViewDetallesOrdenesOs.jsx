@@ -46,7 +46,6 @@ orden,
     setDetallesEditados,
     proveedoresAll,
     procesos,
-    agregarItem
   }=useOrdenServicioDetalle()
 
   if (loading) {
@@ -214,7 +213,11 @@ orden,
             </thead>
             <tbody className="divide-y divide-gray-50">
               {orden.detalles?.map((detalle) => {
-                const obs = detalle.orden_compra_detalle.observaciones?.[0]
+                const detalleCompraId = detalle.orden_compra_detalle_id
+                const detalleCompra = detalle.orden_compra_detalle
+                const obs = detalleCompra?.observaciones?.[0]
+                const editado = detallesEditados[detalleCompraId] || {}
+                const procesoSeleccionado = editado.proceso_bolsas_id || obs?.proceso_bolsas_id
                 return (
                   <tr key={detalle.id} className="hover:bg-blue-50/30 transition-colors">
                     <td className="px-3 py-2.5">
@@ -222,25 +225,25 @@ orden,
                     </td>
                     <td className="px-3 py-2.5">
                       <span className="text-sm font-medium text-gray-800">
-                        {detalle.orden_compra_detalle.producto?.name}
+                        {detalleCompra?.producto?.name || "Producto no encontrado"}
                       </span>
                     </td>
                     <td className="px-3 py-2.5">
                       <span className="text-sm text-gray-600 line-clamp-2">
-                        {detalle.orden_compra_detalle.descripcion}
+                        {detalleCompra?.descripcion || "Sin descripción"}
                       </span>
                     </td>
                     <td className="px-3 py-2.5 text-center">
                       <span className="inline-flex items-center justify-center min-w-[2rem] px-2 py-0.5 text-xs font-semibold bg-gray-100 text-gray-700 rounded">
-                        {detalle.orden_compra_detalle.cantidad_solicitada}
+                        {detalleCompra?.cantidad_solicitada ?? "-"}
                       </span>
                     </td>
                     <td className="px-3 py-2.5">
                       <input
                         type="number"
                         step="1"
-                        value={detallesEditados[obs?.id]?.cantidad || detalle.cantidad}
-                        onChange={(e) => handleChange(obs?.id, "cantidad", e.target.value)}
+                        value={editado.cantidad ?? detalle.cantidad}
+                        onChange={(e) => handleChange(detalleCompraId, "cantidad", e.target.value)}
                         className="w-full h-9 px-2 text-sm text-center border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all"
                       />
                       {errores[`detalles.${detalle.id}.cantidad`] && (
@@ -255,14 +258,14 @@ orden,
                         styles={selectStyles}
                         options={procesos.map(p => ({ value: p.id, label: p.nombre }))}
                         value={
-                          procesos.find(p => p.id === (detallesEditados[obs?.id]?.proceso_bolsas_id || obs?.proceso_bolsas_id))
+                          procesos.find(p => p.id === procesoSeleccionado)
                             ? {
-                                value: detallesEditados[obs?.id]?.proceso_bolsas_id || obs?.proceso_bolsas_id,
-                                label: procesos.find(p => p.id === (detallesEditados[obs?.id]?.proceso_bolsas_id || obs?.proceso_bolsas_id))?.nombre
+                                value: procesoSeleccionado,
+                                label: procesos.find(p => p.id === procesoSeleccionado)?.nombre
                               }
                             : null
                         }
-                        onChange={(selectedOption) => handleChange(obs?.id, "proceso_bolsas_id", selectedOption?.value)}
+                        onChange={(selectedOption) => handleChange(detalleCompraId, "proceso_bolsas_id", selectedOption?.value)}
                         menuPortalTarget={document.body}
                         placeholder="Seleccionar..."
                       />
@@ -276,8 +279,8 @@ orden,
                     <td className="px-3 py-2.5">
                       <input
                         type="text"
-                        value={detallesEditados[obs?.id]?.observacion || obs?.observacion || ""}
-                        onChange={(e) => handleChange(obs?.id, "observacion", e.target.value)}
+                        value={editado.observacion ?? obs?.observacion ?? ""}
+                        onChange={(e) => handleChange(detalleCompraId, "observacion", e.target.value)}
                         placeholder="Sin observaciones"
                         className="w-full h-9 px-2 text-sm border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all"
                       />
