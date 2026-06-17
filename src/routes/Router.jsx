@@ -651,8 +651,8 @@ export default function Router() {
           />
        {/*   ORDENES COMPRA PROVEEDOR*/} 
           <Route
-            path="proveedores-ordenes-compra"
-            element={<DynamicProtectedRoute permission="proveedores-ordenes-compra">
+            path="/auth/crm/proveedores-ordenes-compra"
+            element={<DynamicProtectedRoute permission="/auth/crm/proveedores-ordenes-compra">
               <FormOrdenesProveedores />
             </DynamicProtectedRoute>}  
           />
