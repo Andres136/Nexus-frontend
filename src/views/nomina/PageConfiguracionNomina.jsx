@@ -9,6 +9,7 @@ import {
   Clock3,
   Coffee,
   Coins,
+  Percent,
   Download,
   RotateCcw,
   Save,
@@ -375,7 +376,9 @@ export default function PageConfiguracionNomina() {
   const [form, setForm] = useState(prepararForm(jornada));
   const [configForm, setConfigForm] = useState(CONFIG_DEFAULT);
   const configTabs = [
+    
     { id: "laboral", label: "Parámetros laborales", icon: Coins },
+    { id: "porcentajes", label: "Porcentajes", icon: Percent },
     { id: "contable", label: "PUC contable", icon: ShieldCheck },
     { id: "horarios", label: "Horarios", icon: Clock3 },
     { id: "documentos", label: "Documentos", icon: Upload },
@@ -1026,7 +1029,9 @@ export default function PageConfiguracionNomina() {
           </div>
         </div>
       </form>
-
+        </>
+      )}
+      {activeConfigTab === "porcentajes" && (
       <form onSubmit={guardarConfig} className="mb-5 rounded-xl border border-gray-200 bg-white shadow-sm">
         <div className="flex flex-col gap-3 border-b border-gray-100 px-5 py-4 md:flex-row md:items-center md:justify-between">
           <div>
@@ -1176,8 +1181,8 @@ export default function PageConfiguracionNomina() {
           </div>
         </div>
       </form>
-      </>
       )}
+    
 
       {activeConfigTab === "contable" && (
       <section className="mb-5 rounded-xl border border-gray-200 bg-white shadow-sm">
