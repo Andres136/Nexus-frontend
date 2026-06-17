@@ -21,13 +21,18 @@ import {
 import { useDeleteAjusteSalarial } from "../../hooks/nomina/useDeleteAjusteSalarial";
 import { useGetAjustesSalariales } from "../../hooks/nomina/useGetAjustesSalariales";
 import { useGetContrataciones } from "../../hooks/nomina/useGetContrataciones";
+import {
+  useConfiguracionNomina,
+  useSubirFirmaConfiguracionNomina,
+  useUpdateConfiguracionNomina,
+} from "../../hooks/nomina/useConfiguracionNomina";
 import { useGetJornadaLaboral } from "../../hooks/nomina/useGetJornadaLaboral";
 import { useGetNominaConceptosContables } from "../../hooks/nomina/useGetNominaConceptosContables";
 import { useRegisterAjusteSalarial } from "../../hooks/nomina/useRegisterAjusteSalarial";
 import { useSincronizarNominaConceptosPuc } from "../../hooks/nomina/useSincronizarNominaConceptosPuc";
 import { useUpdateNominaConceptoContable } from "../../hooks/nomina/useUpdateNominaConceptoContable";
 import { cuentasContablesService } from "../../services/contabilidadService";
-import { configuracionNominaService, horarioOperacionService, jornadaLaboralService, nominaConceptoContableService, nominaParametroLaboralService } from "../../services/nominaService";
+import { horarioOperacionService, jornadaLaboralService, nominaConceptoContableService, nominaParametroLaboralService } from "../../services/nominaService";
 import { showToast } from "../../helpers/utils/showToast";
 
 const HORARIO_DEFAULT = {
@@ -53,6 +58,13 @@ const CONFIG_DEFAULT = {
   porcentaje_sena: 2.00,
   porcentaje_icbf: 3.00,
   porcentaje_caja_compensacion: 4.00,
+  recargo_extra_diurna: 0.25,
+  recargo_extra_nocturna: 0.75,
+  recargo_festiva: 0.75,
+  recargo_nocturna_festiva: 1.10,
+  porcentaje_incapacidad: 0.6667,
+  hora_inicio_nocturna: "19:00",
+  hora_fin_nocturna: "06:00",
   status: true,
 };
 
@@ -310,17 +322,15 @@ export default function PageConfiguracionNomina() {
   const { conceptosContables, isLoading: loadingConceptos } = useGetNominaConceptosContables({ per_page: 100 });
   const updateConceptoMutation = useUpdateNominaConceptoContable();
   const sincronizarConceptosMutation = useSincronizarNominaConceptosPuc();
+  const { configuracion: configuracionData, isLoading: loadingConfig } = useConfiguracionNomina();
+  const configMutation = useUpdateConfiguracionNomina();
+  const firmaMutation = useSubirFirmaConfiguracionNomina({
+    onSuccess: () => setFirmaFile(null),
+  });
   const ajusteMutation = useRegisterAjusteSalarial({
     onSuccess: () => setAjusteForm(AJUSTE_SALARIAL_DEFAULT),
   });
   const deleteAjusteMutation = useDeleteAjusteSalarial();
-  const { data: configuracionData, isLoading: loadingConfig } = useQuery({
-    queryKey: ["configuracionNomina"],
-    queryFn: async () => {
-      const response = await configuracionNominaService.getConfiguracion();
-      return response.data.data;
-    },
-  });
   const { data: parametrosLaboralesData } = useQuery({
     queryKey: ["nomina-parametros-laborales", { per_page: 5 }],
     queryFn: async () => {
@@ -391,6 +401,13 @@ export default function PageConfiguracionNomina() {
       porcentaje_sena:              configuracionData.porcentaje_sena              ?? 2.00,
       porcentaje_icbf:              configuracionData.porcentaje_icbf              ?? 3.00,
       porcentaje_caja_compensacion: configuracionData.porcentaje_caja_compensacion ?? 4.00,
+      recargo_extra_diurna:         configuracionData.recargo_extra_diurna         ?? 0.25,
+      recargo_extra_nocturna:       configuracionData.recargo_extra_nocturna       ?? 0.75,
+      recargo_festiva:              configuracionData.recargo_festiva              ?? 0.75,
+      recargo_nocturna_festiva:     configuracionData.recargo_nocturna_festiva     ?? 1.10,
+      porcentaje_incapacidad:       configuracionData.porcentaje_incapacidad       ?? 0.6667,
+      hora_inicio_nocturna:         normalizarHora(configuracionData.hora_inicio_nocturna) || "19:00",
+      hora_fin_nocturna:            normalizarHora(configuracionData.hora_fin_nocturna) || "06:00",
       status: configuracionData.status ?? true,
     });
   }, [configuracionData]);
@@ -448,19 +465,6 @@ export default function PageConfiguracionNomina() {
     },
   });
 
-  const configMutation = useMutation({
-    mutationFn: (payload) => configuracionNominaService.updateConfiguracion(payload),
-    onSuccess: (response) => {
-      showToast("success", response.data?.message || "Configuración de nómina actualizada");
-      queryClient.invalidateQueries({ queryKey: ["configuracionNomina"] });
-      queryClient.invalidateQueries({ queryKey: ["nominas"] });
-      queryClient.invalidateQueries({ queryKey: ["nominaSummary"] });
-    },
-    onError: (error) => {
-      showToast("error", error.response?.data?.message || "No fue posible guardar los porcentajes");
-    },
-  });
-
   const parametroLaboralMutation = useMutation({
     mutationFn: (payload) => {
       const data = {
@@ -493,17 +497,6 @@ export default function PageConfiguracionNomina() {
     },
     onError: (error) => {
       showToast("error", error.response?.data?.message || "No fue posible guardar la instrucción del día");
-    },
-  });
-
-  const firmaMutation = useMutation({
-    mutationFn: (file) => configuracionNominaService.subirFirma(file),
-    onSuccess: (response) => {
-      setFirmaFile(null);
-      showToast("success", response.data?.message || "Firma guardada correctamente");
-    },
-    onError: (error) => {
-      showToast("error", error.response?.data?.message || "No fue posible guardar la firma");
     },
   });
 
@@ -608,6 +601,13 @@ export default function PageConfiguracionNomina() {
       porcentaje_sena:              Number(configForm.porcentaje_sena),
       porcentaje_icbf:              Number(configForm.porcentaje_icbf),
       porcentaje_caja_compensacion: Number(configForm.porcentaje_caja_compensacion),
+      recargo_extra_diurna:         Number(configForm.recargo_extra_diurna),
+      recargo_extra_nocturna:       Number(configForm.recargo_extra_nocturna),
+      recargo_festiva:              Number(configForm.recargo_festiva),
+      recargo_nocturna_festiva:     Number(configForm.recargo_nocturna_festiva),
+      porcentaje_incapacidad:       Number(configForm.porcentaje_incapacidad),
+      hora_inicio_nocturna:         configForm.hora_inicio_nocturna,
+      hora_fin_nocturna:            configForm.hora_fin_nocturna,
       status: true,
     });
   };
@@ -1030,8 +1030,8 @@ export default function PageConfiguracionNomina() {
       <form onSubmit={guardarConfig} className="mb-5 rounded-xl border border-gray-200 bg-white shadow-sm">
         <div className="flex flex-col gap-3 border-b border-gray-100 px-5 py-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="text-lg font-bold text-gray-900">Porcentajes de liquidación</h2>
-            <p className="text-sm text-gray-500">Estos valores se usan para calcular salud y pensión en preliquidación y liquidación.</p>
+            <h2 className="text-lg font-bold text-gray-900">Porcentajes y recargos de liquidación</h2>
+            <p className="text-sm text-gray-500">Estos valores se usan en preliquidación, liquidación, horas extra, festivos e incapacidad.</p>
           </div>
           <button
             type="submit"
@@ -1039,7 +1039,7 @@ export default function PageConfiguracionNomina() {
             className="inline-flex h-10 items-center gap-2 rounded-lg bg-indigo-600 px-4 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
           >
             <Save className="h-4 w-4" />
-            {configMutation.isPending ? "Guardando..." : "Guardar porcentajes"}
+            {configMutation.isPending ? "Guardando..." : "Guardar configuración"}
           </button>
         </div>
         <div className="p-5 space-y-5">
@@ -1067,6 +1067,69 @@ export default function PageConfiguracionNomina() {
                 <p className="text-xs font-semibold uppercase tracking-wider text-indigo-500">Resumen empleado</p>
                 <p className="mt-1 text-sm font-bold text-indigo-900">
                   Salud {Number(configForm.porcentaje_salud_empleado || 0).toFixed(2)}% · Pensión {Number(configForm.porcentaje_pension_empleado || 0).toFixed(2)}%
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Recargos */}
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Recargos de horas y festivos</p>
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+              {[
+                { name: "recargo_extra_diurna", label: "Extra diurna", hint: "0.25 = 25%" },
+                { name: "recargo_extra_nocturna", label: "Extra nocturna", hint: "0.75 = 75%" },
+                { name: "recargo_festiva", label: "Festiva", hint: "0.75 = 75%" },
+                { name: "recargo_nocturna_festiva", label: "Nocturna festiva", hint: "1.10 = 110%" },
+                { name: "porcentaje_incapacidad", label: "Incapacidad reconocida", hint: "0.6667 = 66.67%", step: "0.0001", max: "1" },
+              ].map(({ name, label, hint, step = "0.01", max = "5" }) => (
+                <label key={name} className="block">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">{label}</span>
+                  <div className="mt-1 flex h-11 items-center gap-2 rounded-lg border border-emerald-100 bg-emerald-50 px-3">
+                    <input
+                      type="number"
+                      min="0"
+                      max={max}
+                      step={step}
+                      name={name}
+                      value={configForm[name]}
+                      onChange={handleConfig}
+                      className="w-full border-none bg-transparent text-sm text-gray-800 outline-none"
+                    />
+                    <span className="text-xs font-semibold text-emerald-500">x</span>
+                  </div>
+                  <p className="mt-1 text-[11px] text-gray-400">{hint}</p>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Nocturnidad */}
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Rango nocturno</p>
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              {[
+                { name: "hora_inicio_nocturna", label: "Inicio nocturno" },
+                { name: "hora_fin_nocturna", label: "Fin nocturno" },
+              ].map(({ name, label }) => (
+                <label key={name} className="block">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">{label}</span>
+                  <div className="mt-1 flex h-11 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3">
+                    <Clock3 className="h-4 w-4 text-gray-400" />
+                    <input
+                      type="time"
+                      name={name}
+                      value={configForm[name]}
+                      onChange={handleConfig}
+                      className="w-full border-none bg-transparent text-sm text-gray-800 outline-none"
+                    />
+                  </div>
+                </label>
+              ))}
+              <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Horario aplicado</p>
+                <p className="mt-1 text-sm font-bold text-gray-900">
+                  {configForm.hora_inicio_nocturna || "--:--"} a {configForm.hora_fin_nocturna || "--:--"}
                 </p>
               </div>
             </div>
