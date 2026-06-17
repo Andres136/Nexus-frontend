@@ -20,13 +20,23 @@ import {
   Mail,
   MapPin,
   FileText,
-
+  X,
   PieChart
 } from "lucide-react"
 
 import ModalRegistroProcesoBolsa from "../../components/crm/ModalRegistroProcesoBolsa"
 
 export default function Proveedores() {
+  const formInicial = {
+    nombre: "",
+    nit: "",
+    telefono: "",
+    direccion: "",
+    correo: "",
+    ciudad: "",
+    observaciones: "",
+  }
+
   const [form, setForm] = useState({
     nombre: "",
     nit: "",
@@ -39,12 +49,33 @@ export default function Proveedores() {
 
   // estados
   const [proveedorFiltro, setProveedorFiltro] = useState(""); // '' = todos
+  const [fechaInicioFiltro, setFechaInicioFiltro] = useState("");
+  const [fechaFinFiltro, setFechaFinFiltro] = useState("");
   const [proveedores, setProveedores] = useState([])
   const [search, setSearch] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [lastPage, setLastPage] = useState(1)
   const [proveedoresFiltrados, setProveedoresFiltrados] = useState([]);
   const [errores, setErrores] = useState({});
+  const [modalProveedorOpen, setModalProveedorOpen] = useState(false);
+
+  const abrirModalCrear = () => {
+    setForm(formInicial)
+    setErrores({})
+    setModalProveedorOpen(true)
+  }
+
+  const abrirModalEditar = (proveedor) => {
+    setForm(proveedor)
+    setErrores({})
+    setModalProveedorOpen(true)
+  }
+
+  const cerrarModalProveedor = () => {
+    setModalProveedorOpen(false)
+    setForm(formInicial)
+    setErrores({})
+  }
 
   const handleChange = (e) => {
     setForm({
@@ -89,15 +120,7 @@ export default function Proveedores() {
         toast.success(response.data.message)
       }
 
-      setForm({
-        nombre: "",
-        nit: "",
-        telefono: "",
-        direccion: "",
-        correo: "",
-        ciudad: "",
-        observaciones: "",
-      })
+      cerrarModalProveedor()
 
       obtenerProveedores()
     } catch (error) {
@@ -112,6 +135,12 @@ export default function Proveedores() {
 
   const descargarPendientes = async () => {
     const token = localStorage.getItem("token");
+
+    if (fechaInicioFiltro && fechaFinFiltro && fechaInicioFiltro > fechaFinFiltro) {
+      toast.error("La fecha inicial no puede ser mayor a la fecha final");
+      return;
+    }
+
     try {
       const response = await clienteAxios.get(
         "/api/entregas/items-pendientes/pdf",
@@ -120,6 +149,8 @@ export default function Proveedores() {
           responseType: "blob",
           params: {
             proveedor_id: proveedorFiltro || undefined, // si '' no lo envía
+            fecha_inicio: fechaInicioFiltro || undefined,
+            fecha_fin: fechaFinFiltro || undefined,
           },
         }
       );
@@ -127,13 +158,20 @@ export default function Proveedores() {
       const blob = new Blob([response.data], { type: "application/pdf" });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
+      const rango = fechaInicioFiltro || fechaFinFiltro
+        ? `_${fechaInicioFiltro || "inicio"}_${fechaFinFiltro || "fin"}`
+        : "";
       link.href = url;
-      link.download = "items_pendientes.pdf";
+      link.download = `items_pendientes${rango}.pdf`;
       link.click();
       window.URL.revokeObjectURL(url);
     } catch (error) {
       if (error?.response?.status === 404) {
-        toast.error("No hay entregas pendientes para este proveedor");
+        toast.error("No hay entregas pendientes para los filtros seleccionados");
+      } else if (error?.response?.status === 400) {
+        toast.error("Hay demasiados datos. Filtra por proveedor o reduce el rango de fechas");
+      } else if (error?.response?.status === 422) {
+        toast.error("Revisa el rango de fechas seleccionado");
       } else {
         console.error(error);
         toast.error("Error al descargar PDF");
@@ -279,8 +317,11 @@ export default function Proveedores() {
       <h3 className="font-medium text-gray-700 text-sm">Filtros</h3>
     </div>
     
-    <div className="flex flex-col sm:flex-row gap-3">
-      <div className="flex-1 max-w-xs">
+    <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(220px,1fr)_180px_180px_auto_auto] lg:items-end">
+      <div>
+        <label className="mb-1 block text-xs font-medium text-gray-600">
+          Proveedor
+        </label>
         <Select
           options={opcionesFiltro}
           value={
@@ -304,9 +345,49 @@ export default function Proveedores() {
         />
       </div>
 
+      <div>
+        <label htmlFor="fecha_inicio_pdf" className="mb-1 block text-xs font-medium text-gray-600">
+          Fecha inicial
+        </label>
+        <input
+          id="fecha_inicio_pdf"
+          type="date"
+          value={fechaInicioFiltro}
+          onChange={(e) => setFechaInicioFiltro(e.target.value)}
+          max={fechaFinFiltro || undefined}
+          className="h-[38px] w-full rounded-md border border-gray-300 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="fecha_fin_pdf" className="mb-1 block text-xs font-medium text-gray-600">
+          Fecha final
+        </label>
+        <input
+          id="fecha_fin_pdf"
+          type="date"
+          value={fechaFinFiltro}
+          onChange={(e) => setFechaFinFiltro(e.target.value)}
+          min={fechaInicioFiltro || undefined}
+          className="h-[38px] w-full rounded-md border border-gray-300 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+
+      <button
+        type="button"
+        onClick={() => {
+          setProveedorFiltro("");
+          setFechaInicioFiltro("");
+          setFechaFinFiltro("");
+        }}
+        className="flex h-[38px] items-center justify-center rounded-lg border border-gray-300 px-4 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+      >
+        Limpiar
+      </button>
+
       <button
         onClick={descargarPendientes}
-        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
+        className="flex h-[38px] items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 text-sm font-medium text-white transition-colors hover:bg-blue-700"
       >
         <Download className="w-4 h-4" />
         Descargar PDF
@@ -314,160 +395,6 @@ export default function Proveedores() {
     </div>
   </div>
 </div>
-
-        {/* ✅ Formulario mejorado */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="bg-gradient-to-r from-emerald-500 to-teal-600 p-2 rounded-lg">
-              <UserPlus className="w-6 h-6 text-white" />
-            </div>
-            <h2 className="text-2xl font-bold text-gray-800">
-              {form.id ? 'Editar Proveedor' : 'Nuevo Proveedor'}
-            </h2>
-          </div>
-
-          <form onSubmit={handleSubmit}>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* Nombre */}
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                  <Building2 className="w-4 h-4 text-gray-500" />
-                  Nombre del Proveedor
-                </label>
-                <input
-                  type="text"
-                  name="nombre"
-                  value={form.nombre}
-                  onChange={handleChange}
-                  placeholder="Ingresa el nombre"
-                  className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                  required
-                />
-                {errores.nombre && (
-                  <p className="text-red-500 text-sm mt-1">{errores.nombre[0]}</p>
-                )}
-              </div>
-
-              {/* NIT */}
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-gray-500" />
-                  NIT
-                </label>
-                <input
-                  type="text"
-                  name="nit"
-                  value={form.nit}
-                  onChange={handleChange}
-                  placeholder="Número de identificación"
-                  className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                  required
-                />
-                {errores.nit && (
-                  <p className="text-red-500 text-sm mt-1">{errores.nit[0]}</p>
-                )}
-              </div>
-
-              {/* Teléfono */}
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                  <Phone className="w-4 h-4 text-gray-500" />
-                  Teléfono
-                </label>
-                <input
-                  type="text"
-                  name="telefono"
-                  value={form.telefono}
-                  onChange={handleChange}
-                  placeholder="Número de contacto"
-                  className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                />
-                {errores.telefono && (
-                  <p className="text-red-500 text-sm mt-1">{errores.telefono[0]}</p>
-                )}
-              </div>
-
-              {/* Dirección */}
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-gray-500" />
-                  Dirección
-                </label>
-                <input
-                  type="text"
-                  name="direccion"
-                  value={form.direccion}
-                  onChange={handleChange}
-                  placeholder="Dirección física"
-                  className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                />
-                {errores.direccion && (
-                  <p className="text-red-500 text-sm mt-1">{errores.direccion[0]}</p>
-                )}
-              </div>
-
-              {/* Correo */}
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-gray-500" />
-                  Correo Electrónico
-                </label>
-                <input
-                  type="email"
-                  name="correo"
-                  value={form.correo}
-                  onChange={handleChange}
-                  placeholder="email@empresa.com"
-                  className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                />
-                {errores.correo && (
-                  <p className="text-red-500 text-sm mt-1">{errores.correo[0]}</p>
-                )}
-              </div>
-
-              {/* Ciudad */}
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-gray-500" />
-                  Ciudad
-                </label>
-                <input
-                  type="text"
-                  name="ciudad"
-                  value={form.ciudad}
-                  onChange={handleChange}
-                  placeholder="Ciudad de ubicación"
-                  className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                />
-              </div>
-
-              {/* Observaciones */}
-         <div className="space-y-2 sm:col-span-2 lg:col-span-3">
-                <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-gray-500" />
-                  Observaciones
-                </label>
-                <textarea
-                  name="observaciones"
-                  value={form.observaciones}
-                  onChange={handleChange}
-                  placeholder="Información adicional del proveedor..."
-                  className="w-full border border-gray-300 rounded-lg px-4 py-3 h-24 resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end mt-6">
-              <button 
-                type="submit" 
-                className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-8 py-3 rounded-lg flex items-center gap-2 transition-all duration-300 transform hover:scale-105 shadow-lg font-medium"
-              >
-                <Plus className="w-5 h-5" />
-                {form.id ? 'Actualizar' : 'Guardar'} Proveedor
-              </button>
-            </div>
-          </form>
-        </div>
 
         {/* ✅ Búsqueda mejorada */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
@@ -488,6 +415,13 @@ export default function Proveedores() {
             >
               <Search className="w-4 h-4" />
               Buscar
+            </button>
+            <button
+              onClick={abrirModalCrear}
+              className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 transition-all duration-300 font-medium shadow-lg"
+            >
+              <UserPlus className="w-4 h-4" />
+              Nuevo Proveedor
             </button>
           </div>
         </div>
@@ -561,7 +495,7 @@ export default function Proveedores() {
                     <td className="px-6 py-4">
                       <div className="flex justify-center gap-2">
                         <button
-                          onClick={() => setForm(proveedor)}
+                          onClick={() => abrirModalEditar(proveedor)}
                           className="bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white p-2 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-md"
                           title="Editar proveedor"
                         >
@@ -610,6 +544,190 @@ export default function Proveedores() {
           </div>
         </div>
       </div>
+
+      {modalProveedorOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) cerrarModalProveedor()
+          }}
+        >
+          <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl">
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-100 bg-white px-6 py-4">
+              <div className="flex items-center gap-3">
+                <div className="bg-gradient-to-r from-emerald-500 to-teal-600 p-2 rounded-lg">
+                  <UserPlus className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    {form.id ? "Editar Proveedor" : "Nuevo Proveedor"}
+                  </h2>
+                  <p className="text-sm text-gray-500">
+                    {form.id ? "Actualiza la información del proveedor" : "Completa los datos para crear el proveedor"}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={cerrarModalProveedor}
+                className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+                aria-label="Cerrar modal"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="p-6">
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="space-y-2">
+                  <label htmlFor="nombre" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-gray-500" />
+                    Nombre del Proveedor
+                  </label>
+                  <input
+                    id="nombre"
+                    type="text"
+                    name="nombre"
+                    value={form.nombre}
+                    onChange={handleChange}
+                    placeholder="Ingresa el nombre"
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    required
+                  />
+                  {errores.nombre && (
+                    <p className="text-red-500 text-sm mt-1">{errores.nombre[0]}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="nit" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-gray-500" />
+                    NIT
+                  </label>
+                  <input
+                    id="nit"
+                    type="text"
+                    name="nit"
+                    value={form.nit}
+                    onChange={handleChange}
+                    placeholder="Número de identificación"
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    required
+                  />
+                  {errores.nit && (
+                    <p className="text-red-500 text-sm mt-1">{errores.nit[0]}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="telefono" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                    <Phone className="w-4 h-4 text-gray-500" />
+                    Teléfono
+                  </label>
+                  <input
+                    id="telefono"
+                    type="text"
+                    name="telefono"
+                    value={form.telefono}
+                    onChange={handleChange}
+                    placeholder="Número de contacto"
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  />
+                  {errores.telefono && (
+                    <p className="text-red-500 text-sm mt-1">{errores.telefono[0]}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="direccion" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-gray-500" />
+                    Dirección
+                  </label>
+                  <input
+                    id="direccion"
+                    type="text"
+                    name="direccion"
+                    value={form.direccion}
+                    onChange={handleChange}
+                    placeholder="Dirección física"
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  />
+                  {errores.direccion && (
+                    <p className="text-red-500 text-sm mt-1">{errores.direccion[0]}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="correo" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                    <Mail className="w-4 h-4 text-gray-500" />
+                    Correo Electrónico
+                  </label>
+                  <input
+                    id="correo"
+                    type="email"
+                    name="correo"
+                    value={form.correo}
+                    onChange={handleChange}
+                    placeholder="email@empresa.com"
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  />
+                  {errores.correo && (
+                    <p className="text-red-500 text-sm mt-1">{errores.correo[0]}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="ciudad" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-gray-500" />
+                    Ciudad
+                  </label>
+                  <input
+                    id="ciudad"
+                    type="text"
+                    name="ciudad"
+                    value={form.ciudad}
+                    onChange={handleChange}
+                    placeholder="Ciudad de ubicación"
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  />
+                </div>
+
+                <div className="space-y-2 sm:col-span-2 lg:col-span-3">
+                  <label htmlFor="observaciones" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-gray-500" />
+                    Observaciones
+                  </label>
+                  <textarea
+                    id="observaciones"
+                    name="observaciones"
+                    value={form.observaciones}
+                    onChange={handleChange}
+                    placeholder="Información adicional del proveedor..."
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 h-24 resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  onClick={cerrarModalProveedor}
+                  className="rounded-lg border border-gray-300 px-6 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-6 py-3 rounded-lg flex items-center justify-center gap-2 transition-all duration-300 shadow-lg font-medium"
+                >
+                  <Plus className="w-5 h-5" />
+                  {form.id ? "Actualizar" : "Guardar"} Proveedor
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
       </div>
     </div>
   )

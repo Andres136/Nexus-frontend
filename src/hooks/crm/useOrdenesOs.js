@@ -32,7 +32,7 @@ const handleSubmit = async (e) => {
   e.preventDefault();
 
   setLoading(true);
-  setError(null);
+  setError({});
 
   try {
     const payload = {
@@ -56,7 +56,9 @@ const handleSubmit = async (e) => {
 
   } catch (error) {
     if (error.response?.status === 422) {
-      setError(error.response.data.errors || {});
+      const erroresBackend = error.response.data.errors || {};
+      setError(erroresBackend);
+      showToast("error", error.response.data.message || "Revisa los campos del formulario");
     } else {
       showToast("error", "Error al crear la orden");
     }
