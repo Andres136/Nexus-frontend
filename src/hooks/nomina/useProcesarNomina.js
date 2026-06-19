@@ -7,6 +7,7 @@ import { useGetContrataciones } from "./useGetContrataciones";
 import { useGetJornadaLaboral } from "./useGetJornadaLaboral";
 import { useGetNominaSummary } from "./useGetNominaSummary";
 import { useGetNominas } from "./useGetNominas";
+import { useEmpresas } from "../useEmpresas";
 
 export const CENTROS_COSTO = ["Bogotá", "Cali", "Barranquilla", "Medellín", "Girardot"];
 
@@ -73,8 +74,10 @@ export function useProcesarNomina() {
   const [openActions, setOpenActions] = useState(null);
   const [showBatch, setShowBatch] = useState(false);
   const [batchJornada, setBatchJornada] = useState("");
+  const [batchEmpresa, setBatchEmpresa] = useState("");
+  const [batchPeriodoInicio, setBatchPeriodoInicio] = useState("");
+  const [batchPeriodoFin, setBatchPeriodoFin] = useState("");
   const [batchRunning, setBatchRunning] = useState(false);
-  const [batchResults, setBatchResults] = useState([]);
   const [exportandoPlano, setExportandoPlano] = useState(false);
 
   const periodoInicio = useMemo(() => {
@@ -105,11 +108,13 @@ export function useProcesarNomina() {
   const { contrataciones, isLoading } = useGetContrataciones(contratacionParams);
   const { summary, isLoading: loadingSummary } = useGetNominaSummary(summaryParams);
   const { jornadas } = useGetJornadaLaboral();
+  const { empresas } = useEmpresas();
 
   const lista = useMemo(() => contrataciones?.data?.data ?? [], [contrataciones]);
   const meta = contrataciones?.data ?? null;
   const nominasLista = useMemo(() => nominas?.data?.data ?? [], [nominas]);
   const jornadasList = jornadas?.data?.data ?? [];
+  const empresasList = Array.isArray(empresas) ? empresas : [];
   const nominaByUser = useMemo(() => buildNominaByUser(nominasLista), [nominasLista]);
 
   const conceptos = useMemo(() => nominasLista.reduce((acc, item) => {
@@ -185,55 +190,96 @@ export function useProcesarNomina() {
     setPage(1);
   }, []);
   const toggleBatch = useCallback(() => {
-    setShowBatch((value) => !value);
-    setBatchResults([]);
-  }, []);
+    setShowBatch((value) => {
+      const nextValue = !value;
+      if (nextValue) {
+        setBatchPeriodoInicio(periodoInicio);
+        setBatchPeriodoFin(periodoFin);
+      }
+      return nextValue;
+    });
+  }, [periodoFin, periodoInicio]);
   const closeBatch = useCallback(() => {
     setShowBatch(false);
-    setBatchResults([]);
   }, []);
+
+  const batchInicioSeleccionado = batchPeriodoInicio || periodoInicio;
+  const batchFinSeleccionado = batchPeriodoFin || periodoFin;
+
+  const descargarArchivoPlano = useCallback(async ({ silentSuccess = false } = {}) => {
+    if (!batchInicioSeleccionado || !batchFinSeleccionado) {
+      showToast("error", "Selecciona el rango de fechas.");
+      return false;
+    }
+
+    setExportandoPlano(true);
+    try {
+      const response = await nominaService.exportarPlano({
+        periodo_inicio: batchInicioSeleccionado,
+        periodo_fin: batchFinSeleccionado,
+        ...(batchEmpresa ? { empresa_id: Number(batchEmpresa) } : {}),
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
+      const link = document.createElement("a");
+      link.href = url;
+      const empresaSuffix = batchEmpresa ? `_empresa_${batchEmpresa}` : "";
+      link.setAttribute("download", `nomina_liquidada_${batchInicioSeleccionado}_${batchFinSeleccionado}${empresaSuffix}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      if (!silentSuccess) showToast("success", "Excel de nómina descargado.");
+      return true;
+    } catch (error) {
+      let message = "No se pudo descargar el archivo plano.";
+      if (error.response?.data instanceof Blob) {
+        try {
+          const data = JSON.parse(await error.response.data.text());
+          message = data.message || message;
+        } catch {
+          // La respuesta no contiene un error JSON legible.
+        }
+      }
+      showToast("error", message);
+      return false;
+    } finally {
+      setExportandoPlano(false);
+    }
+  }, [batchEmpresa, batchFinSeleccionado, batchInicioSeleccionado]);
 
   const handleBatchLiquidar = useCallback(async () => {
     if (!batchJornada) {
       showToast("error", "Selecciona una jornada laboral.");
       return;
     }
-    const pendientes = lista.filter((item) => !nominaByUser[item.users_id]);
-    if (pendientes.length === 0) {
-      showToast("success", "Todos los empleados ya están liquidados.");
+    if (!batchInicioSeleccionado || !batchFinSeleccionado) {
+      showToast("error", "Selecciona el rango de fechas.");
       return;
     }
 
     setBatchRunning(true);
-    setBatchResults([]);
-    const results = [];
-    for (const item of pendientes) {
-      const nombre = item.usuario?.name ?? `Contrato #${item.id}`;
-      try {
-        const response = await nominaService.liquidar({
-          user_id: item.users_id,
-          jornada_laboral_id: Number(batchJornada),
-          periodo_inicio: periodoInicio,
-          periodo_fin: periodoFin,
-        });
-        results.push({
-          nombre,
-          status: "ok",
-          neto: response.data.data?.salario_neto,
-          advertencias: response.data.advertencias ?? [],
-        });
-      } catch (error) {
-        results.push({
-          nombre,
-          status: "error",
-          message: error.response?.data?.message ?? "Error al liquidar",
-        });
-      }
+    try {
+      const response = await nominaService.liquidarMasivo({
+        jornada_laboral_id: Number(batchJornada),
+        periodo_inicio: batchInicioSeleccionado,
+        periodo_fin: batchFinSeleccionado,
+        ...(batchEmpresa ? { empresa_id: Number(batchEmpresa) } : {}),
+      });
+      const data = response.data?.data;
+      invalidateNomina();
+      const descargado = await descargarArchivoPlano({ silentSuccess: true });
+      showToast(
+        descargado ? "success" : "warning",
+        descargado
+          ? `Liquidación procesada y archivo plano generado: ${data?.liquidadas ?? 0} liquidada(s), ${data?.omitidas ?? 0} ya existían, ${data?.errores ?? 0} error(es).`
+          : `Liquidación procesada, pero no se pudo generar el archivo plano.`
+      );
+    } catch (error) {
+      showToast("error", error.response?.data?.message ?? "Error al liquidar todos los empleados.");
+    } finally {
+      setBatchRunning(false);
     }
-    setBatchResults(results);
-    setBatchRunning(false);
-    invalidateNomina();
-  }, [batchJornada, invalidateNomina, lista, nominaByUser, periodoFin, periodoInicio]);
+  }, [batchEmpresa, batchFinSeleccionado, batchInicioSeleccionado, batchJornada, descargarArchivoPlano, invalidateNomina]);
 
   const periodoContrato = useCallback((item = {}) => {
     if (Number(item.pago_frecuencia) !== 15) return { inicio: periodoInicio, fin: periodoFin };
@@ -292,38 +338,6 @@ export function useProcesarNomina() {
     }
   }, []);
 
-  const descargarArchivoPlano = useCallback(async () => {
-    setExportandoPlano(true);
-    try {
-      const response = await nominaService.exportarPlano({
-        periodo_inicio: periodoInicio,
-        periodo_fin: periodoFin,
-      });
-      const url = window.URL.createObjectURL(new Blob([response.data], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", `nomina_liquidada_${periodoInicio}_${periodoFin}.xlsx`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-      showToast("success", "Excel de nómina descargado.");
-    } catch (error) {
-      let message = "No se pudo descargar el archivo plano.";
-      if (error.response?.data instanceof Blob) {
-        try {
-          const data = JSON.parse(await error.response.data.text());
-          message = data.message || message;
-        } catch {
-          // La respuesta no contiene un error JSON legible.
-        }
-      }
-      showToast("error", message);
-    } finally {
-      setExportandoPlano(false);
-    }
-  }, [periodoFin, periodoInicio]);
-
   const deleteMutation = useMutation({
     mutationFn: (uuid) => nominaService.deleteNomina(uuid),
     onSuccess: () => {
@@ -379,9 +393,17 @@ export function useProcesarNomina() {
     showBatch,
     batchJornada,
     setBatchJornada,
+    batchEmpresa,
+    setBatchEmpresa,
+    batchPeriodoInicio,
+    setBatchPeriodoInicio,
+    batchPeriodoFin,
+    setBatchPeriodoFin,
+    batchInicioSeleccionado,
+    batchFinSeleccionado,
     batchRunning,
-    batchResults,
     jornadasList,
+    empresasList,
     periodoInicio,
     periodoFin,
     lista,

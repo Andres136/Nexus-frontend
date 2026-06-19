@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Plus, Trash2, X } from "lucide-react";
+import { Check, Pencil, Plus, Trash2, X } from "lucide-react";
 import Select from "react-select";
 import { showToast } from "../../helpers/utils/showToast";
 import { useGetEmpleados } from "../../hooks/nomina/useGetEmpleados";
@@ -37,6 +37,8 @@ export default function PageComisiones() {
   const queryClient = useQueryClient();
   const { empleados, isLoading: loadingEmpleados } = useGetEmpleados();
   const [showForm, setShowForm] = useState(false);
+  const [editingUuid, setEditingUuid] = useState(null);
+  const [editingStatus, setEditingStatus] = useState(null);
   const [form, setForm] = useState(EMPTY);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
@@ -59,15 +61,45 @@ export default function PageComisiones() {
     queryClient.invalidateQueries({ queryKey: ["nominaSummary"] });
   };
 
-  const createMutation = useMutation({
-    mutationFn: comisionService.create,
+  const resetForm = () => {
+    setForm(EMPTY);
+    setEditingUuid(null);
+    setEditingStatus(null);
+    setShowForm(false);
+  };
+
+  const openCreate = () => {
+    setForm(EMPTY);
+    setEditingUuid(null);
+    setEditingStatus(null);
+    setShowForm(true);
+  };
+
+  const openEdit = (item) => {
+    setForm({
+      user_id: item.user_id ?? "",
+      periodo_inicio: String(item.periodo_inicio ?? "").slice(0, 10),
+      periodo_fin: String(item.periodo_fin ?? "").slice(0, 10),
+      concepto: item.concepto ?? "",
+      valor: item.valor ?? "",
+      observacion: item.observacion ?? "",
+    });
+    setEditingUuid(item.uuid);
+    setEditingStatus(item.status);
+    setShowForm(true);
+  };
+
+  const saveMutation = useMutation({
+    mutationFn: (payload) => {
+      if (editingUuid) return comisionService.update(editingUuid, payload);
+      return comisionService.create(payload);
+    },
     onSuccess: () => {
-      showToast("success", "Comisión registrada.");
-      setForm(EMPTY);
-      setShowForm(false);
+      showToast("success", editingUuid ? "Comisión actualizada." : "Comisión registrada.");
+      resetForm();
       invalidate();
     },
-    onError: (error) => showToast("error", error.response?.data?.message || "No se pudo registrar la comisión."),
+    onError: (error) => showToast("error", error.response?.data?.message || "No se pudo guardar la comisión."),
   });
 
   const actionMutation = useMutation({
@@ -85,7 +117,7 @@ export default function PageComisiones() {
 
   const submit = (event) => {
     event.preventDefault();
-    createMutation.mutate({ ...form, user_id: Number(form.user_id), valor: Number(form.valor) });
+    saveMutation.mutate({ ...form, user_id: Number(form.user_id), valor: Number(form.valor) });
   };
 
   const remove = (uuid) => {
@@ -99,15 +131,20 @@ export default function PageComisiones() {
         <div>
           <h1 className="text-xl font-semibold text-gray-800">Comisiones</h1>
           <p className="text-sm text-gray-500">Registra y aprueba comisiones salariales antes de liquidar nómina.</p>
-          <p className="text-xs text-amber-600">El período debe coincidir con el período que se liquidará.</p>
+          <p className="text-xs text-amber-600">Las comisiones aprobadas se toman si su período cruza el rango liquidado.</p>
         </div>
-        <button type="button" onClick={() => setShowForm(true)} className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700">
+        <button type="button" onClick={openCreate} className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700">
           <Plus className="h-4 w-4" /> Nueva comisión
         </button>
       </div>
 
       {showForm && (
         <form onSubmit={submit} className="mb-5 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          {editingStatus === "aplicada" && (
+            <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+              Esta comisión ya fue aplicada. La edición actualiza el registro, pero no recalcula automáticamente una nómina histórica ya liquidada.
+            </div>
+          )}
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             <Select
               options={empleados}
@@ -132,9 +169,9 @@ export default function PageComisiones() {
             <input value={form.observacion} onChange={(event) => setForm((prev) => ({ ...prev, observacion: event.target.value }))} placeholder="Observación opcional" className="h-10 self-end rounded-md border border-gray-300 px-3 text-sm" />
           </div>
           <div className="mt-4 flex justify-end gap-2">
-            <button type="button" onClick={() => setShowForm(false)} className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700">Cancelar</button>
-            <button disabled={createMutation.isPending} className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white disabled:opacity-60">
-              {createMutation.isPending ? "Guardando..." : "Guardar comisión"}
+            <button type="button" onClick={resetForm} className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700">Cancelar</button>
+            <button disabled={saveMutation.isPending} className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white disabled:opacity-60">
+              {saveMutation.isPending ? "Guardando..." : editingUuid ? "Actualizar comisión" : "Guardar comisión"}
             </button>
           </div>
         </form>
@@ -178,14 +215,17 @@ export default function PageComisiones() {
                     <td className="px-4 py-3 text-right font-semibold text-green-700">{money(item.valor)}</td>
                     <td className="px-4 py-3 text-center"><span className={`rounded-full px-2.5 py-1 text-xs font-medium ${statusClass(item.status)}`}>{item.status}</span></td>
                     <td className="px-4 py-3 text-right">
-                      {item.status === "pendiente" && (
-                        <div className="inline-flex gap-3">
+                      <div className="inline-flex items-center gap-3">
+                        <button type="button" title="Editar" onClick={() => openEdit(item)} className="text-indigo-600 hover:text-indigo-800"><Pencil className="h-4 w-4" /></button>
+                        {item.status === "pendiente" && (
+                          <>
                           <button type="button" title="Aprobar" onClick={() => actionMutation.mutate({ uuid: item.uuid, action: "aprobar" })} className="text-green-600 hover:text-green-800"><Check className="h-4 w-4" /></button>
                           <button type="button" title="Rechazar" onClick={() => actionMutation.mutate({ uuid: item.uuid, action: "rechazar" })} className="text-red-600 hover:text-red-800"><X className="h-4 w-4" /></button>
                           <button type="button" title="Eliminar" onClick={() => remove(item.uuid)} className="text-gray-400 hover:text-red-600"><Trash2 className="h-4 w-4" /></button>
-                        </div>
-                      )}
-                      {item.status === "aplicada" && item.nomina?.uuid && <span className="text-xs text-gray-400">Nómina #{item.nomina.id}</span>}
+                          </>
+                        )}
+                        {item.status === "aplicada" && item.nomina?.uuid && <span className="text-xs text-gray-400">Nómina #{item.nomina.id}</span>}
+                      </div>
                     </td>
                   </tr>
                 ))}

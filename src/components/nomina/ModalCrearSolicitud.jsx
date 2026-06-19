@@ -11,7 +11,6 @@ const CONFIG = {
       tipo: "ausencia_parcial",
       hora_inicio: "",
       hora_fin: "",
-      es_remunerado: true,
       motivo: "",
     },
   },
@@ -146,7 +145,7 @@ export default function ModalCrearSolicitud({ tipo, onClose, onSubmit, loading, 
                   <FieldError name="tipo" />
                 </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">Desde</label>
                   <input type="time" name="hora_inicio" value={form.hora_inicio} onChange={handleChange} className={fieldClass("hora_inicio")} />
@@ -157,10 +156,6 @@ export default function ModalCrearSolicitud({ tipo, onClose, onSubmit, loading, 
                   <input type="time" name="hora_fin" value={form.hora_fin} onChange={handleChange} className={fieldClass("hora_fin")} />
                   <FieldError name="hora_fin" />
                 </div>
-                <label className="flex items-center gap-2 h-10 mt-5 text-sm font-medium text-gray-700">
-                  <input type="checkbox" name="es_remunerado" checked={!!form.es_remunerado} onChange={handleChange} className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
-                  Remunerado
-                </label>
               </div>
             </>
           )}

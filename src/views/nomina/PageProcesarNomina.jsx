@@ -137,11 +137,14 @@ export default function PageProcesarNomina() {
   const {
     mes, anio, quincena, search, page, setPage, activeTab, setActiveTab,
     showLiquidarModal, setShowLiquidarModal, liquidarInitialData,
-    openActions, setOpenActions, showBatch, batchJornada, setBatchJornada,
-    batchRunning, batchResults, jornadasList, periodoInicio, periodoFin,
+    openActions, setOpenActions, batchJornada, setBatchJornada,
+    batchEmpresa, setBatchEmpresa, batchPeriodoInicio, setBatchPeriodoInicio,
+    batchPeriodoFin, setBatchPeriodoFin, batchInicioSeleccionado, batchFinSeleccionado,
+    batchRunning,
+    jornadasList, empresasList, periodoInicio, periodoFin,
     lista, meta, nominasLista, nominaByUser, conceptos, centrosCosto,
     summary, isLoading, loadingNominas, loadingSummary, deleteMutation, exportandoPlano,
-    handleMes, handleAnio, handleQuincena, handleSearch, toggleBatch, closeBatch,
+    handleMes, handleAnio, handleQuincena, handleSearch,
     handleBatchLiquidar, abrirLiquidacion, descargarDesprendible,
     enviarDesprendible, descargarArchivoPlano, eliminarNomina, estimarNominaContrato,
   } = useProcesarNomina();
@@ -212,22 +215,6 @@ export default function PageProcesarNomina() {
             </svg>
           </div>
 
-          <button
-            type="button"
-            onClick={descargarArchivoPlano}
-            disabled={exportandoPlano}
-            className="h-9 px-4 inline-flex items-center gap-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            <Download className="h-4 w-4" />
-            {exportandoPlano ? "Preparando..." : "Descargar archivo plano"}
-          </button>
-          <button
-            type="button"
-            onClick={toggleBatch}
-            className="h-9 px-4 text-sm font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-colors"
-          >
-            Liquidar todos
-          </button>
           <button
             type="button"
             onClick={() => abrirLiquidacion()}
@@ -307,21 +294,35 @@ export default function PageProcesarNomina() {
       </div>
 
       {/* Panel de liquidación en lote */}
-      {showBatch && (
         <div className="mb-6 bg-white rounded-xl border border-indigo-200 shadow-sm p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-sm font-semibold text-indigo-900">Liquidar todos los empleados pendientes</p>
+              <p className="text-sm font-semibold text-indigo-900">Liquidación masiva por empresa</p>
               <p className="text-xs text-gray-400 mt-0.5">
-                Período: {periodoInicio} / {periodoFin} &nbsp;·&nbsp;
-                {lista.filter((i) => !nominaByUser[i.users_id]).length} empleado(s) sin liquidar
+                Liquida empleados pendientes y descarga el archivo plano con los mismos filtros.
               </p>
             </div>
-            <button onClick={closeBatch}
-              className="text-gray-400 hover:text-gray-600 text-lg leading-none">✕</button>
           </div>
 
           <div className="flex flex-wrap gap-3 items-end mb-4">
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Desde</label>
+              <input
+                type="date"
+                value={batchInicioSeleccionado}
+                onChange={(e) => setBatchPeriodoInicio(e.target.value)}
+                className="h-9 px-3 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Hasta</label>
+              <input
+                type="date"
+                value={batchFinSeleccionado}
+                onChange={(e) => setBatchPeriodoFin(e.target.value)}
+                className="h-9 px-3 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Jornada laboral</label>
               <select
@@ -335,48 +336,38 @@ export default function PageProcesarNomina() {
                 ))}
               </select>
             </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Empresa</label>
+              <select
+                value={batchEmpresa}
+                onChange={(e) => setBatchEmpresa(e.target.value)}
+                className="h-9 pl-3 pr-8 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 min-w-[190px]"
+              >
+                <option value="">Todas las empresas</option>
+                {empresasList.map((empresa) => (
+                  <option key={empresa.id} value={empresa.id}>{empresa.nombre}</option>
+                ))}
+              </select>
+            </div>
             <button
               onClick={handleBatchLiquidar}
-              disabled={batchRunning || !batchJornada}
+              disabled={batchRunning || !batchJornada || !batchInicioSeleccionado || !batchFinSeleccionado}
               className="h-9 px-5 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
             >
-              {batchRunning ? "Procesando..." : "Iniciar liquidación"}
+              {batchRunning ? "Procesando..." : "Liquidar y generar plano"}
+            </button>
+            <button
+              type="button"
+              onClick={descargarArchivoPlano}
+              disabled={exportandoPlano || !batchInicioSeleccionado || !batchFinSeleccionado}
+              className="h-9 px-4 inline-flex items-center gap-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              <Download className="h-4 w-4" />
+              {exportandoPlano ? "Preparando..." : "Descargar archivo plano"}
             </button>
           </div>
 
-          {/* Resultados del lote */}
-          {batchResults.length > 0 && (
-            <div className="space-y-2 max-h-64 overflow-y-auto">
-              {batchResults.map((r, i) => (
-                <div key={i} className={`flex items-start gap-3 px-3 py-2.5 rounded-lg text-sm border ${
-                  r.status === "ok" && r.advertencias?.length === 0
-                    ? "bg-green-50 border-green-200"
-                    : r.status === "ok"
-                    ? "bg-amber-50 border-amber-200"
-                    : "bg-red-50 border-red-200"
-                }`}>
-                  <span className="text-base leading-none mt-0.5">
-                    {r.status === "ok" && r.advertencias?.length === 0 ? "✅" : r.status === "ok" ? "⚠️" : "❌"}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="font-medium text-gray-800">{r.nombre}</p>
-                    {r.status === "ok" ? (
-                      <>
-                        <p className="text-xs text-gray-500">Neto a pagar: {formatCOP(r.neto)}</p>
-                        {r.advertencias?.map((adv, j) => (
-                          <p key={j} className="text-xs text-amber-700 mt-0.5">{adv}</p>
-                        ))}
-                      </>
-                    ) : (
-                      <p className="text-xs text-red-600">{r.message}</p>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
-      )}
 
       {/* Tabs internos */}
       <div className="min-w-0 bg-white rounded-xl border border-gray-200 shadow-sm overflow-visible">

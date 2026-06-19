@@ -342,6 +342,9 @@ export const nominaService = {
   liquidar(data) {
     return apiClient.post("api/nomina/nominas/liquidar", data);
   },
+  liquidarMasivo(data) {
+    return apiClient.post("api/nomina/nominas/liquidar-masivo", data);
+  },
   exportarPlano(params = {}) {
     return apiClient.get("api/nomina/nominas/exportar-plano", {
       params,
@@ -439,6 +442,9 @@ export const comisionService = {
   },
   create(data) {
     return apiClient.post("api/nomina/comisiones", data);
+  },
+  update(uuid, data) {
+    return apiClient.put(`api/nomina/comisiones/${uuid}`, data);
   },
   aprobar(uuid, data = {}) {
     return apiClient.patch(`api/nomina/comisiones/${uuid}/aprobar`, data);

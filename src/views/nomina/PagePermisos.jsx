@@ -14,6 +14,7 @@ const STATUS_BADGE = {
 
 function ModalGestion({ item, accion, onClose, onConfirm, loading }) {
   const [observacion, setObservacion] = useState("");
+  const [esRemunerado, setEsRemunerado] = useState(true);
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
@@ -24,6 +25,19 @@ function ModalGestion({ item, accion, onClose, onConfirm, loading }) {
         <p className="text-sm text-gray-500 mb-4">
           Empleado: <span className="font-medium text-gray-700">{item?.empleado?.name ?? "—"}</span>
         </p>
+        {accion === "aprobar" && (
+          <div className="mb-4">
+            <label className="block text-xs font-medium text-gray-600 mb-1">Tratamiento en nómina</label>
+            <select
+              value={esRemunerado ? "1" : "0"}
+              onChange={(event) => setEsRemunerado(event.target.value === "1")}
+              className="w-full h-9 rounded-md border border-gray-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              <option value="1">Remunerado</option>
+              <option value="0">No remunerado</option>
+            </select>
+          </div>
+        )}
         <label className="block text-xs font-medium text-gray-600 mb-1">
           Observación <span className="text-gray-400">(opcional)</span>
         </label>
@@ -39,7 +53,7 @@ function ModalGestion({ item, accion, onClose, onConfirm, loading }) {
             Cancelar
           </button>
           <button
-            onClick={() => onConfirm(observacion)}
+            onClick={() => onConfirm({ observacion, es_remunerado: esRemunerado })}
             disabled={loading}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white rounded-md disabled:opacity-60 ${
               accion === "aprobar" ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"
@@ -77,12 +91,13 @@ export default function PagePermisos({ portalMode = false }) {
   const rawData   = portalMode ? portalQuery.data : permisos;
   const lista     = rawData?.data?.data ?? rawData?.data ?? [];
 
-  const handleGestion = async (observacion) => {
+  const handleGestion = async ({ observacion, es_remunerado }) => {
     const { item, accion } = gestion;
     setLoadingUuid(item.uuid);
     try {
       const fn = accion === "aprobar" ? permisoService.aprobar : permisoService.rechazar;
-      const res = await fn(item.uuid, { observacion });
+      const payload = accion === "aprobar" ? { observacion, es_remunerado } : { observacion };
+      const res = await fn(item.uuid, payload);
       showToast("success", res.data.message || `Permiso ${accion === "aprobar" ? "aprobado" : "rechazado"}`);
       queryClient.invalidateQueries(["permisos"]);
     } catch {
@@ -97,11 +112,7 @@ export default function PagePermisos({ portalMode = false }) {
     setCreando(true);
     try {
       const { user_id: _userId, ...payloadBase } = form;
-      const payload = {
-        ...payloadBase,
-        es_remunerado: !!form.es_remunerado,
-      };
-      const res = await permisoService.createPermiso(payload);
+      const res = await permisoService.createPermiso(payloadBase);
       showToast("success", res.data.message || "Permiso registrado");
       queryClient.invalidateQueries({ queryKey: [portalMode ? "permisos-portal" : "permisos"] });
       setCrear(false);
@@ -169,8 +180,14 @@ export default function PagePermisos({ portalMode = false }) {
                     {item.hora_inicio ? `${item.hora_inicio} – ${item.hora_fin}` : "—"}
                   </td>
                   <td className="px-4 py-3.5 text-center">
-                    <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${item.es_remunerado ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-500"}`}>
-                      {item.es_remunerado ? "Sí" : "No"}
+                    <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
+                      item.status === "pendiente"
+                        ? "bg-amber-100 text-amber-700"
+                        : item.es_remunerado
+                        ? "bg-blue-100 text-blue-700"
+                        : "bg-gray-100 text-gray-500"
+                    }`}>
+                      {item.status === "pendiente" ? "Por definir" : item.es_remunerado ? "Sí" : "No"}
                     </span>
                   </td>
                   <td className="px-4 py-3.5 text-gray-500 max-w-[180px] truncate">{item.motivo ?? "—"}</td>
