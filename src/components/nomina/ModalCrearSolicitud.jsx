@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Plus, X } from "lucide-react";
+import PropTypes from "prop-types";
+import { Loader2, Pencil, Plus, X } from "lucide-react";
 import { useGetEmpleados } from "../../hooks/nomina/useGetEmpleados";
 
 const CONFIG = {
@@ -56,16 +57,27 @@ function daysBetween(inicio, fin) {
   return Math.floor((end - start) / 86400000) + 1;
 }
 
-export default function ModalCrearSolicitud({ tipo, onClose, onSubmit, loading, defaultUserId = null }) {
+export default function ModalCrearSolicitud({
+  tipo,
+  onClose,
+  onSubmit,
+  loading,
+  defaultUserId = null,
+  initialData = null,
+}) {
   const config = CONFIG[tipo];
   const { empleados, isLoading } = useGetEmpleados();
   const [form, setForm] = useState(() => ({
     ...config.initial,
+    ...(initialData ?? {}),
     ...(defaultUserId ? { user_id: defaultUserId } : {}),
   }));
   const [errors, setErrors] = useState({});
 
-  const title = useMemo(() => config.title, [config.title]);
+  const title = useMemo(
+    () => initialData ? config.title.replace(/^Nueva?/, "Editar").replace(/^Nuevo/, "Editar") : config.title,
+    [config.title, initialData]
+  );
 
   useEffect(() => {
     if (tipo === "licencia") {
@@ -100,6 +112,9 @@ export default function ModalCrearSolicitud({ tipo, onClose, onSubmit, loading, 
     }`;
 
   const FieldError = ({ name }) => errors[name] ? <p className="mt-1 text-xs text-red-500">{errors[name][0]}</p> : null;
+  FieldError.propTypes = {
+    name: PropTypes.string.isRequired,
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -268,11 +283,24 @@ export default function ModalCrearSolicitud({ tipo, onClose, onSubmit, loading, 
             Cancelar
           </button>
           <button type="submit" disabled={loading} className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:opacity-60">
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-            Crear solicitud
+            {loading
+              ? <Loader2 className="h-4 w-4 animate-spin" />
+              : initialData
+                ? <Pencil className="h-4 w-4" />
+                : <Plus className="h-4 w-4" />}
+            {initialData ? "Guardar cambios" : "Crear solicitud"}
           </button>
         </div>
       </form>
     </div>
   );
 }
+
+ModalCrearSolicitud.propTypes = {
+  tipo: PropTypes.oneOf(Object.keys(CONFIG)).isRequired,
+  onClose: PropTypes.func.isRequired,
+  onSubmit: PropTypes.func.isRequired,
+  loading: PropTypes.bool,
+  defaultUserId: PropTypes.oneOfType([PropTypes.number, PropTypes.string, PropTypes.bool]),
+  initialData: PropTypes.object,
+};

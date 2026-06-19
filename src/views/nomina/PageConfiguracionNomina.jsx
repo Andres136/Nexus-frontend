@@ -3,7 +3,6 @@ import { ShieldCheck } from "lucide-react";
 import { useConfiguracionNominaTabs } from "../../hooks/nomina/useConfiguracionNominaTabs";
 import { useConfiguracionPorcentajes } from "../../hooks/nomina/useConfiguracionPorcentajes";
 import { useConfiguracionParametrosLaborales } from "../../hooks/nomina/useConfiguracionParametrosLaborales";
-import { useConfiguracionHorarios } from "../../hooks/nomina/useConfiguracionHorarios";
 import { useConfiguracionPuc } from "../../hooks/nomina/useConfiguracionPuc";
 import { useConfiguracionDocumentos } from "../../hooks/nomina/useConfiguracionDocumentos";
 
@@ -12,13 +11,11 @@ import ConfiguracionDocumentosTab from "../../components/nomina/configuracion/Co
 import ConfiguracionParametrosLaboralesTab from "../../components/nomina/configuracion/ConfiguracionParametrosLaboralesTab";
 import ConfiguracionPorcentajesTab from "../../components/nomina/configuracion/ConfiguracionPorcentajesTab";
 import ConfiguracionPucTab from "../../components/nomina/configuracion/ConfiguracionPucTab";
-import ConfiguracionHorariosTab from "../../components/nomina/configuracion/ConfiguracionHorariosTab";
 
 export default function PageConfiguracionNomina() {
   const tabsHook = useConfiguracionNominaTabs();
   const porcentajesHook = useConfiguracionPorcentajes();
   const parametrosLaboralesHook = useConfiguracionParametrosLaborales();
-  const horariosHook = useConfiguracionHorarios();
   const pucHook = useConfiguracionPuc();
   const documentosHook = useConfiguracionDocumentos();
 
@@ -37,8 +34,7 @@ export default function PageConfiguracionNomina() {
           </h1>
 
           <p className="text-sm text-gray-500 mt-1">
-            Organiza parámetros laborales, contabilidad, horarios y documentos
-            del módulo.
+            Organiza parámetros laborales, contabilidad y documentos del módulo.
           </p>
         </div>
 
@@ -79,9 +75,6 @@ export default function PageConfiguracionNomina() {
         <ConfiguracionPucTab {...pucHook} />
       )}
 
-      {activeConfigTab === "horarios" && (
-        <ConfiguracionHorariosTab {...horariosHook} />
-      )}
     </div>
   );
 }

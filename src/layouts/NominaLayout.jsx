@@ -165,7 +165,7 @@ const NAV_ITEMS = [
       },
     ],
 
-    
+
   },
 
 
@@ -174,24 +174,24 @@ const NAV_ITEMS = [
     label: "Asistencia",
     icon: Clock,
     tabs: [
- 
-      {
-        id: "acceso-temporal",
-        label: "Acceso Temporal",
-        icon: Clock,
-        component: <BtnAccesoTemporalKiosko />,
-      },
-      {
+   {
         id: "work-sessions",
         label: "Registro de Asistencia",
         icon: ClipboardList,
         component: <PageWorkSessions />,
       },
+
       {
         id: "reconocimiento",
         label: "Reconocimiento Facial",
         icon: ScanFace,
         component: <PageReconocimientoFacial />,
+      },
+          {
+        id: "acceso-temporal",
+        label: "Acceso Temporal",
+        icon: Clock,
+        component: <BtnAccesoTemporalKiosko />,
       },
     ],
   },

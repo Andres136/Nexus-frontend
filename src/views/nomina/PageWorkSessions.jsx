@@ -1,6 +1,15 @@
 import { useState, useMemo } from "react";
 import PropTypes from "prop-types";
-import { Search, Loader2, Clock, Calendar } from "lucide-react";
+import {
+  Search,
+  Loader2,
+  Clock,
+  Calendar,
+  CircleCheck,
+  CircleAlert,
+  Timer,
+  Users,
+} from "lucide-react";
 import { useGetWorkSessions } from "../../hooks/nomina/useGetWorkSessions";
 import { useSedes } from "../../hooks/useSedes";
 
@@ -67,6 +76,33 @@ function avatarColor(name = "") {
   for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
   return COLORS[Math.abs(h) % COLORS.length];
 }
+
+function Indicador({ label, value, detail, icon: Icon, color }) {
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+            {label}
+          </p>
+          <p className="mt-2 text-xl font-bold text-gray-900">{value}</p>
+          <p className="mt-1 text-xs text-gray-400">{detail}</p>
+        </div>
+        <div className={`rounded-full p-2.5 ${color}`}>
+          <Icon className="h-5 w-5" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+Indicador.propTypes = {
+  label: PropTypes.string.isRequired,
+  value: PropTypes.node.isRequired,
+  detail: PropTypes.string.isRequired,
+  icon: PropTypes.elementType.isRequired,
+  color: PropTypes.string.isRequired,
+};
 
 function Pagination({ meta, page, onPage }) {
   if (!meta || meta.last_page <= 1) return null;
@@ -138,10 +174,41 @@ export default function PageWorkSessions() {
     per_page: 15,
   }), [search, fechaInicio, fechaFin, sedeId, page]);
 
+  const dailyParams = useMemo(() => ({
+    fecha: today,
+    sede_id: sedeId || undefined,
+    per_page: 1000,
+  }), [sedeId, today]);
+
   const { workSessions, isLoading } = useGetWorkSessions(params);
-  console.log(workSessions);
-  const lista = workSessions?.data?.data ?? [];
+  const { workSessions: dailyWorkSessions, isLoading: loadingDaily } =
+    useGetWorkSessions(dailyParams);
+  const lista = useMemo(
+    () => workSessions?.data?.data ?? [],
+    [workSessions]
+  );
   const meta  = workSessions?.data ?? null;
+  const dailyList = useMemo(
+    () => dailyWorkSessions?.data?.data ?? [],
+    [dailyWorkSessions]
+  );
+  const dailyMeta = dailyWorkSessions?.data ?? null;
+  const resumen = useMemo(() => {
+    return dailyList.reduce((acc, item) => {
+      acc.minutosTrabajados += Number(item.minutos_trabajados ?? 0);
+      acc.minutosTardanza += Number(item.minutos_tardanza ?? 0);
+      if (Number(item.minutos_tardanza ?? 0) === 0) acc.aTiempo += 1;
+      if (Number(item.minutos_tardanza ?? 0) > 0) acc.conTardanza += 1;
+      if (item.hora_entrada && !item.hora_salida) acc.abiertas += 1;
+      return acc;
+    }, {
+      minutosTrabajados: 0,
+      minutosTardanza: 0,
+      aTiempo: 0,
+      conTardanza: 0,
+      abiertas: 0,
+    });
+  }, [dailyList]);
 
   const handleSearch     = (e) => { setSearch(e.target.value); setPage(1); };
   const handleFechaInicio = (e) => { setFechaInicio(e.target.value); setPage(1); };
@@ -156,6 +223,39 @@ export default function PageWorkSessions() {
           <h1 className="text-xl font-semibold text-gray-800">Registro de Asistencia</h1>
           <p className="text-sm text-gray-500 mt-0.5">Sesiones de trabajo registradas por el kiosko.</p>
         </div>
+      </div>
+
+
+
+      <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <Indicador
+          label="Registros de hoy"
+          value={loadingDaily ? "—" : (dailyMeta?.total ?? 0)}
+          detail={fmtFecha(today)}
+          icon={Users}
+          color="bg-blue-50 text-blue-600"
+        />
+        <Indicador
+          label="Trabajado hoy"
+          value={loadingDaily ? "—" : minsToHM(resumen.minutosTrabajados)}
+          detail="Total de todas las sesiones del día"
+          icon={Timer}
+          color="bg-indigo-50 text-indigo-600"
+        />
+        <Indicador
+          label="A tiempo hoy"
+          value={loadingDaily ? "—" : resumen.aTiempo}
+          detail={`${dailyList.length} sesiones registradas hoy`}
+          icon={CircleCheck}
+          color="bg-emerald-50 text-emerald-600"
+        />
+        <Indicador
+          label="Novedades de hoy"
+          value={loadingDaily ? "—" : resumen.abiertas + resumen.conTardanza}
+          detail={`${resumen.abiertas} abiertas · ${resumen.conTardanza} con tardanza`}
+          icon={CircleAlert}
+          color="bg-amber-50 text-amber-600"
+        />
       </div>
 
       {/* Filtros */}

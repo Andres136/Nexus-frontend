@@ -1,9 +1,12 @@
 import { useState } from "react";
 import RegisterJornadaLaboral from "../../components/nomina/RegisterJornadaLaboral";
+import ConfiguracionHorariosTab from "../../components/nomina/configuracion/ConfiguracionHorariosTab";
+import { useConfiguracionHorarios } from "../../hooks/nomina/useConfiguracionHorarios";
 import { useGetJornadaLaboral } from "../../hooks/nomina/useGetJornadaLaboral";
 
 export default function PageJornadaLaboral() {
   const { jornadas, isLoading } = useGetJornadaLaboral();
+  const configuracionHorarios = useConfiguracionHorarios();
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedUuid, setSelectedUuid] = useState(null);
 
@@ -92,6 +95,19 @@ export default function PageJornadaLaboral() {
             </tbody>
           </table>
         )}
+      </div>
+
+      <div className="mt-6">
+        <div className="mb-4">
+          <h2 className="text-lg font-semibold text-gray-800">
+            Configuración horaria
+          </h2>
+          <p className="mt-0.5 text-sm text-gray-500">
+            Define el horario base de cada jornada o aplica una excepción operativa para una fecha.
+          </p>
+        </div>
+
+        <ConfiguracionHorariosTab {...configuracionHorarios} />
       </div>
 
       {/* Modal */}

@@ -4,6 +4,8 @@ import { Clock3, Save } from "lucide-react";
 export default function ConfiguracionPorcentajesTab({
   configForm,
   loadingConfig,
+  configError,
+  configReady,
   configMutation,
   handleConfig,
   guardarConfig,
@@ -25,13 +27,19 @@ export default function ConfiguracionPorcentajesTab({
 
         <button
           type="submit"
-          disabled={loadingConfig || configMutation.isPending}
+          disabled={loadingConfig || !configReady || Boolean(configError) || configMutation.isPending}
           className="inline-flex h-10 items-center gap-2 rounded-lg bg-indigo-600 px-4 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
         >
           <Save className="h-4 w-4" />
           {configMutation.isPending ? "Guardando..." : "Guardar configuración"}
         </button>
       </div>
+
+      {configError && (
+        <div className="mx-5 mt-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          No fue posible cargar la configuración de nómina. Recarga la página antes de guardar cambios.
+        </div>
+      )}
 
       <div className="space-y-5 p-5">
         <div>
@@ -61,6 +69,7 @@ export default function ConfiguracionPorcentajesTab({
                     min="0"
                     max="100"
                     step="0.01"
+                    required
                     name={name}
                     value={configForm[name]}
                     onChange={handleConfig}
@@ -110,6 +119,7 @@ export default function ConfiguracionPorcentajesTab({
                     min="0"
                     max={max}
                     step={step}
+                    required
                     name={name}
                     value={configForm[name]}
                     onChange={handleConfig}
@@ -140,6 +150,7 @@ export default function ConfiguracionPorcentajesTab({
                   <Clock3 className="h-4 w-4 text-gray-400" />
                   <input
                     type="time"
+                    required
                     name={name}
                     value={configForm[name]}
                     onChange={handleConfig}
@@ -183,6 +194,7 @@ export default function ConfiguracionPorcentajesTab({
                     min="0"
                     max="100"
                     step={step}
+                    required
                     name={name}
                     value={configForm[name]}
                     onChange={handleConfig}
@@ -218,6 +230,8 @@ export default function ConfiguracionPorcentajesTab({
 ConfiguracionPorcentajesTab.propTypes = {
   configForm: PropTypes.object.isRequired,
   loadingConfig: PropTypes.bool,
+  configError: PropTypes.object,
+  configReady: PropTypes.bool,
   configMutation: PropTypes.shape({ isPending: PropTypes.bool }).isRequired,
   handleConfig: PropTypes.func.isRequired,
   guardarConfig: PropTypes.func.isRequired,

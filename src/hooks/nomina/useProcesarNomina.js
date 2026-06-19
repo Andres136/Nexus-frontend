@@ -28,38 +28,6 @@ function getCentroCosto(item = {}) {
   return centro ?? "Sin sede";
 }
 
-function diasPeriodo(inicio, fin) {
-  const desde = new Date(`${inicio}T00:00:00`);
-  const hasta = new Date(`${fin}T00:00:00`);
-  return Math.max(1, Math.round((hasta - desde) / 86400000) + 1);
-}
-
-function estimarContrato(item, periodoInicio, periodoFin) {
-  const dias = Math.min(30, diasPeriodo(periodoInicio, periodoFin));
-  const frecuencia = Number(item.pago_frecuencia ?? 30);
-  const salarioPeriodo = (Number(item.base_salario ?? 0) / 30) * dias;
-  const auxilioPeriodo = Number(item.auxilio_transporte ?? 0) * (dias / 30);
-  const noSalarialBase = Number(item.no_salarial ?? 0);
-  const noSalarialPeriodo = frecuencia === 15
-    ? noSalarialBase * (dias > 15 ? 2 : 1)
-    : noSalarialBase * (dias / 30);
-  const deducciones = salarioPeriodo * 0.08;
-  const devengado = salarioPeriodo + auxilioPeriodo + noSalarialPeriodo;
-
-  return {
-    devengado: Math.round(devengado),
-    deducciones: Math.round(deducciones),
-    neto: Math.round(devengado - deducciones),
-  };
-}
-
-function buildNominaByUser(nominas = []) {
-  return nominas.reduce((acc, nomina) => {
-    if (nomina?.user_id && nomina.liquidada) acc[nomina.user_id] = nomina;
-    return acc;
-  }, {});
-}
-
 export function useProcesarNomina() {
   const now = useMemo(() => new Date(), []);
   const queryClient = useQueryClient();
@@ -96,8 +64,15 @@ export function useProcesarNomina() {
     [periodoInicio, periodoFin, search, page]
   );
   const contratacionParams = useMemo(
-    () => ({ search: search || undefined, page, per_page: 10, status: 1 }),
-    [search, page]
+    () => ({
+      search: search || undefined,
+      page,
+      per_page: 10,
+      status: 1,
+      periodo_inicio: periodoInicio,
+      periodo_fin: periodoFin,
+    }),
+    [search, page, periodoInicio, periodoFin]
   );
   const summaryParams = useMemo(
     () => ({ periodo_inicio: periodoInicio, periodo_fin: periodoFin }),
@@ -115,7 +90,6 @@ export function useProcesarNomina() {
   const nominasLista = useMemo(() => nominas?.data?.data ?? [], [nominas]);
   const jornadasList = jornadas?.data?.data ?? [];
   const empresasList = Array.isArray(empresas) ? empresas : [];
-  const nominaByUser = useMemo(() => buildNominaByUser(nominasLista), [nominasLista]);
 
   const conceptos = useMemo(() => nominasLista.reduce((acc, item) => {
     acc.salario += Number(item.salario_base_devengado ?? 0);
@@ -154,7 +128,7 @@ export function useProcesarNomina() {
     lista.forEach((contrato) => {
       const centro = getCentroCosto(contrato);
       if (!base[centro]) base[centro] = { nombre: centro, empleados: 0, liquidados: 0, devengado: 0, deducciones: 0, neto: 0 };
-      const nomina = nominaByUser[contrato.users_id];
+      const nomina = contrato.nomina_periodo;
       base[centro].empleados += 1;
       if (nomina) {
         base[centro].liquidados += 1;
@@ -165,7 +139,7 @@ export function useProcesarNomina() {
     });
 
     return Object.values(base);
-  }, [lista, nominaByUser]);
+  }, [lista]);
 
   const invalidateNomina = useCallback(() => {
     queryClient.invalidateQueries(["nominas"]);
@@ -371,11 +345,6 @@ export function useProcesarNomina() {
     deleteMutation.mutate(nomina.uuid);
   }, [deleteMutation]);
 
-  const estimarNominaContrato = useCallback(
-    (item = {}) => estimarContrato(item, periodoInicio, periodoFin),
-    [periodoFin, periodoInicio]
-  );
-
   return {
     mes,
     anio,
@@ -409,7 +378,6 @@ export function useProcesarNomina() {
     lista,
     meta,
     nominasLista,
-    nominaByUser,
     conceptos,
     centrosCosto,
     summary,
@@ -430,6 +398,5 @@ export function useProcesarNomina() {
     enviarDesprendible,
     descargarArchivoPlano,
     eliminarNomina,
-    estimarNominaContrato,
   };
 }

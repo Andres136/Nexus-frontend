@@ -27,6 +27,7 @@ export function useHorasExtrasOperacion() {
   const [status, setStatus] = useState("");
   const [tipo, setTipo] = useState("");
   const [sedeId, setSedeId] = useState("");
+  const [userId, setUserId] = useState("");
   const [kioskoDeviceId, setKioskoDeviceId] = useState("");
   const [fechaDesde, setFechaDesde] = useState(firstDay);
   const [fechaHasta, setFechaHasta] = useState(today);
@@ -41,12 +42,13 @@ export function useHorasExtrasOperacion() {
     status: status || undefined,
     tipo: tipo || undefined,
     sede_id: sedeId || undefined,
+    user_id: userId || undefined,
     kiosko_device_id: kioskoDeviceId || undefined,
     fecha_desde: fechaDesde || undefined,
     fecha_hasta: fechaHasta || undefined,
     page,
     per_page: 15,
-  }), [fechaDesde, fechaHasta, kioskoDeviceId, page, search, sedeId, status, tipo]);
+  }), [fechaDesde, fechaHasta, kioskoDeviceId, page, search, sedeId, status, tipo, userId]);
 
   const { horasExtras, isLoading } = useGetHorasExtras(params);
   const { empleados, isLoading: loadingEmpleados } = useGetEmpleados({
@@ -74,6 +76,7 @@ export function useHorasExtrasOperacion() {
     status,
     tipo,
     sedeId,
+    userId,
     kioskoDeviceId,
     fechaDesde,
     fechaHasta,
@@ -83,9 +86,11 @@ export function useHorasExtrasOperacion() {
     setTipo: actualizarFiltro(setTipo),
     setSedeId: (value) => {
       setSedeId(value);
+      setUserId("");
       setKioskoDeviceId("");
       setPage(1);
     },
+    setUserId: actualizarFiltro(setUserId),
     setKioskoDeviceId: actualizarFiltro(setKioskoDeviceId),
     setFechaDesde: actualizarFiltro(setFechaDesde),
     setFechaHasta: actualizarFiltro(setFechaHasta),
@@ -101,7 +106,8 @@ export function useHorasExtrasOperacion() {
         kiosko_device_id: form.kiosko_device_id ? Number(form.kiosko_device_id) : null,
         origen: "admin",
         fecha: form.fecha,
-        horas: Number(form.horas),
+        hora_inicio: form.hora_inicio,
+        hora_fin: form.hora_fin,
         tipo: form.tipo,
         motivo: form.motivo,
       };

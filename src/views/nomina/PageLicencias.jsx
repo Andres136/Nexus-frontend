@@ -1,10 +1,13 @@
 import { useState } from "react";
+import PropTypes from "prop-types";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Baby, CheckCircle, Loader2, Search, XCircle, Plus } from "lucide-react";
+import { Baby, CheckCircle, Loader2, XCircle, Plus } from "lucide-react";
 import { useGetLicencias } from "../../hooks/nomina/useGetLicencias";
 import { licenciaService, portalEmpleadoService } from "../../services/nominaService";
 import { showToast } from "../../helpers/utils/showToast";
 import ModalCrearSolicitud from "../../components/nomina/ModalCrearSolicitud";
+import { SolicitudesFiltros, SolicitudesPaginacion } from "../../components/nomina/SolicitudesFiltros";
+import { useFiltrosSolicitudes } from "../../hooks/nomina/useFiltrosSolicitudes";
 
 const STATUS_BADGE = {
   pendiente: "bg-yellow-100 text-yellow-700",
@@ -53,9 +56,17 @@ function ModalGestion({ item, accion, onClose, onConfirm, loading }) {
   );
 }
 
+ModalGestion.propTypes = {
+  item: PropTypes.shape({ empleado: PropTypes.shape({ name: PropTypes.string }) }),
+  accion: PropTypes.string.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onConfirm: PropTypes.func.isRequired,
+  loading: PropTypes.bool,
+};
+
 export default function PageLicencias({ portalMode = false }) {
   const queryClient = useQueryClient();
-  const [search, setSearch] = useState("");
+  const filtros = useFiltrosSolicitudes();
   const [gestion, setGestion] = useState(null);
   const [crear, setCrear] = useState(false);
   const [creando, setCreando] = useState(false);
@@ -69,12 +80,13 @@ export default function PageLicencias({ portalMode = false }) {
   });
 
   const { licencias, isLoading: isLoadingAdmin } = useGetLicencias(
-    portalMode ? { enabled: false } : { search: search || undefined }
+    portalMode ? { enabled: false } : filtros.params
   );
 
   const isLoading = portalMode ? portalQuery.isLoading : isLoadingAdmin;
   const rawData   = portalMode ? portalQuery.data : licencias;
   const lista     = rawData?.data?.data ?? rawData?.data ?? [];
+  const meta      = rawData?.data?.data ? rawData.data : null;
 
   const handleGestion = async (observacion) => {
     const { item, accion } = gestion;
@@ -126,23 +138,25 @@ export default function PageLicencias({ portalMode = false }) {
           <p className="text-sm text-gray-500 mt-0.5">Gestiona licencias de maternidad y paternidad.</p>
         </div>
         <div className="flex items-center gap-2">
-          {!portalMode && (
-            <div className="relative">
-              <Search className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Buscar empleado..."
-                className="pl-9 pr-4 h-9 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 w-56"
-              />
-            </div>
-          )}
           <button onClick={() => setCrear(true)} className="inline-flex items-center gap-2 h-9 px-3 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700">
             <Plus className="h-4 w-4" /> Nueva
           </button>
         </div>
       </div>
+
+      {!portalMode && (
+        <SolicitudesFiltros
+          filtros={filtros}
+          empleados={filtros.empleados}
+          sedes={filtros.sedes}
+          estados={[
+            { value: "pendiente", label: "Pendiente" },
+            { value: "aprobada", label: "Aprobada" },
+            { value: "rechazada", label: "Rechazada" },
+          ]}
+          total={meta?.total}
+        />
+      )}
 
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         {isLoading ? (
@@ -155,7 +169,7 @@ export default function PageLicencias({ portalMode = false }) {
           <table className="min-w-full divide-y divide-gray-100 text-sm">
             <thead className="bg-gray-50">
               <tr>
-                {[...["Empleado", "Tipo", "Inicio", "Fin", "Días", "Estado", "Autorizado por"], ...(!portalMode ? ["Acciones"] : [])].map((h) => (
+                {[...["Empleado", "Sede", "Tipo", "Inicio", "Fin", "Días", "Estado", "Autorizado por"], ...(!portalMode ? ["Acciones"] : [])].map((h) => (
                   <th key={h} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
                 ))}
               </tr>
@@ -164,6 +178,7 @@ export default function PageLicencias({ portalMode = false }) {
               {lista.map((item) => (
                 <tr key={item.uuid} className="hover:bg-gray-50 transition-colors">
                   <td className="px-4 py-3.5 font-medium text-gray-800 whitespace-nowrap">{item.empleado?.name ?? "-"}</td>
+                  <td className="px-4 py-3.5 text-gray-500 whitespace-nowrap">{item.empleado?.sede?.nombre ?? "—"}</td>
                   <td className="px-4 py-3.5 text-gray-600 capitalize">
                     <span className="inline-flex items-center gap-1.5">
                       <Baby className="h-3.5 w-3.5 text-indigo-500" /> {item.tipo ?? "-"}
@@ -199,6 +214,7 @@ export default function PageLicencias({ portalMode = false }) {
             </tbody>
           </table>
         )}
+        {!portalMode && <SolicitudesPaginacion meta={meta} page={filtros.values.page} onPage={filtros.actions.setPage} />}
       </div>
 
       {gestion && (
@@ -222,3 +238,7 @@ export default function PageLicencias({ portalMode = false }) {
     </div>
   );
 }
+
+PageLicencias.propTypes = {
+  portalMode: PropTypes.bool,
+};

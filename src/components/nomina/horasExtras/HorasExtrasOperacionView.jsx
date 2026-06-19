@@ -71,6 +71,17 @@ export default function HorasExtrasOperacionView() {
         </div>
 
         <select
+          value={filtros.userId}
+          onChange={(event) => filtros.setUserId(event.target.value)}
+          className="h-9 max-w-64 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        >
+          <option value="">Todos los empleados</option>
+          {empleados.map((empleado) => (
+            <option key={empleado.value} value={empleado.value}>{empleado.label}</option>
+          ))}
+        </select>
+
+        <select
           value={filtros.sedeId}
           onChange={(event) => filtros.setSedeId(event.target.value)}
           className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"

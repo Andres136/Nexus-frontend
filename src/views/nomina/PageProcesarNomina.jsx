@@ -15,6 +15,15 @@ function formatCOP(value) {
   return "$ " + Number(value).toLocaleString("es-CO", { maximumFractionDigits: 0 });
 }
 
+function formatFechaPeriodo(value) {
+  if (!value) return "—";
+
+  const [year, month, day] = String(value).slice(0, 10).split("-");
+  if (!year || !month || !day) return "—";
+
+  return `${day}/${month}/${year}`;
+}
+
 function getInitials(name = "") {
   return name
     .split(" ")
@@ -138,15 +147,15 @@ export default function PageProcesarNomina() {
     mes, anio, quincena, search, page, setPage, activeTab, setActiveTab,
     showLiquidarModal, setShowLiquidarModal, liquidarInitialData,
     openActions, setOpenActions, batchJornada, setBatchJornada,
-    batchEmpresa, setBatchEmpresa, batchPeriodoInicio, setBatchPeriodoInicio,
-    batchPeriodoFin, setBatchPeriodoFin, batchInicioSeleccionado, batchFinSeleccionado,
+    batchEmpresa, setBatchEmpresa, setBatchPeriodoInicio, setBatchPeriodoFin,
+    batchInicioSeleccionado, batchFinSeleccionado,
     batchRunning,
-    jornadasList, empresasList, periodoInicio, periodoFin,
-    lista, meta, nominasLista, nominaByUser, conceptos, centrosCosto,
+    jornadasList, empresasList,
+    lista, meta, nominasLista, conceptos, centrosCosto,
     summary, isLoading, loadingNominas, loadingSummary, deleteMutation, exportandoPlano,
     handleMes, handleAnio, handleQuincena, handleSearch,
     handleBatchLiquidar, abrirLiquidacion, descargarDesprendible,
-    enviarDesprendible, descargarArchivoPlano, eliminarNomina, estimarNominaContrato,
+    enviarDesprendible, descargarArchivoPlano, eliminarNomina,
   } = useProcesarNomina();
 
   const TABS = [
@@ -177,53 +186,7 @@ export default function PageProcesarNomina() {
 
   return (
     <div className="w-full min-w-0 max-w-full overflow-hidden box-border p-4 sm:p-6">
-      {/* Encabezado */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between mb-6">
-      
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Selector de período */}
-          <div className="flex items-center gap-1 border border-gray-200 rounded-lg bg-white px-3 h-9 shadow-sm">
-            <select
-              value={mes}
-              onChange={handleMes}
-              className="text-sm text-gray-700 bg-transparent border-none outline-none pr-1 cursor-pointer"
-            >
-              {MESES.map((m, i) => (
-                <option key={i} value={i}>{m}</option>
-              ))}
-            </select>
-            <select
-              value={anio}
-              onChange={handleAnio}
-              className="text-sm text-gray-700 bg-transparent border-none outline-none cursor-pointer"
-            >
-              {YEARS.map((y) => (
-                <option key={y} value={y}>{y}</option>
-              ))}
-            </select>
-            <select
-              value={quincena}
-              onChange={handleQuincena}
-              className="text-sm text-gray-700 bg-transparent border-none outline-none cursor-pointer ml-1"
-            >
-              <option value="0">Mes completo</option>
-              <option value="1">1ª quincena</option>
-              <option value="2">2ª quincena</option>
-            </select>
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-          </div>
 
-          <button
-            type="button"
-            onClick={() => abrirLiquidacion()}
-            className="h-9 px-4 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
-          >
-            Liquidar Nómina
-          </button>
-        </div>
-      </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-4 mb-6">
@@ -461,10 +424,7 @@ export default function PageProcesarNomina() {
                     const cargo     = item.cargo ?? "—";
                     const tipoDoc   = item.tipo_documento ?? "CC";
                     const numDoc    = item.numero_documento ?? "";
-                    const estimado  = estimarNominaContrato(item);
-
-                    // ¿ya tiene nómina liquidada en este período?
-                    const nominaExiste = nominaByUser[item.users_id];
+                    const nominaExiste = item.nomina_periodo;
 
                     return (
                       <tr key={item.uuid} className="hover:bg-gray-50 transition-colors">
@@ -484,13 +444,13 @@ export default function PageProcesarNomina() {
                         </td>
                         <td className="px-4 py-3.5 text-gray-600">{cargo}</td>
                         <td className="px-4 py-3.5 text-right text-gray-700 font-medium">
-                          {nominaExiste ? formatCOP(nominaExiste.total_devengado) : formatCOP(estimado.devengado)}
+                          {nominaExiste ? formatCOP(nominaExiste.total_devengado) : "—"}
                         </td>
                         <td className="px-4 py-3.5 text-right text-orange-600 font-medium">
-                          {nominaExiste ? formatCOP(nominaExiste.total_deducciones) : formatCOP(estimado.deducciones)}
+                          {nominaExiste ? formatCOP(nominaExiste.total_deducciones) : "—"}
                         </td>
                         <td className="px-4 py-3.5 text-right text-green-600 font-semibold">
-                          {nominaExiste ? formatCOP(nominaExiste.salario_neto) : formatCOP(estimado.neto)}
+                          {nominaExiste ? formatCOP(nominaExiste.salario_neto) : "—"}
                         </td>
                         <td className="px-4 py-3.5 text-center">
                           {nominaExiste ? (
@@ -618,9 +578,12 @@ export default function PageProcesarNomina() {
                       <td className="px-4 py-3.5">
                         <p className="font-medium text-gray-800">{item.empleado?.name ?? "—"}</p>
                         <p className="text-xs text-gray-400">{item.contratacion?.cargo ?? "—"}</p>
+                        <p className="text-xs text-gray-400">
+                          Liquidó: {item.liquidador?.name ?? "—"}
+                        </p>
                       </td>
                       <td className="px-4 py-3.5 text-gray-600">
-                        {item.periodo_inicio} / {item.periodo_fin}
+                        {formatFechaPeriodo(item.periodo_inicio)} – {formatFechaPeriodo(item.periodo_fin)}
                       </td>
                       <td className="px-4 py-3.5 text-right font-medium text-gray-700">{formatCOP(item.total_devengado)}</td>
                       <td className="px-4 py-3.5 text-right font-medium text-orange-600">{formatCOP(item.total_deducciones)}</td>

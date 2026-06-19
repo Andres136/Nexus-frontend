@@ -25,6 +25,15 @@ export const useLiquidarNomina = ({ onSuccess, initialData = {} } = {}) => {
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [observacionRevision, setObservacionRevision] = useState("");
+  const [ajusteForm, setAjusteForm] = useState({
+    tipo: "devengo",
+    concepto: "",
+    valor: "",
+    afecta_base_aportes: false,
+    motivo: "",
+  });
 
   const { empleados, isLoading: loadingEmpleados } = useGetEmpleados();
   const { jornadas, isLoading: loadingJornadas } = useGetJornadaLaboral();
@@ -38,6 +47,14 @@ export const useLiquidarNomina = ({ onSuccess, initialData = {} } = {}) => {
   const handleSelectEmpleado = (option) => {
     setFormData((prev) => ({ ...prev, user_id: option ? option.value : "" }));
     setPreview(null);
+  };
+
+  const handleAjusteChange = (event) => {
+    const { name, value, type, checked } = event.target;
+    setAjusteForm((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
   };
 
   const buildPayload = () => {
@@ -84,9 +101,14 @@ export const useLiquidarNomina = ({ onSuccess, initialData = {} } = {}) => {
     setLoading(true);
     setFieldErrors({});
     try {
+      if (formData.tipo_liquidacion !== "retiro" && preview?.estado_preliquidacion !== "aprobada") {
+        showToast("warning", "Debes aprobar la preliquidación antes de liquidar.");
+        return;
+      }
+
       const response = formData.tipo_liquidacion === "retiro"
         ? await nominaService.liquidarRetiro(buildPayload())
-        : await nominaService.liquidar(buildPayload());
+        : await nominaService.liquidarPreliquidacion(preview.preliquidacion_uuid);
 
       const advs = response.data.advertencias ?? [];
       if (advs.length > 0) {
@@ -110,6 +132,90 @@ export const useLiquidarNomina = ({ onSuccess, initialData = {} } = {}) => {
     }
   };
 
+  const actualizarPreview = (response) => {
+    setPreview(response.data.data);
+    return response.data.data;
+  };
+
+  const agregarAjuste = async () => {
+    if (!preview?.preliquidacion_uuid) {
+      showToast("warning", "Primero genera la preliquidación.");
+      return;
+    }
+
+    setAuditLoading(true);
+    try {
+      const response = await nominaService.agregarAjustePreliquidacion(
+        preview.preliquidacion_uuid,
+        {
+          ...ajusteForm,
+          valor: Number(ajusteForm.valor),
+        }
+      );
+      actualizarPreview(response);
+      setAjusteForm({
+        tipo: "devengo",
+        concepto: "",
+        valor: "",
+        afecta_base_aportes: false,
+        motivo: "",
+      });
+      showToast("success", response.data.message);
+    } catch (error) {
+      showToast("error", error.response?.data?.message || "No se pudo agregar el ajuste.");
+    } finally {
+      setAuditLoading(false);
+    }
+  };
+
+  const eliminarAjuste = async (ajusteUuid) => {
+    setAuditLoading(true);
+    try {
+      const response = await nominaService.eliminarAjustePreliquidacion(
+        preview.preliquidacion_uuid,
+        ajusteUuid
+      );
+      actualizarPreview(response);
+      showToast("success", response.data.message);
+    } catch (error) {
+      showToast("error", error.response?.data?.message || "No se pudo eliminar el ajuste.");
+    } finally {
+      setAuditLoading(false);
+    }
+  };
+
+  const enviarRevision = async () => {
+    setAuditLoading(true);
+    try {
+      const response = await nominaService.enviarRevisionPreliquidacion(
+        preview.preliquidacion_uuid,
+        { observacion: observacionRevision || undefined }
+      );
+      actualizarPreview(response);
+      showToast("success", response.data.message);
+    } catch (error) {
+      showToast("error", error.response?.data?.message || "No se pudo enviar a revisión.");
+    } finally {
+      setAuditLoading(false);
+    }
+  };
+
+  const aprobarPreliquidacion = async () => {
+    setAuditLoading(true);
+    try {
+      const response = await nominaService.aprobarPreliquidacion(
+        preview.preliquidacion_uuid,
+        { observacion: observacionRevision || undefined }
+      );
+      actualizarPreview(response);
+      showToast("success", response.data.message);
+    } catch (error) {
+      showToast("error", error.response?.data?.message || "No se pudo aprobar.");
+    } finally {
+      setAuditLoading(false);
+    }
+  };
+
   return {
     formData,
     handleChange,
@@ -120,6 +226,15 @@ export const useLiquidarNomina = ({ onSuccess, initialData = {} } = {}) => {
     loading,
     preview,
     previewLoading,
+    auditLoading,
+    ajusteForm,
+    observacionRevision,
+    setObservacionRevision,
+    handleAjusteChange,
+    agregarAjuste,
+    eliminarAjuste,
+    enviarRevision,
+    aprobarPreliquidacion,
     empleados,
     loadingEmpleados,
     jornadas: jornadas?.data?.data ?? [],

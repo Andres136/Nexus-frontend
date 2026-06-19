@@ -38,6 +38,15 @@ export default function ModalLiquidarNomina({ onClose, initialData = {} }) {
     loading,
     preview,
     previewLoading,
+    auditLoading,
+    ajusteForm,
+    observacionRevision,
+    setObservacionRevision,
+    handleAjusteChange,
+    agregarAjuste,
+    eliminarAjuste,
+    enviarRevision,
+    aprobarPreliquidacion,
     empleados,
     loadingEmpleados,
     jornadas,
@@ -294,9 +303,14 @@ export default function ModalLiquidarNomina({ onClose, initialData = {} }) {
         {preview && formData.tipo_liquidacion !== "retiro" && (
           <div className="space-y-4 rounded-lg border border-indigo-100 bg-indigo-50 p-4">
             <div>
-              <p className="text-sm font-semibold text-indigo-900">Vista previa de liquidación</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-sm font-semibold text-indigo-900">Preliquidación auditable</p>
+                <span className="rounded-full bg-white px-2 py-0.5 text-xs font-semibold text-indigo-700">
+                  {preview.estado_preliquidacion ?? "borrador"}
+                </span>
+              </div>
               <p className="mt-1 text-xs text-indigo-600">
-                Revisa empleado, período, jornada y valores antes de liquidar.
+                El cálculo original se conserva; cualquier corrección queda registrada como ajuste.
               </p>
             </div>
             {preview.advertencias?.length > 0 && (
@@ -376,6 +390,151 @@ export default function ModalLiquidarNomina({ onClose, initialData = {} }) {
                 <p className="text-xs text-indigo-500">Valor hora</p>
                 <p className="font-semibold text-gray-900">{formatCOP(preview.valor_hora_normal)}</p>
               </div>
+            </div>
+
+            <div className="rounded-md border border-indigo-100 bg-white p-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-indigo-500">
+                    Trazabilidad
+                  </p>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Generó: {preview.generado_por?.name ?? "—"} · Revisó: {preview.revisado_por?.name ?? "Pendiente"} · Aprobó: {preview.aprobado_por?.name ?? "Pendiente"}
+                  </p>
+                </div>
+                <div className="text-right text-xs text-gray-500">
+                  <p>Original neto: {formatCOP(preview.calculo_original?.salario_neto)}</p>
+                  <p className="font-semibold text-indigo-700">
+                    Neto revisado: {formatCOP(preview.salario_neto)}
+                  </p>
+                </div>
+              </div>
+
+              {(preview.ajustes_revision ?? []).length > 0 && (
+                <div className="mt-3 space-y-2">
+                  {preview.ajustes_revision.map((ajuste) => (
+                    <div
+                      key={ajuste.uuid}
+                      className="flex flex-col gap-2 rounded-md border border-gray-100 bg-gray-50 px-3 py-2 text-xs sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <div>
+                        <p className="font-semibold text-gray-800">
+                          {ajuste.tipo === "devengo" ? "+" : "−"} {ajuste.concepto}: {formatCOP(ajuste.valor)}
+                        </p>
+                        <p className="text-gray-500">
+                          {ajuste.motivo}
+                          {ajuste.afecta_base_aportes ? " · Afecta base de aportes" : ""}
+                          {ajuste.creador?.name ? ` · ${ajuste.creador.name}` : ""}
+                        </p>
+                      </div>
+                      {["borrador", "en_revision"].includes(preview.estado_preliquidacion) && (
+                        <button
+                          type="button"
+                          disabled={auditLoading}
+                          onClick={() => eliminarAjuste(ajuste.uuid)}
+                          className="text-red-600 hover:text-red-700 disabled:opacity-50"
+                        >
+                          Eliminar
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {["borrador", "en_revision"].includes(preview.estado_preliquidacion) && (
+                <div className="mt-4 border-t border-gray-100 pt-3">
+                  <p className="mb-2 text-xs font-semibold text-gray-700">Registrar corrección</p>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <select
+                      name="tipo"
+                      value={ajusteForm.tipo}
+                      onChange={handleAjusteChange}
+                      className="h-9 rounded-md border border-gray-300 px-2 text-sm"
+                    >
+                      <option value="devengo">Devengo</option>
+                      <option value="deduccion">Deducción</option>
+                    </select>
+                    <input
+                      name="concepto"
+                      value={ajusteForm.concepto}
+                      onChange={handleAjusteChange}
+                      placeholder="Concepto del ajuste"
+                      className="h-9 rounded-md border border-gray-300 px-3 text-sm"
+                    />
+                    <input
+                      type="number"
+                      min="0.01"
+                      step="0.01"
+                      name="valor"
+                      value={ajusteForm.valor}
+                      onChange={handleAjusteChange}
+                      placeholder="Valor"
+                      className="h-9 rounded-md border border-gray-300 px-3 text-sm"
+                    />
+                    <input
+                      name="motivo"
+                      value={ajusteForm.motivo}
+                      onChange={handleAjusteChange}
+                      placeholder="Motivo obligatorio"
+                      className="h-9 rounded-md border border-gray-300 px-3 text-sm"
+                    />
+                  </div>
+                  {ajusteForm.tipo === "devengo" && (
+                    <label className="mt-2 flex items-center gap-2 text-xs text-gray-600">
+                      <input
+                        type="checkbox"
+                        name="afecta_base_aportes"
+                        checked={ajusteForm.afecta_base_aportes}
+                        onChange={handleAjusteChange}
+                      />
+                      Este devengo afecta la base de aportes del empleador
+                    </label>
+                  )}
+                  <button
+                    type="button"
+                    onClick={agregarAjuste}
+                    disabled={auditLoading || !ajusteForm.concepto || !ajusteForm.valor || !ajusteForm.motivo}
+                    className="mt-3 rounded-md bg-gray-800 px-3 py-2 text-xs font-semibold text-white hover:bg-gray-900 disabled:opacity-50"
+                  >
+                    Agregar ajuste
+                  </button>
+                </div>
+              )}
+
+              {preview.estado_preliquidacion !== "aprobada" && (
+                <div className="mt-4 border-t border-gray-100 pt-3">
+                  <textarea
+                    value={observacionRevision}
+                    onChange={(event) => setObservacionRevision(event.target.value)}
+                    placeholder="Observación de revisión (opcional)"
+                    rows={2}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                  />
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {preview.estado_preliquidacion === "borrador" && (
+                      <button
+                        type="button"
+                        onClick={enviarRevision}
+                        disabled={auditLoading}
+                        className="rounded-md border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-semibold text-indigo-700 disabled:opacity-50"
+                      >
+                        Marcar en revisión
+                      </button>
+                    )}
+                    {["borrador", "en_revision"].includes(preview.estado_preliquidacion) && (
+                      <button
+                        type="button"
+                        onClick={aprobarPreliquidacion}
+                        disabled={auditLoading}
+                        className="rounded-md bg-emerald-600 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"
+                      >
+                        Aprobar preliquidación
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="grid gap-3 text-sm lg:grid-cols-2">
@@ -555,7 +714,13 @@ export default function ModalLiquidarNomina({ onClose, initialData = {} }) {
           </button>
           <button
             type="submit"
-            disabled={loading}
+            disabled={
+              loading
+              || (
+                formData.tipo_liquidacion !== "retiro"
+                && preview?.estado_preliquidacion !== "aprobada"
+              )
+            }
             className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
           >
             {loading ? (
@@ -566,7 +731,11 @@ export default function ModalLiquidarNomina({ onClose, initialData = {} }) {
                 </svg>
                 Procesando...
               </>
-            ) : formData.tipo_liquidacion === "retiro" ? "Liquidar Retiro" : "Liquidar Nómina"}
+            ) : formData.tipo_liquidacion === "retiro"
+              ? "Liquidar Retiro"
+              : preview?.estado_preliquidacion === "aprobada"
+                ? "Liquidar versión aprobada"
+                : "Pendiente de aprobación"}
           </button>
         </div>
       </form>

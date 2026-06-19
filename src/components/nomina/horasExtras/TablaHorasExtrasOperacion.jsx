@@ -14,6 +14,14 @@ const TIPO_LABEL = {
   nocturna_festiva: "Nocturna festiva",
 };
 
+function formatHora(value) {
+  if (!value) return "—";
+  const [hour, minute] = String(value).slice(0, 5).split(":");
+  const numericHour = Number(hour);
+  const suffix = numericHour >= 12 ? "p. m." : "a. m.";
+  return `${String(numericHour % 12 || 12).padStart(2, "0")}:${minute} ${suffix}`;
+}
+
 export default function TablaHorasExtrasOperacion({ lista, isLoading, loadingUuid, onGestion }) {
   if (isLoading) {
     return (
@@ -31,7 +39,7 @@ export default function TablaHorasExtrasOperacion({ lista, isLoading, loadingUui
     <table className="min-w-full divide-y divide-gray-100 text-sm">
       <thead className="bg-gray-50">
         <tr>
-          {["Empleado", "Sede", "Kiosko", "Fecha", "Tipo", "Horas", "Estado", "Solicitó", "Gestionó", "Acciones"].map((header) => (
+          {["Empleado", "Sede", "Fecha", "Desde", "Hasta", "Tipo", "Horas", "Estado", "Solicitó", "Aprobó", "Acciones"].map((header) => (
             <th key={header} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">{header}</th>
           ))}
         </tr>
@@ -40,9 +48,10 @@ export default function TablaHorasExtrasOperacion({ lista, isLoading, loadingUui
         {lista.map((item) => (
           <tr key={item.uuid} className="hover:bg-gray-50 transition-colors">
             <td className="px-4 py-3.5 font-medium text-gray-800 whitespace-nowrap">{item.empleado?.name ?? "-"}</td>
-            <td className="px-4 py-3.5 text-gray-600 whitespace-nowrap">{item.sede?.nombre ?? "-"}</td>
-            <td className="px-4 py-3.5 text-gray-600 whitespace-nowrap">{item.kiosko?.name ?? item.kiosko?.code ?? "Global"}</td>
+            <td className="px-4 py-3.5 text-gray-600 whitespace-nowrap">{item.sede?.nombre ?? item.empleado?.sede?.nombre ?? "-"}</td>
             <td className="px-4 py-3.5 text-gray-600 whitespace-nowrap">{item.fecha?.slice(0, 10) ?? "-"}</td>
+            <td className="px-4 py-3.5 text-gray-600 whitespace-nowrap">{formatHora(item.hora_inicio)}</td>
+            <td className="px-4 py-3.5 text-gray-600 whitespace-nowrap">{formatHora(item.hora_fin)}</td>
             <td className="px-4 py-3.5 text-gray-600 whitespace-nowrap">
               <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700">
                 {TIPO_LABEL[item.tipo] ?? item.tipo ?? "-"}

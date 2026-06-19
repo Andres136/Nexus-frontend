@@ -41,6 +41,7 @@ export default function ModalLiquidarPrestacion({ onClose }) {
     formData,
     handleChange,
     handleSelectEmpleado,
+    handleSelectVacacion,
     handlePreview,
     handleSubmit,
     fieldErrors,
@@ -50,6 +51,8 @@ export default function ModalLiquidarPrestacion({ onClose }) {
     empleadoOptions,
     empleadoSeleccionado,
     loadingEmpleados,
+    vacacionesAprobadas,
+    loadingVacaciones,
     tipos,
   } = useLiquidarPrestacion({ onSuccess: onClose });
 
@@ -117,6 +120,40 @@ export default function ModalLiquidarPrestacion({ onClose }) {
           )}
         </div>
 
+        {formData.tipo === "vacaciones_compensadas" && formData.user_id && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Solicitud de vacaciones aprobada <span className="text-red-500">*</span>
+            </label>
+            <select
+              name="vacacion_uuid"
+              value={formData.vacacion_uuid}
+              onChange={handleSelectVacacion}
+              disabled={loadingVacaciones}
+              className={inputCls("vacacion_uuid")}
+            >
+              <option value="">
+                {loadingVacaciones ? "Consultando vacaciones..." : "Seleccione una solicitud"}
+              </option>
+              {vacacionesAprobadas.map((vacacion) => (
+                <option key={vacacion.uuid} value={vacacion.uuid}>
+                  {fmtDate(vacacion.fecha_inicio)} / {fmtDate(vacacion.fecha_fin)}
+                  {" · "}{vacacion.dias_habiles} días
+                  {vacacion.motivo ? ` · ${vacacion.motivo}` : ""}
+                </option>
+              ))}
+            </select>
+            {fieldErrors.vacacion_uuid && (
+              <p className="mt-1 text-xs text-red-500">{fieldErrors.vacacion_uuid[0]}</p>
+            )}
+            {!loadingVacaciones && vacacionesAprobadas.length === 0 && (
+              <p className="mt-1 text-xs text-amber-600">
+                El empleado no tiene vacaciones compensadas aprobadas pendientes de liquidar.
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Período */}
         <div className="grid grid-cols-2 gap-3">
           <div>
@@ -128,6 +165,7 @@ export default function ModalLiquidarPrestacion({ onClose }) {
               name="periodo_inicio"
               value={formData.periodo_inicio}
               onChange={handleChange}
+              readOnly={formData.tipo === "vacaciones_compensadas"}
               className={inputCls("periodo_inicio")}
             />
             {fieldErrors.periodo_inicio && (
@@ -143,6 +181,7 @@ export default function ModalLiquidarPrestacion({ onClose }) {
               name="periodo_fin"
               value={formData.periodo_fin}
               onChange={handleChange}
+              readOnly={formData.tipo === "vacaciones_compensadas"}
               className={inputCls("periodo_fin")}
             />
             {fieldErrors.periodo_fin && (
@@ -224,8 +263,12 @@ export default function ModalLiquidarPrestacion({ onClose }) {
                     </div>
                   )}
                   <div className="flex justify-between gap-3 border-t border-dashed border-gray-200 pt-1.5">
-                    <span className="text-gray-500">Días pendientes a compensar</span>
+                    <span className="text-gray-500">Días de la solicitud aprobada</span>
                     <span className="font-semibold">{Number(preview.dias_vacaciones ?? 0).toFixed(4)} días</span>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <span className="text-gray-500">Días disponibles antes de liquidar</span>
+                    <span className="font-medium">{Number(preview.dias_disponibles ?? 0).toFixed(4)} días</span>
                   </div>
                   <div className="flex justify-between gap-3">
                     <span className="text-gray-500">Valor vacaciones compensadas</span>
@@ -269,7 +312,9 @@ export default function ModalLiquidarPrestacion({ onClose }) {
           <button
             type="button"
             onClick={handlePreview}
-            disabled={previewLoading || loading}
+            disabled={previewLoading || loading || (
+              formData.tipo === "vacaciones_compensadas" && !formData.vacacion_uuid
+            )}
             className="px-4 py-2 text-sm font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-md hover:bg-indigo-100 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
           >
             {previewLoading ? "Calculando..." : "Preliquidar"}

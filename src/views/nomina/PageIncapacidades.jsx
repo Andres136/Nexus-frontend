@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
+import PropTypes from "prop-types";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as pdfjs from "pdfjs-dist";
 import RegisterIncapacidad from "../../components/nomina/RegisterIncapacidad";
 import { useGetIncapacidades } from "../../hooks/nomina/useGetIncapacidades";
 import { incapacidadService, portalEmpleadoService } from "../../services/nominaService";
 import { showToast } from "../../helpers/utils/showToast";
+import { SolicitudesFiltros, SolicitudesPaginacion } from "../../components/nomina/SolicitudesFiltros";
+import { useFiltrosSolicitudes } from "../../hooks/nomina/useFiltrosSolicitudes";
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.mjs",
@@ -13,6 +16,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 
 export default function PageIncapacidades({ portalMode = false }) {
   const queryClient = useQueryClient();
+  const filtros = useFiltrosSolicitudes({ estadoKey: "estado_revision" });
 
   const portalQuery = useQuery({
     queryKey: ["incapacidades-portal"],
@@ -22,12 +26,13 @@ export default function PageIncapacidades({ portalMode = false }) {
   });
 
   const { incapacidades, isLoading: isLoadingAdmin } = useGetIncapacidades(
-    portalMode ? { enabled: false } : {}
+    portalMode ? { enabled: false } : filtros.params
   );
 
   const isLoading = portalMode ? portalQuery.isLoading : isLoadingAdmin;
   const rawData   = portalMode ? portalQuery.data : incapacidades;
   const lista = rawData?.data?.data ?? rawData?.data ?? [];
+  const meta = rawData?.data?.data ? rawData.data : null;
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedUuid, setSelectedUuid] = useState(null);
   const [revisando, setRevisando] = useState(null);
@@ -251,6 +256,20 @@ export default function PageIncapacidades({ portalMode = false }) {
         </button>
       </div>
 
+      {!portalMode && (
+        <SolicitudesFiltros
+          filtros={filtros}
+          empleados={filtros.empleados}
+          sedes={filtros.sedes}
+          estados={[
+            { value: "pendiente", label: "Pendiente" },
+            { value: "aprobada", label: "Aprobada" },
+            { value: "rechazada", label: "Rechazada" },
+          ]}
+          total={meta?.total}
+        />
+      )}
+
       {/* Tabla */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         {isLoading ? (
@@ -270,7 +289,7 @@ export default function PageIncapacidades({ portalMode = false }) {
             <table className="min-w-full divide-y divide-gray-200 text-sm">
               <thead className="bg-gray-50">
                 <tr>
-                  {[...["Empleado","Tipo","Entidad","Inicio","Fin","Estado","Soporte","Revisión"], ...(!portalMode ? ["Revisado por","Acciones"] : [])].map((h) => (
+                  {[...["Empleado","Sede","Tipo","Entidad","Inicio","Fin","Estado","Soporte","Revisión"], ...(!portalMode ? ["Revisado por","Acciones"] : [])].map((h) => (
                     <th key={h} className={`px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap ${h === "Acciones" ? "text-right" : "text-left"}`}>{h}</th>
                   ))}
                 </tr>
@@ -279,6 +298,7 @@ export default function PageIncapacidades({ portalMode = false }) {
                 {lista.map((item) => (
                   <tr key={item.uuid} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 font-medium text-gray-800">{item.empleado?.name ?? "—"}</td>
+                    <td className="px-6 py-4 text-gray-500 whitespace-nowrap">{item.empleado?.sede?.nombre ?? "—"}</td>
                     <td className="px-6 py-4 text-gray-600">{item.tipo_incapacidad}</td>
                     <td className="px-6 py-4 text-gray-600">{item.entidad_medica?.nombre ?? "—"}</td>
                     <td className="px-6 py-4 text-gray-500">{item.inicio?.slice(0, 10) ?? "—"}</td>
@@ -352,6 +372,7 @@ export default function PageIncapacidades({ portalMode = false }) {
             </table>
           </div>
         )}
+        {!portalMode && <SolicitudesPaginacion meta={meta} page={filtros.values.page} onPage={filtros.actions.setPage} />}
       </div>
 
       {/* Modal */}
@@ -472,3 +493,7 @@ export default function PageIncapacidades({ portalMode = false }) {
     </div>
   );
 }
+
+PageIncapacidades.propTypes = {
+  portalMode: PropTypes.bool,
+};

@@ -339,6 +339,24 @@ export const nominaService = {
   preliquidar(data) {
     return apiClient.post("api/nomina/nominas/preliquidar", data);
   },
+  getPreliquidacion(uuid) {
+    return apiClient.get(`api/nomina/nominas/preliquidaciones/${uuid}`);
+  },
+  agregarAjustePreliquidacion(uuid, data) {
+    return apiClient.post(`api/nomina/nominas/preliquidaciones/${uuid}/ajustes`, data);
+  },
+  eliminarAjustePreliquidacion(uuid, ajusteUuid) {
+    return apiClient.delete(`api/nomina/nominas/preliquidaciones/${uuid}/ajustes/${ajusteUuid}`);
+  },
+  enviarRevisionPreliquidacion(uuid, data = {}) {
+    return apiClient.patch(`api/nomina/nominas/preliquidaciones/${uuid}/revision`, data);
+  },
+  aprobarPreliquidacion(uuid, data = {}) {
+    return apiClient.patch(`api/nomina/nominas/preliquidaciones/${uuid}/aprobar`, data);
+  },
+  liquidarPreliquidacion(uuid) {
+    return apiClient.post(`api/nomina/nominas/preliquidaciones/${uuid}/liquidar`);
+  },
   liquidar(data) {
     return apiClient.post("api/nomina/nominas/liquidar", data);
   },
@@ -409,6 +427,9 @@ export const prestacionService = {
   },
   getTipos() {
     return apiClient.get("api/nomina/liquidaciones-prestaciones/tipos");
+  },
+  getVacacionesAprobadas(userId) {
+    return apiClient.get(`api/nomina/liquidaciones-prestaciones/vacaciones-aprobadas/${userId}`);
   },
   preliquidar(data) {
     return apiClient.post("api/nomina/nominas/preliquidar-prestacion", data);
@@ -569,6 +590,9 @@ export const vacacionService = {
   },
   createVacacion(data) {
     return apiClient.post("api/nomina/vacaciones", data);
+  },
+  updateVacacion(uuid, data) {
+    return apiClient.put(`api/nomina/vacaciones/${uuid}`, data);
   },
   resumen(userId, params = {}) {
     return apiClient.get(`api/nomina/vacaciones/resumen/${userId}`, { params });

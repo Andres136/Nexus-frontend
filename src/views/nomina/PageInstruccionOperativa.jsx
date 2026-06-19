@@ -164,7 +164,7 @@ CampoHoraStepper.propTypes = {
   fallback: PropTypes.string,
 };
 
-export default function PageInstruccionOperativa() {
+export default function PageInstruccionOperativa({ embedded = false }) {
   const queryClient = useQueryClient();
   const [instruccionForm, setInstruccionForm] = useState(INSTRUCCION_DEFAULT);
 
@@ -257,8 +257,8 @@ export default function PageInstruccionOperativa() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-4 sm:p-6">
-      <div className="mx-auto max-w-5xl">
+    <div className={embedded ? "" : "min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-4 sm:p-6"}>
+      <div className={embedded ? "" : "mx-auto max-w-5xl"}>
         <InstruccionOperativaDia
           CampoHoraStepper={CampoHoraStepper}
           form={instruccionForm}
@@ -274,3 +274,7 @@ export default function PageInstruccionOperativa() {
     </div>
   );
 }
+
+PageInstruccionOperativa.propTypes = {
+  embedded: PropTypes.bool,
+};

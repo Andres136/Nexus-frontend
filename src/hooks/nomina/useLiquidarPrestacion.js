@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { showToast } from "../../helpers/utils/showToast";
 import { prestacionService } from "../../services/nominaService";
 import { useGetEmpleados } from "./useGetEmpleados";
@@ -35,6 +35,7 @@ const EMPTY = {
   tipo:           "prima",
   periodo_inicio: "",
   periodo_fin:    "",
+  vacacion_uuid:  "",
 };
 
 export const useLiquidarPrestacion = ({ onSuccess } = {}) => {
@@ -46,6 +47,27 @@ export const useLiquidarPrestacion = ({ onSuccess } = {}) => {
   const [previewLoading, setPreviewLoading] = useState(false);
 
   const { empleados, isLoading: loadingEmpleados } = useGetEmpleados();
+  const esVacaciones = formData.tipo === "vacaciones_compensadas";
+
+  const { data: vacacionesAprobadas = [], isLoading: loadingVacaciones } = useQuery({
+    queryKey: ["vacaciones-aprobadas-prestacion", formData.user_id],
+    queryFn: async () => (
+      await prestacionService.getVacacionesAprobadas(formData.user_id)
+    ).data.data,
+    enabled: esVacaciones && Boolean(formData.user_id),
+  });
+
+  useEffect(() => {
+    if (!esVacaciones || vacacionesAprobadas.length !== 1 || formData.vacacion_uuid) return;
+
+    const vacacion = vacacionesAprobadas[0];
+    setFormData((prev) => ({
+      ...prev,
+      vacacion_uuid: vacacion.uuid,
+      periodo_inicio: String(vacacion.fecha_inicio).slice(0, 10),
+      periodo_fin: String(vacacion.fecha_fin).slice(0, 10),
+    }));
+  }, [esVacaciones, formData.vacacion_uuid, vacacionesAprobadas]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -56,6 +78,7 @@ export const useLiquidarPrestacion = ({ onSuccess } = {}) => {
         const defaults = defaultPeriodo(value);
         next.periodo_inicio = defaults.inicio;
         next.periodo_fin    = defaults.fin;
+        next.vacacion_uuid   = "";
       }
       return next;
     });
@@ -63,7 +86,23 @@ export const useLiquidarPrestacion = ({ onSuccess } = {}) => {
   };
 
   const handleSelectEmpleado = (option) => {
-    setFormData((prev) => ({ ...prev, user_id: option ? option.value : "" }));
+    setFormData((prev) => ({
+      ...prev,
+      user_id: option ? option.value : "",
+      vacacion_uuid: "",
+      ...(esVacaciones ? { periodo_inicio: "", periodo_fin: "" } : {}),
+    }));
+    setPreview(null);
+  };
+
+  const handleSelectVacacion = (event) => {
+    const vacacion = vacacionesAprobadas.find((item) => item.uuid === event.target.value);
+    setFormData((prev) => ({
+      ...prev,
+      vacacion_uuid: vacacion?.uuid ?? "",
+      periodo_inicio: vacacion ? String(vacacion.fecha_inicio).slice(0, 10) : "",
+      periodo_fin: vacacion ? String(vacacion.fecha_fin).slice(0, 10) : "",
+    }));
     setPreview(null);
   };
 
@@ -118,6 +157,7 @@ export const useLiquidarPrestacion = ({ onSuccess } = {}) => {
     formData,
     handleChange,
     handleSelectEmpleado,
+    handleSelectVacacion,
     handlePreview,
     handleSubmit,
     fieldErrors,
@@ -127,6 +167,8 @@ export const useLiquidarPrestacion = ({ onSuccess } = {}) => {
     empleadoOptions,
     empleadoSeleccionado,
     loadingEmpleados,
+    vacacionesAprobadas,
+    loadingVacaciones,
     tipos: TIPOS,
   };
 };

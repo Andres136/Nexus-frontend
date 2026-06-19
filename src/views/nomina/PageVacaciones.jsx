@@ -1,10 +1,13 @@
 import { useState } from "react";
+import PropTypes from "prop-types";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Search, CheckCircle, XCircle, Loader2, Plus } from "lucide-react";
+import { CheckCircle, XCircle, Loader2, Pencil, Plus } from "lucide-react";
 import { useGetVacaciones } from "../../hooks/nomina/useGetVacaciones";
 import { vacacionService, portalEmpleadoService } from "../../services/nominaService";
 import { showToast } from "../../helpers/utils/showToast";
 import ModalCrearSolicitud from "../../components/nomina/ModalCrearSolicitud";
+import { SolicitudesFiltros, SolicitudesPaginacion } from "../../components/nomina/SolicitudesFiltros";
+import { useFiltrosSolicitudes } from "../../hooks/nomina/useFiltrosSolicitudes";
 
 const STATUS_BADGE = {
   pendiente: "bg-yellow-100 text-yellow-700",
@@ -54,11 +57,20 @@ function ModalGestion({ item, accion, onClose, onConfirm, loading }) {
   );
 }
 
+ModalGestion.propTypes = {
+  item: PropTypes.shape({ empleado: PropTypes.shape({ name: PropTypes.string }) }),
+  accion: PropTypes.string.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onConfirm: PropTypes.func.isRequired,
+  loading: PropTypes.bool,
+};
+
 export default function PageVacaciones({ portalMode = false }) {
   const queryClient = useQueryClient();
-  const [search, setSearch] = useState("");
+  const filtros = useFiltrosSolicitudes();
   const [gestion, setGestion] = useState(null);
   const [crear, setCrear] = useState(false);
+  const [editando, setEditando] = useState(null);
   const [creando, setCreando] = useState(false);
   const [loadingUuid, setLoadingUuid] = useState(null);
 
@@ -71,12 +83,13 @@ export default function PageVacaciones({ portalMode = false }) {
   });
 
   const { vacaciones, isLoading: isLoadingAdmin } = useGetVacaciones(
-    portalMode ? { enabled: false } : { search: search || undefined }
+    portalMode ? { enabled: false } : filtros.params
   );
 
   const isLoading = portalMode ? portalQuery.isLoading : isLoadingAdmin;
   const rawData   = portalMode ? portalQuery.data : vacaciones;
   const lista     = rawData?.data?.data ?? rawData?.data ?? [];
+  const meta      = rawData?.data?.data ? rawData.data : null;
 
   const handleGestion = async (observacion) => {
     const { item, accion } = gestion;
@@ -94,16 +107,21 @@ export default function PageVacaciones({ portalMode = false }) {
     }
   };
 
-  const handleCrear = async (form) => {
+  const handleGuardar = async (form) => {
     setCreando(true);
     try {
       const payload = { ...form, dias_habiles: Number(form.dias_habiles) };
-      const res = await vacacionService.createVacacion(payload);
-      showToast("success", res.data.message || "Vacación registrada");
-      queryClient.invalidateQueries(["vacaciones"]);
+      const res = editando
+        ? await vacacionService.updateVacacion(editando.uuid, payload)
+        : await vacacionService.createVacacion(payload);
+      showToast("success", res.data.message || (editando ? "Vacación actualizada" : "Vacación registrada"));
+      queryClient.invalidateQueries({ queryKey: ["vacaciones"] });
       setCrear(false);
+      setEditando(null);
     } catch (error) {
-      showToast("error", error.response?.data?.message || "Error al registrar vacaciones");
+      showToast("error", error.response?.data?.message || (editando
+        ? "Error al actualizar las vacaciones"
+        : "Error al registrar vacaciones"));
       throw error;
     } finally {
       setCreando(false);
@@ -118,23 +136,31 @@ export default function PageVacaciones({ portalMode = false }) {
           <p className="text-sm text-gray-500 mt-0.5">Gestiona las solicitudes de vacaciones del personal.</p>
         </div>
         <div className="flex items-center gap-2">
-          {!portalMode && (
-            <div className="relative">
-              <Search className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Buscar empleado..."
-                className="pl-9 pr-4 h-9 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 w-56"
-              />
-            </div>
-          )}
-          <button onClick={() => setCrear(true)} className="inline-flex items-center gap-2 h-9 px-3 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700">
+          <button
+            onClick={() => {
+              setEditando(null);
+              setCrear(true);
+            }}
+            className="inline-flex items-center gap-2 h-9 px-3 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700"
+          >
             <Plus className="h-4 w-4" /> Nueva
           </button>
         </div>
       </div>
+
+      {!portalMode && (
+        <SolicitudesFiltros
+          filtros={filtros}
+          empleados={filtros.empleados}
+          sedes={filtros.sedes}
+          estados={[
+            { value: "pendiente", label: "Pendiente" },
+            { value: "aprobada", label: "Aprobada" },
+            { value: "rechazada", label: "Rechazada" },
+          ]}
+          total={meta?.total}
+        />
+      )}
 
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         {isLoading ? (
@@ -147,7 +173,7 @@ export default function PageVacaciones({ portalMode = false }) {
           <table className="min-w-full divide-y divide-gray-100 text-sm">
             <thead className="bg-gray-50">
               <tr>
-                {[...["Empleado","Tipo","Fecha inicio","Fecha fin","Días háb.","Motivo","Estado","Gestionado por"], ...(!portalMode ? ["Acciones"] : [])].map((h) => (
+                {[...["Empleado","Sede","Tipo","Fecha inicio","Fecha fin","Días háb.","Motivo","Estado","Gestionado por"], ...(!portalMode ? ["Acciones"] : [])].map((h) => (
                   <th key={h} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
                 ))}
               </tr>
@@ -156,6 +182,7 @@ export default function PageVacaciones({ portalMode = false }) {
               {lista.map((item) => (
                 <tr key={item.uuid} className="hover:bg-gray-50 transition-colors">
                   <td className="px-4 py-3.5 font-medium text-gray-800 whitespace-nowrap">{item.empleado?.name ?? "—"}</td>
+                  <td className="px-4 py-3.5 text-gray-500 whitespace-nowrap">{item.empleado?.sede?.nombre ?? "—"}</td>
                   <td className="px-4 py-3.5 text-gray-600 capitalize">{item.tipo ?? "—"}</td>
                   <td className="px-4 py-3.5 text-gray-600 whitespace-nowrap">{item.fecha_inicio?.slice(0, 10) ?? "—"}</td>
                   <td className="px-4 py-3.5 text-gray-600 whitespace-nowrap">{item.fecha_fin?.slice(0, 10) ?? "—"}</td>
@@ -171,22 +198,36 @@ export default function PageVacaciones({ portalMode = false }) {
                   </td>
                   {!portalMode && (
                     <td className="px-4 py-3.5">
-                      {item.status === "pendiente" && (
-                        <div className="flex items-center gap-2">
+                      {item.status !== "aprobada" && (
+                        <div className="flex flex-wrap items-center gap-2">
                           <button
-                            onClick={() => setGestion({ item, accion: "aprobar" })}
+                            onClick={() => {
+                              setCrear(false);
+                              setEditando(item);
+                            }}
                             disabled={!!loadingUuid}
-                            className="inline-flex items-center gap-1 text-xs font-medium text-green-600 hover:text-green-800 disabled:opacity-40"
+                            className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-800 disabled:opacity-40"
                           >
-                            <CheckCircle className="h-3.5 w-3.5" /> Aprobar
+                            <Pencil className="h-3.5 w-3.5" /> Editar
                           </button>
-                          <button
-                            onClick={() => setGestion({ item, accion: "rechazar" })}
-                            disabled={!!loadingUuid}
-                            className="inline-flex items-center gap-1 text-xs font-medium text-red-600 hover:text-red-800 disabled:opacity-40"
-                          >
-                            <XCircle className="h-3.5 w-3.5" /> Rechazar
-                          </button>
+                          {item.status === "pendiente" && (
+                            <>
+                              <button
+                                onClick={() => setGestion({ item, accion: "aprobar" })}
+                                disabled={!!loadingUuid}
+                                className="inline-flex items-center gap-1 text-xs font-medium text-green-600 hover:text-green-800 disabled:opacity-40"
+                              >
+                                <CheckCircle className="h-3.5 w-3.5" /> Aprobar
+                              </button>
+                              <button
+                                onClick={() => setGestion({ item, accion: "rechazar" })}
+                                disabled={!!loadingUuid}
+                                className="inline-flex items-center gap-1 text-xs font-medium text-red-600 hover:text-red-800 disabled:opacity-40"
+                              >
+                                <XCircle className="h-3.5 w-3.5" /> Rechazar
+                              </button>
+                            </>
+                          )}
                         </div>
                       )}
                     </td>
@@ -196,6 +237,7 @@ export default function PageVacaciones({ portalMode = false }) {
             </tbody>
           </table>
         )}
+        {!portalMode && <SolicitudesPaginacion meta={meta} page={filtros.values.page} onPage={filtros.actions.setPage} />}
       </div>
 
       {gestion && (
@@ -207,15 +249,30 @@ export default function PageVacaciones({ portalMode = false }) {
           loading={!!loadingUuid}
         />
       )}
-      {crear && (
+      {(crear || editando) && (
         <ModalCrearSolicitud
           tipo="vacaciones"
-          onClose={() => setCrear(false)}
-          onSubmit={handleCrear}
+          onClose={() => {
+            setCrear(false);
+            setEditando(null);
+          }}
+          onSubmit={handleGuardar}
           loading={creando}
           defaultUserId={portalMode}
+          initialData={editando ? {
+            user_id: editando.user_id ?? editando.empleado?.id ?? "",
+            fecha_inicio: editando.fecha_inicio?.slice(0, 10) ?? "",
+            fecha_fin: editando.fecha_fin?.slice(0, 10) ?? "",
+            dias_habiles: editando.dias_habiles ?? "",
+            tipo: editando.tipo ?? "ordinarias",
+            motivo: editando.motivo ?? "",
+          } : null}
         />
       )}
     </div>
   );
 }
+
+PageVacaciones.propTypes = {
+  portalMode: PropTypes.bool,
+};

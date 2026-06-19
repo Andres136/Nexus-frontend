@@ -1,6 +1,5 @@
 import { useState } from "react";
 import {
-  Clock3,
   Coins,
   Percent,
   ShieldCheck,
@@ -14,7 +13,6 @@ export function useConfiguracionNominaTabs() {
     { id: "laboral", label: "Parámetros laborales", icon: Coins },
     { id: "porcentajes", label: "Porcentajes", icon: Percent },
     { id: "contable", label: "PUC contable", icon: ShieldCheck },
-    { id: "horarios", label: "Horarios", icon: Clock3 },
     { id: "documentos", label: "Documentos", icon: Upload },
   ];
 

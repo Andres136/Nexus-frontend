@@ -8,7 +8,9 @@ const initialForm = {
   sede_id: "",
   kiosko_device_id: "",
   fecha: "",
-  horas: "",
+  hora_inicio: "",
+  hora_fin: "",
+  tipo: "diurna",
   motivo: "",
 };
 
@@ -178,9 +180,25 @@ export default function FormHoraExtraOperacion({
               <FieldError name="fecha" />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Horas</label>
-              <input type="number" min="0.5" max="24" step="0.5" name="horas" value={form.horas} onChange={(event) => update("horas", event.target.value)} className={fieldClass("horas")} />
-              <FieldError name="horas" />
+              <label className="block text-xs font-medium text-gray-600 mb-1">Tipo</label>
+              <select name="tipo" value={form.tipo} onChange={(event) => update("tipo", event.target.value)} className={fieldClass("tipo")}>
+                <option value="diurna">Diurna</option>
+                <option value="nocturna">Nocturna</option>
+                <option value="festiva">Festiva</option>
+                <option value="nocturna_festiva">Nocturna festiva</option>
+              </select>
+              <FieldError name="tipo" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Desde</label>
+              <input type="time" name="hora_inicio" value={form.hora_inicio} onChange={(event) => update("hora_inicio", event.target.value)} className={fieldClass("hora_inicio")} />
+              <FieldError name="hora_inicio" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Hasta</label>
+              <input type="time" name="hora_fin" value={form.hora_fin} onChange={(event) => update("hora_fin", event.target.value)} className={fieldClass("hora_fin")} />
+              <p className="mt-1 text-xs text-gray-400">Si termina después de medianoche, usa una hora menor a la inicial.</p>
+              <FieldError name="hora_fin" />
             </div>
           </div>
 
