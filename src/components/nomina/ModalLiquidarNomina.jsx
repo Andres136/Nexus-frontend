@@ -336,8 +336,13 @@ export default function ModalLiquidarNomina({ onClose, initialData = {} }) {
                 </p>
               </div>
               <div className="rounded-md bg-white/80 p-3">
-                <p className="text-xs text-indigo-500">Días liquidados</p>
+                <p className="text-xs text-indigo-500">Días pagados en nómina</p>
                 <p className="font-semibold text-gray-900">{preview.dias_liquidados ?? "—"}</p>
+                {(preview.dias_vacaciones_ordinarias ?? 0) > 0 && (
+                  <p className="mt-1 text-xs text-amber-700">
+                    {preview.dias_vacaciones_ordinarias} días excluidos por vacaciones
+                  </p>
+                )}
               </div>
               <div className="rounded-md bg-white/80 p-3">
                 <p className="text-xs text-indigo-500">Jornada</p>

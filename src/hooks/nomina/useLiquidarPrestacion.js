@@ -7,6 +7,7 @@ import { useGetEmpleados } from "./useGetEmpleados";
 const TIPOS = [
   { value: "prima",                  label: "Prima de servicios" },
   { value: "cesantias",              label: "Cesantías e intereses" },
+  { value: "vacaciones_ordinarias",  label: "Vacaciones ordinarias" },
   { value: "vacaciones_compensadas", label: "Vacaciones compensadas" },
 ];
 
@@ -47,12 +48,12 @@ export const useLiquidarPrestacion = ({ onSuccess } = {}) => {
   const [previewLoading, setPreviewLoading] = useState(false);
 
   const { empleados, isLoading: loadingEmpleados } = useGetEmpleados();
-  const esVacaciones = formData.tipo === "vacaciones_compensadas";
+  const esVacaciones = ["vacaciones_ordinarias", "vacaciones_compensadas"].includes(formData.tipo);
 
   const { data: vacacionesAprobadas = [], isLoading: loadingVacaciones } = useQuery({
-    queryKey: ["vacaciones-aprobadas-prestacion", formData.user_id],
+    queryKey: ["vacaciones-aprobadas-prestacion", formData.user_id, formData.tipo],
     queryFn: async () => (
-      await prestacionService.getVacacionesAprobadas(formData.user_id)
+      await prestacionService.getVacacionesAprobadas(formData.user_id, formData.tipo)
     ).data.data,
     enabled: esVacaciones && Boolean(formData.user_id),
   });
@@ -140,7 +141,10 @@ export const useLiquidarPrestacion = ({ onSuccess } = {}) => {
     try {
       const response = await prestacionService.liquidar(formData);
       showToast("success", response.data.message || "Prestación liquidada exitosamente");
-      queryClient.invalidateQueries(["liquidacionesPrestaciones"]);
+      queryClient.invalidateQueries({ queryKey: ["liquidacionesPrestaciones"] });
+      queryClient.invalidateQueries({ queryKey: ["vacaciones"] });
+      queryClient.invalidateQueries({ queryKey: ["vacaciones-resumen"] });
+      queryClient.invalidateQueries({ queryKey: ["vacaciones-resumen-portal"] });
       setFormData(EMPTY);
       setPreview(null);
       onSuccess?.(response.data);
@@ -169,6 +173,7 @@ export const useLiquidarPrestacion = ({ onSuccess } = {}) => {
     loadingEmpleados,
     vacacionesAprobadas,
     loadingVacaciones,
+    esVacaciones,
     tipos: TIPOS,
   };
 };

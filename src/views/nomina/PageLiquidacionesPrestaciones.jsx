@@ -10,7 +10,8 @@ function money(value) {
 const TIPOS = {
   prima:                  { label: "Prima",      color: "bg-green-100 text-green-700" },
   cesantias:              { label: "Cesantías",  color: "bg-blue-100 text-blue-700" },
-  vacaciones_compensadas: { label: "Vacaciones", color: "bg-violet-100 text-violet-700" },
+  vacaciones_ordinarias:  { label: "Vacaciones ordinarias", color: "bg-amber-100 text-amber-700" },
+  vacaciones_compensadas: { label: "Vacaciones compensadas", color: "bg-violet-100 text-violet-700" },
 };
 
 export default function PageLiquidacionesPrestaciones() {
@@ -46,7 +47,7 @@ export default function PageLiquidacionesPrestaciones() {
         <div>
           <h1 className="text-xl font-semibold text-gray-800">Prestaciones Sociales</h1>
           <p className="text-sm text-gray-500">
-            Historial de primas, cesantías e intereses, y vacaciones compensadas liquidadas.
+            Historial de primas, cesantías e intereses, y vacaciones liquidadas.
           </p>
         </div>
         <button
@@ -73,6 +74,7 @@ export default function PageLiquidacionesPrestaciones() {
           <option value="">Todos los tipos</option>
           <option value="prima">Prima de servicios</option>
           <option value="cesantias">Cesantías</option>
+          <option value="vacaciones_ordinarias">Vacaciones ordinarias</option>
           <option value="vacaciones_compensadas">Vacaciones compensadas</option>
         </select>
         <select

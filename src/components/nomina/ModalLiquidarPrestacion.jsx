@@ -28,12 +28,18 @@ const ETIQUETAS = {
     sub: "Días pendientes pagados en dinero · Art. 186 CST",
     color: "violet",
   },
+  vacaciones_ordinarias: {
+    titulo: "Vacaciones ordinarias",
+    sub: "Pago separado de los días de descanso aprobados; estos días se excluyen de la nómina",
+    color: "amber",
+  },
 };
 
 const COLOR = {
   green:  { border: "border-green-100",  bg: "bg-green-50",  title: "text-green-900",  sub: "text-green-600",  badge: "bg-green-100 text-green-700" },
   blue:   { border: "border-blue-100",   bg: "bg-blue-50",   title: "text-blue-900",   sub: "text-blue-600",   badge: "bg-blue-100 text-blue-700" },
   violet: { border: "border-violet-100", bg: "bg-violet-50", title: "text-violet-900", sub: "text-violet-600", badge: "bg-violet-100 text-violet-700" },
+  amber:  { border: "border-amber-100",  bg: "bg-amber-50",  title: "text-amber-900",  sub: "text-amber-700",  badge: "bg-amber-100 text-amber-700" },
 };
 
 export default function ModalLiquidarPrestacion({ onClose }) {
@@ -53,6 +59,7 @@ export default function ModalLiquidarPrestacion({ onClose }) {
     loadingEmpleados,
     vacacionesAprobadas,
     loadingVacaciones,
+    esVacaciones,
     tipos,
   } = useLiquidarPrestacion({ onSuccess: onClose });
 
@@ -68,7 +75,7 @@ export default function ModalLiquidarPrestacion({ onClose }) {
     <div>
       <div className="mb-5">
         <h2 className="text-lg font-semibold text-gray-800">Liquidar prestación social</h2>
-        <p className="text-sm text-gray-500 mt-1">Prima · Cesantías · Vacaciones compensadas</p>
+        <p className="text-sm text-gray-500 mt-1">Prima · Cesantías · Vacaciones ordinarias y compensadas</p>
       </div>
 
       <form onSubmit={handleSubmit} noValidate className="space-y-4">
@@ -120,7 +127,7 @@ export default function ModalLiquidarPrestacion({ onClose }) {
           )}
         </div>
 
-        {formData.tipo === "vacaciones_compensadas" && formData.user_id && (
+        {esVacaciones && formData.user_id && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Solicitud de vacaciones aprobada <span className="text-red-500">*</span>
@@ -148,7 +155,7 @@ export default function ModalLiquidarPrestacion({ onClose }) {
             )}
             {!loadingVacaciones && vacacionesAprobadas.length === 0 && (
               <p className="mt-1 text-xs text-amber-600">
-                El empleado no tiene vacaciones compensadas aprobadas pendientes de liquidar.
+                El empleado no tiene solicitudes de este tipo aprobadas pendientes de liquidar.
               </p>
             )}
           </div>
@@ -165,7 +172,7 @@ export default function ModalLiquidarPrestacion({ onClose }) {
               name="periodo_inicio"
               value={formData.periodo_inicio}
               onChange={handleChange}
-              readOnly={formData.tipo === "vacaciones_compensadas"}
+              readOnly={esVacaciones}
               className={inputCls("periodo_inicio")}
             />
             {fieldErrors.periodo_inicio && (
@@ -181,7 +188,7 @@ export default function ModalLiquidarPrestacion({ onClose }) {
               name="periodo_fin"
               value={formData.periodo_fin}
               onChange={handleChange}
-              readOnly={formData.tipo === "vacaciones_compensadas"}
+              readOnly={esVacaciones}
               className={inputCls("periodo_fin")}
             />
             {fieldErrors.periodo_fin && (
@@ -227,7 +234,7 @@ export default function ModalLiquidarPrestacion({ onClose }) {
                 <span className="font-medium">{fmt(preview.salario_mensual)}</span>
               </div>
 
-              {preview.tipo !== "vacaciones_compensadas" && (
+              {!["vacaciones_ordinarias", "vacaciones_compensadas"].includes(preview.tipo) && (
                 <div className="flex justify-between gap-3">
                   <span className="text-gray-500">Auxilio de transporte</span>
                   <span className="font-medium">{fmt(preview.auxilio_transporte)}</span>
@@ -246,7 +253,7 @@ export default function ModalLiquidarPrestacion({ onClose }) {
                 <span className="font-semibold">{fmt(preview.base_calculo)}</span>
               </div>
 
-              {preview.tipo === "vacaciones_compensadas" ? (
+              {["vacaciones_ordinarias", "vacaciones_compensadas"].includes(preview.tipo) ? (
                 <>
                   <div className="flex justify-between gap-3">
                     <span className="text-gray-500">Días ganados (contrato completo)</span>
@@ -271,7 +278,9 @@ export default function ModalLiquidarPrestacion({ onClose }) {
                     <span className="font-medium">{Number(preview.dias_disponibles ?? 0).toFixed(4)} días</span>
                   </div>
                   <div className="flex justify-between gap-3">
-                    <span className="text-gray-500">Valor vacaciones compensadas</span>
+                    <span className="text-gray-500">
+                      Valor {preview.tipo === "vacaciones_ordinarias" ? "vacaciones ordinarias" : "vacaciones compensadas"}
+                    </span>
                     <span className="font-semibold text-green-700">{fmt(preview.valor_calculado)}</span>
                   </div>
                 </>
@@ -313,7 +322,7 @@ export default function ModalLiquidarPrestacion({ onClose }) {
             type="button"
             onClick={handlePreview}
             disabled={previewLoading || loading || (
-              formData.tipo === "vacaciones_compensadas" && !formData.vacacion_uuid
+              esVacaciones && !formData.vacacion_uuid
             )}
             className="px-4 py-2 text-sm font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-md hover:bg-indigo-100 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
           >

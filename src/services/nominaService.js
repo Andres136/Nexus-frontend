@@ -428,8 +428,10 @@ export const prestacionService = {
   getTipos() {
     return apiClient.get("api/nomina/liquidaciones-prestaciones/tipos");
   },
-  getVacacionesAprobadas(userId) {
-    return apiClient.get(`api/nomina/liquidaciones-prestaciones/vacaciones-aprobadas/${userId}`);
+  getVacacionesAprobadas(userId, tipo) {
+    return apiClient.get(`api/nomina/liquidaciones-prestaciones/vacaciones-aprobadas/${userId}`, {
+      params: { tipo },
+    });
   },
   preliquidar(data) {
     return apiClient.post("api/nomina/nominas/preliquidar-prestacion", data);
@@ -745,6 +747,12 @@ export const portalEmpleadoService = {
   // Vacaciones y permisos — siempre del usuario autenticado
   getVacaciones(params = {}) {
     return apiClient.get("api/nomina/portal/vacaciones", { params });
+  },
+  createVacacion(data) {
+    return apiClient.post("api/nomina/portal/vacaciones", data);
+  },
+  resumenVacaciones() {
+    return apiClient.get("api/nomina/portal/vacaciones/resumen");
   },
   getPermisos(params = {}) {
     return apiClient.get("api/nomina/portal/permisos", { params });

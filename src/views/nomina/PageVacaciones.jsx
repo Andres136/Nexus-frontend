@@ -81,6 +81,12 @@ export default function PageVacaciones({ portalMode = false }) {
     enabled: portalMode,
     staleTime: 1000 * 60 * 2,
   });
+  const portalResumenQuery = useQuery({
+    queryKey: ["vacaciones-resumen-portal"],
+    queryFn: () => portalEmpleadoService.resumenVacaciones().then((r) => r.data?.data),
+    enabled: portalMode,
+    staleTime: 1000 * 60 * 2,
+  });
 
   const { vacaciones, isLoading: isLoadingAdmin } = useGetVacaciones(
     portalMode ? { enabled: false } : filtros.params
@@ -111,11 +117,16 @@ export default function PageVacaciones({ portalMode = false }) {
     setCreando(true);
     try {
       const payload = { ...form, dias_habiles: Number(form.dias_habiles) };
+      if (portalMode) delete payload.user_id;
       const res = editando
         ? await vacacionService.updateVacacion(editando.uuid, payload)
-        : await vacacionService.createVacacion(payload);
+        : portalMode
+          ? await portalEmpleadoService.createVacacion(payload)
+          : await vacacionService.createVacacion(payload);
       showToast("success", res.data.message || (editando ? "Vacación actualizada" : "Vacación registrada"));
       queryClient.invalidateQueries({ queryKey: ["vacaciones"] });
+      queryClient.invalidateQueries({ queryKey: ["vacaciones-portal"] });
+      queryClient.invalidateQueries({ queryKey: ["vacaciones-resumen-portal"] });
       setCrear(false);
       setEditando(null);
     } catch (error) {
@@ -160,6 +171,22 @@ export default function PageVacaciones({ portalMode = false }) {
           ]}
           total={meta?.total}
         />
+      )}
+
+      {portalMode && portalResumenQuery.data && (
+        <div className="grid grid-cols-2 gap-3 mb-5 sm:grid-cols-4">
+          {[
+            ["Causados", portalResumenQuery.data.dias_ganados],
+            ["Disfrutados", portalResumenQuery.data.dias_disfrutados],
+            ["Comprometidos", portalResumenQuery.data.dias_comprometidos],
+            ["Disponibles", portalResumenQuery.data.dias_disponibles],
+          ].map(([label, value]) => (
+            <div key={label} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <p className="text-xs font-medium uppercase tracking-wide text-gray-500">{label}</p>
+              <p className="mt-1 text-2xl font-semibold text-gray-800">{Number(value ?? 0).toFixed(2)}</p>
+            </div>
+          ))}
+        </div>
       )}
 
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
@@ -258,7 +285,7 @@ export default function PageVacaciones({ portalMode = false }) {
           }}
           onSubmit={handleGuardar}
           loading={creando}
-          defaultUserId={portalMode}
+          defaultUserId={portalMode ? "self" : null}
           initialData={editando ? {
             user_id: editando.user_id ?? editando.empleado?.id ?? "",
             fecha_inicio: editando.fecha_inicio?.slice(0, 10) ?? "",
