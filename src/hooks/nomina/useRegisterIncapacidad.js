@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { showToast } from "../../helpers/utils/showToast";
-import { incapacidadService } from "../../services/nominaService";
+import { incapacidadService, portalEmpleadoService } from "../../services/nominaService";
 import { useGetIncapacidadById } from "./useGetIncapacidadById";
 
 const EMPTY_FORM = {
@@ -13,7 +13,7 @@ const EMPTY_FORM = {
   soporte: null,
 };
 
-export const useRegisterIncapacidad = ({ uuid = null, onSuccess } = {}) => {
+export const useRegisterIncapacidad = ({ uuid = null, onSuccess, portalMode = false } = {}) => {
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [fieldErrors, setFieldErrors] = useState({});
@@ -61,7 +61,9 @@ export const useRegisterIncapacidad = ({ uuid = null, onSuccess } = {}) => {
     try {
       const response = uuid
         ? await incapacidadService.updateIncapacidad(uuid, payload)
-        : await incapacidadService.createIncapacidad(payload);
+        : portalMode
+          ? await portalEmpleadoService.createIncapacidad(payload)
+          : await incapacidadService.createIncapacidad(payload);
 
       showToast("success", response.data.message || (uuid ? "Actualizado exitosamente" : "Registrado exitosamente"));
       queryClient.invalidateQueries(["incapacidades"]);

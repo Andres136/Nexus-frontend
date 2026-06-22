@@ -357,12 +357,6 @@ export const nominaService = {
   liquidarPreliquidacion(uuid) {
     return apiClient.post(`api/nomina/nominas/preliquidaciones/${uuid}/liquidar`);
   },
-  liquidar(data) {
-    return apiClient.post("api/nomina/nominas/liquidar", data);
-  },
-  liquidarMasivo(data) {
-    return apiClient.post("api/nomina/nominas/liquidar-masivo", data);
-  },
   exportarPlano(params = {}) {
     return apiClient.get("api/nomina/nominas/exportar-plano", {
       params,
@@ -416,8 +410,8 @@ export const nominaService = {
       responseType: "blob",
     });
   },
-  deleteNomina(uuid) {
-    return apiClient.delete(`api/nomina/nominas/${uuid}`);
+  revertirNomina(uuid, motivo) {
+    return apiClient.post(`api/nomina/nominas/${uuid}/revertir`, { motivo });
   },
 };
 
@@ -757,11 +751,32 @@ export const portalEmpleadoService = {
   getPermisos(params = {}) {
     return apiClient.get("api/nomina/portal/permisos", { params });
   },
+  createPermiso(data) {
+    return apiClient.post("api/nomina/portal/permisos", data);
+  },
   getIncapacidades(params = {}) {
     return apiClient.get("api/nomina/portal/incapacidades", { params });
   },
+  createIncapacidad(formData) {
+    return apiClient.post("api/nomina/portal/incapacidades", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+  soporteIncapacidad(uuid) {
+    return apiClient.get(`api/nomina/portal/incapacidades/${uuid}/soporte`, {
+      responseType: "arraybuffer",
+    });
+  },
+  getEntidadesMedicas() {
+    return apiClient.get("api/nomina/portal/entidades-medicas");
+  },
   getLicencias(params = {}) {
     return apiClient.get("api/nomina/portal/licencias", { params });
+  },
+  createLicencia(formData) {
+    return apiClient.post("api/nomina/portal/licencias", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
   },
   getPrestamos(params = {}) {
     return apiClient.get("api/nomina/portal/prestamos", { params });

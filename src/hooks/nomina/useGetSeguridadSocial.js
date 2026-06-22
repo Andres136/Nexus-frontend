@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { seguridadSocialService } from "../../services/nominaService";
 
-export const useGetSeguridadSocial = () => {
+export const useGetSeguridadSocial = ({ enabled = true } = {}) => {
   const fetchSeguridadSocial = async () => {
     const response = await seguridadSocialService.getSeguridadSocial();
     return response.data;
@@ -10,6 +10,7 @@ export const useGetSeguridadSocial = () => {
   const { data: seguridadSociales, isLoading, error } = useQuery({
     queryKey: ["seguridadSocial"],
     queryFn: fetchSeguridadSocial,
+    enabled,
   });
 
   return {

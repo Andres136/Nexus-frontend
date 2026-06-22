@@ -9,7 +9,6 @@ const MESES = [
   "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
 ];
 
-const YEARS = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i);
 function formatCOP(value) {
   if (!value && value !== 0) return "$ 0";
   return "$ " + Number(value).toLocaleString("es-CO", { maximumFractionDigits: 0 });
@@ -144,18 +143,17 @@ Pagination.propTypes = {
 export default function PageProcesarNomina() {
   const [actionMenuPosition, setActionMenuPosition] = useState(null);
   const {
-    mes, anio, quincena, search, page, setPage, activeTab, setActiveTab,
+    mes, anio, search, page, setPage, activeTab, setActiveTab,
     showLiquidarModal, setShowLiquidarModal, liquidarInitialData,
-    openActions, setOpenActions, batchJornada, setBatchJornada,
+    openActions, setOpenActions,
     batchEmpresa, setBatchEmpresa, setBatchPeriodoInicio, setBatchPeriodoFin,
     batchInicioSeleccionado, batchFinSeleccionado,
-    batchRunning,
-    jornadasList, empresasList,
+    empresasList,
     lista, meta, nominasLista, conceptos, centrosCosto,
-    summary, isLoading, loadingNominas, loadingSummary, deleteMutation, exportandoPlano,
-    handleMes, handleAnio, handleQuincena, handleSearch,
-    handleBatchLiquidar, abrirLiquidacion, descargarDesprendible,
-    enviarDesprendible, descargarArchivoPlano, eliminarNomina,
+    summary, isLoading, loadingNominas, loadingSummary, revertMutation, exportandoPlano,
+    handleSearch,
+    abrirLiquidacion, descargarDesprendible,
+    enviarDesprendible, descargarArchivoPlano, revertirNomina,
   } = useProcesarNomina();
 
   const TABS = [
@@ -256,13 +254,13 @@ export default function PageProcesarNomina() {
         />
       </div>
 
-      {/* Panel de liquidación en lote */}
+      {/* Exportación consolidada de nóminas previamente aprobadas y liquidadas */}
         <div className="mb-6 bg-white rounded-xl border border-indigo-200 shadow-sm p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-sm font-semibold text-indigo-900">Liquidación masiva por empresa</p>
+              <p className="text-sm font-semibold text-indigo-900">Exportación de nómina por empresa</p>
               <p className="text-xs text-gray-400 mt-0.5">
-                Liquida empleados pendientes y descarga el archivo plano con los mismos filtros.
+                Descarga únicamente nóminas que ya pasaron por preliquidación, aprobación y liquidación.
               </p>
             </div>
           </div>
@@ -287,19 +285,6 @@ export default function PageProcesarNomina() {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Jornada laboral</label>
-              <select
-                value={batchJornada}
-                onChange={(e) => setBatchJornada(e.target.value)}
-                className="h-9 pl-3 pr-8 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="">Seleccionar jornada...</option>
-                {jornadasList.map((j) => (
-                  <option key={j.id} value={j.id}>{j.nombre} · {j.horas_semanales} h/sem</option>
-                ))}
-              </select>
-            </div>
-            <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Empresa</label>
               <select
                 value={batchEmpresa}
@@ -312,13 +297,6 @@ export default function PageProcesarNomina() {
                 ))}
               </select>
             </div>
-            <button
-              onClick={handleBatchLiquidar}
-              disabled={batchRunning || !batchJornada || !batchInicioSeleccionado || !batchFinSeleccionado}
-              className="h-9 px-5 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
-            >
-              {batchRunning ? "Procesando..." : "Liquidar y generar plano"}
-            </button>
             <button
               type="button"
               onClick={descargarArchivoPlano}
@@ -505,14 +483,14 @@ export default function PageProcesarNomina() {
                               >
                                 Enviar por correo
                               </button>
-                              {nominaExiste && (
+                              {nominaExiste && !["anulada", "reversada"].includes(nominaExiste.estado_contable) && (
                                 <button
                                   type="button"
-                                  onClick={() => eliminarNomina(nominaExiste)}
-                                  disabled={deleteMutation.isPending}
+                                  onClick={() => revertirNomina(nominaExiste)}
+                                  disabled={revertMutation.isPending}
                                   className="block w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 border-t border-gray-100 disabled:opacity-50"
                                 >
-                                  Eliminar nómina
+                                  Revertir nómina
                                 </button>
                               )}
                             </div>
@@ -581,6 +559,11 @@ export default function PageProcesarNomina() {
                         <p className="text-xs text-gray-400">
                           Liquidó: {item.liquidador?.name ?? "—"}
                         </p>
+                        {["anulada", "reversada"].includes(item.estado_contable) && (
+                          <p className="text-xs font-semibold uppercase text-red-600">
+                            {item.estado_contable}
+                          </p>
+                        )}
                       </td>
                       <td className="px-4 py-3.5 text-gray-600">
                         {formatFechaPeriodo(item.periodo_inicio)} – {formatFechaPeriodo(item.periodo_fin)}
@@ -593,25 +576,29 @@ export default function PageProcesarNomina() {
                           <button
                             type="button"
                             onClick={() => descargarDesprendible(item)}
-                            className="h-8 px-3 rounded-md border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50"
+                            disabled={["anulada", "reversada"].includes(item.estado_contable)}
+                            className="h-8 px-3 rounded-md border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40"
                           >
                             Descargar
                           </button>
                           <button
                             type="button"
                             onClick={() => enviarDesprendible(item)}
-                            className="h-8 px-3 rounded-md border border-indigo-200 bg-indigo-50 text-xs font-medium text-indigo-700 hover:bg-indigo-100"
+                            disabled={["anulada", "reversada"].includes(item.estado_contable)}
+                            className="h-8 px-3 rounded-md border border-indigo-200 bg-indigo-50 text-xs font-medium text-indigo-700 hover:bg-indigo-100 disabled:opacity-40"
                           >
                             Enviar
                           </button>
-                          <button
-                            type="button"
-                            onClick={() => eliminarNomina(item)}
-                            disabled={deleteMutation.isPending}
-                            className="h-8 px-3 rounded-md border border-red-200 bg-red-50 text-xs font-medium text-red-600 hover:bg-red-100 disabled:opacity-50"
-                          >
-                            Eliminar
-                          </button>
+                          {!["anulada", "reversada"].includes(item.estado_contable) && (
+                            <button
+                              type="button"
+                              onClick={() => revertirNomina(item)}
+                              disabled={revertMutation.isPending}
+                              className="h-8 px-3 rounded-md border border-red-200 bg-red-50 text-xs font-medium text-red-600 hover:bg-red-100 disabled:opacity-50"
+                            >
+                              Revertir
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

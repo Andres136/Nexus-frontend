@@ -116,7 +116,9 @@ export default function PageLicencias({ portalMode = false }) {
     });
 
     try {
-      const res = await licenciaService.createLicencia(payload);
+      const res = portalMode
+        ? await portalEmpleadoService.createLicencia(payload)
+        : await licenciaService.createLicencia(payload);
       showToast("success", res.data.message || "Licencia registrada");
       queryClient.invalidateQueries(["licencias"]);
       queryClient.invalidateQueries(["licencias-portal"]);

@@ -1,8 +1,10 @@
 import PropTypes from "prop-types";
+import { useQuery } from "@tanstack/react-query";
 import { useRegisterIncapacidad } from "../../hooks/nomina/useRegisterIncapacidad";
 import { useGetSeguridadSocial } from "../../hooks/nomina/useGetSeguridadSocial";
+import { portalEmpleadoService } from "../../services/nominaService";
 
-export default function RegisterIncapacidad({ uuid = null, onClose }) {
+export default function RegisterIncapacidad({ uuid = null, onClose, portalMode = false }) {
   const {
     formData,
     handleChange,
@@ -11,10 +13,17 @@ export default function RegisterIncapacidad({ uuid = null, onClose }) {
     loading,
     isLoadingData,
     soporteActual,
-  } = useRegisterIncapacidad({ uuid, onSuccess: onClose });
+  } = useRegisterIncapacidad({ uuid, onSuccess: onClose, portalMode });
 
-  const { seguridadSociales } = useGetSeguridadSocial();
-  const entidades = seguridadSociales?.data?.data ?? [];
+  const { seguridadSociales } = useGetSeguridadSocial({ enabled: !portalMode });
+  const portalEntidades = useQuery({
+    queryKey: ["entidades-medicas-portal"],
+    queryFn: () => portalEmpleadoService.getEntidadesMedicas().then((response) => response.data),
+    enabled: portalMode,
+  });
+  const entidades = portalMode
+    ? portalEntidades.data?.data ?? []
+    : seguridadSociales?.data?.data ?? [];
 
   const isEdit = !!uuid;
 
@@ -216,4 +225,5 @@ export default function RegisterIncapacidad({ uuid = null, onClose }) {
 RegisterIncapacidad.propTypes = {
   uuid: PropTypes.string,
   onClose: PropTypes.func,
+  portalMode: PropTypes.bool,
 };

@@ -125,7 +125,9 @@ export default function PagePermisos({ portalMode = false }) {
     try {
       const payloadBase = { ...form };
       delete payloadBase.user_id;
-      const res = await permisoService.createPermiso(payloadBase);
+      const res = portalMode
+        ? await portalEmpleadoService.createPermiso(payloadBase)
+        : await permisoService.createPermiso(payloadBase);
       showToast("success", res.data.message || "Permiso registrado");
       queryClient.invalidateQueries({ queryKey: [portalMode ? "permisos-portal" : "permisos"] });
       setCrear(false);

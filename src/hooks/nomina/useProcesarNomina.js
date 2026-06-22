@@ -4,7 +4,6 @@ import Swal from "sweetalert2";
 import { showToast } from "../../helpers/utils/showToast";
 import { nominaService } from "../../services/nominaService";
 import { useGetContrataciones } from "./useGetContrataciones";
-import { useGetJornadaLaboral } from "./useGetJornadaLaboral";
 import { useGetNominaSummary } from "./useGetNominaSummary";
 import { useGetNominas } from "./useGetNominas";
 import { useEmpresas } from "../useEmpresas";
@@ -40,12 +39,9 @@ export function useProcesarNomina() {
   const [showLiquidarModal, setShowLiquidarModal] = useState(false);
   const [liquidarInitialData, setLiquidarInitialData] = useState({});
   const [openActions, setOpenActions] = useState(null);
-  const [showBatch, setShowBatch] = useState(false);
-  const [batchJornada, setBatchJornada] = useState("");
   const [batchEmpresa, setBatchEmpresa] = useState("");
   const [batchPeriodoInicio, setBatchPeriodoInicio] = useState("");
   const [batchPeriodoFin, setBatchPeriodoFin] = useState("");
-  const [batchRunning, setBatchRunning] = useState(false);
   const [exportandoPlano, setExportandoPlano] = useState(false);
 
   const periodoInicio = useMemo(() => {
@@ -82,16 +78,16 @@ export function useProcesarNomina() {
   const { nominas, isLoading: loadingNominas } = useGetNominas(nominaParams);
   const { contrataciones, isLoading } = useGetContrataciones(contratacionParams);
   const { summary, isLoading: loadingSummary } = useGetNominaSummary(summaryParams);
-  const { jornadas } = useGetJornadaLaboral();
   const { empresas } = useEmpresas();
 
   const lista = useMemo(() => contrataciones?.data?.data ?? [], [contrataciones]);
   const meta = contrataciones?.data ?? null;
   const nominasLista = useMemo(() => nominas?.data?.data ?? [], [nominas]);
-  const jornadasList = jornadas?.data?.data ?? [];
   const empresasList = Array.isArray(empresas) ? empresas : [];
 
-  const conceptos = useMemo(() => nominasLista.reduce((acc, item) => {
+  const conceptos = useMemo(() => nominasLista
+    .filter((item) => !["anulada", "reversada"].includes(item.estado_contable))
+    .reduce((acc, item) => {
     acc.salario += Number(item.salario_base_devengado ?? 0);
     acc.auxilio += Number(item.auxilio_transporte ?? 0);
     acc.comisiones += Number(item.total_comisiones ?? 0);
@@ -117,7 +113,7 @@ export function useProcesarNomina() {
     devengado: 0,
     deducciones: 0,
     neto: 0,
-  }), [nominasLista]);
+    }), [nominasLista]);
 
   const centrosCosto = useMemo(() => {
     const base = CENTROS_COSTO.reduce((acc, nombre) => {
@@ -163,20 +159,6 @@ export function useProcesarNomina() {
     setSearch(event.target.value);
     setPage(1);
   }, []);
-  const toggleBatch = useCallback(() => {
-    setShowBatch((value) => {
-      const nextValue = !value;
-      if (nextValue) {
-        setBatchPeriodoInicio(periodoInicio);
-        setBatchPeriodoFin(periodoFin);
-      }
-      return nextValue;
-    });
-  }, [periodoFin, periodoInicio]);
-  const closeBatch = useCallback(() => {
-    setShowBatch(false);
-  }, []);
-
   const batchInicioSeleccionado = batchPeriodoInicio || periodoInicio;
   const batchFinSeleccionado = batchPeriodoFin || periodoFin;
 
@@ -220,40 +202,6 @@ export function useProcesarNomina() {
       setExportandoPlano(false);
     }
   }, [batchEmpresa, batchFinSeleccionado, batchInicioSeleccionado]);
-
-  const handleBatchLiquidar = useCallback(async () => {
-    if (!batchJornada) {
-      showToast("error", "Selecciona una jornada laboral.");
-      return;
-    }
-    if (!batchInicioSeleccionado || !batchFinSeleccionado) {
-      showToast("error", "Selecciona el rango de fechas.");
-      return;
-    }
-
-    setBatchRunning(true);
-    try {
-      const response = await nominaService.liquidarMasivo({
-        jornada_laboral_id: Number(batchJornada),
-        periodo_inicio: batchInicioSeleccionado,
-        periodo_fin: batchFinSeleccionado,
-        ...(batchEmpresa ? { empresa_id: Number(batchEmpresa) } : {}),
-      });
-      const data = response.data?.data;
-      invalidateNomina();
-      const descargado = await descargarArchivoPlano({ silentSuccess: true });
-      showToast(
-        descargado ? "success" : "warning",
-        descargado
-          ? `Liquidación procesada y archivo plano generado: ${data?.liquidadas ?? 0} liquidada(s), ${data?.omitidas ?? 0} ya existían, ${data?.errores ?? 0} error(es).`
-          : `Liquidación procesada, pero no se pudo generar el archivo plano.`
-      );
-    } catch (error) {
-      showToast("error", error.response?.data?.message ?? "Error al liquidar todos los empleados.");
-    } finally {
-      setBatchRunning(false);
-    }
-  }, [batchEmpresa, batchFinSeleccionado, batchInicioSeleccionado, batchJornada, descargarArchivoPlano, invalidateNomina]);
 
   const periodoContrato = useCallback((item = {}) => {
     if (Number(item.pago_frecuencia) !== 15) return { inicio: periodoInicio, fin: periodoFin };
@@ -312,28 +260,38 @@ export function useProcesarNomina() {
     }
   }, []);
 
-  const deleteMutation = useMutation({
-    mutationFn: (uuid) => nominaService.deleteNomina(uuid),
-    onSuccess: () => {
-      showToast("success", "Nómina eliminada. Ya puedes re-liquidar el período.");
+  const revertMutation = useMutation({
+    mutationFn: ({ uuid, motivo }) => nominaService.revertirNomina(uuid, motivo),
+    onSuccess: (response) => {
+      showToast("success", response.data?.message || "Nómina revertida correctamente.");
       invalidateNomina();
       setOpenActions(null);
     },
     onError: (error) => {
-      showToast("error", error.response?.data?.message || "No se pudo eliminar la nómina.");
+      showToast("error", error.response?.data?.message || "No se pudo revertir la nómina.");
     },
   });
 
-  const eliminarNomina = useCallback(async (nomina) => {
+  const revertirNomina = useCallback(async (nomina) => {
     if (!nomina?.uuid) return;
 
     const empleado = nomina.empleado?.name ?? "este empleado";
     const result = await Swal.fire({
-      title: "¿Eliminar nómina?",
-      text: `Se eliminará la nómina de ${empleado}. Esta acción no se puede deshacer.`,
+      title: "Revertir nómina",
+      text: `La nómina de ${empleado} se conservará como histórico y el período podrá liquidarse nuevamente.`,
       icon: "warning",
+      input: "textarea",
+      inputLabel: "Motivo obligatorio",
+      inputPlaceholder: "Explica por qué debe revertirse esta nómina...",
+      inputAttributes: { maxlength: "2000" },
+      inputValidator: (value) => {
+        if (!value || value.trim().length < 10) {
+          return "El motivo debe tener al menos 10 caracteres.";
+        }
+        return null;
+      },
       showCancelButton: true,
-      confirmButtonText: "Sí, eliminar",
+      confirmButtonText: "Confirmar reversión",
       cancelButtonText: "Cancelar",
       confirmButtonColor: "#dc2626",
       cancelButtonColor: "#6b7280",
@@ -342,8 +300,8 @@ export function useProcesarNomina() {
 
     if (!result.isConfirmed) return;
 
-    deleteMutation.mutate(nomina.uuid);
-  }, [deleteMutation]);
+    revertMutation.mutate({ uuid: nomina.uuid, motivo: result.value.trim() });
+  }, [revertMutation]);
 
   return {
     mes,
@@ -359,9 +317,6 @@ export function useProcesarNomina() {
     liquidarInitialData,
     openActions,
     setOpenActions,
-    showBatch,
-    batchJornada,
-    setBatchJornada,
     batchEmpresa,
     setBatchEmpresa,
     batchPeriodoInicio,
@@ -370,8 +325,6 @@ export function useProcesarNomina() {
     setBatchPeriodoFin,
     batchInicioSeleccionado,
     batchFinSeleccionado,
-    batchRunning,
-    jornadasList,
     empresasList,
     periodoInicio,
     periodoFin,
@@ -384,19 +337,16 @@ export function useProcesarNomina() {
     isLoading,
     loadingNominas,
     loadingSummary,
-    deleteMutation,
+    revertMutation,
     exportandoPlano,
     handleMes,
     handleAnio,
     handleQuincena,
     handleSearch,
-    toggleBatch,
-    closeBatch,
-    handleBatchLiquidar,
     abrirLiquidacion,
     descargarDesprendible,
     enviarDesprendible,
     descargarArchivoPlano,
-    eliminarNomina,
+    revertirNomina,
   };
 }

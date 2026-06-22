@@ -121,7 +121,9 @@ export default function PageIncapacidades({ portalMode = false }) {
       setSoportePreview({ pages: [], imageUrl: null, type: "", loading: true, error: "" });
 
       try {
-        const response = await incapacidadService.soporteIncapacidad(activeItem.uuid);
+        const response = portalMode
+          ? await portalEmpleadoService.soporteIncapacidad(activeItem.uuid)
+          : await incapacidadService.soporteIncapacidad(activeItem.uuid);
         const contentType = response.headers["content-type"] || "";
         const blob = new Blob([response.data], { type: contentType });
 
@@ -168,7 +170,7 @@ export default function PageIncapacidades({ portalMode = false }) {
       cancelled = true;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [revisionItem, soporteItem]);
+  }, [revisionItem, soporteItem, portalMode]);
 
   const renderSoportePreview = (item) => {
     if (!item?.soporte_url) {
@@ -388,7 +390,7 @@ export default function PageIncapacidades({ portalMode = false }) {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
-            <RegisterIncapacidad uuid={selectedUuid} onClose={closeModal} />
+            <RegisterIncapacidad uuid={selectedUuid} onClose={closeModal} portalMode={portalMode} />
           </div>
         </div>
       )}
