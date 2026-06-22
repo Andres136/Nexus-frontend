@@ -89,7 +89,7 @@ export function useProcesarNomina() {
   const meta = contrataciones?.data ?? null;
   const nominasLista = useMemo(() => nominas?.data?.data ?? [], [nominas]);
   const jornadasList = jornadas?.data?.data ?? [];
-  const empresasList = Array.isArray(empresas) ? empresas : [];
+  const empresasList = useMemo(() => (Array.isArray(empresas) ? empresas : []), [empresas]);
 
   const conceptos = useMemo(() => nominasLista.reduce((acc, item) => {
     acc.salario += Number(item.salario_base_devengado ?? 0);
@@ -196,8 +196,15 @@ export function useProcesarNomina() {
       const url = window.URL.createObjectURL(new Blob([response.data], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
       const link = document.createElement("a");
       link.href = url;
-      const empresaSuffix = batchEmpresa ? `_empresa_${batchEmpresa}` : "";
-      link.setAttribute("download", `nomina_liquidada_${batchInicioSeleccionado}_${batchFinSeleccionado}${empresaSuffix}.xlsx`);
+      const disposition = response.headers?.["content-disposition"] ?? "";
+      const filenameMatch = disposition.match(/filename\*?=(?:UTF-8''|")?([^";]+)/i);
+      const empresaNombre = empresasList.find((empresa) => String(empresa.id) === String(batchEmpresa))?.nombre
+        ?? "todas_las_empresas";
+      const empresaArchivo = normalizarTexto(empresaNombre).replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "") || "empresa";
+      const filename = filenameMatch
+        ? decodeURIComponent(filenameMatch[1].trim())
+        : "nomina_liquidada_" + empresaArchivo + "_" + batchInicioSeleccionado + "_" + batchFinSeleccionado + ".xlsx";
+      link.setAttribute("download", filename);
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -219,7 +226,7 @@ export function useProcesarNomina() {
     } finally {
       setExportandoPlano(false);
     }
-  }, [batchEmpresa, batchFinSeleccionado, batchInicioSeleccionado]);
+  }, [batchEmpresa, batchFinSeleccionado, batchInicioSeleccionado, empresasList]);
 
   const handleBatchLiquidar = useCallback(async () => {
     if (!batchJornada) {
