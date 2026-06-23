@@ -57,6 +57,7 @@ import Bodegas from "../components/Bodegas";
 import OrdenesCompraClient from "../components/auditoria/OrdenesCompraClient";
 import RegistrarInventario from "../views/crm/RegistrarInventario";
 import TrasladoInventario from "../views/crm/TrasladoInventario";
+import ListadoTrasladosInventario from "../views/crm/ListadoTrasladosInventario";
 
 import OrdenesFaltantes from "../views/crm/OrdenesFaltantes";
 
@@ -718,6 +719,10 @@ export default function Router() {
           <Route
             path="/auth/crm/traslado-inventario"
             element={<TrasladoInventario />}
+          />
+          <Route
+            path="/auth/crm/traslados-inventario"
+            element={<ListadoTrasladosInventario />}
           />
           <Route
             path="/auth/crm/crear-productos"

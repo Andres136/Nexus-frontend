@@ -274,6 +274,10 @@ exportar: (params = {}) =>
       headers: { "Content-Type": "multipart/form-data" },
     }),
   createTraslado: (data) => apiClient.post("/api/traslados-internos", data),
+  listarTraslados: (params = {}) =>
+    apiClient.get("/api/traslados-internos", { params }),
+  actualizarTraslado: (id, data) =>
+    apiClient.put(`/api/traslados-internos/${id}`, data),
   sedesTraslados: () => apiClient.get("/api/traslados-internos-sedes"),
   ordenesCompraTraslados: (params = {}) =>
     apiClient.get("/api/traslados-internos-ordenes-compra", { params }),

@@ -392,6 +392,13 @@ const descargarPlantilla = async () => {
             <span>Traslados</span>
           </Link>
           <Link
+            to="/auth/crm/traslados-inventario"
+            className="flex items-center gap-2 px-3 py-2.5 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 border border-indigo-200 transition-all duration-150 text-sm font-medium"
+          >
+            <FiRefreshCw className="w-4 h-4" />
+            <span>Listar traslados</span>
+          </Link>
+          <Link
             to="/auth/obtener-traslados"
             className="flex items-center gap-2 px-3 py-2.5 bg-rose-50 text-rose-700 rounded-lg hover:bg-rose-100 border border-rose-200 transition-all duration-150 text-sm font-medium"
           >
