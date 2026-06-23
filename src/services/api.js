@@ -311,12 +311,26 @@ export const crearQrApi = {
 //Exportar ordenes con falta de Stock
 export const ordenesApi = {
 
-  getFaltantesPendientes: (page = 1, search = "") => {
+  getFaltantesPendientes: (page = 1, search = "", estado = "", sedeId = null, bodegaId = null) => {
 
     return apiClient.get("/api/ordenes-compra/faltantes/pendientes", {
       params: {
         page,
-        search
+        search,
+        ...(estado && { estado }),
+        ...(sedeId && { sede_id: sedeId }),
+        ...(bodegaId && { bodega_id: bodegaId }),
+      }
+    });
+
+  },
+
+  getFaltantesEstadisticas: (sedeId = null, bodegaId = null) => {
+
+    return apiClient.get("/api/ordenes-compra/faltantes/estadisticas", {
+      params: {
+        ...(sedeId && { sede_id: sedeId }),
+        ...(bodegaId && { bodega_id: bodegaId }),
       }
     });
 
