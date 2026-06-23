@@ -18,72 +18,56 @@ export default function DetalleTraslado({
   canRemove = true,
   sedeDestinoId
 }) {
-  const [ocproveedores, setOcproveedores] = useState([]);
   const [search, setSearch] = useState("");
   const { products, isLoading, isFetching, isEmpty } = useProducts({ search });
   const [bodegasDisponibles, setBodegasDisponibles] = useState([]);
-  const [ocCargadas, setOcCargadas] = useState([]); // Para evitar recargas innecesarias de OC
+  const [ocCargadas, setOcCargadas] = useState([]);
+  const [ocLoading, setOcLoading] = useState(false);
 const {
   data: stockData,
   isLoading: stockLoading,
   error: stockError,
 } = useStock(detalle.product_id, sedeOrigenId);
   // ========= TODA LA LÓGICA ORIGINAL SIN CAMBIOS =========
-  const cargarOC = async (value = "") => {
-    try {
-      const params = value ? { q: value } : {};
-      const response = await inventariosApi.ordenesCompraTraslados(params);
-      setOcproveedores(response.data);
-    } catch (error) {
-      console.error("Error al cargar órdenes de compra:", error);
-    }
-  };
-
-  const cargarOcIndividual = async (id) => {
-    try {
-      const response = await inventariosApi.getOcShow(id);
-      setOcproveedores([response.data]);
-    } catch (error) {
-      console.error("Error al cargar orden de compra individual:", error);
-    }
-  };
-
-const cargarOcPendientes = async (product_id) => {
-  if (!product_id || !sedeDestinoId) return;
-
-  try {
-    const params = {
-      producto_id: product_id,
-      sede_id: sedeDestinoId,
-    };
-
-    const response = await inventariosApi.OCpendientes(params);
-   // console.log("Órdenes de compra pendientes cargadas:", response.data);
-    setOcCargadas(response.data);
-  } catch (error) {
-    console.error("Error al cargar órdenes de compra pendientes:", error);
-  }
-};
-
 useEffect(() => {
-    cargarOcPendientes(detalle.product_id);
-  }, [detalle.product_id, sedeDestinoId]);
+  let isCurrentRequest = true;
 
-  useEffect(() => {
-   
-    cargarOC();
-  }, []);
+  const cargarOcPendientes = async () => {
+    if (!detalle.product_id || !sedeDestinoId) {
+      setOcCargadas([]);
+      setOcLoading(false);
+      return;
+    }
 
-  useEffect(() => {
-    if (detalle.orden_compra_id && ocproveedores.length > 0) {
-      const existe = ocproveedores.some((oc) => oc.id === detalle.orden_compra_id);
-      if (!existe) {
-        cargarOcIndividual(detalle.orden_compra_id);
+    setOcLoading(true);
+
+    try {
+      const response = await inventariosApi.OCpendientes({
+        producto_id: detalle.product_id,
+        sede_id: sedeDestinoId,
+      });
+
+      if (isCurrentRequest) {
+        setOcCargadas(Array.isArray(response.data) ? response.data : []);
+      }
+    } catch (error) {
+      if (isCurrentRequest) {
+        setOcCargadas([]);
+        console.error("Error al cargar órdenes de compra pendientes:", error);
+      }
+    } finally {
+      if (isCurrentRequest) {
+        setOcLoading(false);
       }
     }
-  }, [detalle.orden_compra_id, ocproveedores]);
+  };
 
+  cargarOcPendientes();
 
+  return () => {
+    isCurrentRequest = false;
+  };
+}, [detalle.product_id, sedeDestinoId]);
 
 useEffect(() => {
   if (!stockData) return;
@@ -129,7 +113,9 @@ useEffect(() => {
 
 const selectedOc =
   Array.isArray(ocCargadas)
-    ? ocCargadas.find((oc) => oc.id === detalle.orden_compra_id) || null
+    ? ocCargadas.find(
+        (oc) => String(oc.id) === String(detalle.orden_compra_id)
+      ) || null
     : null;
 
   // ========= FIN DE LA LÓGICA ORIGINAL =========
@@ -165,19 +151,16 @@ const selectedOc =
   placeholder="OC..."
   isClearable
   isSearchable
+  isLoading={ocLoading}
 
   menuPortalTarget={document.body}   // 🔑 CLAVE
   menuPosition="fixed"               // 🔑 CLAVE
 
-  onInputChange={(inputValue) => {
-    if (typeof inputValue === "string" && inputValue.length >= 2) {
-      cargarOC(inputValue);
-    } else if (inputValue === "") {
-      cargarOC();
-    }
-  }}
-
-  noOptionsMessage={() => "Sin órdenes"}
+  noOptionsMessage={() =>
+    !detalle.product_id || !sedeDestinoId
+      ? "Selecciona producto y sede destino"
+      : "Sin órdenes pendientes"
+  }
 
   styles={{
     menuPortal: (base) => ({

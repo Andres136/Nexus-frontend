@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import DetalleTraslado from "../../components/crm/DetalleTraslado";
-import { Package, Send, Plus, Building2, FileText, MapPin, Download, ChevronRight, Home } from "lucide-react";
+import { Package, Send, Plus, Building2, FileText, MapPin, Download, ChevronRight, Home, List } from "lucide-react";
 import { useEmpresas } from "../../hooks/useEmpresas";
 import { useTrasladoInventario } from "../../hooks/useTrasladoInventario";
 import { inventariosApi } from "../../services/api";
 import Select from "react-select";
+import { Link } from "react-router-dom";
 
 export default function TrasladoInventario() {
   const [sedes, setSedes] = useState([]);
@@ -80,14 +81,23 @@ export default function TrasladoInventario() {
 
       {/* 🎯 Header */}
       <div className="mb-8 col-span-1">
-        <div className="flex items-center space-x-3 mb-2">
-          <div className="bg-indigo-100 p-2 rounded-lg">
-            <Package className="w-6 h-6 text-indigo-600" />
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center space-x-3">
+            <div className="bg-indigo-100 p-2 rounded-lg">
+              <Package className="w-6 h-6 text-indigo-600" />
+            </div>
+            <div>
+              <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Traslado de Inventario</h1>
+              <p className="text-gray-600">Gestiona el movimiento de productos entre sedes y bodegas</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Traslado de Inventario</h1>
-            <p className="text-gray-600">Gestiona el movimiento de productos entre sedes y bodegas</p>
-          </div>
+          <Link
+            to="/auth/crm/traslados-inventario"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-indigo-200 text-indigo-700 bg-indigo-50 rounded-lg hover:bg-indigo-100"
+          >
+            <List className="w-4 h-4" />
+            Ver traslados
+          </Link>
         </div>
       </div>
 
