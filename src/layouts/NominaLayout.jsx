@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   ReceiptText,
   FileText,
@@ -25,31 +25,6 @@ import {
   UserMinus,
 } from "lucide-react";
 
-import PageProcesarNomina from "../views/nomina/PageProcesarNomina";
-import PageContratos from "../views/nomina/PageContratos";
-import PageSeguridadSocial from "../views/nomina/PageSeguridadSocial";
-import PageTipoContrato from "../views/nomina/PageTipoContrato";
-import PageDescuentos from "../views/nomina/PageDescuentos";
-import PageJornadaLaboral from "../views/nomina/PageJornadaLaboral";
-import PageIncapacidades from "../views/nomina/PageIncapacidades";
-import PageValores from "../views/nomina/PageValores";
-
-import PageWorkSessions from "../views/nomina/PageWorkSessions";
-import PagePermisos from "../views/nomina/PagePermisos";
-import PageVacaciones from "../views/nomina/PageVacaciones";
-import PageLicencias from "../views/nomina/PageLicencias";
-import PageHorasExtras from "../views/nomina/PageHorasExtras";
-import PageReconocimientoFacial from "../views/nomina/PageReconocimientoFacial";
-
-import PageLlamadosAtencion from "../views/nomina/PageLlamadosAtencion";
-import PageDescargos from "../views/nomina/PageDescargos";
-import PageConfiguracionNomina from "../views/nomina/PageConfiguracionNomina";
-import PageNovedadesRetroactivas from "../views/nomina/PageNovedadesRetroactivas";
-import PageControlContableNomina from "../views/nomina/PageControlContableNomina";
-import PageComisiones from "../views/nomina/PageComisiones";
-import PageLiquidacionesRetiro from "../views/nomina/PageLiquidacionesRetiro";
-import PageLiquidacionesPrestaciones from "../views/nomina/PageLiquidacionesPrestaciones";
-import BtnAccesoTemporalKiosko from "../components/nomina/BtnAccesoTemporalKiosko";
 import { useSolicitudesPendientesCount } from "../hooks/nomina/useSolicitudesPendientesCount";
 
 const NAV_ITEMS = [
@@ -62,43 +37,43 @@ const NAV_ITEMS = [
         id: "liquidacion",
         label: "Liquidación",
         icon: ReceiptText,
-        component: <PageProcesarNomina />,
+        link: "/auth/crm/nomina/procesar",
       },
       {
         id: "comisiones",
         label: "Comisiones",
         icon: Coins,
-        component: <PageComisiones />,
+        link: "/auth/crm/nomina/comisiones",
       },
       {
         id: "liquidaciones-retiro",
         label: "Liquidaciones de Retiro",
         icon: UserMinus,
-        component: <PageLiquidacionesRetiro />,
+        link: "/auth/crm/nomina/liquidaciones-retiro",
       },
       {
         id: "prestaciones",
         label: "Prestaciones Sociales",
         icon: Landmark,
-        component: <PageLiquidacionesPrestaciones />,
+        link: "/auth/crm/nomina/prestaciones",
       },
       {
         id: "descuentos",
         label: "Descuentos / Préstamos",
         icon: Percent,
-        component: <PageDescuentos />,
+        link: "/auth/crm/nomina/descuentos",
       },
       {
         id: "retroactivos",
         label: "Novedades Retroactivas",
         icon: RefreshCcw,
-        component: <PageNovedadesRetroactivas />,
+        link: "/auth/crm/nomina/retroactivos",
       },
       {
         id: "control-contable",
         label: "Control Contable",
         icon: Landmark,
-        component: <PageControlContableNomina />,
+        link: "/auth/crm/nomina/control-contable",
       },
     ],
   },
@@ -111,19 +86,19 @@ const NAV_ITEMS = [
         id: "contratos",
         label: "Contrataciones",
         icon: UserCheck,
-        component: <PageContratos />,
+        link: "/auth/crm/nomina/contratacion/contratos",
       },
       {
         id: "tipo-contrato",
         label: "Tipos de Contrato",
         icon: FileText,
-        component: <PageTipoContrato />,
+        link: "/auth/crm/nomina/contratacion/tipo-contrato",
       },
       {
         id: "seguridad-social",
         label: "Seguridad Social",
         icon: ShieldCheck,
-        component: <PageSeguridadSocial />,
+        link: "/auth/crm/nomina/contratacion/seguridad-social",
       },
    
     ],
@@ -137,31 +112,31 @@ const NAV_ITEMS = [
         id: "permisos",
         label: "Permisos",
         icon: AlarmClock,
-        component: <PagePermisos />,
+        link: "/auth/crm/nomina/solicitudes/permisos",
       },
       {
         id: "vacaciones",
         label: "Vacaciones",
         icon: Palmtree,
-        component: <PageVacaciones />,
+        link: "/auth/crm/nomina/solicitudes/vacaciones",
       },
       {
         id: "licencias",
         label: "Licencias",
         icon: Baby,
-        component: <PageLicencias />,
+        link: "/auth/crm/nomina/solicitudes/licencias",
       },
         {
     id: "incapacidades",
     label: "Incapacidades",
     icon: Stethoscope,
-    component: <PageIncapacidades />,
+    link: "/auth/crm/nomina/solicitudes/incapacidades",
   },
      {
         id: "horas-extras",
         label: "Horas Extras Operación",
         icon: Timer,
-        component: <PageHorasExtras />,
+        link: "/auth/crm/nomina/solicitudes/horas-extras",
       },
     ],
 
@@ -178,20 +153,20 @@ const NAV_ITEMS = [
         id: "work-sessions",
         label: "Registro de Asistencia",
         icon: ClipboardList,
-        component: <PageWorkSessions />,
+        link: "/auth/crm/nomina/asistencia/work-sessions",
       },
 
       {
         id: "reconocimiento",
         label: "Reconocimiento Facial",
         icon: ScanFace,
-        component: <PageReconocimientoFacial />,
+        link: "/auth/crm/nomina/asistencia/reconocimiento",
       },
           {
         id: "acceso-temporal",
         label: "Acceso Temporal",
         icon: Clock,
-        component: <BtnAccesoTemporalKiosko />,
+        link: "/auth/crm/nomina/asistencia/acceso-temporal",
       },
     ],
   },
@@ -204,13 +179,13 @@ const NAV_ITEMS = [
         id: "jornada",
         label: "Jornadas",
         icon: Timer,
-        component: <PageJornadaLaboral />,
+        link: "/auth/crm/nomina/jornada-laboral/jornada",
       },
       {
         id: "valores",
         label: "Valores de Horas",
         icon: Coins,
-        component: <PageValores />,
+        link: "/auth/crm/nomina/jornada-laboral/valores",
       },
     ],
   },
@@ -223,13 +198,13 @@ const NAV_ITEMS = [
         id: "llamados",
         label: "Llamados de Atención",
         icon: AlertTriangle,
-        component: <PageLlamadosAtencion />,
+        link: "/auth/crm/nomina/reportes/llamados",
       },
       {
         id: "descargos",
         label: "Descargos",
         icon: FileWarning,
-        component: <PageDescargos />,
+        link: "/auth/crm/nomina/reportes/descargos",
       },
     ],
   },
@@ -242,7 +217,7 @@ const NAV_ITEMS = [
         id: "parametros",
         label: "Parámetros",
         icon: Settings,
-        component: <PageConfiguracionNomina />,
+        link: "/auth/crm/nomina/configuracion/parametros",
       },
    
     ],
@@ -250,24 +225,27 @@ const NAV_ITEMS = [
 ];
 
 export default function NominaLayout() {
-  const [activeNav, setActiveNav] = useState("procesar");
-  const [activeTab, setActiveTab] = useState({});
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
   const { totalPendientes, totalNominaPendientes, pendientesPorTab } = useSolicitudesPendientesCount();
 
-  const currentNav = NAV_ITEMS.find((n) => n.id === activeNav);
-  const currentTabId = currentNav?.tabs
-    ? (activeTab[activeNav] ?? currentNav.tabs[0].id)
-    : null;
-  const currentComponent = currentNav?.tabs
-    ? currentNav.tabs.find((t) => t.id === currentTabId)?.component
-    : currentNav?.component;
+  const isCurrentRoute = (link) => pathname === link || pathname.startsWith(`${link}/`);
 
-  const handleNavChange = (navId) => {
-    setActiveNav(navId);
+  const currentNav = NAV_ITEMS.find((nav) =>
+    nav.tabs?.some((tab) => isCurrentRoute(tab.link))
+  ) ?? NAV_ITEMS[0];
+
+  const currentTabId = currentNav?.tabs?.find((tab) => isCurrentRoute(tab.link))?.id
+    ?? currentNav?.tabs?.[0]?.id
+    ?? null;
+
+  const handleNavChange = (item) => {
+    const firstTabLink = item.tabs?.[0]?.link;
+    if (firstTabLink) navigate(firstTabLink);
   };
 
-  const handleTabChange = (tabId) => {
-    setActiveTab((prev) => ({ ...prev, [activeNav]: tabId }));
+  const handleTabChange = (tab) => {
+    if (tab.link) navigate(tab.link);
   };
 
   const formatBadge = (count) => (count > 99 ? "99+" : count);
@@ -290,12 +268,12 @@ export default function NominaLayout() {
           <nav className="mt-3 grid w-full grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-[repeat(7,minmax(0,1fr))]">
             {NAV_ITEMS.map((item) => {
               const Icon = item.icon;
-              const isActive = activeNav === item.id;
+              const isActive = currentNav?.id === item.id;
               return (
                 <button
                   key={item.id}
                   type="button"
-                  onClick={() => handleNavChange(item.id)}
+                  onClick={() => handleNavChange(item)}
                   className={`group relative flex h-16 cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-md border px-3 text-sm font-semibold uppercase tracking-wide text-white/85 backdrop-blur-md transition-all duration-200 before:absolute before:left-0 before:top-1/2 before:h-px before:w-full before:-translate-y-1/2 before:bg-[linear-gradient(90deg,transparent,rgba(56,189,248,0.85),transparent)] before:opacity-45 before:shadow-[0_0_14px_rgba(56,189,248,0.9)] after:absolute after:inset-0 after:bg-[radial-gradient(circle_at_88%_18%,rgba(125,211,252,0.45),transparent_12%),linear-gradient(135deg,rgba(255,255,255,0.08),transparent_42%,rgba(56,189,248,0.12))] after:opacity-90 ${
                     isActive
                       ? "border-cyan-100/60 bg-[#062a58] shadow-[0_0_22px_rgba(56,189,248,0.35),inset_0_0_20px_rgba(56,189,248,0.16)]"
@@ -330,11 +308,11 @@ export default function NominaLayout() {
             {currentNav.tabs.map((tab) => {
               const TabIcon = tab.icon;
               const isActive = currentTabId === tab.id;
-              const pendientesTab = ["solicitudes", "procesar"].includes(activeNav) ? (pendientesPorTab[tab.id] ?? 0) : 0;
+              const pendientesTab = ["solicitudes", "procesar"].includes(currentNav.id) ? (pendientesPorTab[tab.id] ?? 0) : 0;
               return (
                 <button
                   key={tab.id}
-                  onClick={() => handleTabChange(tab.id)}
+                  onClick={() => handleTabChange(tab)}
                   className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                     isActive
                       ? "border-indigo-600 text-indigo-700"
@@ -359,7 +337,9 @@ export default function NominaLayout() {
       )}
 
       {/* Content */}
-      <main className="w-0 min-w-full max-w-full overflow-hidden">{currentComponent}</main>
+      <main className="w-0 min-w-full max-w-full overflow-hidden">
+        <Outlet />
+      </main>
     </div>
   );
 }

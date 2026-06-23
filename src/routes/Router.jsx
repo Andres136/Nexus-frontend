@@ -112,6 +112,29 @@ import GetHistorialGestionFacturaCartera from "../views/crm/GetHistorialGestionF
 import DashboardOperativo from "../views/calidad/DashboardOperativo";
 import Contabilidad from "../views/contabilidad/Contabilidad";
 import NominaLayout from "../layouts/NominaLayout";
+import PageProcesarNomina from "../views/nomina/PageProcesarNomina";
+import PageContratos from "../views/nomina/PageContratos";
+import PageSeguridadSocial from "../views/nomina/PageSeguridadSocial";
+import PageTipoContrato from "../views/nomina/PageTipoContrato";
+import PageDescuentos from "../views/nomina/PageDescuentos";
+import PageJornadaLaboral from "../views/nomina/PageJornadaLaboral";
+import PageIncapacidades from "../views/nomina/PageIncapacidades";
+import PageValores from "../views/nomina/PageValores";
+import PageWorkSessions from "../views/nomina/PageWorkSessions";
+import PagePermisos from "../views/nomina/PagePermisos";
+import PageVacaciones from "../views/nomina/PageVacaciones";
+import PageLicencias from "../views/nomina/PageLicencias";
+import PageHorasExtras from "../views/nomina/PageHorasExtras";
+import PageReconocimientoFacial from "../views/nomina/PageReconocimientoFacial";
+import PageLlamadosAtencion from "../views/nomina/PageLlamadosAtencion";
+import PageDescargos from "../views/nomina/PageDescargos";
+import PageConfiguracionNomina from "../views/nomina/PageConfiguracionNomina";
+import PageNovedadesRetroactivas from "../views/nomina/PageNovedadesRetroactivas";
+import PageControlContableNomina from "../views/nomina/PageControlContableNomina";
+import PageComisiones from "../views/nomina/PageComisiones";
+import PageLiquidacionesRetiro from "../views/nomina/PageLiquidacionesRetiro";
+import PageLiquidacionesPrestaciones from "../views/nomina/PageLiquidacionesPrestaciones";
+import BtnAccesoTemporalKiosko from "../components/nomina/BtnAccesoTemporalKiosko";
 import PageKiosko from "../views/nomina/kiosko/PageKiosko";
 import PageKioskoActivacion from "../views/nomina/kiosko/PageKioskoActivacion";
 import PageKioskoAccesoTemporal from "../views/nomina/kiosko/PageKioskoAccesoTemporal";
@@ -646,7 +669,32 @@ export default function Router() {
             }
           />
 
-          {/* 🔹 Rutas para Nomina */}
+          {/*/auth/crm/nomina
+/auth/crm/nomina/procesar
+/auth/crm/nomina/comisiones
+/auth/crm/nomina/liquidaciones-retiro
+/auth/crm/nomina/prestaciones
+/auth/crm/nomina/descuentos
+/auth/crm/nomina/retroactivos
+/auth/crm/nomina/control-contable
+/auth/crm/nomina/contratacion/contratos
+/auth/crm/nomina/contratacion/tipo-contrato
+/auth/crm/nomina/contratacion/seguridad-social
+/auth/crm/nomina/solicitudes/permisos
+/auth/crm/nomina/solicitudes/vacaciones
+/auth/crm/nomina/solicitudes/licencias
+/auth/crm/nomina/solicitudes/incapacidades
+/auth/crm/nomina/solicitudes/horas-extras
+/auth/crm/nomina/asistencia/work-sessions
+/auth/crm/nomina/asistencia/reconocimiento
+/auth/crm/nomina/asistencia/acceso-temporal
+/auth/crm/nomina/jornada-laboral/jornada
+/auth/crm/nomina/jornada-laboral/valores
+/auth/crm/nomina/reportes/llamados
+/auth/crm/nomina/reportes/descargos
+/auth/crm/nomina/configuracion/parametros
+🔹 Rutas para Nomina */}
+          
           <Route
             path="/auth/crm/nomina"
             element={
@@ -654,7 +702,200 @@ export default function Router() {
                 <NominaLayout />
               </DynamicProtectedRoute>
             }
-          />
+          >
+            <Route index element={<Navigate to="procesar" replace />} />
+
+            <Route
+              path="procesar"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/procesar">
+                  <PageProcesarNomina />
+                </DynamicProtectedRoute>
+              }
+            />
+            <Route
+              path="comisiones"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/comisiones">
+                  <PageComisiones />
+                </DynamicProtectedRoute>
+              }
+            />
+            <Route
+              path="liquidaciones-retiro"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/liquidaciones-retiro">
+                  <PageLiquidacionesRetiro />
+                </DynamicProtectedRoute>
+              }
+            />
+            <Route
+              path="prestaciones"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/prestaciones">
+                  <PageLiquidacionesPrestaciones />
+                </DynamicProtectedRoute>
+              }
+            />
+            <Route
+              path="descuentos"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/descuentos">
+                  <PageDescuentos />
+                </DynamicProtectedRoute>
+              }
+            />
+            <Route
+              path="retroactivos"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/retroactivos">
+                  <PageNovedadesRetroactivas />
+                </DynamicProtectedRoute>
+              }
+            />
+            <Route
+              path="control-contable"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/control-contable">
+                  <PageControlContableNomina />
+                </DynamicProtectedRoute>
+              }
+            />
+
+            <Route
+              path="contratacion/contratos"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/contratacion/contratos">
+                  <PageContratos />
+                </DynamicProtectedRoute>
+              }
+            />
+            <Route
+              path="contratacion/tipo-contrato"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/contratacion/tipo-contrato">
+                  <PageTipoContrato />
+                </DynamicProtectedRoute>
+              }
+            />
+            <Route
+              path="contratacion/seguridad-social"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/contratacion/seguridad-social">
+                  <PageSeguridadSocial />
+                </DynamicProtectedRoute>
+              }
+            />
+
+            <Route
+              path="solicitudes/permisos"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/solicitudes/permisos">
+                  <PagePermisos />
+                </DynamicProtectedRoute>
+              }
+            />
+            <Route
+              path="solicitudes/vacaciones"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/solicitudes/vacaciones">
+                  <PageVacaciones />
+                </DynamicProtectedRoute>
+              }
+            />
+            <Route
+              path="solicitudes/licencias"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/solicitudes/licencias">
+                  <PageLicencias />
+                </DynamicProtectedRoute>
+              }
+            />
+            <Route
+              path="solicitudes/incapacidades"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/solicitudes/incapacidades">
+                  <PageIncapacidades />
+                </DynamicProtectedRoute>
+              }
+            />
+            <Route
+              path="solicitudes/horas-extras"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/solicitudes/horas-extras">
+                  <PageHorasExtras />
+                </DynamicProtectedRoute>
+              }
+            />
+
+            <Route
+              path="asistencia/work-sessions"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/asistencia/work-sessions">
+                  <PageWorkSessions />
+                </DynamicProtectedRoute>
+              }
+            />
+            <Route
+              path="asistencia/reconocimiento"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/asistencia/reconocimiento">
+                  <PageReconocimientoFacial />
+                </DynamicProtectedRoute>
+              }
+            />
+            <Route
+              path="asistencia/acceso-temporal"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/asistencia/acceso-temporal">
+                  <BtnAccesoTemporalKiosko />
+                </DynamicProtectedRoute>
+              }
+            />
+
+            <Route
+              path="jornada-laboral/jornada"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/jornada-laboral/jornada">
+                  <PageJornadaLaboral />
+                </DynamicProtectedRoute>
+              }
+            />
+            <Route
+              path="jornada-laboral/valores"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/jornada-laboral/valores">
+                  <PageValores />
+                </DynamicProtectedRoute>
+              }
+            />
+
+            <Route
+              path="reportes/llamados"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/reportes/llamados">
+                  <PageLlamadosAtencion />
+                </DynamicProtectedRoute>
+              }
+            />
+            <Route
+              path="reportes/descargos"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/reportes/descargos">
+                  <PageDescargos />
+                </DynamicProtectedRoute>
+              }
+            />
+
+            <Route
+              path="configuracion/parametros"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/configuracion/parametros">
+                  <PageConfiguracionNomina />
+                </DynamicProtectedRoute>
+              }
+            />
+          </Route>
 
 
           <Route
