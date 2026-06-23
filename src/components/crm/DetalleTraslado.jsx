@@ -1,6 +1,6 @@
-import { Trash2, Package, FileText, ShoppingCart, Building2 } from "lucide-react";
+import { Trash2,} from "lucide-react";
 import { useEffect, useState } from "react";
-import { inventariosApi, productsApi } from "../../services/api";
+import { inventariosApi,  } from "../../services/api";
 import { useProducts } from "../../hooks/useProducts";
 import Select from "react-select";
 import { useStock } from "../../hooks/crm/useStock";
