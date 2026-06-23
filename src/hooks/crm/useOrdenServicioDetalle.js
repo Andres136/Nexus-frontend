@@ -19,6 +19,13 @@ export function useOrdenServicioDetalle(formData) {
   const [pdfUrl, setPdfUrl] = useState(null)
   const [errores, setErrores] = useState({})
   const [guardando, setGuardando] = useState(false)
+  const [observacionesOrden, setObservacionesOrden] = useState("")
+
+  useEffect(() => {
+    if (orden) {
+      setObservacionesOrden(orden.observaciones || "")
+    }
+  }, [orden])
 
 
   const handleChange = (detalleId, field, value) => {
@@ -40,10 +47,24 @@ export function useOrdenServicioDetalle(formData) {
   setGuardando(true);
 
   try {
+    const datosOrden = formData || {
+      empresa_id: orden.empresa_id,
+      proveedor_id: detallesEditados.proveedor_id ?? orden.proveedor_id,
+      fecha: orden.fecha,
+      observaciones: observacionesOrden,
+      detalles: (orden.detalles || []).map((detalle) => ({
+        id: detalle.id,
+        orden_compra_detalle_id: detalle.orden_compra_detalle_id,
+        cantidad: detalle.cantidad,
+        _info: {
+          observaciones: detalle.orden_compra_detalle?.observaciones || [],
+        },
+      })),
+    }
 
-    const detalles = formData.detalles.map(detalle => {
-     const obsList = detalle.info?.observaciones || []
-      const obs = obsList[obsList.length - 1] || null
+    const detalles = datosOrden.detalles.map(detalle => {
+     const obsList = detalle._info?.observaciones || []
+      const obs = obsList[0] || null
 
       const key = detalle.orden_compra_detalle_id
       const editado = detallesEditados[key] || {}
@@ -61,10 +82,10 @@ export function useOrdenServicioDetalle(formData) {
     })
 
     const response = await ordenesServicioApi.update(id, {
-      empresa_id: formData.empresa_id,
-      proveedor_id: formData.proveedor_id,
-      fecha: formData.fecha, // opcional según backend
-      observaciones: formData.observaciones,
+      empresa_id: datosOrden.empresa_id,
+      proveedor_id: datosOrden.proveedor_id,
+      fecha: datosOrden.fecha,
+      observaciones: datosOrden.observaciones,
       detalles
     })
 
@@ -90,6 +111,8 @@ export function useOrdenServicioDetalle(formData) {
     orden,
     loading,
     detallesEditados,
+    observacionesOrden,
+    setObservacionesOrden,
     pdfUrl,
     errores,
     guardando,

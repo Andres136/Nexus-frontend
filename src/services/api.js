@@ -274,6 +274,10 @@ exportar: (params = {}) =>
       headers: { "Content-Type": "multipart/form-data" },
     }),
   createTraslado: (data) => apiClient.post("/api/traslados-internos", data),
+  listarTraslados: (params = {}) =>
+    apiClient.get("/api/traslados-internos", { params }),
+  actualizarTraslado: (id, data) =>
+    apiClient.put(`/api/traslados-internos/${id}`, data),
   sedesTraslados: () => apiClient.get("/api/traslados-internos-sedes"),
   ordenesCompraTraslados: (params = {}) =>
     apiClient.get("/api/traslados-internos-ordenes-compra", { params }),
@@ -311,12 +315,26 @@ export const crearQrApi = {
 //Exportar ordenes con falta de Stock
 export const ordenesApi = {
 
-  getFaltantesPendientes: (page = 1, search = "") => {
+  getFaltantesPendientes: (page = 1, search = "", estado = "", sedeId = null, bodegaId = null) => {
 
     return apiClient.get("/api/ordenes-compra/faltantes/pendientes", {
       params: {
         page,
-        search
+        search,
+        ...(estado && { estado }),
+        ...(sedeId && { sede_id: sedeId }),
+        ...(bodegaId && { bodega_id: bodegaId }),
+      }
+    });
+
+  },
+
+  getFaltantesEstadisticas: (sedeId = null, bodegaId = null) => {
+
+    return apiClient.get("/api/ordenes-compra/faltantes/estadisticas", {
+      params: {
+        ...(sedeId && { sede_id: sedeId }),
+        ...(bodegaId && { bodega_id: bodegaId }),
       }
     });
 

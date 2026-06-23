@@ -9,8 +9,9 @@ export default function DetallesOs({
   obtenerProductosPorId,
   formData,
   setFormData,
-    handleChange,
-    detallesEditados
+  handleChange,
+  detallesEditados,
+  error
 
 
 }) {
@@ -27,6 +28,17 @@ export default function DetallesOs({
   selectStyles
 } = useDetallesOs(formData, setFormData);
 
+  const actualizarCantidadDetalle = (detalleId, value) => {
+    handleChange(detalleId, "cantidad", value);
+    setFormData(prev => ({
+      ...prev,
+      detalles: prev.detalles.map(detalle =>
+        detalle.orden_compra_detalle_id === detalleId
+          ? { ...detalle, cantidad: value }
+          : detalle
+      )
+    }));
+  };
 
   return (
     <div className="space-y-4">
@@ -58,6 +70,12 @@ export default function DetallesOs({
       </div>
 
       {/* Tabla de productos encontrados */}
+      {error?.detalles && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {error.detalles[0]}
+        </div>
+      )}
+
       {productosbyId.length > 0 && (
         <div className="border rounded-lg overflow-hidden">
           <div className="bg-gray-50 px-3 py-2 border-b">
@@ -187,8 +205,8 @@ export default function DetallesOs({
                 </tr>
               </thead>
               <tbody className="divide-y divide-green-200">
-                {formData.detalles.map((detalle) => (
-                  <tr key={detalle.id} className="bg-white">
+                {formData.detalles.map((detalle, index) => (
+                  <tr key={detalle.orden_compra_detalle_id} className="bg-white">
                     <td className="px-3 py-2 text-gray-700 text-xs">
                       #{detalle._info?.numero_orden || detalle.orden_compra_detalle_id}
                     </td>
@@ -238,24 +256,26 @@ export default function DetallesOs({
                     <td className="px-3 py-2 text-center">
                       <input
                         type="number"
-                       value={
-  detallesEditados[detalle.orden_compra_detalle_id]?.cantidad 
-  ?? detalle.cantidad
-}
-                   onChange={(e) =>
-  handleChange(
-    detalle.orden_compra_detalle_id, // 🔥 clave correcta
-    "cantidad",
-    e.target.value
-  )
-}
+                        min="1"
+                        value={detalle.cantidad ?? ""}
+                        onChange={(e) =>
+                          actualizarCantidadDetalle(
+                            detalle.orden_compra_detalle_id,
+                            e.target.value
+                          )
+                        }
                         className="w-full border border-gray-300 rounded px-1 py-1 text-xs text-center focus:outline-none focus:ring-1 focus:ring-blue-500"
                       />
+                      {error?.[`detalles.${index}.cantidad`] && (
+                        <p className="mt-1 text-[10px] text-red-500">
+                          {error[`detalles.${index}.cantidad`][0]}
+                        </p>
+                      )}
                     </td>
                     <td className="px-3 py-2 text-center">
                       <button
                         type="button"
-                        onClick={() => eliminarDetalle(detalle.id)}
+                        onClick={() => eliminarDetalle(detalle.orden_compra_detalle_id)}
                         className="text-red-500 hover:text-red-700 text-xs font-medium"
                       >
                         Eliminar

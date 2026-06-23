@@ -332,8 +332,7 @@ export default function RegistroDocumentacion() {
               )}
             </div>
 
-            {/* Nueva carpeta — solo admin */}
-            {esAdmin && (
+           
               <button
                 onClick={() => setModalNueva(true)}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700
@@ -342,7 +341,7 @@ export default function RegistroDocumentacion() {
                 <FolderPlus className="w-4 h-4" />
                 {currentFolderId ? "Nueva subcarpeta" : "Nueva carpeta"}
               </button>
-            )}
+            
           </div>
         </div>
       </div>

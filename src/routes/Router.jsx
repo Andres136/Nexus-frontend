@@ -57,6 +57,7 @@ import Bodegas from "../components/Bodegas";
 import OrdenesCompraClient from "../components/auditoria/OrdenesCompraClient";
 import RegistrarInventario from "../views/crm/RegistrarInventario";
 import TrasladoInventario from "../views/crm/TrasladoInventario";
+import ListadoTrasladosInventario from "../views/crm/ListadoTrasladosInventario";
 
 import OrdenesFaltantes from "../views/crm/OrdenesFaltantes";
 
@@ -552,11 +553,11 @@ export default function Router() {
               </DynamicProtectedRoute>
             }
           />
-
-
-          {/*  Fin Rutas para  gestion de cartera */}
-          {/*   Rutas para  HSEQ */}
-          <Route
+          
+           
+          {/*  Fin Rutas para  gestion de cartera */}  
+            {/*   Rutas para  HSEQ */} 
+            <Route
             path="/auth/crm/hseq/inspecciones"
             element={
               <DynamicProtectedRoute permission="/auth/crm/hseq/inspecciones">
@@ -708,10 +709,12 @@ export default function Router() {
               </DynamicProtectedRoute>
             }
           />
-
+       {/*   ORDENES COMPRA PROVEEDOR*/} 
           <Route
-            path="proveedores-ordenes-compra"
-            element={<FormOrdenesProveedores />}
+            path="/auth/crm/proveedores-ordenes-compra"
+            element={<DynamicProtectedRoute permission="/auth/crm/proveedores-ordenes-compra">
+              <FormOrdenesProveedores />
+            </DynamicProtectedRoute>}  
           />
           <Route
             path="ordenes-compra-proveedor"
@@ -731,11 +734,15 @@ export default function Router() {
           />
           <Route
             path="/auth/crm/oc-provedor-update/:id"
-            element={<UpdateOcProvedor />}
+            element={<DynamicProtectedRoute permission="/auth/crm/oc-provedor-update/:id">
+              <UpdateOcProvedor />
+            </DynamicProtectedRoute>}
           />
           <Route
             path="/auth/crm/ordenes-proveedor/dividir-orden/:id"
-            element={<DividirOcProveedor />}
+            element={<DynamicProtectedRoute permission="/auth/crm/ordenes-proveedor/dividir-orden/:id">
+              <DividirOcProveedor />
+            </DynamicProtectedRoute>}
           />
           <Route path="cotizaciones" element={<CotizacionForm />} />
           <Route path="mis-ordenes" element={<MisOrdenesComerciales />} />
@@ -771,6 +778,10 @@ export default function Router() {
           <Route
             path="/auth/crm/traslado-inventario"
             element={<TrasladoInventario />}
+          />
+          <Route
+            path="/auth/crm/traslados-inventario"
+            element={<ListadoTrasladosInventario />}
           />
           <Route
             path="/auth/crm/crear-productos"
