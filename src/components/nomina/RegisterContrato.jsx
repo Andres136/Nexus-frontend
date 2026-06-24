@@ -344,6 +344,27 @@ export default function RegisterContrato({ uuid = null, onClose }) {
               {err("fin_contrato")}
             </div>
           </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              {label("Vacaciones ya disfrutadas")}
+              <input
+                type="number"
+                inputMode="decimal"
+                min="0"
+                step="0.0001"
+                name="dias_vacaciones_iniciales"
+                value={formData.dias_vacaciones_iniciales}
+                onChange={handleChange}
+                placeholder="0"
+                className={inputClass("dias_vacaciones_iniciales")}
+              />
+              {err("dias_vacaciones_iniciales")}
+            </div>
+            <div className="sm:col-span-2 self-end rounded-md border border-amber-100 bg-amber-50 px-3 py-2 text-[11px] text-amber-700">
+              Úsalo para empleados que ya traen vacaciones tomadas antes de registrarlos en el sistema.
+            </div>
+          </div>
         </div>
 
         {/* — Seguridad social — */}

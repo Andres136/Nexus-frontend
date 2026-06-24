@@ -20,6 +20,7 @@ const EMPTY_FORM = {
   auxilio_transporte: "",
   pago_frecuencia: "",
   inicio_contratacion: "",
+  dias_vacaciones_iniciales: 0,
   fin_contrato: "",
   status: true,
   eps_id: "",
@@ -63,7 +64,7 @@ export const useGetRegisterContratacion = ({ uuid = null, onSuccess } = {}) => {
       const {
         id_contrato, users_id, empresa_id, centro_costo, tipo_documento, numero_documento, correo, cargo,
         tipo_salario, parametro_laboral_id, no_salarial, base_salario, salario_integral, auxilio_transporte, pago_frecuencia,
-        inicio_contratacion, fin_contrato, status, eps_id, arl_id,
+        inicio_contratacion, dias_vacaciones_iniciales, fin_contrato, status, eps_id, arl_id,
         fondo_pensiones_id, caja_penciones_id,
       } = contratacion.data;
       setFormData({
@@ -83,6 +84,7 @@ export const useGetRegisterContratacion = ({ uuid = null, onSuccess } = {}) => {
         auxilio_transporte: auxilio_transporte ?? "",
         pago_frecuencia: pago_frecuencia ?? "",
         inicio_contratacion: inicio_contratacion?.slice(0, 10) ?? "",
+        dias_vacaciones_iniciales: dias_vacaciones_iniciales ?? 0,
         fin_contrato: fin_contrato?.slice(0, 10) ?? "",
         status: status ?? true,
         eps_id: eps_id ?? "",
@@ -111,6 +113,7 @@ export const useGetRegisterContratacion = ({ uuid = null, onSuccess } = {}) => {
         base_salario: normalizeMoneyValue(formData.base_salario),
         auxilio_transporte: normalizeMoneyValue(formData.auxilio_transporte) || 0,
         no_salarial: normalizeMoneyValue(formData.no_salarial) || 0,
+        dias_vacaciones_iniciales: formData.dias_vacaciones_iniciales || 0,
         parametro_laboral_id: formData.parametro_laboral_id || null,
         tipo_salario: formData.tipo_salario || "personalizado",
       };

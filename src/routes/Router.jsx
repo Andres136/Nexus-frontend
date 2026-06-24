@@ -669,31 +669,7 @@ export default function Router() {
             }
           />
 
-          {/*/auth/crm/nomina
-/auth/crm/nomina/procesar
-/auth/crm/nomina/comisiones
-/auth/crm/nomina/liquidaciones-retiro
-/auth/crm/nomina/prestaciones
-/auth/crm/nomina/descuentos
-/auth/crm/nomina/retroactivos
-/auth/crm/nomina/control-contable
-/auth/crm/nomina/contratacion/contratos
-/auth/crm/nomina/contratacion/tipo-contrato
-/auth/crm/nomina/contratacion/seguridad-social
-/auth/crm/nomina/solicitudes/permisos
-/auth/crm/nomina/solicitudes/vacaciones
-/auth/crm/nomina/solicitudes/licencias
-/auth/crm/nomina/solicitudes/incapacidades
-/auth/crm/nomina/solicitudes/horas-extras
-/auth/crm/nomina/asistencia/work-sessions
-/auth/crm/nomina/asistencia/reconocimiento
-/auth/crm/nomina/asistencia/acceso-temporal
-/auth/crm/nomina/jornada-laboral/jornada
-/auth/crm/nomina/jornada-laboral/valores
-/auth/crm/nomina/reportes/llamados
-/auth/crm/nomina/reportes/descargos
-/auth/crm/nomina/configuracion/parametros
-🔹 Rutas para Nomina */}
+
           
           <Route
             path="/auth/crm/nomina"
