@@ -55,7 +55,50 @@ export const ticService = {
           data
         });
     },
+    getAsignacionesByUsuario(userId, params = {}) {
+        return apiClient.get(`api/asignaciones/usuario/${userId}`, { params });
+    },
 }
+
+export const ticketService = {
+  getAll(params) {
+    return apiClient.get("api/tickets", { params });
+  },
+  getById(id) {
+    return apiClient.get(`api/tickets/${id}`);
+  },
+  getAssignedSummary() {
+    return apiClient.get("api/tickets/resumen-asignados");
+  },
+  getDowntimeStats(params = {}) {
+    return apiClient.get("api/tickets/estadisticas-paradas", { params });
+  },
+  create(data) {
+    return apiClient.post("api/tickets", data, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+  update(id, data) {
+    if (data instanceof FormData && !data.has("_method")) {
+      data.append("_method", "PUT");
+    }
+
+    return apiClient.post(`api/tickets/${id}`, data, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+  changeStatus(id, data) {
+    return apiClient.patch(`api/tickets/${id}/estado`, data);
+  },
+  addHistory(id, data) {
+    return apiClient.post(`api/tickets/${id}/historial`, data, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+  delete(id) {
+    return apiClient.delete(`api/tickets/${id}`);
+  },
+};
 
 //MANTENIMIENTO DE EQUIPOS TIC
 export const mantenimientoEquiposTicService = {

@@ -44,6 +44,8 @@ export const usersApi = {
   getAll: () => apiClient.get("/api/conductores"),
   // USUARIO TODOS
   getUsers:()=>apiClient.get("/api/usuarios/all"),
+  getByDepartamento: (departamentoId) =>
+    apiClient.get(`/api/usuarios/departamento/${departamentoId}`),
 };
 
 //Api para registro de indicadores por procesos o departamentos
