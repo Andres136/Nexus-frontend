@@ -57,6 +57,11 @@ function fmtTicketDateTime(ticket, dateKey, timeKey, fallbackKey) {
   return fmtDateTime(ticket?.[fallbackKey]);
 }
 
+function fmtTicketDelivery(ticket) {
+  if (!ticket?.fecha_entrega) return "-";
+  return `${ticket.fecha_entrega} ${ticket.hora_entrega?.slice(0, 5) ?? ""}`.trim();
+}
+
 export default function Tickets() {
   const {
     tickets,
@@ -228,6 +233,7 @@ export default function Tickets() {
                       <th className="px-4 py-3 text-left font-semibold text-gray-700">Equipo</th>
                       <th className="px-4 py-3 text-left font-semibold text-gray-700">Prioridad</th>
                       <th className="px-4 py-3 text-left font-semibold text-gray-700">Estado</th>
+                      <th className="px-4 py-3 text-left font-semibold text-gray-700">Entrega</th>
                       <th className="px-4 py-3 text-left font-semibold text-gray-700">Creación</th>
                       <th className="px-4 py-3 text-left font-semibold text-gray-700">Cierre</th>
                     </tr>
@@ -255,6 +261,7 @@ export default function Tickets() {
                             {ticket.estado?.replace("_", " ")}
                           </span>
                         </td>
+                        <td className="px-4 py-3 text-gray-500">{fmtTicketDelivery(ticket)}</td>
                         <td className="px-4 py-3 text-gray-500">
                           {fmtTicketDateTime(ticket, "fecha_creacion", "hora_creacion", "created_at")}
                         </td>
@@ -316,6 +323,10 @@ export default function Tickets() {
                   <div>
                     <p className="font-semibold text-gray-400">Asignado</p>
                     <p className="text-sm text-gray-800">{selectedTicket.asignado?.name ?? "-"}</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-400">Entrega</p>
+                    <p className="text-sm text-gray-800">{fmtTicketDelivery(selectedTicket)}</p>
                   </div>
                 </div>
 
@@ -523,6 +534,30 @@ export default function Tickets() {
                 </select>
               </div>
 
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-gray-600">Fecha de entrega</label>
+                <input
+                  type="date"
+                  value={form.fecha_entrega}
+                  onChange={(event) => updateForm("fecha_entrega", event.target.value)}
+                  required
+                  className="h-10 w-full rounded-lg border border-gray-300 px-3 text-sm"
+                />
+                {fieldErrors.fecha_entrega && <p className="mt-1 text-xs text-red-500">{fieldErrors.fecha_entrega[0]}</p>}
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-gray-600">Hora de entrega</label>
+                <input
+                  type="time"
+                  value={form.hora_entrega}
+                  onChange={(event) => updateForm("hora_entrega", event.target.value)}
+                  required
+                  className="h-10 w-full rounded-lg border border-gray-300 px-3 text-sm"
+                />
+                {fieldErrors.hora_entrega && <p className="mt-1 text-xs text-red-500">{fieldErrors.hora_entrega[0]}</p>}
+              </div>
+
               <div className="md:col-span-2">
                 <label className="mb-1 block text-xs font-semibold text-gray-600">Descripción</label>
                 <textarea
@@ -634,6 +669,28 @@ export default function Tickets() {
                   <option value="media">Media</option>
                   <option value="alta">Alta</option>
                 </select>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-gray-600">Fecha de entrega</label>
+                <input
+                  type="date"
+                  value={editForm.fecha_entrega}
+                  onChange={(event) => updateEditForm("fecha_entrega", event.target.value)}
+                  className="h-10 w-full rounded-lg border border-gray-300 px-3 text-sm"
+                />
+                {editFieldErrors.fecha_entrega && <p className="mt-1 text-xs text-red-500">{editFieldErrors.fecha_entrega[0]}</p>}
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-gray-600">Hora de entrega</label>
+                <input
+                  type="time"
+                  value={editForm.hora_entrega}
+                  onChange={(event) => updateEditForm("hora_entrega", event.target.value)}
+                  className="h-10 w-full rounded-lg border border-gray-300 px-3 text-sm"
+                />
+                {editFieldErrors.hora_entrega && <p className="mt-1 text-xs text-red-500">{editFieldErrors.hora_entrega[0]}</p>}
               </div>
 
               <div className="md:col-span-2">

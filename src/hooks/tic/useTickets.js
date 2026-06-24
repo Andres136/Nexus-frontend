@@ -11,6 +11,8 @@ const EMPTY_FORM = {
   departamento_id: "",
   descripcion: "",
   prioridad: "media",
+  fecha_entrega: "",
+  hora_entrega: "",
   archivo: null,
 };
 
@@ -227,6 +229,8 @@ export function useTickets() {
       departamento_id: ticket?.departamento_id ?? "",
       descripcion: ticket?.descripcion ?? "",
       prioridad: ticket?.prioridad ?? "media",
+      fecha_entrega: ticket?.fecha_entrega ?? "",
+      hora_entrega: ticket?.hora_entrega?.slice(0, 5) ?? "",
       archivo: null,
     });
   };
