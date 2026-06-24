@@ -85,11 +85,13 @@ import VerificacionDiaria from "../components/RegistroDiario/VerificacionDiaria"
 import DashboardRegistroDiario from "../components/RegistroDiario/DashboardRegistroDiario";
 import DashboardProcesosAnuales from "../components/RegistroDiario/DashboardProcesosAnuales";
 import Asignaciones from "../views/tic/Asignaciones";
+import Tickets from "../views/tic/Tickets";
+import ParadasEquipos from "../views/tic/ParadasEquipos";
 
 import NovedadesCalidad from "../components/calidad/NovedadesCalidad";
 import MantenimientoEquiposTic from "../components/tic/MantenimientoEquiposTic";
 import ViewOrdenesOs from "../views/crm/ViewOrdenesOs/ViewOrdenesOs";
-
+import ViewDetallesOrdenesOs from "../views/crm/ViewOrdenesOs/ViewDetallesOrdenesOs";
 import RegistrarOs from "../components/crm/ordenesServicio/RegistrarOs";
 import GestionCartera from "../views/crm/GestionCartera";
 import ObtenerGestionCartera from "../components/crm/ObtenerGestionCartera";
@@ -273,10 +275,10 @@ export default function Router() {
 
           {/*Fin de Rutas para control de calidad */}
 
-          {/*Rutas para TIC */}
-          <Route path="/auth/tic" element={<DynamicProtectedRoute permission="/auth/tic">
-            <Asignaciones />
-          </DynamicProtectedRoute>} />
+         {/*Rutas para TIC */}
+         <Route path="/auth/tic" element={<DynamicProtectedRoute permission="/auth/tic">
+           <Asignaciones />
+         </DynamicProtectedRoute>} />
 
           <Route
             path="marketing"

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Search, Plus, Building2, Users, Package, MapPin, Calendar, CheckCircle, XCircle, ChevronLeft, ChevronRight, Trash2, AlertCircle, X } from 'lucide-react';
+import { Search, Plus, Package, Calendar, ChevronLeft, ChevronRight, Trash2, AlertCircle, X, Activity } from 'lucide-react';
 import AsignarEquipo from '../../components/tic/AsignarEquipo'
 import { useAsignacionesEquipo } from '../../hooks/tic/useAsignacionesEquipo'
 import Select from 'react-select';  
@@ -54,6 +54,13 @@ export default function Asignaciones() {
 
           {/* Acciones */}
           <div className="flex items-center gap-3">
+            <Link
+              to="/auth/tic/paradas"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors"
+            >
+              <Activity className="w-4 h-4" />
+              Paradas equipos
+            </Link>
             <Link
               to="/auth/tic/mantenimientos"
               className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors"
