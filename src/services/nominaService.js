@@ -25,7 +25,13 @@ async function kioskRequestConfig() {
 
   const guestToken   = getKioskoGuestSession(uuid);
   if (guestToken) {
-    return { headers: { "X-Kiosko-Device": uuid, "X-Kiosko-Guest-Token": guestToken } };
+    return {
+      headers: {
+        "X-Kiosko-Device": uuid,
+        "X-Kiosko-Guest-Token": guestToken,
+        "X-Kiosko-Guest-Fingerprint": await getKioskoFingerprint(),
+      },
+    };
   }
 
   const sessionToken = getKioskoSession(uuid);

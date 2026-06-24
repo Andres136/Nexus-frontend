@@ -30,7 +30,7 @@ async function loadImageViaApi(uuid) {
   const deviceUuid   = window.location.pathname.match(/^\/kiosko\/([^/]+)/)?.[1];
   const sessionToken = deviceUuid ? getKioskoSession(deviceUuid) : null;
   const guestToken   = deviceUuid ? getKioskoGuestSession(deviceUuid) : null;
-  const fingerprint  = sessionToken && deviceUuid ? await getKioskoFingerprint() : null;
+  const fingerprint  = (sessionToken || guestToken) && deviceUuid ? await getKioskoFingerprint() : null;
   const authToken    = localStorage.getItem("token");
 
   const isKiosko = sessionToken || guestToken;
@@ -40,7 +40,7 @@ async function loadImageViaApi(uuid) {
 
   let headers;
   if (guestToken) {
-    headers = { "X-Kiosko-Device": deviceUuid, "X-Kiosko-Guest-Token": guestToken };
+    headers = { "X-Kiosko-Device": deviceUuid, "X-Kiosko-Guest-Token": guestToken, "X-Kiosko-Guest-Fingerprint": fingerprint };
   } else if (sessionToken) {
     headers = { "X-Kiosko-Device": deviceUuid, "X-Kiosko-Session": sessionToken, "X-Kiosko-Fingerprint": fingerprint };
   } else {
@@ -195,7 +195,8 @@ export function useKiosko() {
 
         let bootstrap;
         if (guestToken) {
-          const response = await kioskoDeviceService.bootstrapGuest({ uuid: code, guest_token: guestToken });
+          const fingerprint = await getKioskoFingerprint();
+          const response = await kioskoDeviceService.bootstrapGuest({ uuid: code, guest_token: guestToken, fingerprint });
           bootstrap = response.data?.data;
         } else {
           const fingerprint = await getKioskoFingerprint();
