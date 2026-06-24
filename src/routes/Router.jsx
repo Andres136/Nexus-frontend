@@ -91,7 +91,7 @@ import ParadasEquipos from "../views/tic/ParadasEquipos";
 import NovedadesCalidad from "../components/calidad/NovedadesCalidad";
 import MantenimientoEquiposTic from "../components/tic/MantenimientoEquiposTic";
 import ViewOrdenesOs from "../views/crm/ViewOrdenesOs/ViewOrdenesOs";
-import ViewDetallesOrdenesOs from "../views/crm/ViewOrdenesOs/ViewDetallesOrdenesOs";
+
 import RegistrarOs from "../components/crm/ordenesServicio/RegistrarOs";
 import GestionCartera from "../views/crm/GestionCartera";
 import ObtenerGestionCartera from "../components/crm/ObtenerGestionCartera";
@@ -294,6 +294,24 @@ export default function Router() {
             element={
               <DynamicProtectedRoute permission="/auth/tic/mantenimientos">
                 <MantenimientoEquiposTic />
+              </DynamicProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/auth/tic/tickets"
+            element={
+              <DynamicProtectedRoute permission="/auth/tic/tickets">
+                <Tickets />
+              </DynamicProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/auth/tic/paradas-equipos"
+            element={
+              <DynamicProtectedRoute permission="/auth/tic/paradas-equipos">
+                <ParadasEquipos />
               </DynamicProtectedRoute>
             }
           />
