@@ -25,7 +25,7 @@ import {
   Settings,
   PackageX,
   TicketCheck,
-  Activity,
+  CalendarDays,
 
 } from "lucide-react";
 
@@ -82,6 +82,7 @@ export default function Navbar() {
     { name: "Inicio", to: "/", icon: Home, allowedRoles: [1,10,11] },
     { name: "Procesos", to: "/auth/procesos", icon: FolderKanban, alwaysVisible: true },
     { name: "Entregas ", to: "/auth/entregas", icon: TruckIcon, alwaysVisible: true },
+    { name: "Capacitaciones", to: "/auth/capacitaciones", icon: CalendarDays, alwaysVisible: true },
     { name: "CRM", to: "/auth/crm", icon: Building2, alwaysVisible: true },
     {name: "KPIS", to: "dashboard/indicadores", icon: Building2, alwaysVisible: true },
     {name: "Portal Empleado", to: "/auth/crm/nomina/portal-empleado", icon: User2Icon, alwaysVisible: true },
@@ -99,6 +100,7 @@ export default function Navbar() {
         {name: "Responsabilidades", to: "/auth/responsabilidades", icon: User2Icon, allowedRoles: [1] },
         {name: "TIC", to: "/auth/tic", icon: Monitor, allowedRoles: [1, 2] },
         {name: "Tickets", to: "/auth/tic/tickets", icon: TicketCheck, allowedRoles: [1, 2, 3, 4, 5, 6, 7, 8, 9] },
+        {name: "Encuestas capacitación", to: "/auth/capacitaciones/encuestas", icon: CalendarDays, alwaysVisible: true },
      
         {name: "Cartera", to: "/auth/crm/cartera-clientes", icon: Wallet, alwaysVisible: true },
         {name: "HSEQ", to: "/auth/crm/hseq/inspecciones", icon: ShieldCheck, alwaysVisible: true },

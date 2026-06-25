@@ -64,6 +64,9 @@ import OrdenesFaltantes from "../views/crm/OrdenesFaltantes";
 import Marketing from "../views/comunicaciones/Marketing";
 import DividirOcProveedor from "../views/crm/DividirOcProveedor";
 import DeliveryPage from "../views/Rutas/DeliveryPage";
+import PageCapacitaciones from "../views/capacitaciones/PageCapacitaciones";
+import PageCapacitacionEncuestas from "../views/capacitaciones/PageCapacitacionEncuestas";
+import CapacitacionEncuestaPublica from "../views/capacitaciones/CapacitacionEncuestaPublica";
 import MovimientoInventario from "../views/crm/MovimientoInventario";
 import DynamicProtectedRoute from "./DynamicProtectedRoute";
 import SettingPermissions from "../views/Roles/SettingPermissions";
@@ -171,6 +174,7 @@ export default function Router() {
 
       {/* 🔹 Encuesta pública — sin auth, el cliente responde por token */}
       <Route path="/encuesta/:token" element={<EncuestaPublica />} />
+      <Route path="/capacitacion-encuesta/:token" element={<CapacitacionEncuestaPublica />} />
 
       {/* 🔹 Rutas bajo AuthLayout (Procesos y CRM) */}
       <Route
@@ -328,6 +332,22 @@ export default function Router() {
             element={
               <DynamicProtectedRoute permission="/auth/entregas">
                 <DeliveryPage />
+              </DynamicProtectedRoute>
+            }
+          />
+          <Route
+            path="capacitaciones"
+            element={
+              <DynamicProtectedRoute permission="/auth/capacitaciones">
+                <PageCapacitaciones />
+              </DynamicProtectedRoute>
+            }
+          />
+          <Route
+            path="capacitaciones/encuestas"
+            element={
+              <DynamicProtectedRoute permission="/auth/capacitaciones/encuestas">
+                <PageCapacitacionEncuestas />
               </DynamicProtectedRoute>
             }
           />
