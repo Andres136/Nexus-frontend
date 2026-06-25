@@ -7,6 +7,7 @@ import {
   ChevronRight,
   FileText,
   LifeBuoy,
+  Link as LinkIcon,
   Loader2,
   MessageSquare,
   Paperclip,
@@ -38,6 +39,22 @@ function fileUrl(path) {
   return `${base}/storage/${path}`;
 }
 
+function filePaths(...values) {
+  return values.flatMap((value) => {
+    if (!value) return [];
+    return Array.isArray(value) ? value.filter(Boolean) : [value];
+  });
+}
+
+function selectedFileNames(files) {
+  if (!files?.length) return "";
+  return files.map((file) => file.name).join(", ");
+}
+
+function appendSelectedFiles(currentFiles, fileList) {
+  return [...(currentFiles ?? []), ...Array.from(fileList ?? [])];
+}
+
 function fmtDateTime(value) {
   if (!value) return "-";
   return new Date(value).toLocaleString("es-CO", {
@@ -63,6 +80,7 @@ function fmtTicketDelivery(ticket) {
 }
 
 export default function Tickets() {
+  const { user } = useAuth({ middleware: "auth" });
   const {
     tickets,
     pagination,
@@ -93,8 +111,7 @@ export default function Tickets() {
     updating,
     isUsuariosLoading,
     isAsignacionesLoading,
-  } = useTickets();
-  const { user } = useAuth({ middleware: "auth" });
+  } = useTickets(user?.id);
 
   const [showCreate, setShowCreate] = useState(false);
   const canEditSelectedTicket = selectedTicket && Number(selectedTicket.user_solicitante_id) === Number(user?.id);
@@ -351,16 +368,21 @@ export default function Tickets() {
                   </div>
                 </div>
 
-                {selectedTicket.archivo && (
-                  <a
-                    href={fileUrl(selectedTicket.archivo)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 rounded-lg border border-blue-200 px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50"
-                  >
-                    <Paperclip className="h-4 w-4" />
-                    Ver soporte
-                  </a>
+                {filePaths(selectedTicket.archivo, selectedTicket.archivos).length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {filePaths(selectedTicket.archivo, selectedTicket.archivos).map((path, index) => (
+                      <a
+                        key={`${path}-${index}`}
+                        href={fileUrl(path)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 rounded-lg border border-blue-200 px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50"
+                      >
+                        <Paperclip className="h-4 w-4" />
+                        Soporte {index + 1}
+                      </a>
+                    ))}
+                  </div>
                 )}
 
                 <div className="flex gap-2">
@@ -390,16 +412,48 @@ export default function Tickets() {
                     placeholder="Agregar comentario..."
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
-                  <div className="flex items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <label className="inline-flex h-9 cursor-pointer items-center rounded-lg border border-gray-200 px-3 text-xs font-medium text-gray-600 hover:bg-gray-50">
+                      Agregar otro archivo
+                      <input
+                        type="file"
+                        name="soportes[]"
+                        multiple
+                        onChange={(event) =>
+                          setCommentForm((prev) => ({
+                            ...prev,
+                            soportes: appendSelectedFiles(prev.soportes, event.target.files),
+                          }))
+                        }
+                        className="sr-only"
+                      />
+                    </label>
                     <input
-                      type="file"
-                      onChange={(event) => setCommentForm((prev) => ({ ...prev, soporte: event.target.files?.[0] ?? null }))}
-                      className="text-xs text-gray-500"
+                      type="url"
+                      value={commentForm.link}
+                      onChange={(event) => setCommentForm((prev) => ({ ...prev, link: event.target.value }))}
+                      placeholder="Link opcional"
+                      className="h-9 min-w-0 flex-1 rounded-lg border border-gray-300 px-3 text-xs focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
+                    <label className="inline-flex h-9 items-center gap-2 rounded-lg border border-gray-200 px-3 text-xs font-medium text-gray-600">
+                      <input
+                        type="checkbox"
+                        checked={commentForm.cerrar}
+                        disabled={!canChangeSelectedStatus || selectedTicket.estado === "cerrado"}
+                        onChange={(event) => setCommentForm((prev) => ({ ...prev, cerrar: event.target.checked }))}
+                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
+                      />
+                      Cerrar
+                    </label>
                     <button type="submit" className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700">
                       Comentar
                     </button>
                   </div>
+                  {commentForm.soportes.length > 0 && (
+                    <p className="text-[11px] text-gray-500">
+                      {commentForm.soportes.length} archivo(s): {selectedFileNames(commentForm.soportes)}
+                    </p>
+                  )}
                 </form>
 
                 <div className="space-y-2">
@@ -410,10 +464,26 @@ export default function Tickets() {
                         <p className="text-[11px] text-gray-400">{fmtDateTime(item.created_at)}</p>
                       </div>
                       <p className="text-sm text-gray-600">{item.comentario}</p>
-                      {item.soporte && (
-                        <a href={fileUrl(item.soporte)} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1 text-xs text-blue-600">
-                          <FileText className="h-3.5 w-3.5" />
-                          Soporte
+                      {filePaths(item.soporte, item.soportes).length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-3">
+                          {filePaths(item.soporte, item.soportes).map((path, index) => (
+                            <a
+                              key={`${path}-${index}`}
+                              href={fileUrl(path)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-xs text-blue-600"
+                            >
+                              <FileText className="h-3.5 w-3.5" />
+                              Soporte {index + 1}
+                            </a>
+                          ))}
+                        </div>
+                      )}
+                      {item.link && (
+                        <a href={item.link} target="_blank" rel="noopener noreferrer" className="ml-3 mt-2 inline-flex items-center gap-1 text-xs text-blue-600">
+                          <LinkIcon className="h-3.5 w-3.5" />
+                          Link
                         </a>
                       )}
                     </div>
@@ -500,23 +570,23 @@ export default function Tickets() {
               </div>
 
               <div>
-                <label className="mb-1 block text-xs font-semibold text-gray-600">Equipo asignado</label>
+                <label className="mb-1 block text-xs font-semibold text-gray-600">Mi equipo asignado</label>
                 <Select
                   value={selectedAsignacion}
                   onChange={(option) => updateForm("asignacion_id", option?.value ?? "")}
                   options={asignacionOptions}
-                  placeholder={form.user_asignado_id ? "Seleccionar equipo..." : "Selecciona primero un usuario"}
-                  isDisabled={!form.user_asignado_id}
+                  placeholder={user?.id ? "Seleccionar equipo..." : "Cargando usuario..."}
+                  isDisabled={!user?.id}
                   isLoading={isAsignacionesLoading}
                   isClearable
                   className="text-sm"
                   classNamePrefix="react-select"
-                  noOptionsMessage={() => (form.user_asignado_id ? "No tiene equipos activos" : "Selecciona primero un usuario")}
+                  noOptionsMessage={() => (user?.id ? "No tienes equipos activos asignados" : "Cargando usuario...")}
                 />
-                {form.user_asignado_id && !isAsignacionesLoading && asignacionesUsuario.length === 0 && (
+                {user?.id && !isAsignacionesLoading && asignacionesUsuario.length === 0 && (
                   <p className="mt-1 flex items-center gap-1 text-xs text-amber-600">
                     <AlertCircle className="h-3.5 w-3.5" />
-                    El usuario no tiene equipos activos asignados.
+                    No tienes equipos activos asignados.
                   </p>
                 )}
               </div>
@@ -572,12 +642,22 @@ export default function Tickets() {
               </div>
 
               <div className="md:col-span-2">
-                <label className="mb-1 block text-xs font-semibold text-gray-600">Soporte</label>
-                <input
-                  type="file"
-                  onChange={(event) => updateForm("archivo", event.target.files?.[0] ?? null)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                />
+                <label className="mb-1 block text-xs font-semibold text-gray-600">Soportes</label>
+                <label className="inline-flex h-10 cursor-pointer items-center rounded-lg border border-gray-300 px-3 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                  Agregar otro archivo
+                  <input
+                    type="file"
+                    name="archivos[]"
+                    multiple
+                    onChange={(event) => updateForm("archivos", appendSelectedFiles(form.archivos, event.target.files))}
+                    className="sr-only"
+                  />
+                </label>
+                {form.archivos.length > 0 && (
+                  <p className="mt-1 text-xs text-gray-500">
+                    {form.archivos.length} archivo(s): {selectedFileNames(form.archivos)}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -707,12 +787,22 @@ export default function Tickets() {
               </div>
 
               <div className="md:col-span-2">
-                <label className="mb-1 block text-xs font-semibold text-gray-600">Soporte</label>
-                <input
-                  type="file"
-                  onChange={(event) => updateEditForm("archivo", event.target.files?.[0] ?? null)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                />
+                <label className="mb-1 block text-xs font-semibold text-gray-600">Soportes</label>
+                <label className="inline-flex h-10 cursor-pointer items-center rounded-lg border border-gray-300 px-3 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                  Agregar otro archivo
+                  <input
+                    type="file"
+                    name="archivos[]"
+                    multiple
+                    onChange={(event) => updateEditForm("archivos", appendSelectedFiles(editForm.archivos, event.target.files))}
+                    className="sr-only"
+                  />
+                </label>
+                {editForm.archivos.length > 0 && (
+                  <p className="mt-1 text-xs text-gray-500">
+                    {editForm.archivos.length} archivo(s): {selectedFileNames(editForm.archivos)}
+                  </p>
+                )}
               </div>
             </div>
 

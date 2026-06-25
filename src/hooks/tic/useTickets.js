@@ -13,7 +13,7 @@ const EMPTY_FORM = {
   prioridad: "media",
   fecha_entrega: "",
   hora_entrega: "",
-  archivo: null,
+  archivos: [],
 };
 
 function toFormData(data) {
@@ -22,14 +22,23 @@ function toFormData(data) {
   Object.entries(data).forEach(([key, value]) => {
     if (key === "asignacion_id") return;
     if (value !== null && value !== undefined && value !== "") {
-      formData.append(key, value);
+      if (Array.isArray(value)) {
+        value.forEach((item, index) => {
+          if (item !== null && item !== undefined && item !== "") {
+            formData.append(`${key}[${index}]`, item);
+          }
+        });
+        return;
+      }
+
+      formData.append(key, typeof value === "boolean" ? Number(value) : value);
     }
   });
 
   return formData;
 }
 
-export function useTickets() {
+export function useTickets(currentUserId = null) {
   const queryClient = useQueryClient();
   const [selectedTicketId, setSelectedTicketId] = useState(null);
   const [filters, setFilters] = useState({
@@ -41,11 +50,11 @@ export function useTickets() {
   });
   const [form, setForm] = useState(EMPTY_FORM);
   const [editForm, setEditForm] = useState(null);
-  const [commentForm, setCommentForm] = useState({ comentario: "", soporte: null });
+  const [commentForm, setCommentForm] = useState({ comentario: "", soportes: [], link: "", cerrar: false });
   const [fieldErrors, setFieldErrors] = useState({});
   const [editFieldErrors, setEditFieldErrors] = useState({});
   const activeDepartamentoId = editForm?.departamento_id || form.departamento_id;
-  const activeUserAsignadoId = editForm?.user_asignado_id || form.user_asignado_id;
+  const activeAsignacionesUserId = editForm ? editForm.user_asignado_id : currentUserId;
 
   const ticketsQuery = useQuery({
     queryKey: ["tic-tickets", filters],
@@ -88,12 +97,12 @@ export function useTickets() {
   });
 
   const asignacionesUsuarioQuery = useQuery({
-    queryKey: ["tic-asignaciones-usuario", activeUserAsignadoId],
+    queryKey: ["tic-asignaciones-usuario", activeAsignacionesUserId],
     queryFn: async () => {
-      const response = await ticService.getAsignacionesByUsuario(activeUserAsignadoId);
+      const response = await ticService.getAsignacionesByUsuario(activeAsignacionesUserId);
       return response.data?.data ?? [];
     },
-    enabled: Boolean(activeUserAsignadoId),
+    enabled: Boolean(activeAsignacionesUserId),
   });
 
   const asignacionesUsuario = asignacionesUsuarioQuery.data ?? [];
@@ -189,7 +198,7 @@ export function useTickets() {
     mutationFn: ({ ticketId, payload }) => ticketService.addHistory(ticketId, toFormData(payload)),
     onSuccess: async (response) => {
       showToast("success", response.data?.message || "Comentario agregado");
-      setCommentForm({ comentario: "", soporte: null });
+      setCommentForm({ comentario: "", soportes: [], link: "", cerrar: false });
       await invalidateTickets();
     },
     onError: (error) => {
@@ -231,7 +240,7 @@ export function useTickets() {
       prioridad: ticket?.prioridad ?? "media",
       fecha_entrega: ticket?.fecha_entrega ?? "",
       hora_entrega: ticket?.hora_entrega?.slice(0, 5) ?? "",
-      archivo: null,
+      archivos: [],
     });
   };
 
