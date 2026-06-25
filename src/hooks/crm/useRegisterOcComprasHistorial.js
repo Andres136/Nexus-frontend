@@ -3,6 +3,7 @@ import { gestionOperativaService } from "../../services/calidaService";
 import { useQueryClient } from "@tanstack/react-query";
 import { showToast } from "../../helpers/utils/showToast";
 
+
 export const useRegisterOcComprasHistorial = () => {
 
     const queryClient = useQueryClient();
@@ -55,12 +56,9 @@ export const useRegisterOcComprasHistorial = () => {
             });
 
         } catch (err) {
-            console.log("Error al actualizar la orden:", err);
-            if (err.response?.status === 422) {
-                setError(err.response.data.message || "Error de validación");
-            } else {
-                setError("Error al actualizar la orden");
-            }
+            const mensaje = err.response?.data?.message || "Error al actualizar la orden";
+            setError(mensaje);
+            showToast("error", mensaje);
         } finally {
             setLoading(false);
         }

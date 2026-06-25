@@ -112,6 +112,7 @@ import DashboardProductividaIndividual from "../views/vsm/DashboardProductividaI
 import GestionarFacturaCartera from "../views/crm/GestionarFacturaCartera";
 import GetHistorialGestionFacturaCartera from "../views/crm/GetHistorialGestionFacturaCartera";
 import DashboardOperativo from "../views/calidad/DashboardOperativo";
+import TrazabilidadPrioridades from "../views/calidad/TrazabilidadPrioridades";
 import Contabilidad from "../views/contabilidad/Contabilidad";
 import NominaLayout from "../layouts/NominaLayout";
 import PageProcesarNomina from "../views/nomina/PageProcesarNomina";
@@ -263,6 +264,12 @@ export default function Router() {
             path="/auth/crm/control-operativo/dashboard"
             element={<DynamicProtectedRoute permission="/auth/crm/control-operativo/dashboard">
               <DashboardOperativo />
+            </DynamicProtectedRoute>}
+          />
+          <Route
+            path="/auth/crm/control-operativo/trazabilidad-prioridades"
+            element={<DynamicProtectedRoute permission="/auth/crm/control-operativo/dashboard">
+              <TrazabilidadPrioridades />
             </DynamicProtectedRoute>}
           />
 
