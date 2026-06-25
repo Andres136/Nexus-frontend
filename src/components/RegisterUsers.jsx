@@ -4,15 +4,17 @@ import clienteAxios from "../config/axios";
 import { toast } from "react-toastify";
 import { useSedes } from "../hooks/useSedes";
 import Select from 'react-select';
+import PropTypes from "prop-types";
+
 export default function RegisterUsers({ onClose }) {
     const nameRef = createRef   ();
+    const apellidosRef = createRef();
     const emailRef = createRef();
     const passwordRef = createRef();
     const role_idRef = createRef();
     const telefonoRef = createRef();
     const departamento_idRef = createRef();
     const imagenRef = createRef();
-    const sede_idRef = createRef();
 
     const [errores, setErrores] = useState({});
     const { register } = useAuth({ middleware: "guest" });
@@ -36,6 +38,7 @@ export default function RegisterUsers({ onClose }) {
         // 1) Armar FormData
         const formData = new FormData();
         formData.append("name", nameRef.current.value);
+        formData.append("apellidos", apellidosRef.current.value);
         formData.append("email", emailRef.current.value);
         formData.append("password", passwordRef.current.value);
         formData.append("role_id", role_idRef.current.value);
@@ -62,7 +65,7 @@ export default function RegisterUsers({ onClose }) {
         try {
             const response = await clienteAxios.get('/api/departamentos');
             setDepartamentos(response.data);
-        } catch (error) {
+        } catch {
             toast.error("No se pudieron cargar los departamentos.");
         }
     };
@@ -71,7 +74,7 @@ export default function RegisterUsers({ onClose }) {
         try {
             const response = await clienteAxios.get('/api/roles');
             setRoles(response.data);
-        } catch (error) {
+        } catch {
             toast.error("No se pudieron cargar los roles.");
         }
     };
@@ -96,6 +99,21 @@ export default function RegisterUsers({ onClose }) {
                     className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full h-10 shadow-sm sm:text-sm border-gray-300 rounded-md"
                 />
                 {errores.name && <small className="text-red-500">{errores.name}</small>}
+            </div>
+
+            <div>
+                <label htmlFor="apellidos" className="block text-sm font-medium text-gray-700">
+                    Apellidos
+                </label>
+                <input
+                    type="text"
+                    id="apellidos"
+                    name="apellidos"
+                    ref={apellidosRef}
+                    placeholder="Ingrese sus apellidos"
+                    className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full h-10 shadow-sm sm:text-sm border-gray-300 rounded-md"
+                />
+                {errores.apellidos && <small className="text-red-500">{errores.apellidos}</small>}
             </div>
 
             <div>
@@ -223,3 +241,7 @@ export default function RegisterUsers({ onClose }) {
         </form>
     );
 }
+
+RegisterUsers.propTypes = {
+    onClose: PropTypes.func.isRequired,
+};

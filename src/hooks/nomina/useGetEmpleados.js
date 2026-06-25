@@ -6,7 +6,10 @@ export const useGetEmpleados = (params = {}) => {
     queryKey: ["empleados", params],
     queryFn: async () => {
       const response = await contratacionService.getEmpleados(params);
-      return response.data.map((u) => ({ value: u.id, label: u.name }));
+      return response.data.map((u) => ({
+        value: u.id,
+        label: u.nombre_completo || [u.name, u.apellidos].filter(Boolean).join(" "),
+      }));
     },
     staleTime: 1000 * 60 * 10,
   });

@@ -401,9 +401,6 @@ export const nominaService = {
   cerrarPeriodo(data) {
     return apiClient.post("api/nomina/nominas/cerrar-periodo", data);
   },
-  exportarPuc(params = {}) {
-    return apiClient.get("api/nomina/nominas/exportar-puc", { params });
-  },
   exportarPucExcel(params = {}) {
     return apiClient.get("api/nomina/nominas/exportar-puc/excel", {
       params,
