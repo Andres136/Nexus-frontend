@@ -3,6 +3,7 @@ import { useDebounce } from "../../hooks/useDebounce";
 import { useOrdenesFaltantes } from "../../hooks/useOrdenesFaltantes";
 import { useSedes } from "../../hooks/useSedes";
 import { useFaltantesStats } from "../../hooks/useFaltantesStats";
+import { useNavigate } from "react-router-dom";
 import {
   Loader2,
   Package,
@@ -13,11 +14,13 @@ import {
   Building,
   User,
   CheckCircle,
+  Download,
   ChevronLeft,
   ChevronRight
 } from "lucide-react";
 
 export default function OrdenesFaltantes() {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 400);
   const [filterEstado, setFilterEstado] = useState("");
@@ -26,6 +29,7 @@ export default function OrdenesFaltantes() {
   const [expandedOrders, setExpandedOrders] = useState(new Set());
   const [sortBy, setSortBy] = useState("faltantes_desc");
   const [page, setPage] = useState(1);
+  const [prioridadesKg, setPrioridadesKg] = useState({});
 
   const { sedes, bodegasAll } = useSedes();
   const bodegasFiltradas = filterSede
@@ -63,6 +67,159 @@ export default function OrdenesFaltantes() {
     });
 
   const estadosUnicos = [...new Set(ordenes.map((o) => o.estado))].filter(Boolean);
+  const prioridadKey = (ordenId, detalleId) => `${ordenId}-${detalleId}`;
+
+  const calcularPrioridad = (orden, faltante) => {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    const fechaEntrega = orden.fecha_entrega ? new Date(orden.fecha_entrega) : null;
+    if (fechaEntrega) fechaEntrega.setHours(0, 0, 0, 0);
+
+    const diasEntrega = fechaEntrega
+      ? Math.ceil((fechaEntrega - hoy) / (1000 * 60 * 60 * 24))
+      : null;
+    const faltanteReal = Number(faltante.faltante_real ?? faltante.faltante ?? 0);
+
+    if (diasEntrega !== null && diasEntrega < 0) {
+      return { nivel: "vencida", label: "Vencida" };
+    }
+
+    if ((diasEntrega !== null && diasEntrega <= 2) || faltanteReal >= 100) {
+      return { nivel: "alta", label: "Alta" };
+    }
+
+    if ((diasEntrega !== null && diasEntrega <= 5) || faltanteReal >= 30) {
+      return { nivel: "media", label: "Media" };
+    }
+
+    return { nivel: "baja", label: "Baja" };
+  };
+
+  const prioridadClass = (nivel) => {
+    const clases = {
+      vencida: "bg-red-100 text-red-700",
+      alta: "bg-orange-100 text-orange-700",
+      media: "bg-amber-100 text-amber-700",
+      baja: "bg-slate-100 text-slate-600",
+    };
+
+    return clases[nivel] || clases.baja;
+  };
+
+  const crearOrdenProveedorDesdeFaltante = (orden, faltante) => {
+    const prioridad = calcularPrioridad(orden, faltante);
+    const key = prioridadKey(orden.orden_id, faltante.detalle_id);
+    const prioridadManual = Number(prioridadesKg[key] ?? 0);
+    const cantidadSugerida = Number(faltante.faltante_real ?? faltante.faltante ?? 0);
+    const cantidad = prioridadManual > 0
+      ? prioridadManual
+      : cantidadSugerida > 0
+      ? cantidadSugerida
+      : Number(faltante.cantidad_requerida ?? 0);
+
+    navigate("/auth/crm/proveedores-ordenes-compra", {
+      state: {
+        trazabilidadCompra: {
+          orden_id: orden.orden_id,
+          codigo: orden.codigo,
+          cliente: orden.cliente?.nombre || "Sin cliente",
+          detalles: [
+            {
+              descripcion: faltante.nombre,
+              cantidad_solicitada: cantidad,
+              cantidad_entregada: 0,
+              code: faltante.codigo,
+              producto_id: faltante.producto_id,
+              origenes: [
+                {
+                  orden_compra_id: orden.orden_id,
+                  orden_compra_detalle_id: faltante.detalle_id,
+                  producto_id: faltante.producto_id,
+                  sede_id: orden.sede?.id ?? (filterSede || null),
+                  bodega_id: filterBodega || null,
+                  cantidad_solicitada: cantidad,
+                  cantidad_prioridad: cantidad,
+                  prioridad_snapshot: {
+                    prioridad: prioridad.nivel,
+                    prioridad_label: prioridad.label,
+                    fecha_entrega: orden.fecha_entrega,
+                    faltante_kg: faltante.faltante,
+                    faltante_real_kg: faltante.faltante_real,
+                    stock_disponible_kg: faltante.stock_disponible,
+                    cliente: orden.cliente?.nombre,
+                    orden_codigo: orden.codigo,
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      },
+    });
+  };
+
+  const descargarDocumentoPrioridades = () => {
+    const filas = filteredAndSortedOrders.flatMap((orden) =>
+      orden.faltantes.map((faltante) => {
+        const key = prioridadKey(orden.orden_id, faltante.detalle_id);
+        const prioridadManual = Number(prioridadesKg[key] ?? 0);
+        const prioridadRegistrada = faltante.prioridades_proveedor?.[0];
+        const cantidadPrioridad = prioridadRegistrada?.cantidad_prioridad
+          ?? (prioridadManual > 0 ? prioridadManual : "");
+        const cantidadRecibida = prioridadRegistrada?.cantidad_recibida ?? "";
+        const estadoPrioridad = prioridadRegistrada
+          ? prioridadRegistrada.completa
+            ? "RECIBIDA"
+            : "PENDIENTE"
+          : "POR_CREAR";
+
+        return [
+          orden.codigo,
+          orden.ordenes_trabajo?.map((ot) => ot.codigo).join(" / ") || "",
+          orden.cliente?.nombre || "",
+          orden.sede?.nombre || "",
+          orden.fecha_entrega || "",
+          faltante.codigo || "",
+          faltante.nombre || "",
+          Number(faltante.faltante ?? 0).toFixed(2),
+          cantidadPrioridad,
+          cantidadRecibida,
+          estadoPrioridad,
+          faltante.ordenes_proveedor?.map((op) => op.codigo).join(" / ") || "",
+        ];
+      })
+    );
+
+    const encabezados = [
+      "OC",
+      "OT",
+      "Cliente",
+      "Sede",
+      "Fecha entrega",
+      "Codigo producto",
+      "Producto",
+      "Faltante kg",
+      "Prioridad kg",
+      "Recibido prioridad kg",
+      "Estado prioridad",
+      "Orden proveedor",
+    ];
+
+    const csv = [encabezados, ...filas]
+      .map((fila) => fila.map((valor) => `"${String(valor ?? "").replaceAll('"', '""')}"`).join(","))
+      .join("\n");
+
+    const blob = new Blob([`\uFEFF${csv}`], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `prioridades-proveedor-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="min-h-screen bg-slate-50/50">
@@ -176,6 +333,14 @@ export default function OrdenesFaltantes() {
               <option value="codigo">Código</option>
               <option value="cliente">Cliente</option>
             </select>
+            <button
+              type="button"
+              onClick={descargarDocumentoPrioridades}
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100"
+            >
+              <Download className="h-4 w-4" />
+              Descargar prioridades
+            </button>
           </div>
         </div>
 
@@ -275,7 +440,9 @@ export default function OrdenesFaltantes() {
                             <th className="text-center px-2 py-2 text-xs font-medium text-gray-500 uppercase tracking-wide">Proveedor kg</th>
                             <th className="text-center px-2 py-2 text-xs font-medium text-gray-500 uppercase tracking-wide">Prod. kg</th>
                             <th className="text-center px-2 py-2 text-xs font-medium text-gray-500 uppercase tracking-wide">Faltante kg</th>
+                            <th className="text-center px-2 py-2 text-xs font-medium text-gray-500 uppercase tracking-wide">Prioridad kg</th>
                             <th className="text-center px-2 py-2 text-xs font-medium text-gray-500 uppercase tracking-wide">Estado</th>
+                            <th className="text-center px-2 py-2 text-xs font-medium text-gray-500 uppercase tracking-wide">Acción</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
@@ -308,6 +475,15 @@ export default function OrdenesFaltantes() {
 </td>
                               <td className="px-2 py-2.5 text-center">
                                 <span className="text-blue-600 font-medium">{f.solicitado_proveedor ?? 0}</span>
+                                {f.trazabilidad_proveedor && (
+                                  <div className={`mx-auto mt-1 w-fit rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${
+                                    f.trazabilidad_proveedor === 'exacta'
+                                      ? 'bg-green-50 text-green-700'
+                                      : 'bg-amber-50 text-amber-700'
+                                  }`}>
+                                    {f.trazabilidad_proveedor}
+                                  </div>
+                                )}
                                 {f.ordenes_proveedor?.length > 0 && (
                                   <div className="flex flex-wrap justify-center gap-1 mt-1">
                                     {f.ordenes_proveedor.map((op) => (
@@ -340,19 +516,97 @@ export default function OrdenesFaltantes() {
                                 <span className="text-red-600 font-bold">{Number(f.faltante ?? 0).toFixed(2)}</span>
                               </td>
                               <td className="px-2 py-2.5 text-center">
-                                {f.faltante_real > 0 ? (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-100 text-red-700">
-                                    {Number(f.faltante_real ?? 0).toFixed(2)}
-                                  </span>
-                                ) : f.proveedor_cubre_necesidad ? (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-700">
-                                    Cubierto
-                                  </span>
-                                ) : (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-100 text-amber-700">
-                                    {Number(f.faltante ?? 0).toFixed(2)}
-                                  </span>
-                                )}
+                                {(() => {
+                                  const prioridad = calcularPrioridad(orden, f);
+                                  const key = prioridadKey(orden.orden_id, f.detalle_id);
+                                  const prioridadRegistrada = f.prioridades_proveedor?.[0];
+                                  const valorSugerido = Number(f.faltante_real ?? f.faltante ?? 0);
+
+                                  return (
+                                    <div className="space-y-1">
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        value={prioridadesKg[key] ?? ""}
+                                        onChange={(event) =>
+                                          setPrioridadesKg((prev) => ({
+                                            ...prev,
+                                            [key]: event.target.value,
+                                          }))
+                                        }
+                                        placeholder={valorSugerido > 0 ? valorSugerido.toFixed(2) : "0.00"}
+                                        className="mx-auto w-24 rounded border border-gray-300 px-2 py-1 text-center text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                      />
+                                      <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${prioridadClass(prioridad.nivel)}`}>
+                                        {prioridad.label}
+                                      </span>
+                                      {prioridadRegistrada && (
+                                        <div className={`mx-auto w-fit rounded px-1.5 py-0.5 text-[10px] font-semibold ${
+                                          prioridadRegistrada.completa
+                                            ? "bg-green-100 text-green-700"
+                                            : "bg-orange-100 text-orange-700"
+                                        }`}>
+                                          {Number(prioridadRegistrada.cantidad_recibida ?? 0).toFixed(2)}
+                                          {" / "}
+                                          {Number(prioridadRegistrada.cantidad_prioridad ?? 0).toFixed(2)} kg
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })()}
+                              </td>
+                              <td className="px-2 py-2.5 text-center">
+                                {(() => {
+                                  const prioridadRegistrada = f.prioridades_proveedor?.[0];
+
+                                  if (prioridadRegistrada?.completa) {
+                                    return (
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-700">
+                                        Prioridad llegó
+                                      </span>
+                                    );
+                                  }
+
+                                  if (prioridadRegistrada) {
+                                    return (
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-orange-100 text-orange-700">
+                                        Falta prioridad {Number(prioridadRegistrada.pendiente ?? 0).toFixed(2)}
+                                      </span>
+                                    );
+                                  }
+
+                                  if (f.faltante_real > 0) {
+                                    return (
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-100 text-red-700">
+                                        {Number(f.faltante_real ?? 0).toFixed(2)}
+                                      </span>
+                                    );
+                                  }
+
+                                  if (f.proveedor_cubre_necesidad) {
+                                    return (
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-700">
+                                        Cubierto
+                                      </span>
+                                    );
+                                  }
+
+                                  return (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-100 text-amber-700">
+                                      {Number(f.faltante ?? 0).toFixed(2)}
+                                    </span>
+                                  );
+                                })()}
+                              </td>
+                              <td className="px-2 py-2.5 text-center">
+                                <button
+                                  type="button"
+                                  onClick={() => crearOrdenProveedorDesdeFaltante(orden, f)}
+                                  className="rounded bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-blue-700"
+                                >
+                                  Crear OC
+                                </button>
                               </td>
                             </tr>
                           ))}

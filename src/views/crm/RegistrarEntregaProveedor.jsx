@@ -9,7 +9,6 @@ import RegisterObservacionOcProveedorDetalles from "../../components/crm/Registe
 import { useRegistrarEntregaProveedor } from "../../hooks/EntregasProveedores/useRegistrarEntregaProveedor";
 import { Trash } from "lucide-react";
 import useReferenciasExcedidas from "../../hooks/crm/useReferenciasExcedidas";
-import { useEffect } from "react";
 
 export default function RegistrarEntregaProveedor({ modo = "crear" }) {
 
@@ -205,6 +204,9 @@ export default function RegistrarEntregaProveedor({ modo = "crear" }) {
                   <th className="px-2 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-20">
                     Faltantes
                   </th>
+                  <th className="px-2 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-32">
+                    Prioridad
+                  </th>
                   <th className="px-2 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-20">
                     Estado
                   </th>
@@ -330,6 +332,34 @@ export default function RegistrarEntregaProveedor({ modo = "crear" }) {
                           </span>
                           <div className="text-xs text-orange-600">kg</div>
                         </div>
+                      </td>
+
+                      <td className="px-2 py-2 w-32">
+                        {detalle.origenes?.length > 0 ? (
+                          <div className="space-y-1">
+                            {detalle.origenes.map((origen) => (
+                              <div
+                                key={origen.id}
+                                className={`rounded-md px-2 py-1 text-xs ${
+                                  origen.prioridad_completa
+                                    ? "bg-green-100 text-green-700"
+                                    : "bg-orange-100 text-orange-700"
+                                }`}
+                              >
+                                <div className="font-semibold">
+                                  {Number(origen.cantidad_recibida_aplicada ?? 0).toFixed(2)}
+                                  {" / "}
+                                  {Number(origen.cantidad_prioridad ?? 0).toFixed(2)} kg
+                                </div>
+                                <div className="text-[10px]">
+                                  {origen.prioridad_completa ? "Prioridad recibida" : "Prioridad pendiente"}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-400">Sin prioridad</span>
+                        )}
                       </td>
 
                       {/* Estado - MÁS COMPACTO */}

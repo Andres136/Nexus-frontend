@@ -63,15 +63,21 @@ export  const hallazgosNovedadesService = {
 };
 
 export const gestionOperativaService = {
-  getvsm:(params)=> apiClient.get("/api/vsm/ordenes", { params }),
+  getvsm: (params) => apiClient.get("/api/vsm/ordenes", { params }),
 
   updateGestion: (id, data) => apiClient.put(`/api/control-operativo/${id}`, data),
 
   deleteGestion: (id) => apiClient.delete(`/api/control-operativo/${id}`),
- createHistorialOrdenes(data) {
-  return apiClient.post('/api/ordenes-compras-historial', data);
-}
 
+  createHistorialOrdenes(data) {
+    return apiClient.post('/api/ordenes-compras-historial', data);
+  },
+
+  agregarDetalleOcProveedor: (data) => apiClient.post('/api/detalles-orden', data),
+
+  getPrioridadesActivas: (params) => apiClient.get('/api/vsm/prioridades', { params }),
+  actualizarPrioridadOrigen: (id, cantidad_prioridad) =>
+    apiClient.patch(`/api/vsm/origenes/${id}/prioridad`, { cantidad_prioridad }),
 };
 
 export const seguimentoHallazgosService = {
