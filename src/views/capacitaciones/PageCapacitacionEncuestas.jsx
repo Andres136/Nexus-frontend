@@ -3,9 +3,13 @@ import PropTypes from "prop-types";
 import Select from "react-select";
 import {
   BarChart3,
+  Check,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   ClipboardList,
   Clock,
+  Copy,
   Loader2,
   Mail,
   Pencil,
@@ -16,7 +20,7 @@ import {
   UserCheck,
   X,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useCapacitaciones } from "../../hooks/capacitaciones/useCapacitaciones";
 import {
   useCapacitacionEncuestaResultados,
@@ -476,6 +480,13 @@ ModalEnviar.propTypes = {
 function ModalResultados({ encuesta, onClose }) {
   const { data, isLoading } = useCapacitacionEncuestaResultados(encuesta?.uuid);
   const porcentaje = data?.total_envios ? Math.round((data.total_respondidas / data.total_envios) * 100) : 0;
+  const [copiado, setCopiado] = useState(null);
+
+  const copiarLink = (token) => {
+    navigator.clipboard.writeText(`${window.location.origin}/capacitacion-encuesta/${token}`);
+    setCopiado(token);
+    setTimeout(() => setCopiado(null), 2000);
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-3 py-6">
@@ -540,9 +551,21 @@ function ModalResultados({ encuesta, onClose }) {
                         </summary>
                         <div className="divide-y divide-amber-100 border-t border-amber-200">
                           {pendientes.map((e) => (
-                            <div key={e.id} className="flex items-center justify-between px-3 py-2">
-                              <span className="text-xs font-medium text-amber-900">{e.usuario?.name}</span>
-                              <span className="text-xs text-amber-600">{e.usuario?.email}</span>
+                            <div key={e.id} className="flex items-center gap-2 px-3 py-2">
+                              <span className="flex-1 truncate text-xs font-medium text-amber-900">{e.usuario?.name}</span>
+                              <span className="shrink-0 truncate text-xs text-amber-600">{e.usuario?.email}</span>
+                              {e.token && (
+                                <button
+                                  type="button"
+                                  onClick={() => copiarLink(e.token)}
+                                  title="Copiar link de encuesta"
+                                  className="shrink-0 rounded p-1 text-amber-500 hover:bg-amber-100"
+                                >
+                                  {copiado === e.token
+                                    ? <Check className="h-3.5 w-3.5 text-emerald-600" />
+                                    : <Copy className="h-3.5 w-3.5" />}
+                                </button>
+                              )}
                             </div>
                           ))}
                         </div>
@@ -620,21 +643,26 @@ ModalResultados.propTypes = {
 };
 
 export default function PageCapacitacionEncuestas() {
-  const [filters, setFilters] = useState({ search: "", capacitacion_uuid: "", estado: "" });
+  const navigate = useNavigate();
+  const [filters, setFilters] = useState({ search: "", capacitacion_uuid: "", estado: "", page: 1 });
+
+  const updateFilter = (key, value) =>
+    setFilters((current) => ({ ...current, [key]: value, page: 1 }));
   const [modalEncuesta, setModalEncuesta] = useState(false);
   const [editando, setEditando] = useState(null);
   const [enviando, setEnviando] = useState(null);
-  const [resultados, setResultados] = useState(null);
 
   const queryFilters = useMemo(() => ({
     search: filters.search || undefined,
     capacitacion_uuid: filters.capacitacion_uuid || undefined,
     estado: filters.estado || undefined,
+    page: filters.page,
   }), [filters]);
 
   const { capacitaciones } = useCapacitaciones({ propias: 1 });
   const {
     encuestas,
+    paginacion,
     isLoading,
     isFetching,
     crear,
@@ -685,14 +713,14 @@ export default function PageCapacitacionEncuestas() {
             <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
             <input
               value={filters.search}
-              onChange={(event) => setFilters((current) => ({ ...current, search: event.target.value }))}
+              onChange={(event) => updateFilter("search", event.target.value)}
               placeholder="Buscar encuesta o capacitación"
               className="w-full rounded-md border border-slate-300 py-2 pl-9 pr-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </label>
           <select
             value={filters.capacitacion_uuid}
-            onChange={(event) => setFilters((current) => ({ ...current, capacitacion_uuid: event.target.value }))}
+            onChange={(event) => updateFilter("capacitacion_uuid", event.target.value)}
             className="rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
           >
             <option value="">Todas las capacitaciones</option>
@@ -702,7 +730,7 @@ export default function PageCapacitacionEncuestas() {
           </select>
           <select
             value={filters.estado}
-            onChange={(event) => setFilters((current) => ({ ...current, estado: event.target.value }))}
+            onChange={(event) => updateFilter("estado", event.target.value)}
             className="rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
           >
             <option value="">Todos los estados</option>
@@ -724,59 +752,90 @@ export default function PageCapacitacionEncuestas() {
           ) : encuestas.length === 0 ? (
             <div className="px-4 py-8 text-sm text-slate-500">No hay encuestas con estos filtros.</div>
           ) : (
-            <div className="divide-y divide-slate-100">
-              {encuestas.map((encuesta) => (
-                <article key={encuesta.uuid} className="grid gap-3 px-4 py-4 lg:grid-cols-[1fr_auto]">
-                  <div className="min-w-0">
+            <>
+              <div className="divide-y divide-slate-100">
+                {encuestas.map((encuesta) => (
+                  <article key={encuesta.uuid} className="grid gap-3 px-4 py-4 lg:grid-cols-[1fr_auto]">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="text-sm font-semibold text-slate-950">{encuesta.titulo}</h3>
+                        <span className={`rounded-full border px-2 py-0.5 text-xs font-semibold ${estadoBadge[encuesta.estado] ?? estadoBadge.inactiva}`}>
+                          {encuesta.estado}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-sm text-slate-500">{encuesta.capacitacion?.titulo}</p>
+                      <div className="mt-2 flex flex-wrap gap-3 text-xs text-slate-500">
+                        <span>{encuesta.preguntas?.length ?? 0} preguntas</span>
+                        <span>{encuesta.envios_count ?? 0} enviadas</span>
+                        <span>{encuesta.respondidas_count ?? 0} respondidas</span>
+                        <span>{encuesta.porcentaje_respuesta ?? 0}% respuesta</span>
+                      </div>
+                    </div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-sm font-semibold text-slate-950">{encuesta.titulo}</h3>
-                      <span className={`rounded-full border px-2 py-0.5 text-xs font-semibold ${estadoBadge[encuesta.estado] ?? estadoBadge.inactiva}`}>
-                        {encuesta.estado}
-                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setEnviando(encuesta)}
+                        className="inline-flex items-center gap-2 rounded-md border border-blue-200 px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50"
+                      >
+                        <Mail className="h-4 w-4" />
+                        Enviar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/auth/capacitaciones/encuestas/${encuesta.uuid}/resultados`)}
+                        className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                      >
+                        <BarChart3 className="h-4 w-4" />
+                        Resultados
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setEditando(encuesta); setModalEncuesta(true); }}
+                        className="rounded-md border border-slate-300 p-2 text-slate-700 hover:bg-slate-50"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => eliminar(encuesta.uuid)}
+                        className="rounded-md border border-red-200 p-2 text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </div>
-                    <p className="mt-1 text-sm text-slate-500">{encuesta.capacitacion?.titulo}</p>
-                    <div className="mt-2 flex flex-wrap gap-3 text-xs text-slate-500">
-                      <span>{encuesta.preguntas?.length ?? 0} preguntas</span>
-                      <span>{encuesta.envios_count ?? 0} enviadas</span>
-                      <span>{encuesta.respondidas_count ?? 0} respondidas</span>
-                      <span>{encuesta.porcentaje_respuesta ?? 0}% respuesta</span>
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
+                  </article>
+                ))}
+              </div>
+
+              {paginacion && paginacion.ultimaPagina > 1 && (
+                <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3">
+                  <span className="text-sm text-slate-500">
+                    {paginacion.total} encuesta{paginacion.total !== 1 ? "s" : ""}
+                  </span>
+                  <div className="flex items-center gap-1">
                     <button
                       type="button"
-                      onClick={() => setEnviando(encuesta)}
-                      className="inline-flex items-center gap-2 rounded-md border border-blue-200 px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50"
+                      disabled={filters.page <= 1}
+                      onClick={() => setFilters((c) => ({ ...c, page: c.page - 1 }))}
+                      className="rounded-md border border-slate-300 p-1.5 text-slate-600 hover:bg-slate-50 disabled:opacity-40"
                     >
-                      <Mail className="h-4 w-4" />
-                      Enviar
+                      <ChevronLeft className="h-4 w-4" />
                     </button>
+                    <span className="min-w-[80px] text-center text-sm text-slate-700">
+                      {filters.page} / {paginacion.ultimaPagina}
+                    </span>
                     <button
                       type="button"
-                      onClick={() => setResultados(encuesta)}
-                      className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                      disabled={filters.page >= paginacion.ultimaPagina}
+                      onClick={() => setFilters((c) => ({ ...c, page: c.page + 1 }))}
+                      className="rounded-md border border-slate-300 p-1.5 text-slate-600 hover:bg-slate-50 disabled:opacity-40"
                     >
-                      <BarChart3 className="h-4 w-4" />
-                      Resultados
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { setEditando(encuesta); setModalEncuesta(true); }}
-                      className="rounded-md border border-slate-300 p-2 text-slate-700 hover:bg-slate-50"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => eliminar(encuesta.uuid)}
-                      className="rounded-md border border-red-200 p-2 text-red-700 hover:bg-red-50"
-                    >
-                      <Trash2 className="h-4 w-4" />
+                      <ChevronRight className="h-4 w-4" />
                     </button>
                   </div>
-                </article>
-              ))}
-            </div>
+                </div>
+              )}
+            </>
           )}
         </section>
       </div>
@@ -800,9 +859,6 @@ export default function PageCapacitacionEncuestas() {
         />
       )}
 
-      {resultados && (
-        <ModalResultados encuesta={resultados} onClose={() => setResultados(null)} />
-      )}
     </div>
   );
 }
