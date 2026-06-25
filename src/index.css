@@ -277,7 +277,7 @@
           .fc-event[title*="cancelad"] {
             background: linear-gradient(135deg, #ef4444, #dc2626) !important;
           }
-          
+
           /* Headers responsive */
           .fc-col-header-cell {
             background: linear-gradient(135deg, #f8fafc, #f1f5f9) !important;
