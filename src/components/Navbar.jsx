@@ -100,14 +100,14 @@ export default function Navbar() {
         {name: "Responsabilidades", to: "/auth/responsabilidades", icon: User2Icon, allowedRoles: [1] },
         {name: "TIC", to: "/auth/tic", icon: Monitor, allowedRoles: [1, 2] },
         {name: "Tickets", to: "/auth/tic/tickets", icon: TicketCheck, allowedRoles: [1, 2, 3, 4, 5, 6, 7, 8, 9] },
-        {name: "Encuestas capacitación", to: "/auth/capacitaciones/encuestas", icon: CalendarDays, alwaysVisible: true },
+
      
         {name: "Cartera", to: "/auth/crm/cartera-clientes", icon: Wallet, alwaysVisible: true },
         {name: "HSEQ", to: "/auth/crm/hseq/inspecciones", icon: ShieldCheck, alwaysVisible: true },
         {name: "Contabilidad", to: "/auth/crm/contabilidad", icon: Wallet, alwaysVisible: true },
 
         {name: "Nomina", to: "/auth/crm/nomina", icon: Wallet, alwaysVisible: true },
-              {name: "Producto no conforme", to: "/auth/crm/producto-no-conforme", icon: PackageX, alwaysVisible: true },
+          
 
       ],
     },
