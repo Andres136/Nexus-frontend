@@ -51,7 +51,7 @@ import NexusLoader from './NexusLoader';
  * @name useSystem
  * @description Recupera la configuración de modo oscuro del sistema.
  */
-export default function TableUsers({onClose}) {
+export default function TableUsers() {
  
  const { darkMode} = useSystem();
  const [isUserModalOpen, setUserModalOpen] = useState(false);
@@ -104,6 +104,7 @@ export default function TableUsers({onClose}) {
                 <th className="border border-gray-300 px-4 py-2">Editar</th>
                 <th className="border border-gray-300 px-4 py-2">Estado</th>
                 <th className="border border-gray-300 px-4 py-2">Nombre</th>
+                <th className="border border-gray-300 px-4 py-2">Apellidos</th>
                 <th className="border border-gray-300 px-4 py-2">Correo</th>
                 <th className="border border-gray-300 px-4 py-2">Teléfono</th>
                 <th className="border border-gray-300 px-4 py-2">Rol</th>
@@ -145,6 +146,7 @@ export default function TableUsers({onClose}) {
                     </button>
                   </td>
                   <td className="border border-gray-300 px-4 py-2">{row.name}</td>
+                  <td className="border border-gray-300 px-4 py-2">{row.apellidos || "—"}</td>
                   <td className="border border-gray-300 px-4 py-2">{row.email}</td>
                   <td className="border border-gray-300 px-4 py-2">{row.telefono}</td>
                   <td className="border border-gray-300 px-4 py-2">{row.role?.nombre || "Sin rol"}</td>

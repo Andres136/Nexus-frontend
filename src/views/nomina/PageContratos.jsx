@@ -12,6 +12,11 @@ function formatCOP(value) {
   return "$ " + Number(value).toLocaleString("es-CO");
 }
 
+function nombreCompleto(usuario) {
+  if (!usuario) return "—";
+  return usuario.nombre_completo || [usuario.name, usuario.apellidos].filter(Boolean).join(" ") || "—";
+}
+
 function Pagination({ meta, page, onPage }) {
   Pagination.propTypes = {
     meta: PropTypes.shape({ last_page: PropTypes.number, from: PropTypes.number, to: PropTypes.number, total: PropTypes.number }),
@@ -182,7 +187,7 @@ export default function PageContratos() {
               {lista.map((item) => (
                 <tr key={item.uuid} className="hover:bg-gray-50 transition-colors">
                   <td className="px-4 py-3 align-top">
-                    <p className="font-medium text-gray-800 truncate max-w-[160px]">{item.usuario?.name ?? "—"}</p>
+                    <p className="font-medium text-gray-800 truncate max-w-[160px]">{nombreCompleto(item.usuario)}</p>
                     <p className="text-xs text-gray-400 truncate max-w-[160px]">{item.usuario?.email ?? ""}</p>
                   </td>
                   <td className="px-4 py-3 text-gray-600 align-top">

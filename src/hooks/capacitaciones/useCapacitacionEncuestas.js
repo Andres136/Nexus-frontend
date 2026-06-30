@@ -19,6 +19,7 @@ export const useCapacitacionEncuestas = (filters = {}) => {
     },
     staleTime: 60 * 1000,
     refetchOnWindowFocus: false,
+    placeholderData: (prev) => prev,
   });
 
   const crear = useMutation({
@@ -59,7 +60,14 @@ export const useCapacitacionEncuestas = (filters = {}) => {
   });
 
   return {
-    encuestas: query.data ?? [],
+    encuestas: query.data?.data ?? [],
+    paginacion: query.data
+      ? {
+          paginaActual: query.data.current_page,
+          ultimaPagina: query.data.last_page,
+          total: query.data.total,
+        }
+      : null,
     isLoading: query.isLoading,
     isFetching: query.isFetching,
     crear: crear.mutate,

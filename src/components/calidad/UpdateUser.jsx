@@ -4,11 +4,13 @@ import { toast } from "react-toastify";
 import clienteAxios from "../../config/axios";
 import { useSedes } from "../../hooks/useSedes";
 import Select from 'react-select';
+import PropTypes from "prop-types";
 
 export default function UpdateUser({ onClose, userId }) {
   // IDs únicos por instancia del componente
   const uid = useId();
   const nameId = `${uid}-name`;
+  const apellidosId = `${uid}-apellidos`;
   const emailId = `${uid}-email`;
   const passId = `${uid}-password`;
   const roleId = `${uid}-role`;
@@ -18,6 +20,7 @@ export default function UpdateUser({ onClose, userId }) {
 
   // Refs
   const nameRef = useRef(null);
+  const apellidosRef = useRef(null);
   const emailRef = useRef(null);
   const passwordRef = useRef(null);
   const role_idRef = useRef(null);
@@ -44,6 +47,7 @@ export default function UpdateUser({ onClose, userId }) {
     const formData = new FormData();
     formData.append("_method", "PUT");
     formData.append("name", nameRef.current.value);
+    formData.append("apellidos", apellidosRef.current.value);
     formData.append("email", emailRef.current.value);
     formData.append("sede_id", sede?.value);
     if (passwordRef.current.value) {
@@ -87,6 +91,7 @@ export default function UpdateUser({ onClose, userId }) {
       if (!usuario) usuario = await obtenerUsuarioPorId();
       if (usuario) {
         if (nameRef.current) nameRef.current.value = usuario.name ?? "";
+        if (apellidosRef.current) apellidosRef.current.value = usuario.apellidos ?? "";
         if (emailRef.current) emailRef.current.value = usuario.email ?? "";
         if (telefonoRef.current) telefonoRef.current.value = usuario.telefono ?? "";
         if (role_idRef.current) role_idRef.current.value = usuario.role_id ?? "";
@@ -146,6 +151,17 @@ export default function UpdateUser({ onClose, userId }) {
                 className={inputClasses}
               />
               {errores.name && <p className="mt-1 text-sm text-red-500 flex items-center gap-1"><span>⚠</span>{errores.name}</p>}
+            </div>
+
+            {/* Apellidos */}
+            <div>
+              <label htmlFor={apellidosId} className={labelClasses}>Apellidos</label>
+              <input
+                type="text" id={apellidosId} name="apellidos" ref={apellidosRef}
+                placeholder="Ingrese sus apellidos"
+                className={inputClasses}
+              />
+              {errores.apellidos && <p className="mt-1 text-sm text-red-500 flex items-center gap-1"><span>⚠</span>{errores.apellidos}</p>}
             </div>
 
             {/* Teléfono */}
@@ -277,3 +293,8 @@ export default function UpdateUser({ onClose, userId }) {
     </div>
   );
 }
+
+UpdateUser.propTypes = {
+  onClose: PropTypes.func.isRequired,
+  userId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+};

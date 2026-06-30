@@ -66,6 +66,7 @@ import DividirOcProveedor from "../views/crm/DividirOcProveedor";
 import DeliveryPage from "../views/Rutas/DeliveryPage";
 import PageCapacitaciones from "../views/capacitaciones/PageCapacitaciones";
 import PageCapacitacionEncuestas from "../views/capacitaciones/PageCapacitacionEncuestas";
+import PageResultadosEncuesta from "../views/capacitaciones/PageResultadosEncuesta";
 import CapacitacionEncuestaPublica from "../views/capacitaciones/CapacitacionEncuestaPublica";
 import MovimientoInventario from "../views/crm/MovimientoInventario";
 import DynamicProtectedRoute from "./DynamicProtectedRoute";
@@ -348,6 +349,14 @@ export default function Router() {
             element={
               <DynamicProtectedRoute permission="/auth/capacitaciones/encuestas">
                 <PageCapacitacionEncuestas />
+              </DynamicProtectedRoute>
+            }
+          />
+          <Route
+            path="capacitaciones/encuestas/:uuid/resultados"
+            element={
+              <DynamicProtectedRoute permission="/auth/capacitaciones/encuestas">
+                <PageResultadosEncuesta />
               </DynamicProtectedRoute>
             }
           />

@@ -54,6 +54,12 @@ export function formatCOP(value) {
   }).format(Number(value || 0));
 }
 
+function parseMoneyInput(value) {
+  if (value === null || value === undefined || value === "") return 0;
+
+  return Number(String(value).replace(/[^\d-]/g, ""));
+}
+
 export function useConfiguracionParametrosLaborales() {
   const queryClient = useQueryClient();
 
@@ -147,8 +153,8 @@ export function useConfiguracionParametrosLaborales() {
       const data = {
         ...payload,
         anio: Number(payload.anio),
-        salario_minimo: Number(payload.salario_minimo || 0),
-        auxilio_transporte: Number(payload.auxilio_transporte || 0),
+        salario_minimo: parseMoneyInput(payload.salario_minimo),
+        auxilio_transporte: parseMoneyInput(payload.auxilio_transporte),
         activo: true,
       };
 
