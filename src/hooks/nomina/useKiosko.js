@@ -17,6 +17,8 @@ import {
 const API_URL     = import.meta.env.VITE_API_URL;
 const STORAGE_URL = API_URL + "/storage/";
 const MODEL_URL   = "/models";
+const FACE_IMAGE_MIN_CONFIDENCE = 0.5;
+const FACE_MATCH_THRESHOLD = 0.5;
 
 async function loadModels() {
   await Promise.all([
@@ -66,7 +68,7 @@ async function buildFaceMatcher(fotos) {
     try {
       const img = await loadImageViaApi(foto.uuid);
       const det = await faceapi
-        .detectSingleFace(img, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.35 }))
+        .detectSingleFace(img, new faceapi.SsdMobilenetv1Options({ minConfidence: FACE_IMAGE_MIN_CONFIDENCE }))
         .withFaceLandmarks()
         .withFaceDescriptor();
       if (det) {
@@ -79,7 +81,7 @@ async function buildFaceMatcher(fotos) {
     }
   }
   if (!labeled.length) return null;
-  return new faceapi.FaceMatcher(labeled, 0.62);
+  return new faceapi.FaceMatcher(labeled, FACE_MATCH_THRESHOLD);
 }
 
 function aplicarInstruccionDiaria(jornada, instruccion) {

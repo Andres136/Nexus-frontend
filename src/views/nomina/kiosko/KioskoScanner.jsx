@@ -5,6 +5,11 @@ import { KeyRound, MessageCircle } from "lucide-react";
 import { workSessionService, permisoService } from "../../../services/nominaService";
 import { hablar } from "../../../helpers/voz";
 
+const FACE_LIVE_MIN_CONFIDENCE = 0.5;
+const FACE_REQUIRED_CONSECUTIVE_MATCHES = 2;
+const FACE_CONSECUTIVE_WINDOW_MS = 1800;
+const RECOGNITION_ACTIVE_MS = 60000;
+
 const hhmm = (date) =>
   date.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit", timeZone: "America/Bogota" });
 
@@ -236,9 +241,11 @@ export default function KioskoScanner({
   const autoPinRef = useRef(null);
   const cooldown   = useRef(false);
   const detecting  = useRef(false);
+  const sleepTimerRef = useRef(null);
   const usuarioBloqueado = useRef(ultimaMarca?.userId ?? null);
   const sinRostroDesde = useRef(null);
-  const detOptions = useRef(new faceapi.SsdMobilenetv1Options({ minConfidence: 0.3 }));
+  const detOptions = useRef(new faceapi.SsdMobilenetv1Options({ minConfidence: FACE_LIVE_MIN_CONFIDENCE }));
+  const matchPendiente = useRef({ userId: null, count: 0, lastAt: 0 });
 
   const [camError, setCamError]         = useState("");
   const [candidato, setCandidato]       = useState(null);
@@ -249,6 +256,40 @@ export default function KioskoScanner({
   const [jornadaCerrada, setJornadaCerrada] = useState(false);
   const [showPin, setShowPin]           = useState(false);
   const [reconocimientoFallido, setReconocimientoFallido] = useState(false);
+  const [reconocimientoActivo, setReconocimientoActivo] = useState(false);
+
+  const detenerCamara = useCallback(() => {
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+    if (videoRef.current) videoRef.current.srcObject = null;
+  }, []);
+
+  const activarReconocimiento = useCallback(() => {
+    clearTimeout(sleepTimerRef.current);
+    cooldown.current = false;
+    detecting.current = false;
+    matchPendiente.current = { userId: null, count: 0, lastAt: 0 };
+    setCamError("");
+    setCandidato(null);
+    setChecking(false);
+    setGuardando(false);
+    setExitoMsg("");
+    setResultadoTipo("success");
+    setJornadaCerrada(false);
+    setReconocimientoFallido(false);
+    setReconocimientoActivo(true);
+  }, []);
+
+  const suspenderReconocimiento = useCallback(() => {
+    clearTimeout(sleepTimerRef.current);
+    cooldown.current = false;
+    detecting.current = false;
+    matchPendiente.current = { userId: null, count: 0, lastAt: 0 };
+    setReconocimientoActivo(false);
+    setReconocimientoFallido(false);
+    setCamError("");
+    detenerCamara();
+  }, [detenerCamara]);
 
   const resetear = useCallback(() => {
     setCandidato(null);
@@ -258,11 +299,17 @@ export default function KioskoScanner({
     setResultadoTipo("success");
     setJornadaCerrada(false);
     setReconocimientoFallido(false);
+    matchPendiente.current = { userId: null, count: 0, lastAt: 0 };
     setTimeout(() => { cooldown.current = false; }, 2000);
   }, []);
 
   // ── Cámara ──────────────────────────────────────────────────────────────────
   useEffect(() => {
+    if (!reconocimientoActivo) {
+      detenerCamara();
+      return undefined;
+    }
+
     navigator.mediaDevices
       .getUserMedia({ video: true })
       .then((stream) => {
@@ -272,14 +319,14 @@ export default function KioskoScanner({
       .catch((err) => setCamError(err.name + ": " + err.message));
 
     return () => {
-      streamRef.current?.getTracks().forEach((t) => t.stop());
+      detenerCamara();
       clearInterval(loopRef.current);
     };
-  }, []);
+  }, [detenerCamara, reconocimientoActivo]);
 
   // ── Detección ───────────────────────────────────────────────────────────────
   const detectar = useCallback(async () => {
-    if (!videoRef.current || !faceMatcher || cooldown.current || candidato || detecting.current) return;
+    if (!reconocimientoActivo || !videoRef.current || !faceMatcher || cooldown.current || candidato || detecting.current) return;
     const video = videoRef.current;
     if (video.readyState < 2) return;
 
@@ -291,6 +338,7 @@ export default function KioskoScanner({
         .withFaceDescriptor();
 
       if (!det) {
+        matchPendiente.current = { userId: null, count: 0, lastAt: 0 };
         if (usuarioBloqueado.current) {
           sinRostroDesde.current ??= Date.now();
           if (Date.now() - sinRostroDesde.current >= 2000) {
@@ -302,11 +350,27 @@ export default function KioskoScanner({
       }
 
       const match = faceMatcher.findBestMatch(det.descriptor);
-      if (match.label === "unknown") return;
+      if (match.label === "unknown") {
+        matchPendiente.current = { userId: null, count: 0, lastAt: 0 };
+        return;
+      }
 
       const userId = Number(match.label);
       sinRostroDesde.current = null;
       if (usuarioBloqueado.current === userId) return;
+
+      const ahoraMatch = Date.now();
+      const previo = matchPendiente.current;
+      const esMismoCandidato =
+        previo.userId === userId && ahoraMatch - previo.lastAt <= FACE_CONSECUTIVE_WINDOW_MS;
+      matchPendiente.current = {
+        userId,
+        count: esMismoCandidato ? previo.count + 1 : 1,
+        lastAt: ahoraMatch,
+      };
+
+      if (matchPendiente.current.count < FACE_REQUIRED_CONSECUTIVE_MATCHES) return;
+      matchPendiente.current = { userId: null, count: 0, lastAt: 0 };
 
       cooldown.current = true;
       setReconocimientoFallido(false);
@@ -380,17 +444,19 @@ export default function KioskoScanner({
     } finally {
       detecting.current = false;
     }
-  }, [faceMatcher, empleadosMap, candidato, onReconocido, kioskoInfo, jornadaId, jornadaActiva, onRefrescarJornada, onEntradaCompleta, resetear]);
+  }, [faceMatcher, empleadosMap, candidato, onReconocido, kioskoInfo, jornadaId, jornadaActiva, onRefrescarJornada, onEntradaCompleta, resetear, reconocimientoActivo]);
 
   useEffect(() => {
+    if (!reconocimientoActivo) return undefined;
+
     loopRef.current = setInterval(detectar, 300);
     return () => clearInterval(loopRef.current);
-  }, [detectar]);
+  }, [detectar, reconocimientoActivo]);
 
   useEffect(() => {
     clearTimeout(autoPinRef.current);
 
-    if (candidato || exitoMsg || showPin || reconocimientoFallido) return;
+    if (!reconocimientoActivo || candidato || exitoMsg || showPin || reconocimientoFallido) return;
 
     autoPinRef.current = setTimeout(() => {
       decir(jornadaActiva, "No fue posible validar el reconocimiento facial. Puedes usar el PIN alterno con tu número de cédula.");
@@ -398,7 +464,25 @@ export default function KioskoScanner({
     }, 10000);
 
     return () => clearTimeout(autoPinRef.current);
-  }, [candidato, exitoMsg, showPin, reconocimientoFallido, jornadaActiva]);
+  }, [candidato, exitoMsg, showPin, reconocimientoFallido, jornadaActiva, reconocimientoActivo]);
+
+  useEffect(() => {
+    clearTimeout(sleepTimerRef.current);
+
+    if (!reconocimientoActivo || candidato || exitoMsg || showPin) return undefined;
+
+    sleepTimerRef.current = setTimeout(() => {
+      decir(jornadaActiva, "Reconocimiento pausado. Toca la pantalla para activarlo nuevamente.");
+      suspenderReconocimiento();
+    }, RECOGNITION_ACTIVE_MS);
+
+    return () => clearTimeout(sleepTimerRef.current);
+  }, [candidato, exitoMsg, jornadaActiva, showPin, suspenderReconocimiento, reconocimientoActivo]);
+
+  useEffect(() => () => {
+    clearTimeout(sleepTimerRef.current);
+    detenerCamara();
+  }, [detenerCamara]);
 
   // ── UI ──────────────────────────────────────────────────────────────────────
   return (
@@ -438,6 +522,7 @@ export default function KioskoScanner({
         <p className="text-gray-400 text-sm mt-1">
           {candidato
             ? checkingSession ? "Verificando sesión..." : "Reconocimiento completado"
+            : !reconocimientoActivo ? "Reconocimiento en espera · Toca activar"
             : reconocimientoFallido || camError ? "Reconocimiento no validado · Usa PIN alterno"
             : "Reconocimiento facial · Acércate a la cámara"}
         </p>
@@ -445,7 +530,17 @@ export default function KioskoScanner({
 
       {/* Cámara */}
       <div className="relative w-64 h-64 rounded-2xl overflow-hidden border-2 border-indigo-600/40 shadow-2xl shadow-indigo-900/30 my-4">
-        {camError ? (
+        {!reconocimientoActivo ? (
+          <div className="w-full h-full bg-gray-900 flex flex-col items-center justify-center gap-3 px-5 text-center">
+            <svg className="h-12 w-12 text-indigo-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5l4.72-2.36A1 1 0 0122 9.03v5.94a1 1 0 01-1.53.85l-4.72-2.36M4.5 6.75h8.25A2.25 2.25 0 0115 9v6a2.25 2.25 0 01-2.25 2.25H4.5A2.25 2.25 0 012.25 15V9A2.25 2.25 0 014.5 6.75z" />
+            </svg>
+            <div>
+              <p className="text-white text-sm font-bold">Cámara pausada</p>
+              <p className="text-gray-400 text-xs mt-1">Activa el reconocimiento cuando vayas a marcar.</p>
+            </div>
+          </div>
+        ) : camError ? (
           <div className="w-full h-full bg-gray-900 flex flex-col items-center justify-center gap-2 px-3">
             <svg className="h-10 w-10 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.07A1 1 0 0121 8.845v6.31a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" />
@@ -509,7 +604,21 @@ export default function KioskoScanner({
 
         {!candidato && !exitoMsg && (
           <>
-            {!reconocimientoFallido && !camError ? (
+            {!reconocimientoActivo ? (
+              <>
+                <button
+                  onClick={activarReconocimiento}
+                  className="w-full py-4 rounded-2xl bg-green-600 border border-green-400/70 text-white text-sm font-bold shadow-lg shadow-green-900/40 hover:bg-green-500 transition-colors">
+                  Activar reconocimiento facial
+                </button>
+                <button
+                  onClick={() => setShowPin(true)}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-indigo-700/70 border border-indigo-500/40 text-indigo-200 text-sm font-medium hover:bg-indigo-600/80 transition-colors">
+                  <KeyRound className="h-4 w-4" strokeWidth={2} />
+                  Usar PIN alterno
+                </button>
+              </>
+            ) : !reconocimientoFallido && !camError ? (
               <div className="w-full py-4 rounded-2xl bg-green-600/90 border border-green-500/60 text-white text-center text-sm font-bold select-none shadow-lg shadow-green-900/40">
                 Acércate a la cámara
               </div>
