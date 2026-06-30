@@ -258,10 +258,17 @@ export default function KioskoScanner({
     setResultadoTipo("success");
     setJornadaCerrada(false);
     setReconocimientoFallido(false);
+    // Reanuda manualmente cuando el kiosko vuelve al estado de espera
+    videoRef.current?.play().catch(() => {});
     setTimeout(() => { cooldown.current = false; }, 2000);
   }, []);
 
-  // ── Cámara ──────────────────────────────────────────────────────────────────
+  // ── Pausa automática al registrar ────────────────────────────────────────
+  useEffect(() => {
+    if (exitoMsg || candidato) videoRef.current?.pause();
+  }, [exitoMsg, candidato]);
+
+  // ── Cámara (un solo intento) ─────────────────────────────────────────────
   useEffect(() => {
     navigator.mediaDevices
       .getUserMedia({ video: true })
