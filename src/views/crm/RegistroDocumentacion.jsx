@@ -18,8 +18,11 @@ import {
 // ─── helpers API ──────────────────────────────────────────────────────────────
 const authHeaders = () => ({ Authorization: `Bearer ${localStorage.getItem("token")}` });
 
-async function apiFetchCarpetas(parentId, search) {
-  const params = search ? { search } : (parentId != null ? { parent_id: parentId } : {});
+async function apiFetchCarpetas(parentId, search, page = 1) {
+  const params = {
+    ...(search ? { search } : (parentId != null ? { parent_id: parentId } : {})),
+    page,
+  };
   const { data } = await clienteAxios.get("/api/carpetas", { headers: authHeaders(), params });
   return data;
 }
@@ -203,6 +206,7 @@ export default function RegistroDocumentacion() {
 
   const [path, setPath]                   = useState([]); // [{id, nombre}]
   const [searchTerm, setSearchTerm]       = useState("");
+  const [page, setPage]                   = useState(1);
   const [modalNueva, setModalNueva]       = useState(false);
   const [carpetaDetalle, setCarpetaDetalle] = useState(null);
   const [activeDragId, setActiveDragId]   = useState(null);
@@ -217,12 +221,13 @@ export default function RegistroDocumentacion() {
 
   // ─── Queries ────────────────────────────────────────────────────────────────
   const { data, isLoading } = useQuery({
-    queryKey: ["carpetas", currentFolderId, searchTerm],
-    queryFn: () => apiFetchCarpetas(currentFolderId, searchTerm),
+    queryKey: ["carpetas", currentFolderId, searchTerm, page],
+    queryFn: () => apiFetchCarpetas(currentFolderId, searchTerm, page),
     placeholderData: (prev) => prev,
   });
 
   const carpetas      = data?.data ?? [];
+  const pagination     = data?.current_page ? data : null;
   const carpetaActiva = carpetas.find((c) => c.id === activeDragId);
 
   // ─── Mutations ──────────────────────────────────────────────────────────────
@@ -263,10 +268,12 @@ export default function RegistroDocumentacion() {
   // ─── Handlers ───────────────────────────────────────────────────────────────
   const navegar = (carpeta) => {
     if (searchTerm) setSearchTerm("");
+    setPage(1);
     setPath((prev) => [...prev, { id: carpeta.id, nombre: carpeta.nombre }]);
   };
 
   const navegarBreadcrumb = (index) => {
+    setPage(1);
     setPath(index === -1 ? [] : (prev) => prev.slice(0, index + 1));
   };
 
@@ -318,13 +325,13 @@ export default function RegistroDocumentacion() {
                 type="text"
                 placeholder="Buscar carpetas..."
                 value={searchTerm}
-                onChange={(e) => { setSearchTerm(e.target.value); setPath([]); }}
+                onChange={(e) => { setSearchTerm(e.target.value); setPath([]); setPage(1); }}
                 className="w-full pl-9 pr-8 py-2 border border-gray-200 rounded-lg text-sm
                   focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
               />
               {searchTerm && (
                 <button
-                  onClick={() => setSearchTerm("")}
+                  onClick={() => { setSearchTerm(""); setPage(1); }}
                   className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -350,7 +357,7 @@ export default function RegistroDocumentacion() {
       {(path.length > 0 || searchTerm) && (
         <div className="flex items-center gap-1.5 px-1 flex-wrap text-xs">
           <button
-            onClick={() => { navegarBreadcrumb(-1); setSearchTerm(""); }}
+            onClick={() => { navegarBreadcrumb(-1); setSearchTerm(""); setPage(1); }}
             className="flex items-center gap-1 text-gray-500 hover:text-blue-600 transition-colors"
           >
             <Home className="w-3.5 h-3.5" /> Raíz
@@ -415,8 +422,8 @@ export default function RegistroDocumentacion() {
           <>
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">
               {searchTerm
-                ? `${carpetas.length} resultado${carpetas.length !== 1 ? "s" : ""}`
-                : `${carpetas.length} carpeta${carpetas.length !== 1 ? "s" : ""}`}
+                ? `${pagination?.total ?? carpetas.length} resultado${(pagination?.total ?? carpetas.length) !== 1 ? "s" : ""}`
+                : `${pagination?.total ?? carpetas.length} carpeta${(pagination?.total ?? carpetas.length) !== 1 ? "s" : ""}`}
               {!searchTerm && (
                 <span className="ml-2 font-normal text-gray-300 normal-case">
                   · arrastra una carpeta sobre otra para moverla
@@ -459,6 +466,34 @@ export default function RegistroDocumentacion() {
                 ) : null}
               </DragOverlay>
             </DndContext>
+            {pagination && pagination.last_page > 1 && (
+              <div className="mt-5 flex flex-col gap-2 border-t border-gray-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                <span className="text-xs font-medium text-gray-500">
+                  Mostrando {pagination.from ?? 0}-{pagination.to ?? 0} de {pagination.total}
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPage((current) => Math.max(1, current - 1))}
+                    disabled={pagination.current_page <= 1 || isLoading}
+                    className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Anterior
+                  </button>
+                  <span className="text-xs text-gray-500">
+                    Página {pagination.current_page} de {pagination.last_page}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setPage((current) => Math.min(pagination.last_page, current + 1))}
+                    disabled={pagination.current_page >= pagination.last_page || isLoading}
+                    className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Siguiente
+                  </button>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>

@@ -659,7 +659,7 @@ export default function PageCapacitacionEncuestas() {
     page: filters.page,
   }), [filters]);
 
-  const { capacitaciones } = useCapacitaciones({ propias: 1 });
+  const { capacitaciones } = useCapacitaciones({ propias: 1, per_page: 100 });
   const {
     encuestas,
     paginacion,

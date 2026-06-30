@@ -45,6 +45,7 @@ const nombreUsuario = (usuario) => {
 };
 
 const getBadge = (estado) => ESTADOS[estado] ?? ESTADOS.programada;
+const today = new Date().toISOString().slice(0, 10);
 
 export default function PageCapacitaciones() {
   const [filters, setFilters] = useState({
@@ -53,6 +54,7 @@ export default function PageCapacitaciones() {
     fecha_hasta: "",
     estado: "",
     propias: false,
+    page: 1,
   });
   const [modalOpen, setModalOpen] = useState(false);
   const [selected, setSelected] = useState(null);
@@ -66,6 +68,8 @@ export default function PageCapacitaciones() {
       fecha_desde: filters.fecha_desde || undefined,
       fecha_hasta: filters.fecha_hasta || undefined,
       estado: filters.estado || undefined,
+      page: filters.page,
+      per_page: 25,
     }),
     [filters]
   );
@@ -80,7 +84,16 @@ export default function PageCapacitaciones() {
     isActualizando,
     eliminarCapacitacion,
     isEliminando,
+    pagination,
   } = useCapacitaciones(queryFilters);
+
+  const updateFilters = (patch) => {
+    setFilters((current) => ({ ...current, ...patch, page: 1 }));
+  };
+
+  const changePage = (page) => {
+    setFilters((current) => ({ ...current, page }));
+  };
 
   const eventos = useMemo(
     () =>
@@ -109,7 +122,7 @@ export default function PageCapacitaciones() {
 
   const openCreate = (fecha = "") => {
     setSelected(null);
-    setFormData({ ...emptyForm, fecha_realizacion: fecha });
+    setFormData({ ...emptyForm, fecha_realizacion: fecha && fecha >= today ? fecha : "" });
     setModalOpen(true);
   };
 
@@ -219,7 +232,7 @@ export default function PageCapacitaciones() {
               <input
                 type="search"
                 value={filters.search}
-                onChange={(event) => setFilters((current) => ({ ...current, search: event.target.value }))}
+                onChange={(event) => updateFilters({ search: event.target.value })}
                 className="w-full rounded-md border border-slate-300 py-2 pl-9 pr-3 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 placeholder="Título, lugar o creador"
               />
@@ -231,7 +244,7 @@ export default function PageCapacitaciones() {
             <input
               type="date"
               value={filters.fecha_desde}
-              onChange={(event) => setFilters((current) => ({ ...current, fecha_desde: event.target.value }))}
+              onChange={(event) => updateFilters({ fecha_desde: event.target.value })}
               className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </label>
@@ -241,7 +254,7 @@ export default function PageCapacitaciones() {
             <input
               type="date"
               value={filters.fecha_hasta}
-              onChange={(event) => setFilters((current) => ({ ...current, fecha_hasta: event.target.value }))}
+              onChange={(event) => updateFilters({ fecha_hasta: event.target.value })}
               className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </label>
@@ -250,7 +263,7 @@ export default function PageCapacitaciones() {
             Estado
             <select
               value={filters.estado}
-              onChange={(event) => setFilters((current) => ({ ...current, estado: event.target.value }))}
+              onChange={(event) => updateFilters({ estado: event.target.value })}
               className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             >
               <option value="">Todos</option>
@@ -264,7 +277,7 @@ export default function PageCapacitaciones() {
             <input
               type="checkbox"
               checked={filters.propias}
-              onChange={(event) => setFilters((current) => ({ ...current, propias: event.target.checked }))}
+              onChange={(event) => updateFilters({ propias: event.target.checked })}
               className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
             />
             Mis registros
@@ -303,7 +316,7 @@ export default function PageCapacitaciones() {
               <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600">
                 <span className="inline-flex items-center gap-1 font-semibold text-slate-800">
                   <Filter className="h-4 w-4" />
-                  {capacitaciones.length} registros
+                  {pagination?.total ?? capacitaciones.length} registros
                 </span>
                 {Object.entries(ESTADOS).map(([key, estado]) => (
                   <span key={key} className="inline-flex items-center gap-1">
@@ -356,7 +369,14 @@ export default function PageCapacitaciones() {
 
           <aside className="rounded-md border border-slate-200 bg-white shadow-sm">
             <div className="border-b border-slate-200 px-4 py-3">
-              <h2 className="text-sm font-semibold text-slate-950">Capacitaciones</h2>
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-sm font-semibold text-slate-950">Capacitaciones</h2>
+                {pagination && (
+                  <span className="text-xs font-medium text-slate-500">
+                    Pag. {pagination.current_page} de {pagination.last_page}
+                  </span>
+                )}
+              </div>
             </div>
             <div className="max-h-[760px] divide-y divide-slate-100 overflow-auto">
               {isLoading ? (
@@ -412,6 +432,29 @@ export default function PageCapacitaciones() {
                 })
               )}
             </div>
+            {pagination && pagination.last_page > 1 && (
+              <div className="flex items-center justify-between gap-2 border-t border-slate-200 px-4 py-3">
+                <button
+                  type="button"
+                  onClick={() => changePage(pagination.current_page - 1)}
+                  disabled={pagination.current_page <= 1 || isFetching}
+                  className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Anterior
+                </button>
+                <span className="text-xs text-slate-500">
+                  {pagination.from ?? 0}-{pagination.to ?? 0} de {pagination.total}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => changePage(pagination.current_page + 1)}
+                  disabled={pagination.current_page >= pagination.last_page || isFetching}
+                  className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Siguiente
+                </button>
+              </div>
+            )}
           </aside>
         </main>
       </div>
@@ -461,6 +504,7 @@ export default function PageCapacitaciones() {
                   Fecha
                   <input
                     type="date"
+                    min={today}
                     value={formData.fecha_realizacion}
                     onChange={(event) => setFormData((current) => ({ ...current, fecha_realizacion: event.target.value }))}
                     disabled={!canEditSelected}

@@ -11,7 +11,10 @@ export const useCapacitaciones = (filters = {}) => {
     queryKey: [...QUERY_KEY, filters],
     queryFn: async () => {
       const response = await capacitacionService.getAll(filters);
-      return response.data;
+      const payload = response.data;
+      return Array.isArray(payload)
+        ? { data: payload, meta: null }
+        : { data: payload.data ?? [], meta: payload };
     },
     staleTime: 60 * 1000,
     refetchOnWindowFocus: false,
@@ -51,7 +54,8 @@ export const useCapacitaciones = (filters = {}) => {
   });
 
   return {
-    capacitaciones: query.data ?? [],
+    capacitaciones: query.data?.data ?? [],
+    pagination: query.data?.meta ?? null,
     isLoading: query.isLoading,
     isFetching: query.isFetching,
     isError: query.isError,
