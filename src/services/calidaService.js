@@ -74,6 +74,8 @@ export const gestionOperativaService = {
   },
 
   agregarDetalleOcProveedor: (data) => apiClient.post('/api/detalles-orden', data),
+  agregarPrioridadDetalleExistente: (data) =>
+    apiClient.post('/api/detalles-orden/prioridad-existente', data),
 
   getPrioridadesActivas: (params) => apiClient.get('/api/vsm/prioridades', { params }),
   actualizarPrioridadOrigen: (id, cantidad_prioridad) =>

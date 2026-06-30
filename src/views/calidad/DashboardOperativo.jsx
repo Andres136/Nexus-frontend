@@ -21,6 +21,7 @@ const VSMCard = ({ orden, formData, handleChange, handleSubmit  }) => {
   const [showProducts, setShowProducts] = useState(false);
   const [prioridadesKg, setPrioridadesKg] = useState({});
   const [prioridadesPrioridad, setPrioridadesPrioridad] = useState({});
+  const [productoCompraModal, setProductoCompraModal] = useState(null);
   const [localRevisada, setLocalRevisada] = useState(orden.revisada);
 const queryClient = useQueryClient();
 
@@ -69,18 +70,18 @@ const marcarDocumentoRevisado = async () => {
     return faltante > 0 ? faltante : Math.max(requerido - entregado, 0);
   };
 
-  const buildDetallePrioridad = (producto) => {
+  const buildDetallePrioridad = (producto, { soloPrioridad = false } = {}) => {
     const key = prioridadKey(producto);
     const cantidadManual = Number(prioridadesKg[key] ?? 0);
-    const cantidad = cantidadManual > 0
-      ? cantidadManual
-      : cantidadSugeridaPrioridad(producto);
+    const prioridadManual = Number(prioridadesPrioridad[key] ?? 0);
+    const cantidad = soloPrioridad
+      ? prioridadManual
+      : (cantidadManual > 0 ? cantidadManual : cantidadSugeridaPrioridad(producto));
 
     if (cantidad <= 0) {
       return null;
     }
 
-    const prioridadManual = Number(prioridadesPrioridad[key] ?? 0);
     const cantidadPrioridad = prioridadManual > 0
       ? Math.min(prioridadManual, cantidad)
       : cantidad;
@@ -124,11 +125,9 @@ const marcarDocumentoRevisado = async () => {
 
   const actualizarPrioridadDirecta = async (origenId, producto) => {
     const key = prioridadKey(producto);
-    const prio = Number(prioridadesPrioridad[key] ?? 0);
-    const total = Number(prioridadesKg[key] ?? 0) || cantidadSugeridaPrioridad(producto);
-    const cantidad = prio > 0 ? Math.min(prio, total) : total;
+    const cantidad = Number(prioridadesPrioridad[key] ?? 0);
     if (cantidad <= 0) {
-      showToast('error', 'Indica una cantidad mayor a 0 kg');
+      showToast('error', 'Indica cuántos kg quieres dejar como urgentes');
       return;
     }
     try {
@@ -158,15 +157,21 @@ const marcarDocumentoRevisado = async () => {
   };
 
   const agregarPrioridadExistente = (producto, oc) => {
-    const item = buildDetallePrioridad(producto);
+    if (!oc.detalle_id) {
+      showToast('error', 'No se encontró el item exacto en la OC proveedor');
+      return;
+    }
+
+    const item = buildDetallePrioridad(producto, { soloPrioridad: true });
     if (!item) {
-      showToast('error', 'Indica una prioridad mayor a 0 kg');
+      showToast('error', 'Indica cuántos kg quieres priorizar en la OC existente');
       return;
     }
     const taggedItem = {
       ...item,
-      uid: `oc${oc.id}-${item.uid}`,
+      uid: `oc-det${oc.detalle_id}-${item.uid}`,
       target_oc_id: oc.id,
+      target_oc_detalle_id: oc.detalle_id,
       target_oc_numero: oc.numero_orden || `OC-${oc.id}`,
     };
     const storageKey = 'crm_prioridades_compra';
@@ -307,23 +312,25 @@ const marcarDocumentoRevisado = async () => {
   </div>
 </td>
                     <td className="px-3 py-2">
-                      <div className="space-y-1">
+                      <div className="space-y-2">
                         {prod.compra_proveedor?.pendiente > 0 ? (
                           <>
-                          <div className="font-mono text-blue-700">
-                            {parseFloat(prod.compra_proveedor.pendiente).toFixed(1)} kg
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <div className="font-mono font-bold text-blue-700">
+                              {parseFloat(prod.compra_proveedor.pendiente).toFixed(1)} kg
+                            </div>
+                            <span className={`inline-block rounded px-2 py-0.5 text-[10px] font-bold uppercase ${
+                              prod.compra_proveedor.trazabilidad === 'exacta'
+                                ? 'bg-green-100 text-green-700'
+                                : 'bg-amber-100 text-amber-700'
+                            }`}>
+                              {prod.compra_proveedor.trazabilidad}
+                            </span>
                           </div>
-                          <span className={`inline-block rounded px-1.5 py-0.5 text-[9px] font-bold uppercase ${
-                            prod.compra_proveedor.trazabilidad === 'exacta'
-                              ? 'bg-green-100 text-green-700'
-                              : 'bg-amber-100 text-amber-700'
-                          }`}>
-                            {prod.compra_proveedor.trazabilidad}
-                          </span>
                           {prod.compra_proveedor.ordenes?.length > 0 && (
                             <div className="flex flex-wrap gap-1">
                               {prod.compra_proveedor.ordenes.map((op) => (
-                                <span key={op.id} className="rounded bg-blue-50 px-1.5 py-0.5 text-[9px] font-semibold text-blue-700">
+                                <span key={op.detalle_id ?? op.id} className="rounded bg-blue-50 px-1.5 py-0.5 text-[9px] font-semibold text-blue-700">
                                   {op.numero_orden || `OP-${op.id}`}
                                 </span>
                               ))}
@@ -363,82 +370,13 @@ const marcarDocumentoRevisado = async () => {
                           <span className="text-[10px] text-gray-400">Sin compra</span>
                         )}
                         {prod.faltante > 0 && (
-                          <div className="rounded border border-blue-100 bg-white p-1">
-                            {/* Inputs en grilla 2 col */}
-                            <div className="grid grid-cols-2 gap-1 mb-1">
-                              <div>
-                                <label className="block text-[8px] font-bold uppercase text-gray-400 mb-0.5">
-                                  Total (kg)
-                                </label>
-                                <input
-                                  type="number"
-                                  min="0"
-                                  step="0.01"
-                                  value={prioridadesKg[prioridadKey(prod)] ?? ''}
-                                  onChange={(event) =>
-                                    setPrioridadesKg((prev) => ({
-                                      ...prev,
-                                      [prioridadKey(prod)]: event.target.value,
-                                    }))
-                                  }
-                                  placeholder={cantidadSugeridaPrioridad(prod).toFixed(1)}
-                                  className="w-full rounded border border-gray-300 px-1 py-0.5 text-[10px] focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-[8px] font-bold uppercase text-orange-400 mb-0.5">
-                                  Urgente (kg)
-                                </label>
-                                <input
-                                  type="number"
-                                  min="0"
-                                  step="0.01"
-                                  value={prioridadesPrioridad[prioridadKey(prod)] ?? ''}
-                                  onChange={(event) =>
-                                    setPrioridadesPrioridad((prev) => ({
-                                      ...prev,
-                                      [prioridadKey(prod)]: event.target.value,
-                                    }))
-                                  }
-                                  placeholder="= Total"
-                                  className="w-full rounded border border-orange-300 px-1 py-0.5 text-[10px] focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
-                                />
-                              </div>
-                            </div>
-                            {(() => {
-                              const total = Number(prioridadesKg[prioridadKey(prod)] ?? 0) || cantidadSugeridaPrioridad(prod);
-                              const prio = Number(prioridadesPrioridad[prioridadKey(prod)] ?? 0);
-                              return prio > total ? (
-                                <p className="text-[8px] text-red-500 font-bold mb-1">
-                                  Max {total.toFixed(1)} kg
-                                </p>
-                              ) : null;
-                            })()}
-                            <button
-                              type="button"
-                              onClick={() => agregarPrioridadLocal(prod)}
-                              className="w-full rounded bg-blue-600 px-1 py-0.5 text-[9px] font-bold text-white hover:bg-blue-700"
-                            >
-                              + Nueva OC
-                            </button>
-                            {prod.compra_proveedor?.ordenes?.length > 0 && (
-                              <div className="mt-1 space-y-0.5 border-t border-gray-100 pt-1">
-                                <label className="block text-[8px] font-bold uppercase text-gray-400">
-                                  + OC existente
-                                </label>
-                                {prod.compra_proveedor.ordenes.map((oc) => (
-                                  <button
-                                    key={oc.id}
-                                    type="button"
-                                    onClick={() => agregarPrioridadExistente(prod, oc)}
-                                    className="w-full rounded border border-green-300 bg-green-50 px-1 py-0.5 text-[9px] font-bold text-green-700 hover:bg-green-100"
-                                  >
-                                    → {oc.numero_orden || `OC-${oc.id}`}
-                                  </button>
-                                ))}
-                              </div>
-                            )}
-                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setProductoCompraModal(prod)}
+                            className="w-full rounded border border-blue-200 bg-blue-50 px-2 py-1.5 text-[10px] font-bold text-blue-700 hover:bg-blue-100"
+                          >
+                            Compra / prioridad
+                          </button>
                         )}
                       </div>
                     </td>
@@ -452,6 +390,119 @@ const marcarDocumentoRevisado = async () => {
           </div>
         </div>
       )}
+{productoCompraModal && (
+  <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/45 px-4">
+    <div className="w-full max-w-2xl rounded-lg bg-white shadow-2xl">
+      <div className="flex items-start justify-between gap-4 border-b px-5 py-4">
+        <div>
+          <p className="text-xs font-bold uppercase text-gray-400">Compra / prioridad</p>
+          <h3 className="text-base font-bold text-gray-900">
+            {productoCompraModal.producto || `Producto ${productoCompraModal.producto_id}`}
+          </h3>
+          <p className="text-sm text-gray-500">
+            Faltante: {Number(productoCompraModal.faltante ?? 0).toFixed(1)} kg · Stock: {Number(productoCompraModal.stock ?? 0).toFixed(1)}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setProductoCompraModal(null)}
+          className="rounded border border-gray-200 px-3 py-1.5 text-sm font-semibold text-gray-600 hover:bg-gray-50"
+        >
+          Cerrar
+        </button>
+      </div>
+
+      <div className="grid gap-4 p-5 md:grid-cols-2">
+        {productoCompraModal.compra_proveedor?.ordenes?.length > 0 && (
+          <section className="rounded-md border border-green-200 bg-green-50 p-4">
+            <h4 className="text-sm font-bold text-green-800">Priorizar cantidad ya pedida</h4>
+            <p className="mt-1 text-xs text-green-700">
+              Registra solo los kg urgentes sobre un item existente. No crea otro item en la OC.
+            </p>
+
+            <label className="mt-4 block text-xs font-bold uppercase text-green-800">
+              Kg urgentes
+            </label>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={prioridadesPrioridad[prioridadKey(productoCompraModal)] ?? ''}
+              onChange={(event) =>
+                setPrioridadesPrioridad((prev) => ({
+                  ...prev,
+                  [prioridadKey(productoCompraModal)]: event.target.value,
+                }))
+              }
+              placeholder="Ej: 5.00"
+              className="mt-1 w-full rounded border border-green-300 bg-white px-3 py-2 text-sm focus:border-green-500 focus:ring-1 focus:ring-green-500"
+            />
+
+            <div className="mt-4 space-y-2">
+              <p className="text-xs font-bold uppercase text-green-800">OC proveedor</p>
+              {productoCompraModal.compra_proveedor.ordenes.map((oc) => (
+                <button
+                  key={oc.detalle_id ?? oc.id}
+                  type="button"
+                  onClick={() => {
+                    agregarPrioridadExistente(productoCompraModal, oc);
+                    setProductoCompraModal(null);
+                  }}
+                  disabled={!oc.detalle_id}
+                  className="flex w-full items-center justify-between gap-3 rounded border border-green-300 bg-white px-3 py-2 text-left text-sm font-semibold text-green-800 hover:bg-green-100 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <span>
+                    {oc.numero_orden || `OC-${oc.id}`}
+                    {oc.proveedor ? ` · ${oc.proveedor}` : ''}
+                  </span>
+                  <span className="font-mono text-xs">
+                    {Number(oc.pendiente ?? 0).toFixed(1)} kg pend.
+                  </span>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+
+        <section className="rounded-md border border-blue-200 bg-blue-50 p-4">
+          <h4 className="text-sm font-bold text-blue-800">Crear OC proveedor nueva</h4>
+          <p className="mt-1 text-xs text-blue-700">
+            Usa esta opción si todavía no hay un pedido proveedor adecuado para este producto.
+          </p>
+
+          <label className="mt-4 block text-xs font-bold uppercase text-blue-800">
+            Kg a comprar
+          </label>
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            value={prioridadesKg[prioridadKey(productoCompraModal)] ?? ''}
+            onChange={(event) =>
+              setPrioridadesKg((prev) => ({
+                ...prev,
+                [prioridadKey(productoCompraModal)]: event.target.value,
+              }))
+            }
+            placeholder={cantidadSugeridaPrioridad(productoCompraModal).toFixed(1)}
+            className="mt-1 w-full rounded border border-blue-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          />
+
+          <button
+            type="button"
+            onClick={() => {
+              agregarPrioridadLocal(productoCompraModal);
+              setProductoCompraModal(null);
+            }}
+            className="mt-4 w-full rounded bg-blue-600 px-3 py-2 text-sm font-bold text-white hover:bg-blue-700"
+          >
+            Agregar para nueva OC
+          </button>
+        </section>
+      </div>
+    </div>
+  </div>
+)}
 {/* 🔥 FORMULARIO DE REPROGRAMACIÓN */}
 <div className="border-t p-4 space-y-3">
   <h4 className="text-sm font-bold text-gray-600">
@@ -618,12 +669,17 @@ const {
     let fallidos = 0;
     for (const item of prioridades) {
       try {
-        await gestionOperativaService.agregarDetalleOcProveedor({
-          orden_id: item.target_oc_id,
-          descripcion: item.detalle.descripcion,
-          cantidad_solicitada: item.detalle.cantidad_solicitada,
-          producto_id: item.detalle.producto_id,
-          origenes: item.detalle.origenes,
+        const origen = item.detalle.origenes?.[0] || {};
+        await gestionOperativaService.agregarPrioridadDetalleExistente({
+          orden_compra_proveedor_detalle_id: item.target_oc_detalle_id,
+          orden_compra_id: origen.orden_compra_id,
+          orden_compra_detalle_id: origen.orden_compra_detalle_id,
+          producto_id: origen.producto_id,
+          sede_id: origen.sede_id,
+          bodega_id: origen.bodega_id,
+          cantidad_solicitada: origen.cantidad_solicitada,
+          cantidad_prioridad: origen.cantidad_prioridad,
+          prioridad_snapshot: origen.prioridad_snapshot,
         });
         exitosos++;
       } catch {
