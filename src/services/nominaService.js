@@ -96,8 +96,8 @@ export  const tipoContratoService = {
 };
 
 export const seguridadSocialService = {
-  getSeguridadSocial() {
-    return apiClient.get("api/nomina/seguridad-social");
+  getSeguridadSocial(params = {}) {
+    return apiClient.get("api/nomina/seguridad-social", { params });
   },
   getSeguridadSocialById(id) {
     return apiClient.get(`api/nomina/seguridad-social/${id}`);
@@ -332,6 +332,18 @@ export const contratacionService = {
   },
   deleteContrato(id) {
     return apiClient.delete(`api/nomina/contratacion/${id}`);
+  },
+};
+
+export const contratacionCambioService = {
+  getCambios(params = {}) {
+    return apiClient.get("api/nomina/contratacion-cambios", { params });
+  },
+  getCambio(uuid) {
+    return apiClient.get(`api/nomina/contratacion-cambios/${uuid}`);
+  },
+  createCambio(data) {
+    return apiClient.post("api/nomina/contratacion-cambios", data);
   },
 };
 

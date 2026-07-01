@@ -81,6 +81,30 @@ export function useConfiguracionPuc() {
     );
   };
 
+  const actualizarClasificacionConcepto = (concepto, clasificacion) => {
+    updateConceptoMutation.mutate(
+      {
+        uuid: concepto.uuid,
+        data: {
+          clasificacion_nomina: clasificacion,
+          es_pago_no_salarial: clasificacion === "pago_no_salarial",
+        },
+      },
+      {
+        onSuccess: () => {
+          showToast("success", "Clasificación actualizada");
+        },
+        onError: (error) => {
+          showToast(
+            "error",
+            error.response?.data?.message ||
+              "No fue posible actualizar la clasificación"
+          );
+        },
+      }
+    );
+  };
+
   const sincronizarCuentasPuc = () => {
     sincronizarConceptosMutation.mutate(undefined, {
       onSuccess: (response) => {
@@ -133,6 +157,7 @@ export function useConfiguracionPuc() {
     sincronizarConceptosMutation,
     descargandoPlantillaPuc,
     actualizarCuentaConcepto,
+    actualizarClasificacionConcepto,
     sincronizarCuentasPuc,
     descargarPlantillaPucFaltante,
   };

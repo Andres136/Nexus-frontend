@@ -27,6 +27,13 @@ const EMPTY_FORM = {
   arl_id: "",
   fondo_pensiones_id: "",
   caja_penciones_id: "",
+  fondo_cesantias_id: "",
+  aplica_salud: true,
+  aplica_pension: true,
+  aplica_arl: true,
+  aplica_sena: true,
+  aplica_icbf: true,
+  aplica_caja_compensacion: true,
 };
 
 function normalizeMoneyValue(value) {
@@ -65,7 +72,8 @@ export const useGetRegisterContratacion = ({ uuid = null, onSuccess } = {}) => {
         id_contrato, users_id, empresa_id, centro_costo, tipo_documento, numero_documento, correo, cargo,
         tipo_salario, parametro_laboral_id, no_salarial, base_salario, salario_integral, auxilio_transporte, pago_frecuencia,
         inicio_contratacion, dias_vacaciones_iniciales, fin_contrato, status, eps_id, arl_id,
-        fondo_pensiones_id, caja_penciones_id,
+        fondo_pensiones_id, caja_penciones_id, fondo_cesantias_id,
+        aplica_salud, aplica_pension, aplica_arl, aplica_sena, aplica_icbf, aplica_caja_compensacion,
       } = contratacion.data;
       setFormData({
         id_contrato: id_contrato ?? "",
@@ -91,6 +99,13 @@ export const useGetRegisterContratacion = ({ uuid = null, onSuccess } = {}) => {
         arl_id: arl_id ?? "",
         fondo_pensiones_id: fondo_pensiones_id ?? "",
         caja_penciones_id: caja_penciones_id ?? "",
+        fondo_cesantias_id: fondo_cesantias_id ?? "",
+        aplica_salud: aplica_salud ?? true,
+        aplica_pension: aplica_pension ?? true,
+        aplica_arl: aplica_arl ?? true,
+        aplica_sena: aplica_sena ?? true,
+        aplica_icbf: aplica_icbf ?? true,
+        aplica_caja_compensacion: aplica_caja_compensacion ?? true,
       });
     } else if (!uuid) {
       setFormData(EMPTY_FORM);

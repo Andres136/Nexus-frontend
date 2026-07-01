@@ -1,9 +1,10 @@
 import { useState, useMemo } from "react";
 import PropTypes from "prop-types";
 import { useQueryClient } from "@tanstack/react-query";
-import { Search, Plus, Pencil, CheckCircle2, XCircle } from "lucide-react";
+import { Search, Plus, Pencil, CheckCircle2, XCircle, FileText } from "lucide-react";
 import { useGetContrataciones } from "../../hooks/nomina/useGetContrataciones";
 import RegisterContrato from "../../components/nomina/RegisterContrato";
+import CambioContratoModal from "../../components/nomina/CambioContratoModal";
 import { contratacionService } from "../../services/nominaService";
 import { showToast } from "../../helpers/utils/showToast";
 
@@ -67,6 +68,7 @@ export default function PageContratos() {
   const [perPage, setPerPage] = useState(10);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedUuid, setSelectedUuid] = useState(null);
+  const [cambioContrato, setCambioContrato] = useState(null);
   const [updatingStatusUuid, setUpdatingStatusUuid] = useState(null);
 
   const params = useMemo(
@@ -84,6 +86,7 @@ export default function PageContratos() {
   const openCreate = () => { setSelectedUuid(null); setModalOpen(true); };
   const openEdit = (uuid) => { setSelectedUuid(uuid); setModalOpen(true); };
   const closeModal = () => { setModalOpen(false); setSelectedUuid(null); };
+  const closeCambioModal = () => setCambioContrato(null);
 
   const handleSearch = (e) => { setSearch(e.target.value); setPage(1); };
   const handlePerPage = (e) => {
@@ -244,11 +247,18 @@ export default function PageContratos() {
                     )}
                   </td>
                   <td className="px-4 py-3 text-right align-top">
-                    <button onClick={() => openEdit(item.uuid)}
-                      className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-800 transition-colors">
-                      <Pencil className="h-3.5 w-3.5" />
-                      Editar
-                    </button>
+                    <div className="flex justify-end gap-2">
+                      <button onClick={() => setCambioContrato(item)}
+                        className="inline-flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-slate-800 transition-colors">
+                        <FileText className="h-3.5 w-3.5" />
+                        Otro sí
+                      </button>
+                      <button onClick={() => openEdit(item.uuid)}
+                        className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-800 transition-colors">
+                        <Pencil className="h-3.5 w-3.5" />
+                        Editar
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -271,6 +281,21 @@ export default function PageContratos() {
               </svg>
             </button>
             <RegisterContrato uuid={selectedUuid} onClose={closeModal} />
+          </div>
+        </div>
+      )}
+
+      {cambioContrato && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={closeCambioModal} />
+          <div className="relative bg-white rounded-xl shadow-xl w-full max-w-4xl mx-4 p-6 animate-slide-in overflow-y-auto max-h-[90vh]">
+            <button onClick={closeCambioModal}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <CambioContratoModal contrato={cambioContrato} onClose={closeCambioModal} />
           </div>
         </div>
       )}
