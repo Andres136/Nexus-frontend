@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
+import Select from "react-select";
 import { useGetFacturasCompras } from "../../hooks/contabilidad/useGetFacturasCompras";
+import { useEmpresas } from "../../hooks/useEmpresas";
 import ModalAbonos from "../../components/contabilidad/ModalAbonos";
 import {
   FileText,
@@ -42,16 +44,20 @@ export default function ObtenerFacturas() {
   const [searchTerm, setSearchTerm] = useState("");
   const [fechaInicio, setFechaInicio] = useState("");
   const [fechaFin, setFechaFin] = useState("");
+  const [empresaId, setEmpresaId] = useState("");
   const [selectedFacturaId, setSelectedFacturaId] = useState(null);
+  const { empresas, loading: empresasLoading } = useEmpresas();
 
   const filtros = useMemo(() => ({
     fecha_inicio: fechaInicio || undefined,
     fecha_fin: fechaFin || undefined,
-  }), [fechaInicio, fechaFin]);
+    empresa_id: empresaId || undefined,
+  }), [fechaInicio, fechaFin, empresaId]);
 
   const limpiarFechas = () => {
     setFechaInicio("");
     setFechaFin("");
+    setEmpresaId("");
     setPage(1);
   };
 
@@ -111,6 +117,32 @@ export default function ObtenerFacturas() {
             </div>
 
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <div className="w-full sm:w-52">
+                <Select
+                  isClearable
+                  isLoading={empresasLoading}
+                  placeholder="Todas las empresas"
+                  options={empresas.map((empresa) => ({
+                    value: empresa.id,
+                    label: empresa.nombre,
+                  }))}
+                  value={
+                    empresas
+                      .filter((empresa) => Number(empresa.id) === Number(empresaId))
+                      .map((empresa) => ({
+                        value: empresa.id,
+                        label: empresa.nombre,
+                      }))[0] || null
+                  }
+                  onChange={(option) => {
+                    setEmpresaId(option?.value || "");
+                    setPage(1);
+                  }}
+                  className="text-sm"
+                  classNamePrefix="facturas-empresa"
+                />
+              </div>
+
               <label className="relative">
                 <CalendarDays size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                 <input
@@ -132,7 +164,7 @@ export default function ObtenerFacturas() {
                 />
               </label>
 
-              {(fechaInicio || fechaFin) && (
+              {(fechaInicio || fechaFin || empresaId) && (
                 <button
                   type="button"
                   onClick={limpiarFechas}
@@ -242,6 +274,7 @@ export default function ObtenerFacturas() {
                   <th className="px-3 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Número Factura</th>
                   <th className="px-3 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">N° Factura Proveedor</th>
                   <th className="px-3 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Proveedor</th>
+                  <th className="px-3 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Empresa</th>
                   <th className="px-3 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Emisión</th>
                   <th className="px-3 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Vencimiento</th>
                   <th className="px-3 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Total</th>
@@ -254,7 +287,7 @@ export default function ObtenerFacturas() {
                 {isLoading ? (
                   [...Array(6)].map((_, i) => (
                     <tr key={i} className="animate-pulse">
-                      {[...Array(9)].map((__, j) => (
+                      {[...Array(11)].map((__, j) => (
                         <td key={j} className="px-3 py-3">
                           <div className="h-4 bg-gray-200 rounded w-full" />
                         </td>
@@ -263,7 +296,7 @@ export default function ObtenerFacturas() {
                   ))
                 ) : facturas.length === 0 ? (
                   <tr>
-                    <td colSpan="10" className="px-6 py-12 text-center text-gray-400 text-sm italic">
+                    <td colSpan="11" className="px-6 py-12 text-center text-gray-400 text-sm italic">
                       No se encontraron facturas.
                     </td>
                   </tr>
@@ -274,6 +307,7 @@ export default function ObtenerFacturas() {
                       <td className="px-3 py-3 text-sm font-medium text-gray-800">{factura.numero_factura}</td>
                       <td className="px-3 py-3 text-sm text-gray-600">{factura.numero_factura_proveedor || "N/A"}</td>
                       <td className="px-3 py-3 text-sm font-medium text-gray-800">{factura.proveedor?.nombre || "Sin proveedor"}</td>
+                      <td className="px-3 py-3 text-sm text-gray-600">{factura.empresa?.nombre || "Sin empresa"}</td>
                       <td className="px-3 py-3 text-sm text-gray-600">{factura.fecha_emision}</td>
                       <td className="px-3 py-3 text-sm text-gray-600">{factura.fecha_vencimiento}</td>
                       <td className="px-3 py-3 text-sm font-semibold text-gray-800">
