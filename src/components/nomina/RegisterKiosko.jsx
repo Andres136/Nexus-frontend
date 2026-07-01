@@ -91,7 +91,16 @@ export default function RegisterKiosko({ uuid = null, onClose }) {
       const res = isEdit
         ? await kioskoDeviceService.updateKiosco(uuid, formData)
         : await kioskoDeviceService.createKiosco(formData);
-      showToast("success", res.data.message || (isEdit ? "Actualizado" : "Registrado"));
+      const activationUrl = res.data?.data?.activation_url;
+      if (!isEdit && activationUrl) {
+        const url = activationUrl.startsWith("http")
+          ? activationUrl
+          : `${window.location.origin}${activationUrl}`;
+        await navigator.clipboard.writeText(url);
+        showToast("success", "Kiosko registrado. Link de activación copiado");
+      } else {
+        showToast("success", res.data.message || (isEdit ? "Actualizado" : "Registrado"));
+      }
       queryClient.invalidateQueries(["kioscos"]);
       if (!isEdit) setFormData(EMPTY);
       onClose?.();

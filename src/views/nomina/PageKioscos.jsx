@@ -183,7 +183,7 @@ export default function PageKioscos() {
                       <button onClick={() => copyActivationLink(item)} disabled={loadingAction === `link-${item.uuid}`}
                         className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800 disabled:opacity-50 transition-colors">
                         {loadingAction === `link-${item.uuid}` ? <Copy className="h-3.5 w-3.5" /> : <Link2 className="h-3.5 w-3.5" />}
-                        Link
+                        {item.status === "active" ? "Reactivar" : "Link"}
                       </button>
                       {item.status === "active" && (
                         <BtnAccesoTemporalKiosko uuid={item.uuid} />
