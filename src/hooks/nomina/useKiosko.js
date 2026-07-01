@@ -128,6 +128,13 @@ export function useKiosko() {
   const [empleadoActual, setEmpleadoActual] = useState(null);
   const [ultimaMarca, setUltimaMarca]     = useState(null);
 
+  const invalidarSesionKiosko = useCallback((message = "La sesión de este kiosko no es válida. Genera un nuevo link de activación y reactívalo en este dispositivo.") => {
+    removeKioskoSession(code);
+    removeKioskoGuestSession(code);
+    setErrorMsg(message);
+    setStatus("error");
+  }, [code]);
+
   const jornadaBaseActiva = useMemo(
     () => jornadasLaborales.find((j) => j.status !== false) ?? jornadasLaborales[0] ?? null,
     [jornadasLaborales]
@@ -147,13 +154,17 @@ export function useKiosko() {
         const response = await horarioOperacionService.getKioskoHoy();
         return response.data?.data ?? null;
       } catch (error) {
-        if (error.response?.status === 403) throw error;
+        if (error.response?.status === 403) {
+          invalidarSesionKiosko(error.response?.data?.message);
+          throw error;
+        }
         return null;
       }
     },
     enabled: status === "ready" && jornadasLaborales.length > 0,
     refetchInterval: 5000,
     refetchOnWindowFocus: true,
+    retry: false,
     staleTime: 0,
   });
 
@@ -172,14 +183,18 @@ export function useKiosko() {
           const response = await horarioOperacionService.getKioskoHoy();
           return response.data?.data ?? null;
         } catch (error) {
-          if (error.response?.status === 403) throw error;
+          if (error.response?.status === 403) {
+            invalidarSesionKiosko(error.response?.data?.message);
+            throw error;
+          }
           return null;
         }
       },
       staleTime: 0,
+      retry: false,
     });
     return construirJornadaOperativa(instruccionDiaria) ?? jornadaActiva;
-  }, [construirJornadaOperativa, fechaOperacion, jornadaActiva, jornadasLaborales, queryClient]);
+  }, [construirJornadaOperativa, fechaOperacion, invalidarSesionKiosko, jornadaActiva, jornadasLaborales, queryClient]);
 
   useEffect(() => {
     async function init() {

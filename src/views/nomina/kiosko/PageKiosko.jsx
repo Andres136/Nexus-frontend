@@ -3,7 +3,7 @@ import KioskoScanner from "./KioskoScanner";
 import KioskoAcciones from "./KioskoAcciones";
 import { useKiosko } from "../../../hooks/nomina/useKiosko";
 
-function PantallaEstado({ titulo, detalle, error }) {
+function PantallaEstado({ titulo, detalle, error, onRetry }) {
   return (
     <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center gap-4 px-6 text-center">
       {error ? (
@@ -20,6 +20,15 @@ function PantallaEstado({ titulo, detalle, error }) {
       )}
       <p className="text-white text-lg font-semibold">{titulo}</p>
       {detalle && <p className="text-gray-400 text-sm max-w-xs">{detalle}</p>}
+      {error && onRetry && (
+        <button
+          type="button"
+          onClick={onRetry}
+          className="mt-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-950/40 transition-colors hover:bg-indigo-500"
+        >
+          Reintentar
+        </button>
+      )}
     </div>
   );
 }
@@ -28,6 +37,7 @@ PantallaEstado.propTypes = {
   titulo: PropTypes.string.isRequired,
   detalle: PropTypes.string,
   error: PropTypes.bool,
+  onRetry: PropTypes.func,
 };
 
 export default function PageKiosko() {
@@ -51,7 +61,7 @@ export default function PageKiosko() {
   } = useKiosko();
 
   if (status === "loading") return <PantallaEstado titulo={loadMsg} />;
-  if (status === "error")   return <PantallaEstado titulo="Error al iniciar" detalle={errorMsg} error />;
+  if (status === "error")   return <PantallaEstado titulo="Error al iniciar" detalle={errorMsg} error onRetry={() => window.location.reload()} />;
 
   return (
     <div className="min-h-screen bg-gray-950 overflow-hidden">
