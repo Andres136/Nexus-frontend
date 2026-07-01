@@ -88,7 +88,7 @@ export default function UpdateClientes({ onClose, clienteId }) {
       <h2 className="text-2xl font-bold text-center mb-4">Editar Cliente</h2>
 
 
-      {(user.role_id===1 || user.role_id ===7) &&(  <div className="mb-4">
+      {(user.role_id===1 || user.role_id ===4 || user.role_id ===7) &&(  <div className="mb-4">
         <label htmlFor="id" className="block text-sm font-medium text-gray-700">
           {" "}
           Acesor Asignado

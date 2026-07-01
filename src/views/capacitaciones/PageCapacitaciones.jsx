@@ -190,6 +190,7 @@ export default function PageCapacitaciones() {
 
   const isSaving = isCreando || isActualizando;
   const canEditSelected = !selected || selected.puede_editar;
+  const canDeleteSelected = !!selected?.puede_eliminar;
   const editMessage = selected?.fecha_pasada
     ? "La fecha de realización ya pasó."
     : "Solo el usuario que creó la capacitación puede editarla.";
@@ -586,7 +587,7 @@ export default function PageCapacitaciones() {
 
               <div className="flex flex-col-reverse gap-2 border-t border-slate-200 pt-4 sm:flex-row sm:justify-between">
                 <div>
-                  {selected && canEditSelected && (
+                  {selected && canDeleteSelected && (
                     <button
                       type="button"
                       onClick={handleDelete}
