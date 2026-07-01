@@ -5,6 +5,7 @@ import * as faceapi from "face-api.js";
 import {
   kioskoDeviceService,
   horarioOperacionService,
+  horarioUsuarioSemanalService,
 } from "../../services/nominaService";
 import {
   getKioskoFingerprint,
@@ -101,6 +102,25 @@ function aplicarInstruccionDiaria(jornada, instruccion) {
   };
 }
 
+function aplicarHorarioUsuario(jornada, horarioUsuario) {
+  if (!horarioUsuario) return jornada;
+  const jornadaUsuario = horarioUsuario.jornada_laboral ?? horarioUsuario.jornadaLaboral ?? jornada;
+  return {
+    ...jornada,
+    ...jornadaUsuario,
+    horario_usuario_semanal: horarioUsuario,
+    hora_entrada:              horarioUsuario.hora_entrada              ?? jornadaUsuario?.hora_entrada              ?? jornada?.hora_entrada,
+    hora_entrada_limite:       horarioUsuario.hora_entrada_limite       ?? jornadaUsuario?.hora_entrada_limite       ?? jornada?.hora_entrada_limite,
+    hora_salida_pausa:         horarioUsuario.hora_salida_pausa         ?? jornadaUsuario?.hora_salida_pausa         ?? jornada?.hora_salida_pausa,
+    hora_ingreso_pausa:        horarioUsuario.hora_ingreso_pausa        ?? jornadaUsuario?.hora_ingreso_pausa        ?? jornada?.hora_ingreso_pausa,
+    hora_salida_almuerzo:      horarioUsuario.hora_salida_almuerzo      ?? jornadaUsuario?.hora_salida_almuerzo      ?? jornada?.hora_salida_almuerzo,
+    hora_ingreso_almuerzo:     horarioUsuario.hora_ingreso_almuerzo     ?? jornadaUsuario?.hora_ingreso_almuerzo     ?? jornada?.hora_ingreso_almuerzo,
+    hora_salida:               horarioUsuario.hora_salida               ?? jornadaUsuario?.hora_salida               ?? jornada?.hora_salida,
+    duracion_pausa_minutos:    horarioUsuario.duracion_pausa_minutos    ?? jornadaUsuario?.duracion_pausa_minutos    ?? jornada?.duracion_pausa_minutos,
+    duracion_almuerzo_minutos: horarioUsuario.duracion_almuerzo_minutos ?? jornadaUsuario?.duracion_almuerzo_minutos ?? jornada?.duracion_almuerzo_minutos,
+  };
+}
+
 function fechaLocal() {
   const fecha = new Date();
   const yyyy  = fecha.getFullYear();
@@ -174,26 +194,38 @@ export function useKiosko() {
   );
   const jornadaId = jornadaActiva?.id ?? jornadaBaseActiva?.id ?? null;
 
-  const refrescarJornadaOperativa = useCallback(async () => {
+  const refrescarJornadaOperativa = useCallback(async (userId) => {
     if (!jornadasLaborales.length) return jornadaActiva;
-    const instruccionDiaria = await queryClient.fetchQuery({
-      queryKey: ["horarioOperacionKiosko", fechaOperacion],
-      queryFn: async () => {
-        try {
-          const response = await horarioOperacionService.getKioskoHoy();
-          return response.data?.data ?? null;
-        } catch (error) {
-          if (error.response?.status === 403) {
-            invalidarSesionKiosko(error.response?.data?.message);
-            throw error;
+    const [instruccionDiaria, horarioUsuario] = await Promise.all([
+      queryClient.fetchQuery({
+        queryKey: ["horarioOperacionKiosko", fechaOperacion],
+        queryFn: async () => {
+          try {
+            const response = await horarioOperacionService.getKioskoHoy();
+            return response.data?.data ?? null;
+          } catch (error) {
+            if (error.response?.status === 403) {
+              invalidarSesionKiosko(error.response?.data?.message);
+              throw error;
+            }
+            return null;
           }
-          return null;
-        }
-      },
-      staleTime: 0,
-      retry: false,
-    });
-    return construirJornadaOperativa(instruccionDiaria) ?? jornadaActiva;
+        },
+        staleTime: 0,
+        retry: false,
+      }),
+      userId
+        ? horarioUsuarioSemanalService.getKioskoHoy(userId)
+            .then((response) => response.data?.data ?? null)
+            .catch((error) => {
+              if (error.response?.status === 403) invalidarSesionKiosko(error.response?.data?.message);
+              return null;
+            })
+        : Promise.resolve(null),
+    ]);
+
+    const base = construirJornadaOperativa(instruccionDiaria) ?? jornadaActiva;
+    return aplicarHorarioUsuario(base, horarioUsuario) ?? base;
   }, [construirJornadaOperativa, fechaOperacion, invalidarSesionKiosko, jornadaActiva, jornadasLaborales, queryClient]);
 
   useEffect(() => {

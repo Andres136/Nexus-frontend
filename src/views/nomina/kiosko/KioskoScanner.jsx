@@ -65,7 +65,7 @@ function PinModal({ cedulaMap, empleadosMap, jornadaId, jornadaActiva, kioskoInf
 
       const info  = empleadosMap.get(userId) ?? { nombre: "Empleado", photoUrl: null };
       const [jornadaOperativa, permisoEntrada] = await Promise.all([
-        onRefrescarJornada?.() ?? Promise.resolve(jornadaActiva),
+        onRefrescarJornada?.(userId) ?? Promise.resolve(jornadaActiva),
         obtenerPermisoEntrada(userId),
       ]);
       const ahora = new Date();
@@ -414,7 +414,7 @@ export default function KioskoScanner({
         setChecking(false);
         setGuardando(true);
         const [jornadaOperativa, permisoEntrada] = await Promise.all([
-          onRefrescarJornada?.() ?? Promise.resolve(jornadaActiva),
+          onRefrescarJornada?.(userId) ?? Promise.resolve(jornadaActiva),
           obtenerPermisoEntrada(userId),
         ]);
         const ahora = new Date();

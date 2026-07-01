@@ -214,6 +214,24 @@ export const horarioOperacionService = {
   },
 };
 
+export const horarioUsuarioSemanalService = {
+  getPorUsuario(userId) {
+    return apiClient.get("api/nomina/horarios-usuario-semanales", {
+      params: { user_id: userId },
+    });
+  },
+  guardarSemana(data) {
+    return apiClient.post("api/nomina/horarios-usuario-semanales", data);
+  },
+  async getKioskoHoy(userId) {
+    const config = await kioskRequestConfig();
+    return apiClient.get("api/nomina/kiosko-horario-usuario/hoy", {
+      ...(config ?? {}),
+      params: { user_id: userId },
+    });
+  },
+};
+
 export const incapacidadService = {
   getIncapacidades(params = {}) {
     return apiClient.get("api/nomina/incapacidades", { params });

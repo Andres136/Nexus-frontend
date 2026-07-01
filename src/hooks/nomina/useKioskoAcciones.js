@@ -159,7 +159,7 @@ export function useKioskoAcciones({ empleado, jornadaActiva, onRefrescarJornada,
     setJornadaSincronizada(false);
     setEsperaMsg("Actualizando horario operativo del día...");
     Promise.all([
-      Promise.resolve(onRefrescarJornada?.()),
+      Promise.resolve(onRefrescarJornada?.(empleado.userId)),
       horaExtraService.getHorasExtrasAprobadasHoy(empleado.userId),
     ])
       .then(([jornadaActualizada, horasExtraResponse]) => {
