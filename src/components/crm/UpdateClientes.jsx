@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import Select from "react-select";
 import { useClientes } from "../../hooks/useClientes";
 
 import clienteAxios from "../../config/axios";
@@ -83,6 +84,14 @@ export default function UpdateClientes({ onClose, clienteId }) {
   useEffect(() => {
     obtenerUsuarios();
   }, []);
+
+  const opcionesUsuarios = usuarios.map((usuario) => ({
+    value: usuario.id,
+    label: usuario.name,
+  }));
+  const usuarioSeleccionado =
+    opcionesUsuarios.find((opcion) => String(opcion.value) === String(clienteEditado.user_id)) ?? null;
+
   return (
     <form onSubmit={handleSubmit} className="p-4">
       <h2 className="text-2xl font-bold text-center mb-4">Editar Cliente</h2>
@@ -93,20 +102,36 @@ export default function UpdateClientes({ onClose, clienteId }) {
           {" "}
           Acesor Asignado
         </label>
-        <select
+        <Select
+          inputId="user_id"
           name="user_id"
-          id="user_id"
-          value={clienteEditado.user_id}
-          onChange={handleChange}
-          className="mt-1 p-2 w-full border border-gray-300 rounded-md"
-        >
-          <option value="">--Asignar Acesor--</option>
-          {usuarios.map((user) => (
-            <option key={user.id} value={user.id}>
-              {user.name}
-            </option>
-          ))}
-        </select>
+          className="mt-1 text-sm"
+          classNamePrefix="react-select"
+          options={opcionesUsuarios}
+          value={usuarioSeleccionado}
+          onChange={(option) =>
+            setClienteEditado((prev) => ({
+              ...prev,
+              user_id: option?.value ?? "",
+            }))
+          }
+          isClearable
+          isSearchable
+          placeholder="--Asignar Asesor--"
+          noOptionsMessage={() => "Sin usuarios activos"}
+          menuPortalTarget={document.body}
+          styles={{
+            control: (base, state) => ({
+              ...base,
+              minHeight: "42px",
+              borderRadius: "0.375rem",
+              borderColor: state.isFocused ? "#16a34a" : "#d1d5db",
+              boxShadow: state.isFocused ? "0 0 0 2px rgba(34, 197, 94, 0.18)" : "none",
+              "&:hover": { borderColor: "#16a34a" },
+            }),
+            menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+          }}
+        />
       </div>)}
     
 
