@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useGetFacturasCompras } from "../../hooks/contabilidad/useGetFacturasCompras";
 import ModalAbonos from "../../components/contabilidad/ModalAbonos";
@@ -8,6 +8,7 @@ import {
   CreditCard,
   BookOpen,
   Search,
+  CalendarDays,
   ChevronLeft,
   ChevronRight,
   AlertCircle,
@@ -39,9 +40,22 @@ export default function ObtenerFacturas() {
   const { user } = useAuth({ middleware: "auth" });
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
+  const [fechaInicio, setFechaInicio] = useState("");
+  const [fechaFin, setFechaFin] = useState("");
   const [selectedFacturaId, setSelectedFacturaId] = useState(null);
 
-  const { facturas, pagination, error, isLoading,resumen } = useGetFacturasCompras(page, searchTerm);
+  const filtros = useMemo(() => ({
+    fecha_inicio: fechaInicio || undefined,
+    fecha_fin: fechaFin || undefined,
+  }), [fechaInicio, fechaFin]);
+
+  const limpiarFechas = () => {
+    setFechaInicio("");
+    setFechaFin("");
+    setPage(1);
+  };
+
+  const { facturas, pagination, error, isLoading,resumen } = useGetFacturasCompras(page, searchTerm, filtros);
   const { anularFactura, eliminarFacturaDefinitivamente } = useRegisterFacturaCompras();
   const esAdministrador = user?.role_id === ADMINISTRADOR_ROLE_ID;
 
@@ -84,15 +98,50 @@ export default function ObtenerFacturas() {
               {pagination.total > 0 && `${pagination.total} registros encontrados`}
             </p>
           </div>
-          <div className="relative w-full sm:w-72">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-            <input
-              type="text"
-              placeholder="Buscar por proveedor o ID..."
-              value={searchTerm}
-              onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
-              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white shadow-sm"
-            />
+          <div className="flex w-full flex-col gap-2 sm:w-auto lg:flex-row lg:items-center">
+            <div className="relative w-full sm:w-72">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Buscar por proveedor o ID..."
+                value={searchTerm}
+                onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
+                className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white shadow-sm"
+              />
+            </div>
+
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <label className="relative">
+                <CalendarDays size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                <input
+                  type="date"
+                  value={fechaInicio}
+                  onChange={(e) => { setFechaInicio(e.target.value); setPage(1); }}
+                  className="h-10 w-full rounded-xl border border-gray-200 bg-white pl-9 pr-3 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 sm:w-40"
+                />
+              </label>
+
+              <label className="relative">
+                <CalendarDays size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                <input
+                  type="date"
+                  value={fechaFin}
+                  min={fechaInicio || undefined}
+                  onChange={(e) => { setFechaFin(e.target.value); setPage(1); }}
+                  className="h-10 w-full rounded-xl border border-gray-200 bg-white pl-9 pr-3 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 sm:w-40"
+                />
+              </label>
+
+              {(fechaInicio || fechaFin) && (
+                <button
+                  type="button"
+                  onClick={limpiarFechas}
+                  className="h-10 rounded-xl border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-600 shadow-sm hover:bg-gray-50"
+                >
+                  Limpiar
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -214,7 +263,7 @@ export default function ObtenerFacturas() {
                   ))
                 ) : facturas.length === 0 ? (
                   <tr>
-                    <td colSpan="9" className="px-6 py-12 text-center text-gray-400 text-sm italic">
+                    <td colSpan="10" className="px-6 py-12 text-center text-gray-400 text-sm italic">
                       No se encontraron facturas.
                     </td>
                   </tr>
