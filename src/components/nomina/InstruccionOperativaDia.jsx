@@ -1,4 +1,5 @@
 import PropTypes from "prop-types";
+import Select from "react-select";
 import { AlarmClock, CheckCircle2, Coffee, Save, TimerReset } from "lucide-react";
 
 export default function InstruccionOperativaDia({
@@ -6,12 +7,17 @@ export default function InstruccionOperativaDia({
   form,
   jornadas,
   kioscos,
+  empleados,
+  loadingEmpleados,
   loading,
   saving,
   onSubmit,
   onFieldChange,
   onTimeChange,
+  onUsersChange,
 }) {
+  const usuariosSeleccionados = empleados.filter((item) => (form.users ?? []).some((id) => String(id) === String(item.value)));
+
   return (
     <form onSubmit={onSubmit} className="mb-5 rounded-xl border border-gray-200 bg-white shadow-sm">
       <div className="flex flex-col gap-3 border-b border-gray-100 px-5 py-4 md:flex-row md:items-center md:justify-between">
@@ -72,6 +78,21 @@ export default function InstruccionOperativaDia({
               </option>
             ))}
           </select>
+        </label>
+
+        <label className="block xl:col-span-2">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Empleados específicos</span>
+          <Select
+            isMulti
+            isClearable
+            isLoading={loadingEmpleados}
+            options={empleados}
+            value={usuariosSeleccionados}
+            onChange={onUsersChange}
+            placeholder="Opcional: si seleccionas empleados, solo aplica para ellos"
+            className="mt-1 text-sm"
+            classNamePrefix="nomina-select"
+          />
         </label>
 
         <CampoHoraStepper label="Entrada desde" name="hora_entrada" value={form.hora_entrada} onChange={onTimeChange} icon={AlarmClock} fallback="07:00" />
@@ -145,6 +166,7 @@ InstruccionOperativaDia.propTypes = {
     hora_ingreso_almuerzo: PropTypes.string,
     duracion_pausa_minutos: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     duracion_almuerzo_minutos: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    users: PropTypes.arrayOf(PropTypes.oneOfType([PropTypes.string, PropTypes.number])),
     motivo: PropTypes.string,
   }).isRequired,
   jornadas: PropTypes.arrayOf(PropTypes.shape({
@@ -160,9 +182,15 @@ InstruccionOperativaDia.propTypes = {
     sede: PropTypes.shape({ nombre: PropTypes.string }),
     bodega: PropTypes.shape({ nombre: PropTypes.string }),
   })).isRequired,
+  empleados: PropTypes.arrayOf(PropTypes.shape({
+    value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    label: PropTypes.string,
+  })).isRequired,
+  loadingEmpleados: PropTypes.bool,
   loading: PropTypes.bool,
   saving: PropTypes.bool,
   onSubmit: PropTypes.func.isRequired,
   onFieldChange: PropTypes.func.isRequired,
   onTimeChange: PropTypes.func.isRequired,
+  onUsersChange: PropTypes.func.isRequired,
 };

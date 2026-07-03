@@ -205,9 +205,12 @@ export const horarioOperacionService = {
   getHoy(params = {}) {
     return apiClient.get("api/nomina/horario-operacion/hoy", { params });
   },
-  async getKioskoHoy() {
+  async getKioskoHoy(params = {}) {
     const config = await kioskRequestConfig();
-    return apiClient.get("api/nomina/kiosko-horario-operacion/hoy", config ?? undefined);
+    return apiClient.get("api/nomina/kiosko-horario-operacion/hoy", {
+      ...(config ?? {}),
+      params,
+    });
   },
   guardarHoy(data) {
     return apiClient.put("api/nomina/horario-operacion/hoy", data);

@@ -76,12 +76,6 @@ function minutosTardeContraHora(horaProgramada, fecha = new Date()) {
   return Math.max(0, minutosDia(fecha) - limite);
 }
 
-function minutosTardeConTolerancia(horaProgramada, tolerancia = 15, fecha = new Date()) {
-  const base = minutosHora(horaProgramada);
-  if (base === null) return 0;
-  return Math.max(0, minutosDia(fecha) - (base + tolerancia));
-}
-
 function detectarAccion(session, jornada, ahora = new Date()) {
   const actual        = minutosDia(ahora);
   const salida        = minutosHora(jornada?.hora_salida);
@@ -90,7 +84,7 @@ function detectarAccion(session, jornada, ahora = new Date()) {
   const salidaPausa   = minutosHora(jornada?.hora_salida_pausa);
   const ingresoPausa  = minutosHora(jornada?.hora_ingreso_pausa);
   const pausaFin      = salidaPausa !== null
-    ? (ingresoPausa ?? salidaPausa + (jornada?.duracion_pausa_minutos ?? 15))
+    ? (ingresoPausa ?? salidaPausa + (jornada?.duracion_pausa_minutos ?? 10))
     : null;
 
   if (session?.hora_salida_brake    && !session?.hora_ingreso_brake)   return "pausaEntrada";
@@ -101,7 +95,7 @@ function detectarAccion(session, jornada, ahora = new Date()) {
   return null;
 }
 
-function entradaTieneTardanza(session, jornada) {
+function entradaTieneTardanza(session) {
   if ((session?.minutos_tardanza ?? 0) > 0) return true;
   return false;
 }
@@ -150,7 +144,7 @@ export function useKioskoAcciones({ empleado, jornadaActiva, onRefrescarJornada,
   const accionDetectada = useMemo(() => detectarAccion(session, jornada), [session, jornada]);
 
   const entrada      = entradaOperativa(session, jornada);
-  const llegadaTarde = entradaTieneTardanza(session, jornada);
+  const llegadaTarde = entradaTieneTardanza(session);
   const enPausa      = !!session?.hora_salida_brake    && !session?.hora_ingreso_brake;
   const enAlmuerzo   = !!session?.hora_salida_almuerzo && !session?.hora_ingreso_almuerzo;
 
@@ -207,7 +201,7 @@ export function useKioskoAcciones({ empleado, jornadaActiva, onRefrescarJornada,
     if (guardando || exitoMsg) return;
 
     const tardanza = minutosTardeContraHora(jornada?.hora_ingreso_almuerzo);
-    const minutosPausa = jornada?.duracion_pausa_minutos ?? 15;
+    const minutosPausa = jornada?.duracion_pausa_minutos ?? 10;
     const acciones = {
       salida: () => ejecutar(
         { hora_salida: tiempoHHMMSS() },

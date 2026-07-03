@@ -215,10 +215,10 @@ export function useKiosko() {
     [jornadasLaborales]
   );
 
-  const construirJornadaOperativa = useCallback((instruccionDiaria) => {
-    if (!jornadaBaseActiva) return null;
+  const construirJornadaOperativa = useCallback((instruccionDiaria, jornadaBase = jornadaBaseActiva) => {
+    if (!jornadaBase) return null;
     const jornadaDelDia =
-      instruccionDiaria?.jornada_laboral ?? instruccionDiaria?.jornadaLaboral ?? jornadaBaseActiva;
+      instruccionDiaria?.jornada_laboral ?? instruccionDiaria?.jornadaLaboral ?? jornadaBase;
     return aplicarInstruccionDiaria(jornadaDelDia, instruccionDiaria);
   }, [jornadaBaseActiva]);
 
@@ -253,10 +253,10 @@ export function useKiosko() {
     if (!jornadasLaborales.length) return jornadaActiva;
     const [instruccionDiaria, horarioUsuario] = await Promise.all([
       queryClient.fetchQuery({
-        queryKey: ["horarioOperacionKiosko", fechaOperacion],
+        queryKey: ["horarioOperacionKiosko", fechaOperacion, userId || "global"],
         queryFn: async () => {
           try {
-            const response = await horarioOperacionService.getKioskoHoy();
+            const response = await horarioOperacionService.getKioskoHoy(userId ? { user_id: userId } : {});
             return response.data?.data ?? null;
           } catch (error) {
             if (error.response?.status === 403) {
@@ -279,9 +279,9 @@ export function useKiosko() {
         : Promise.resolve(null),
     ]);
 
-    const base = construirJornadaOperativa(instruccionDiaria) ?? jornadaActiva;
-    return aplicarHorarioUsuario(base, horarioUsuario) ?? base;
-  }, [construirJornadaOperativa, fechaOperacion, invalidarSesionKiosko, jornadaActiva, jornadasLaborales, queryClient]);
+    const baseConHorarioUsuario = aplicarHorarioUsuario(jornadaBaseActiva, horarioUsuario) ?? jornadaBaseActiva;
+    return construirJornadaOperativa(instruccionDiaria, baseConHorarioUsuario) ?? baseConHorarioUsuario ?? jornadaActiva;
+  }, [construirJornadaOperativa, fechaOperacion, invalidarSesionKiosko, jornadaActiva, jornadaBaseActiva, jornadasLaborales, queryClient]);
 
   useEffect(() => {
     async function init() {

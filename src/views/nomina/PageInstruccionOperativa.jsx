@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import PropTypes from "prop-types";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
 import InstruccionOperativaDia from "../../components/nomina/InstruccionOperativaDia";
+import { useGetEmpleados } from "../../hooks/nomina/useGetEmpleados";
 import { useGetJornadaLaboral } from "../../hooks/nomina/useGetJornadaLaboral";
 import { useGetKioscos } from "../../hooks/nomina/useGetKioscos";
 import { horarioOperacionService } from "../../services/nominaService";
@@ -27,8 +28,9 @@ const INSTRUCCION_DEFAULT = {
   hora_salida_almuerzo: "",
   hora_ingreso_almuerzo: "",
   hora_salida: "17:00",
-  duracion_pausa_minutos: 15,
+  duracion_pausa_minutos: 10,
   duracion_almuerzo_minutos: 60,
+  users: [],
   motivo: "",
   status: true,
 };
@@ -173,6 +175,14 @@ export default function PageInstruccionOperativa({ embedded = false }) {
 
   const lista = useMemo(() => jornadas?.data?.data ?? [], [jornadas]);
   const kioscosLista = useMemo(() => kioscos?.data?.data ?? kioscos?.data ?? [], [kioscos]);
+  const kioskoSeleccionado = useMemo(
+    () => kioscosLista.find((item) => String(item.id) === String(instruccionForm.kiosko_device_id)),
+    [instruccionForm.kiosko_device_id, kioscosLista]
+  );
+  const { empleados, isLoading: loadingEmpleados } = useGetEmpleados({
+    con_contrato: true,
+    sede_id: kioskoSeleccionado?.sede_id || kioskoSeleccionado?.sede?.id || undefined,
+  });
 
   const { data: instruccionData, isLoading: loadingInstruccion } = useQuery({
     queryKey: ["horarioOperacionHoy", instruccionForm.fecha, instruccionForm.kiosko_device_id],
@@ -192,6 +202,7 @@ export default function PageInstruccionOperativa({ embedded = false }) {
       ...INSTRUCCION_DEFAULT,
       ...prev,
       ...(instruccionData ?? {}),
+      users: prev.users ?? [],
       fecha: instruccionData?.fecha ? String(instruccionData.fecha).slice(0, 10) : prev.fecha,
       kiosko_device_id: instruccionData?.kiosko_device_id ?? prev.kiosko_device_id,
       jornada_laboral_id: instruccionData?.jornada_laboral_id ?? prev.jornada_laboral_id,
@@ -219,12 +230,18 @@ export default function PageInstruccionOperativa({ embedded = false }) {
   const handleInstruccion = (event) => {
     const { name, value } = event.target;
 
-    setInstruccionForm((prev) =>
-      aplicarRegresosPorDuracion({
+    setInstruccionForm((prev) => {
+      const next = {
         ...prev,
         [name]: name.includes("duracion") ? Number(value) : value,
-      })
-    );
+      };
+
+      if (name === "kiosko_device_id") {
+        next.users = [];
+      }
+
+      return aplicarRegresosPorDuracion(next);
+    });
   };
 
   const handleInstruccionTime = (name, value) => {
@@ -236,6 +253,13 @@ export default function PageInstruccionOperativa({ embedded = false }) {
     );
   };
 
+  const handleUsuarios = (options) => {
+    setInstruccionForm((prev) => ({
+      ...prev,
+      users: (options ?? []).map((option) => option.value),
+    }));
+  };
+
   const guardarInstruccion = (event) => {
     event.preventDefault();
 
@@ -245,6 +269,7 @@ export default function PageInstruccionOperativa({ embedded = false }) {
       jornada_laboral_id: instruccionForm.jornada_laboral_id ? Number(instruccionForm.jornada_laboral_id) : null,
       duracion_pausa_minutos: instruccionForm.duracion_pausa_minutos ? Number(instruccionForm.duracion_pausa_minutos) : null,
       duracion_almuerzo_minutos: instruccionForm.duracion_almuerzo_minutos ? Number(instruccionForm.duracion_almuerzo_minutos) : null,
+      users: (instruccionForm.users ?? []).map(Number),
       hora_entrada: instruccionForm.hora_entrada || null,
       hora_entrada_limite: instruccionForm.hora_entrada_limite || null,
       hora_salida_pausa: instruccionForm.hora_salida_pausa || null,
@@ -264,11 +289,14 @@ export default function PageInstruccionOperativa({ embedded = false }) {
           form={instruccionForm}
           jornadas={lista}
           kioscos={kioscosLista}
+          empleados={empleados}
+          loadingEmpleados={loadingEmpleados}
           loading={loadingInstruccion || loadingKioscos || loadingJornadas}
           saving={instruccionMutation.isPending}
           onSubmit={guardarInstruccion}
           onFieldChange={handleInstruccion}
           onTimeChange={handleInstruccionTime}
+          onUsersChange={handleUsuarios}
         />
       </div>
     </div>
