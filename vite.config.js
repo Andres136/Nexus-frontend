@@ -25,8 +25,12 @@ export default defineConfig({
       },
       workbox: {
         // Precachea el bundle de la app y los modelos de reconocimiento
-        // facial (pesados, ~12MB) para evitar re-descargarlos en cada arranque.
-        globPatterns: ['**/*.{js,css,html,ico,svg,png,webmanifest}', 'models/**'],
+        // facial (pesados, ~12MB). OJO: como es una SPA de un solo bundle,
+        // el JS/CSS incluye todo el código de la app (no solo kiosko) — eso
+        // es inevitable sin dividir el bundle por rutas. Lo que sí evitamos
+        // aquí es cachear imágenes de otros módulos (transporte, calidad,
+        // etc.) que no le sirven al kiosko para nada.
+        globPatterns: ['**/*.{js,css,html,webmanifest}', 'models/**', 'SETAS.png'],
         // Los shards de los modelos y el bundle principal superan el límite
         // por defecto de 2MB; se sube a 10MB para poder precachearlos.
         maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,

@@ -1,6 +1,12 @@
 Options +FollowSymLinks
 RewriteEngine On
 
+# Content-Type correcto para el manifest del PWA del kiosko: sin esto,
+# algunos Apache lo sirven como texto plano y Chrome ignora el manifest
+# (el botón de instalar nunca aparece, sin error visible).
+<IfModule mod_mime.c>
+  AddType application/manifest+json .webmanifest
+</IfModule>
 
 # Excluir archivos estáticos como CSS, JS, imágenes, etc., de la redirección
 RewriteCond %{REQUEST_FILENAME} !-f
