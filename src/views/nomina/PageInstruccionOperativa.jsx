@@ -169,7 +169,7 @@ export default function PageInstruccionOperativa({ embedded = false }) {
   const [instruccionForm, setInstruccionForm] = useState(INSTRUCCION_DEFAULT);
 
   const { jornadas, isLoading: loadingJornadas } = useGetJornadaLaboral({ per_page: 50 });
-  const { kioscos, isLoading: loadingKioscos } = useGetKioscos({ per_page: 100 });
+  const { kioscos, isLoading: loadingKioscos } = useGetKioscos({ all: true });
 
   const lista = useMemo(() => jornadas?.data?.data ?? [], [jornadas]);
   const kioscosLista = useMemo(() => kioscos?.data?.data ?? kioscos?.data ?? [], [kioscos]);

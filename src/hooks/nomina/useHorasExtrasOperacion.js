@@ -57,7 +57,7 @@ export function useHorasExtrasOperacion() {
   });
   const { kioscos, isLoading: loadingKioscos } = useGetKioscos({
     sede_id: sedeId || undefined,
-    per_page: 100,
+    all: true,
   });
   const { sedes } = useSedes();
 

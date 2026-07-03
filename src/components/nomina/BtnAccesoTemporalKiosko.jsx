@@ -46,8 +46,8 @@ BtnGenerar.propTypes = {
 
 // Cuando se usa sin uuid muestra la lista de kioscos activos
 function ListaKioscos() {
-  const { kioscos, isLoading } = useGetKioscos({ per_page: 50 });
-  const activos = (kioscos?.data?.data ?? []).filter((k) => k.status === "active");
+  const { kioscos, isLoading } = useGetKioscos({ all: true });
+  const activos = (kioscos?.data?.data ?? kioscos?.data ?? []).filter((k) => k.status === "active");
 
   if (isLoading) {
     return <p className="text-sm text-gray-400 animate-pulse">Cargando kioscos...</p>;
