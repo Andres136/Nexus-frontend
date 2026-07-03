@@ -34,9 +34,10 @@ export default defineConfig({
         // Los shards de los modelos y el bundle principal superan el límite
         // por defecto de 2MB; se sube a 10MB para poder precachearlos.
         maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
-        // No se activa el fallback de navegación offline: el service worker
-        // solo acelera cargas repetidas, no intenta servir la app sin red.
-        navigateFallback: null,
+        // Permite abrir el kiosko instalado aunque no haya red. Se limita
+        // a /kiosko/* para no cambiar el comportamiento offline del CRM/ERP.
+        navigateFallback: '/index.html',
+        navigateFallbackAllowlist: [/^\/kiosko\//],
       },
     }),
   ],

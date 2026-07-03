@@ -18,7 +18,7 @@ function BtnGenerar({ uuid, className = "" }) {
         ? guestUrl
         : `${window.location.origin}${guestUrl}`;
       await navigator.clipboard.writeText(url);
-      const expira = expiresAt ? new Date(expiresAt).toLocaleString("es-CO") : "24 horas";
+      const expira = expiresAt ? new Date(expiresAt).toLocaleString("es-CO") : "20 minutos";
       showToast("success", `Link temporal copiado. Vence: ${expira}`);
     } catch (error) {
       showToast("error", error.response?.data?.message || "No se pudo generar el link temporal");

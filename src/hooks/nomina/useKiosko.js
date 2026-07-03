@@ -14,12 +14,19 @@ import {
   getKioskoGuestSession,
   removeKioskoGuestSession,
 } from "../../helpers/nomina/kioskoSession";
+import {
+  getFaceDescriptorCache,
+  getKioskoBootstrapCache,
+  saveFaceDescriptorCache,
+  saveKioskoBootstrapCache,
+} from "../../helpers/nomina/kioskoCache";
 
 const API_URL     = import.meta.env.VITE_API_URL;
 const STORAGE_URL = API_URL + "/storage/";
 const MODEL_URL   = "/models";
 const FACE_IMAGE_MIN_CONFIDENCE = 0.5;
 const FACE_MATCH_THRESHOLD = 0.5;
+const BOOTSTRAP_CACHE_TIMEOUT_MS = 7000;
 
 async function loadModels() {
   await Promise.all([
@@ -62,27 +69,75 @@ async function loadImageViaApi(uuid) {
   });
 }
 
-async function buildFaceMatcher(fotos) {
+function facePhotoCacheKey(foto) {
+  return [
+    foto.uuid,
+    foto.users_id,
+    foto.photo,
+    foto.updated_at ?? foto.created_at ?? "",
+  ].join("|");
+}
+
+async function buildFaceMatcher(fotos, kioskoUuid) {
   if (!fotos.length) return null;
   const labeled = [];
+  const descriptorCache = getFaceDescriptorCache(kioskoUuid);
+  const nextDescriptorCache = {};
+  let cacheChanged = false;
+
   for (const foto of fotos) {
+    const cacheKey = facePhotoCacheKey(foto);
+    const cachedDescriptor = descriptorCache[cacheKey];
+
     try {
+      if (Array.isArray(cachedDescriptor) && cachedDescriptor.length) {
+        nextDescriptorCache[cacheKey] = cachedDescriptor;
+        labeled.push(
+          new faceapi.LabeledFaceDescriptors(String(foto.users_id), [new Float32Array(cachedDescriptor)])
+        );
+        continue;
+      }
+
       const img = await loadImageViaApi(foto.uuid);
       const det = await faceapi
         .detectSingleFace(img, new faceapi.SsdMobilenetv1Options({ minConfidence: FACE_IMAGE_MIN_CONFIDENCE }))
         .withFaceLandmarks()
         .withFaceDescriptor();
       if (det) {
+        const descriptor = Array.from(det.descriptor);
+        nextDescriptorCache[cacheKey] = descriptor;
+        cacheChanged = true;
         labeled.push(
-          new faceapi.LabeledFaceDescriptors(String(foto.users_id), [det.descriptor])
+          new faceapi.LabeledFaceDescriptors(String(foto.users_id), [new Float32Array(descriptor)])
         );
       }
     } catch {
       // foto no cargó o no se detectó rostro — se omite
     }
   }
+  if (cacheChanged) {
+    saveFaceDescriptorCache(kioskoUuid, nextDescriptorCache);
+  }
   if (!labeled.length) return null;
   return new faceapi.FaceMatcher(labeled, FACE_MATCH_THRESHOLD);
+}
+
+function timeout(ms) {
+  return new Promise((_, reject) => {
+    setTimeout(() => reject(new Error("El backend tardó demasiado en responder.")), ms);
+  });
+}
+
+async function bootstrapKiosko({ code, sessionToken, guestToken }) {
+  const fingerprint = await getKioskoFingerprint();
+
+  if (guestToken) {
+    const response = await kioskoDeviceService.bootstrapGuest({ uuid: code, guest_token: guestToken, fingerprint });
+    return response.data?.data;
+  }
+
+  const response = await kioskoDeviceService.bootstrapDevice({ uuid: code, session_token: sessionToken, fingerprint });
+  return response.data?.data;
 }
 
 function aplicarInstruccionDiaria(jornada, instruccion) {
@@ -242,15 +297,30 @@ export function useKiosko() {
           );
         }
 
+        const cachedBootstrap = sessionToken ? getKioskoBootstrapCache(code) : null;
         let bootstrap;
-        if (guestToken) {
-          const fingerprint = await getKioskoFingerprint();
-          const response = await kioskoDeviceService.bootstrapGuest({ uuid: code, guest_token: guestToken, fingerprint });
-          bootstrap = response.data?.data;
-        } else {
-          const fingerprint = await getKioskoFingerprint();
-          const response    = await kioskoDeviceService.bootstrapDevice({ uuid: code, session_token: sessionToken, fingerprint });
-          bootstrap = response.data?.data;
+        let usandoCache = false;
+
+        try {
+          const onlineBootstrap = bootstrapKiosko({ code, sessionToken, guestToken });
+          bootstrap = cachedBootstrap
+            ? await Promise.race([onlineBootstrap, timeout(BOOTSTRAP_CACHE_TIMEOUT_MS)])
+            : await onlineBootstrap;
+
+          if (sessionToken) {
+            saveKioskoBootstrapCache(code, bootstrap);
+          }
+        } catch (error) {
+          if (error.response?.status === 403) {
+            throw error;
+          }
+
+          if (!cachedBootstrap) {
+            throw error;
+          }
+
+          bootstrap = cachedBootstrap;
+          usandoCache = true;
         }
 
         const kiosko = bootstrap?.device;
@@ -260,7 +330,7 @@ export function useKiosko() {
         setLoadMsg("Cargando modelos de reconocimiento facial...");
         await loadModels();
 
-        setLoadMsg("Cargando jornadas laborales...");
+        setLoadMsg(usandoCache ? "Cargando datos guardados del kiosko..." : "Cargando jornadas laborales...");
         const jornadas   = bootstrap?.jornadas ?? [];
         setJornadasLaborales(jornadas);
         const jornadaBase = jornadas.find((j) => j.status !== false) ?? jornadas[0];
@@ -287,7 +357,7 @@ export function useKiosko() {
         setCedulaMap(cedulas);
 
         setLoadMsg("Procesando descriptores faciales...");
-        setFaceMatcher(await buildFaceMatcher(fotos));
+        setFaceMatcher(await buildFaceMatcher(fotos, code));
 
         setStatus("ready");
       } catch (err) {

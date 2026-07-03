@@ -4,6 +4,12 @@ import { CheckCircle2, Loader2, ShieldAlert } from "lucide-react";
 import { kioskoDeviceService } from "../../../services/nominaService";
 import { getKioskoFingerprint, saveKioskoSession } from "../../../helpers/nomina/kioskoSession";
 
+const ACTIVATION_REDIRECT_PREFIX = "kiosko_activation_redirect:";
+
+function activationRedirectKey(token) {
+  return `${ACTIVATION_REDIRECT_PREFIX}${token}`;
+}
+
 export default function PageKioskoActivacion() {
   const { token } = useParams();
   const navigate = useNavigate();
@@ -13,6 +19,14 @@ export default function PageKioskoActivacion() {
   useEffect(() => {
     async function activar() {
       try {
+        const activatedUuid = localStorage.getItem(activationRedirectKey(token));
+        if (activatedUuid) {
+          setStatus("success");
+          setMessage("Este dispositivo ya está activado. Abriendo kiosko...");
+          setTimeout(() => navigate(`/kiosko/${activatedUuid}`, { replace: true }), 600);
+          return;
+        }
+
         const fingerprint = await getKioskoFingerprint();
         const response = await kioskoDeviceService.activateDevice({ token, fingerprint });
         const data = response.data?.data;
@@ -23,10 +37,19 @@ export default function PageKioskoActivacion() {
         }
 
         saveKioskoSession(device.uuid, data.session_token);
+        localStorage.setItem(activationRedirectKey(token), device.uuid);
         setStatus("success");
         setMessage("Dispositivo activado. Abriendo kiosko...");
         setTimeout(() => navigate(`/kiosko/${device.uuid}`, { replace: true }), 1200);
       } catch (error) {
+        const activatedUuid = localStorage.getItem(activationRedirectKey(token));
+        if (activatedUuid && error.response?.status === 422) {
+          setStatus("success");
+          setMessage("Este link ya fue usado en este dispositivo. Abriendo kiosko...");
+          setTimeout(() => navigate(`/kiosko/${activatedUuid}`, { replace: true }), 900);
+          return;
+        }
+
         setStatus("error");
         setMessage(error.response?.data?.message || error.message || "No se pudo activar el kiosko.");
       }
