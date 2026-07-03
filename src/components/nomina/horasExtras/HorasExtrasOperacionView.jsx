@@ -114,18 +114,6 @@ export default function HorasExtrasOperacionView() {
           <option value="rechazada">Rechazada</option>
         </select>
 
-        <select
-          value={filtros.tipo}
-          onChange={(event) => filtros.setTipo(event.target.value)}
-          className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        >
-          <option value="">Todos los tipos</option>
-          <option value="diurna">Diurna</option>
-          <option value="nocturna">Nocturna</option>
-          <option value="festiva">Festiva</option>
-          <option value="nocturna_festiva">Nocturna festiva</option>
-        </select>
-
         {meta?.total != null && (
           <span className="text-xs text-gray-400 ml-1">{meta.total} registros</span>
         )}

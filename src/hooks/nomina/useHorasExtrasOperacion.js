@@ -25,7 +25,6 @@ export function useHorasExtrasOperacion() {
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
-  const [tipo, setTipo] = useState("");
   const [sedeId, setSedeId] = useState("");
   const [userId, setUserId] = useState("");
   const [kioskoDeviceId, setKioskoDeviceId] = useState("");
@@ -40,7 +39,6 @@ export function useHorasExtrasOperacion() {
   const params = useMemo(() => ({
     search: search || undefined,
     status: status || undefined,
-    tipo: tipo || undefined,
     sede_id: sedeId || undefined,
     user_id: userId || undefined,
     kiosko_device_id: kioskoDeviceId || undefined,
@@ -48,7 +46,7 @@ export function useHorasExtrasOperacion() {
     fecha_hasta: fechaHasta || undefined,
     page,
     per_page: 15,
-  }), [fechaDesde, fechaHasta, kioskoDeviceId, page, search, sedeId, status, tipo, userId]);
+  }), [fechaDesde, fechaHasta, kioskoDeviceId, page, search, sedeId, status, userId]);
 
   const { horasExtras, isLoading } = useGetHorasExtras(params);
   const { empleados, isLoading: loadingEmpleados } = useGetEmpleados({
@@ -74,7 +72,6 @@ export function useHorasExtrasOperacion() {
   const filtros = {
     search,
     status,
-    tipo,
     sedeId,
     userId,
     kioskoDeviceId,
@@ -83,7 +80,6 @@ export function useHorasExtrasOperacion() {
     page,
     setSearch: actualizarFiltro(setSearch),
     setStatus: actualizarFiltro(setStatus),
-    setTipo: actualizarFiltro(setTipo),
     setSedeId: (value) => {
       setSedeId(value);
       setUserId("");
@@ -108,7 +104,7 @@ export function useHorasExtrasOperacion() {
         fecha: form.fecha,
         hora_inicio: form.hora_inicio,
         hora_fin: form.hora_fin,
-        tipo: form.tipo,
+        tipo: form.tipo || "diurna",
         motivo: form.motivo,
       };
 

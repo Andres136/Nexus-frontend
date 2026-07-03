@@ -180,16 +180,6 @@ export default function FormHoraExtraOperacion({
               <FieldError name="fecha" />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Tipo</label>
-              <select name="tipo" value={form.tipo} onChange={(event) => update("tipo", event.target.value)} className={fieldClass("tipo")}>
-                <option value="diurna">Diurna</option>
-                <option value="nocturna">Nocturna</option>
-                <option value="festiva">Festiva</option>
-                <option value="nocturna_festiva">Nocturna festiva</option>
-              </select>
-              <FieldError name="tipo" />
-            </div>
-            <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Desde</label>
               <input type="time" name="hora_inicio" value={form.hora_inicio} onChange={(event) => update("hora_inicio", event.target.value)} className={fieldClass("hora_inicio")} />
               <FieldError name="hora_inicio" />

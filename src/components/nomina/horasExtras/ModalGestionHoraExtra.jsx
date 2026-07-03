@@ -2,13 +2,6 @@ import { useState } from "react";
 import PropTypes from "prop-types";
 import { Loader2 } from "lucide-react";
 
-const TIPO_LABEL = {
-  diurna: "Diurna",
-  nocturna: "Nocturna",
-  festiva: "Festiva",
-  nocturna_festiva: "Nocturna festiva",
-};
-
 export default function ModalGestionHoraExtra({ item, accion, onClose, onConfirm, loading }) {
   const [observacion, setObservacion] = useState("");
 
@@ -21,7 +14,7 @@ export default function ModalGestionHoraExtra({ item, accion, onClose, onConfirm
         </h3>
         <p className="text-sm text-gray-500 mb-4">
           Empleado: <span className="font-medium text-gray-700">{item?.empleado?.name ?? "-"}</span>
-          {" · "}{item?.horas}h {TIPO_LABEL[item?.tipo] ?? item?.tipo}
+          {" · "}{item?.horas}h
         </p>
         <label className="block text-xs font-medium text-gray-600 mb-1">
           Observación <span className="text-gray-400">(opcional)</span>
