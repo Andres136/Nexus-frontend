@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import * as faceapi from "face-api.js";
 import { KeyRound, MessageCircle } from "lucide-react";
 import { workSessionService, permisoService } from "../../../services/nominaService";
+import { removeKioskoGuestSession, removeKioskoSession } from "../../../helpers/nomina/kioskoSession";
 import { hablar } from "../../../helpers/voz";
 
 const FACE_LIVE_MIN_CONFIDENCE = 0.5;
@@ -15,6 +16,30 @@ const hhmm = (date) =>
 
 function mensajeErrorApi(error, fallback = "Error al registrar. Intenta de nuevo.") {
   return error?.response?.data?.message || error?.message || fallback;
+}
+
+function uuidKioskoActual() {
+  const match = window.location.pathname.match(/^\/kiosko\/([^/]+)/);
+  const uuid = match?.[1];
+
+  if (!uuid || uuid === "activar" || uuid === "acceso-temporal") return null;
+
+  return uuid;
+}
+
+function mensajeKioskoError(error, fallback = "Error al registrar. Intenta de nuevo.") {
+  if (error.response?.status === 403) {
+    const uuid = uuidKioskoActual();
+
+    if (uuid) {
+      removeKioskoSession(uuid);
+      removeKioskoGuestSession(uuid);
+    }
+
+    return "La sesión de este kiosko cambió o fue reactivada. Abre el nuevo link de activación en este dispositivo.";
+  }
+
+  return mensajeErrorApi(error, fallback);
 }
 
 // ── Teclado PIN ───────────────────────────────────────────────────────────────
@@ -89,7 +114,7 @@ function PinModal({ cedulaMap, empleadosMap, jornadaId, jornadaActiva, kioskoInf
       onEntradaCompleta(info.nombre, hora, userId);
       setTimeout(onClose, 3000);
     } catch (error) {
-      const mensaje = mensajeErrorApi(error);
+      const mensaje = mensajeKioskoError(error);
       setEstado("error");
       setMsg(mensaje);
       decir(jornadaActiva, mensaje);
@@ -440,7 +465,7 @@ export default function KioskoScanner({
         setTimeout(resetear, 3500);
 
       } catch (error) {
-        const mensaje = mensajeErrorApi(error, "Error al registrar la entrada. Intenta de nuevo.");
+        const mensaje = mensajeKioskoError(error, "Error al registrar la entrada. Intenta de nuevo.");
         setResultadoTipo("error");
         decir(jornadaActiva, mensaje);
         setExitoMsg(mensaje);

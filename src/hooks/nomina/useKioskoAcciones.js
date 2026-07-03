@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { horaExtraService, workSessionService } from "../../services/nominaService";
+import { removeKioskoGuestSession, removeKioskoSession } from "../../helpers/nomina/kioskoSession";
 import { hablar } from "../../helpers/voz";
 
 export const hhmm = (date) =>
@@ -43,6 +44,15 @@ const tiempoHHMMSS = () => {
 
 function mensajeErrorApi(error, fallback = "Error al registrar. Intenta de nuevo.") {
   return error?.response?.data?.message || error?.message || fallback;
+}
+
+function uuidKioskoActual() {
+  const match = window.location.pathname.match(/^\/kiosko\/([^/]+)/);
+  const uuid = match?.[1];
+
+  if (!uuid || uuid === "activar" || uuid === "acceso-temporal") return null;
+
+  return uuid;
 }
 
 function parseTime(str) {
@@ -186,7 +196,19 @@ export function useKioskoAcciones({ empleado, jornadaActiva, onRefrescarJornada,
       setExitoMsg(avisoKiosko || mensajePantalla);
       setTimeout(() => onDone(empleado.nombre, hhmm(new Date()), empleado.userId), 3000);
     } catch (error) {
-      const mensaje = mensajeErrorApi(error);
+      let mensaje = mensajeErrorApi(error);
+
+      if (error.response?.status === 403) {
+        const uuid = uuidKioskoActual();
+
+        if (uuid) {
+          removeKioskoSession(uuid);
+          removeKioskoGuestSession(uuid);
+        }
+
+        mensaje = "La sesión de este kiosko cambió o fue reactivada. Abre el nuevo link de activación en este dispositivo.";
+      }
+
       setTipoMensaje("error");
       setEsperaMsg(mensaje);
       decir(jornada, mensaje);

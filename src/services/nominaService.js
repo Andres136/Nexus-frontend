@@ -18,10 +18,9 @@ function fechaLocal(date = new Date()) {
 }
 
 async function kioskRequestConfig() {
-  const match = window.location.pathname.match(/^\/kiosko\/([^/]+)/);
-  const uuid = match?.[1];
+  const uuid = kioskRouteUuid();
 
-  if (!uuid || uuid === "activar" || uuid === "acceso-temporal") return null;
+  if (!uuid) return null;
 
   const guestToken   = getKioskoGuestSession(uuid);
   if (guestToken) {
@@ -44,6 +43,24 @@ async function kioskRequestConfig() {
       "X-Kiosko-Fingerprint": await getKioskoFingerprint(),
     },
   };
+}
+
+function kioskRouteUuid() {
+  const match = window.location.pathname.match(/^\/kiosko\/([^/]+)/);
+  const uuid = match?.[1];
+
+  if (!uuid || uuid === "activar" || uuid === "acceso-temporal") return null;
+
+  return uuid;
+}
+
+function kioskSessionRequiredError() {
+  const error = new Error("La sesión de este kiosko cambió o fue reactivada. Abre el nuevo link de activación en este dispositivo.");
+  error.response = {
+    status: 403,
+    data: { message: error.message },
+  };
+  return error;
 }
 
 // Interceptor para agregar el token de autorización a cada solicitud
@@ -565,12 +582,20 @@ export const workSessionService = {
       return apiClient.post("api/nomina/kiosko-work-sessions", data, kioskConfig);
     }
 
+    if (kioskRouteUuid()) {
+      throw kioskSessionRequiredError();
+    }
+
     return apiClient.post("api/nomina/work-sessions", data);
   },
   async updateSession(uuid, data) {
     const kioskConfig = await kioskRequestConfig();
     if (kioskConfig) {
       return apiClient.put(`api/nomina/kiosko-work-sessions/${uuid}`, data, kioskConfig);
+    }
+
+    if (kioskRouteUuid()) {
+      throw kioskSessionRequiredError();
     }
 
     return apiClient.put(`api/nomina/work-sessions/${uuid}`, data);
@@ -583,6 +608,10 @@ export const workSessionService = {
         ...kioskConfig,
         params: { user_id: userId, fecha: today, per_page: 1 },
       });
+    }
+
+    if (kioskRouteUuid()) {
+      throw kioskSessionRequiredError();
     }
 
     return apiClient.get("api/nomina/work-sessions", {

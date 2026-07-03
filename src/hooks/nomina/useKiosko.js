@@ -206,7 +206,10 @@ export function useKiosko() {
   const invalidarSesionKiosko = useCallback((message = "La sesión de este kiosko no es válida. Genera un nuevo link de activación y reactívalo en este dispositivo.") => {
     removeKioskoSession(code);
     removeKioskoGuestSession(code);
-    setErrorMsg(message);
+    const mensajeNormalizado = message === "El kiosko no está activo."
+      ? "Este kiosko quedó pendiente de reactivación. Abre el nuevo link de activación en este dispositivo."
+      : message;
+    setErrorMsg(mensajeNormalizado);
     setStatus("error");
   }, [code]);
 
