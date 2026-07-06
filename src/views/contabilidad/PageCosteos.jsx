@@ -64,7 +64,7 @@ export default function PageCosteos() {
         filters.fecha_fin;
 
     return (
-        <div className="p-6 max-w-7xl mx-auto">
+        <div className="p-6 max-w-[100rem] mx-auto">
             {/* HEADER */}
   
 
@@ -184,7 +184,7 @@ export default function PageCosteos() {
    
 
 {resumen && (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4 mb-6">
         <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-4">
             <p className="text-xs text-gray-500 uppercase font-semibold">
                 Productos
@@ -218,6 +218,24 @@ export default function PageCosteos() {
             </p>
             <p className="text-xl font-bold text-red-600 mt-1">
                 {formatCOP(resumen.total_costo)}
+            </p>
+        </div>
+
+        <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-4">
+            <p className="text-xs text-gray-500 uppercase font-semibold">
+                KG Comprados
+            </p>
+            <p className="text-2xl font-bold text-gray-900 mt-1">
+                {formatNumber(resumen.total_kg_comprado)}
+            </p>
+        </div>
+
+        <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-4">
+            <p className="text-xs text-gray-500 uppercase font-semibold">
+                Costo Total Comprado sin IVA
+            </p>
+            <p className="text-xl font-bold text-orange-600 mt-1">
+                {formatCOP(resumen.total_costo_comprado)}
             </p>
         </div>
 
@@ -257,6 +275,12 @@ export default function PageCosteos() {
                                     Costo Total sin IVA
                                 </th>
                                 <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">
+                                    KG Comprados
+                                </th>
+                                <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">
+                                    Costo Total Comprado sin IVA
+                                </th>
+                                <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">
                                     Utilidad sin IVA
                                 </th>
                                 <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">
@@ -272,7 +296,7 @@ export default function PageCosteos() {
                                         key={i}
                                         className="animate-pulse border-b"
                                     >
-                                        {[...Array(7)].map((__, j) => (
+                                        {[...Array(9)].map((__, j) => (
                                             <td
                                                 key={j}
                                                 className="px-4 py-3"
@@ -285,7 +309,7 @@ export default function PageCosteos() {
                             ) : costeos.length === 0 ? (
                                 <tr>
                                     <td
-                                        colSpan="7"
+                                        colSpan="9"
                                         className="text-center py-12 text-gray-400 italic"
                                     >
                                         No se encontraron resultados.
@@ -324,6 +348,14 @@ export default function PageCosteos() {
 
                                         <td className="px-4 py-3 text-sm">
                                             {formatCOP(item.costo)}
+                                        </td>
+
+                                        <td className="px-4 py-3 text-sm">
+                                            {formatNumber(item.kg_comprado)}
+                                        </td>
+
+                                        <td className="px-4 py-3 text-sm">
+                                            {formatCOP(item.costo_comprado)}
                                         </td>
 
                                         <td className="px-4 py-3 text-sm font-bold">

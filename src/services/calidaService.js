@@ -59,7 +59,7 @@ export  const hallazgosNovedadesService = {
   getHallazgoById: (id) => apiClient.get(`/api/hallazgos/${id}`),
   updateHallazgo: (id, data) => apiClient.put(`/api/hallazgos/${id}`, data),
   deleteHallazgo: (id) => apiClient.delete(`/api/hallazgos/${id}`),
-  getEstadisticasSemestrales: () => apiClient.get("/api/indicador-semestral"),
+  getEstadisticasSemestrales: (params) => apiClient.get("/api/indicador-semestral", { params }),
 };
 
 export const gestionOperativaService = {

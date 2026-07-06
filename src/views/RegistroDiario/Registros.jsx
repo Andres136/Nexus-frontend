@@ -4,14 +4,16 @@ import { usePreguntas } from "../../hooks/RegistroDiario/UsePreguntas";
 import { useRegistroDiario } from "../../hooks/RegistroDiario/useRegistroDiario";
 import Select from "react-select";
 import RegisterPreguntas from "../../components/RegistroDiario/RegisterPreguntas";
+import NovedadesCalidad from "../../components/calidad/NovedadesCalidad";
 import { useNavigate, useLocation } from "react-router-dom";
 
 export default function Registros() {
   const { departamentos } = useGestionProcesos();
   const navigate = useNavigate();
   const location = useLocation();
-  
-  const [showModal, setShowModal] = useState(false);
+
+  const [showPreguntaModal, setShowPreguntaModal] = useState(false);
+  const [showRegistroModal, setShowRegistroModal] = useState(false);
 
   const {
     formData,
@@ -33,7 +35,7 @@ export default function Registros() {
   ];
 
   return (
-    <div className="max-w-4xl mx-auto p-4 sm:p-6">
+    <div className="w-full p-4 sm:p-6">
       {/* Header de navegación */}
       <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -57,18 +59,40 @@ export default function Registros() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-medium text-gray-700">Nuevo Registro</h2>
-          
+      <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+        <div className="flex justify-end items-center gap-2">
           <button
-            onClick={() => setShowModal(true)}
+            onClick={() => setShowPreguntaModal(true)}
             className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
           >
             + Crear Pregunta
           </button>
+          <button
+            onClick={() => setShowRegistroModal(true)}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+          >
+            + Nuevo Registro
+          </button>
         </div>
+      </div>
 
+      {/* Listado de novedades como vista principal */}
+      <NovedadesCalidad />
+
+      {/* Modal para el formulario de Nuevo Registro */}
+      {showRegistroModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center p-6 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-800">Nuevo Registro</h2>
+              <button
+                onClick={() => setShowRegistroModal(false)}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            <div className="p-6">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Primera fila - Selectores */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -222,16 +246,19 @@ export default function Registros() {
             </button>
           </div>
         </form>
-      </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal para RegisterPreguntas */}
-      {showModal && (
+      {showPreguntaModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center p-6 border-b border-gray-200">
               <h2 className="text-xl font-semibold text-gray-800">Crear Nueva Pregunta</h2>
               <button
-                onClick={() => setShowModal(false)}
+                onClick={() => setShowPreguntaModal(false)}
                 className="text-gray-500 hover:text-gray-700 text-2xl"
               >
                 ×

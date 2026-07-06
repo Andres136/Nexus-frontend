@@ -1,18 +1,52 @@
+import { useState } from "react";
 import { useGetEstadisticasSemestral } from "../../hooks/calidad/useGetEstadisticasSemestral";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { BarChart3 } from "lucide-react";
 
 const COLORS = ["#22c55e", "#f59e0b", "#ef4444"];
 
+const anioActual = new Date().getFullYear();
+const semestreActual = new Date().getMonth() < 6 ? 1 : 2;
+const anios = Array.from({ length: 5 }, (_, i) => anioActual - i);
+
+function rangoSemestre(anio, semestre) {
+  return semestre === 1
+    ? { fecha_inicio: `${anio}-01-01`, fecha_fin: `${anio}-06-30` }
+    : { fecha_inicio: `${anio}-07-01`, fecha_fin: `${anio}-12-31` };
+}
+
 export default function DashboardSemestral() {
+  const [anio, setAnio] = useState(anioActual);
+  const [semestre, setSemestre] = useState(semestreActual);
+
   const {
     data: estadisticas = {},
     isLoading,
     error,
-  } = useGetEstadisticasSemestral();
+  } = useGetEstadisticasSemestral(rangoSemestre(anio, semestre));
 
-  if (isLoading) return <p>Cargando dashboard...</p>;
-  if (error) return <p>Error al cargar datos</p>;
+  const filtro = (
+    <div className="flex items-center gap-3">
+      <select
+        value={anio}
+        onChange={(e) => setAnio(Number(e.target.value))}
+        className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+      >
+        {anios.map((a) => (
+          <option key={a} value={a}>{a}</option>
+        ))}
+      </select>
+
+      <select
+        value={semestre}
+        onChange={(e) => setSemestre(Number(e.target.value))}
+        className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+      >
+        <option value={1}>Semestre 1</option>
+        <option value={2}>Semestre 2</option>
+      </select>
+    </div>
+  );
 
   const chartData = [
     { name: "Cerradas", value: estadisticas.cerradas },
@@ -24,11 +58,19 @@ export default function DashboardSemestral() {
     <div className="p-6 space-y-6">
 
       {/* HEADER */}
-      <div className="flex items-center gap-3">
-        <BarChart3 />
-        <h1 className="text-2xl font-bold">Dashboard de Calidad</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <BarChart3 />
+          <h1 className="text-2xl font-bold">Dashboard de Calidad</h1>
+        </div>
+        {filtro}
       </div>
 
+      {isLoading && <p>Cargando dashboard...</p>}
+      {error && <p>Error al cargar datos</p>}
+
+      {!isLoading && !error && (
+      <>
       {/* KPI PRINCIPAL */}
       <div className="bg-white shadow rounded-xl p-6 text-center">
         <p className="text-gray-500">Cumplimiento Semestral</p>
@@ -92,6 +134,8 @@ export default function DashboardSemestral() {
           </PieChart>
         </ResponsiveContainer>
       </div>
+      </>
+      )}
 
     </div>
   );
