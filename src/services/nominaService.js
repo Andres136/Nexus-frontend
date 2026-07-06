@@ -576,6 +576,9 @@ export const workSessionService = {
   getWorkSessions(params = {}) {
     return apiClient.get("api/nomina/work-sessions", { params });
   },
+  getResumen(params = {}) {
+    return apiClient.get("api/nomina/work-sessions/resumen", { params });
+  },
   async createSession(data) {
     const kioskConfig = await kioskRequestConfig();
     if (kioskConfig) {
@@ -617,6 +620,18 @@ export const workSessionService = {
     return apiClient.get("api/nomina/work-sessions", {
       params: { user_id: userId, fecha: today, per_page: 1 },
     });
+  },
+};
+
+export const recuperacionTiempoService = {
+  getRecuperaciones(params = {}) {
+    return apiClient.get("api/nomina/recuperaciones-tiempo", { params });
+  },
+  createRecuperacion(data) {
+    return apiClient.post("api/nomina/recuperaciones-tiempo", data);
+  },
+  anular(uuid) {
+    return apiClient.patch(`api/nomina/recuperaciones-tiempo/${uuid}/anular`);
   },
 };
 

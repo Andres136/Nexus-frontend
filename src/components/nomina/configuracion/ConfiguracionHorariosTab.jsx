@@ -2,6 +2,7 @@ import PropTypes from "prop-types";
 import Select from "react-select";
 import {
   AlarmClock,
+  Building2,
   CalendarDays,
   CheckCircle2,
   ChevronDown,
@@ -203,6 +204,7 @@ export default function ConfiguracionHorariosTab({
   handleInstruccion,
   handleInstruccionTime,
   handleHorarioUsuario,
+  handleAlcanceHorarioUsuario,
   toggleDiaUsuario,
   aplicarDefault,
   guardar,
@@ -210,6 +212,7 @@ export default function ConfiguracionHorariosTab({
   guardarHorarioUsuario,
 }) {
   const diasGuardados = new Set(horariosUsuario.map((item) => Number(item.dia_semana)));
+  const aplicaEmpresa = horarioUsuarioForm.alcance === "empresa";
   const empleadoSeleccionado =
     empleados.find((empleado) => String(empleado.value) === String(horarioUsuarioForm.user_id)) ?? null;
 
@@ -460,6 +463,38 @@ export default function ConfiguracionHorariosTab({
 
               <label className="block">
                 <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+                  Alcance
+                </span>
+                <div className="mt-1 grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleAlcanceHorarioUsuario("empleado")}
+                    className={`inline-flex h-10 items-center justify-center gap-2 rounded-lg border text-xs font-bold transition-colors ${
+                      !aplicaEmpresa
+                        ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                        : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    <UserRound className="h-4 w-4" />
+                    Empleado
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleAlcanceHorarioUsuario("empresa")}
+                    className={`inline-flex h-10 items-center justify-center gap-2 rounded-lg border text-xs font-bold transition-colors ${
+                      aplicaEmpresa
+                        ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                        : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    <Building2 className="h-4 w-4" />
+                    Empresa
+                  </button>
+                </div>
+              </label>
+
+              <label className="mt-4 block">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">
                   Empleado
                 </span>
                 <Select
@@ -474,8 +509,9 @@ export default function ConfiguracionHorariosTab({
                   }
                   isClearable
                   isSearchable
+                  isDisabled={aplicaEmpresa}
                   isLoading={loadingEmpleados}
-                  placeholder={loadingEmpleados ? "Cargando empleados..." : "Seleccionar empleado"}
+                  placeholder={aplicaEmpresa ? "Aplica a todos" : loadingEmpleados ? "Cargando empleados..." : "Seleccionar empleado"}
                   noOptionsMessage={() => "Sin empleados"}
                   menuPortalTarget={document.body}
                   styles={{
@@ -502,7 +538,7 @@ export default function ConfiguracionHorariosTab({
                 <div className="grid grid-cols-4 gap-2">
                   {DIAS_SEMANA.map((dia) => {
                     const checked = horarioUsuarioForm.dias.includes(dia.value);
-                    const guardado = diasGuardados.has(dia.value);
+                    const guardado = !aplicaEmpresa && diasGuardados.has(dia.value);
 
                     return (
                       <button
@@ -528,7 +564,7 @@ export default function ConfiguracionHorariosTab({
                 type="button"
                 onClick={guardarHorarioUsuario}
                 disabled={
-                  !horarioUsuarioForm.user_id ||
+                  (!aplicaEmpresa && !horarioUsuarioForm.user_id) ||
                   !horarioUsuarioForm.dias.length ||
                   loadingHorariosUsuario ||
                   horarioUsuarioMutation.isPending
@@ -538,7 +574,9 @@ export default function ConfiguracionHorariosTab({
                 <Save className="h-4 w-4" />
                 {horarioUsuarioMutation.isPending
                   ? "Guardando..."
-                  : "Guardar horario semanal"}
+                  : aplicaEmpresa
+                    ? "Aplicar a toda empresa"
+                    : "Guardar horario semanal"}
               </button>
             </section>
           </aside>
@@ -569,6 +607,7 @@ ConfiguracionHorariosTab.propTypes = {
   handleInstruccion: PropTypes.func.isRequired,
   handleInstruccionTime: PropTypes.func.isRequired,
   handleHorarioUsuario: PropTypes.func.isRequired,
+  handleAlcanceHorarioUsuario: PropTypes.func.isRequired,
   toggleDiaUsuario: PropTypes.func.isRequired,
   aplicarDefault: PropTypes.func.isRequired,
   guardar: PropTypes.func.isRequired,

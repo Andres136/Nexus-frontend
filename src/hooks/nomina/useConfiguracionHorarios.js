@@ -155,8 +155,9 @@ export function useConfiguracionHorarios() {
   const [instruccionForm, setInstruccionForm] =
     useState(INSTRUCCION_DEFAULT);
   const [horarioUsuarioForm, setHorarioUsuarioForm] = useState({
+    alcance: "empleado",
     user_id: "",
-    dias: [1, 2, 3, 4, 5],
+    dias: [],
   });
 
   const { jornadas, isLoading } = useGetJornadaLaboral({ per_page: 50 });
@@ -195,7 +196,7 @@ export function useConfiguracionHorarios() {
       const response = await horarioUsuarioSemanalService.getPorUsuario(horarioUsuarioForm.user_id);
       return response.data?.data ?? [];
     },
-    enabled: !!horarioUsuarioForm.user_id,
+    enabled: horarioUsuarioForm.alcance === "empleado" && !!horarioUsuarioForm.user_id,
   });
 
   useEffect(() => {
@@ -283,9 +284,12 @@ export function useConfiguracionHorarios() {
   const horarioUsuarioMutation = useMutation({
     mutationFn: (payload) => horarioUsuarioSemanalService.guardarSemana(payload),
     onSuccess: (response) => {
+      const usuariosActualizados = response.data?.data?.usuarios_actualizados;
       showToast(
         "success",
-        response.data?.message || "Horario semanal del usuario guardado"
+        usuariosActualizados
+          ? `Horario aplicado a ${usuariosActualizados} empleados`
+          : response.data?.message || "Horario semanal del usuario guardado"
       );
 
       queryClient.invalidateQueries({ queryKey: ["horariosUsuarioSemanales"] });
@@ -342,6 +346,14 @@ export function useConfiguracionHorarios() {
   const handleHorarioUsuario = (event) => {
     const { name, value } = event.target;
     setHorarioUsuarioForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleAlcanceHorarioUsuario = (alcance) => {
+    setHorarioUsuarioForm((prev) => ({
+      ...prev,
+      alcance,
+      user_id: alcance === "empresa" ? "" : prev.user_id,
+    }));
   };
 
   const toggleDiaUsuario = (dia) => {
@@ -404,8 +416,10 @@ export function useConfiguracionHorarios() {
   };
 
   const guardarHorarioUsuario = () => {
-    if (!horarioUsuarioForm.user_id || !jornada || !horarioUsuarioForm.dias.length) {
-      showToast("error", "Selecciona un empleado y al menos un día.");
+    const aplicarTodos = horarioUsuarioForm.alcance === "empresa";
+
+    if ((!aplicarTodos && !horarioUsuarioForm.user_id) || !jornada || !horarioUsuarioForm.dias.length) {
+      showToast("error", "Selecciona el alcance y al menos un día.");
       return;
     }
 
@@ -414,7 +428,8 @@ export function useConfiguracionHorarios() {
     );
 
     horarioUsuarioMutation.mutate({
-      user_id: Number(horarioUsuarioForm.user_id),
+      aplicar_todos: aplicarTodos,
+      user_id: aplicarTodos ? null : Number(horarioUsuarioForm.user_id),
       horarios: horarioUsuarioForm.dias.map((dia) => {
         const existente = existentesPorDia.get(Number(dia));
 
@@ -467,6 +482,7 @@ export function useConfiguracionHorarios() {
     handleInstruccion,
     handleInstruccionTime,
     handleHorarioUsuario,
+    handleAlcanceHorarioUsuario,
     toggleDiaUsuario,
     aplicarDefault,
     guardar,

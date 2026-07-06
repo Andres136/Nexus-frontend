@@ -374,7 +374,7 @@ export default function ModalLiquidarNomina({ onClose, initialData = {} }) {
                 <p className="font-semibold text-gray-900">{preview.horas_normales ?? "—"} h</p>
               </div>
               <div>
-                <p className="text-xs text-indigo-500">Horas período</p>
+                <p className="text-xs text-indigo-500">Horas esperadas</p>
                 <p className="font-semibold text-gray-900">
                   {preview.horas_esperadas_periodo ?? "—"} h
                 </p>
