@@ -13,6 +13,7 @@ import {
   removeKioskoSession,
   getKioskoGuestSession,
   removeKioskoGuestSession,
+  shouldClearKioskoSession,
 } from "../../helpers/nomina/kioskoSession";
 import {
   getFaceDescriptorCache,
@@ -204,10 +205,13 @@ export function useKiosko() {
   const [ultimaMarca, setUltimaMarca]     = useState(null);
 
   const invalidarSesionKiosko = useCallback((message = "La sesión de este kiosko no es válida. Genera un nuevo link de activación y reactívalo en este dispositivo.") => {
-    removeKioskoSession(code);
-    removeKioskoGuestSession(code);
+    if (shouldClearKioskoSession(message)) {
+      removeKioskoSession(code);
+      removeKioskoGuestSession(code);
+    }
+
     const mensajeNormalizado = message === "El kiosko no está activo."
-      ? "Este kiosko quedó pendiente de reactivación. Abre el nuevo link de activación en este dispositivo."
+      ? "Este kiosko está desactivado en administración. Actívalo nuevamente y recarga esta pantalla."
       : message;
     setErrorMsg(mensajeNormalizado);
     setStatus("error");
@@ -364,7 +368,8 @@ export function useKiosko() {
 
         setStatus("ready");
       } catch (err) {
-        if (err.response?.status === 403) {
+        const mensaje = err.response?.data?.message || err.message || "";
+        if (err.response?.status === 403 && shouldClearKioskoSession(mensaje)) {
           removeKioskoSession(code);
           removeKioskoGuestSession(code);
         }

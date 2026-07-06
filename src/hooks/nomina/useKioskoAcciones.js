@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { horaExtraService, workSessionService } from "../../services/nominaService";
-import { removeKioskoGuestSession, removeKioskoSession } from "../../helpers/nomina/kioskoSession";
+import { removeKioskoGuestSession, removeKioskoSession, shouldClearKioskoSession } from "../../helpers/nomina/kioskoSession";
 import { hablar } from "../../helpers/voz";
 
 export const hhmm = (date) =>
@@ -207,12 +207,14 @@ export function useKioskoAcciones({ empleado, jornadaActiva, onRefrescarJornada,
       if (error.response?.status === 403) {
         const uuid = uuidKioskoActual();
 
-        if (uuid) {
+        if (uuid && shouldClearKioskoSession(mensaje)) {
           removeKioskoSession(uuid);
           removeKioskoGuestSession(uuid);
         }
 
-        mensaje = "La sesión de este kiosko cambió o fue reactivada. Abre el nuevo link de activación en este dispositivo.";
+        if (shouldClearKioskoSession(mensaje)) {
+          mensaje = "La sesión de este kiosko cambió o fue reactivada. Abre el nuevo link de activación en este dispositivo.";
+        }
       }
 
       setTipoMensaje("error");

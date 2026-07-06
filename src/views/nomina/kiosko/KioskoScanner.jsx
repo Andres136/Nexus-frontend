@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import * as faceapi from "face-api.js";
 import { KeyRound, MessageCircle } from "lucide-react";
 import { workSessionService, permisoService } from "../../../services/nominaService";
-import { removeKioskoGuestSession, removeKioskoSession } from "../../../helpers/nomina/kioskoSession";
+import { removeKioskoGuestSession, removeKioskoSession, shouldClearKioskoSession } from "../../../helpers/nomina/kioskoSession";
 import { hablar } from "../../../helpers/voz";
 
 const FACE_LIVE_MIN_CONFIDENCE = 0.65;
@@ -32,13 +32,16 @@ function uuidKioskoActual() {
 function mensajeKioskoError(error, fallback = "Error al registrar. Intenta de nuevo.") {
   if (error.response?.status === 403) {
     const uuid = uuidKioskoActual();
+    const mensaje = mensajeErrorApi(error);
 
-    if (uuid) {
+    if (uuid && shouldClearKioskoSession(mensaje)) {
       removeKioskoSession(uuid);
       removeKioskoGuestSession(uuid);
     }
 
-    return "La sesión de este kiosko cambió o fue reactivada. Abre el nuevo link de activación en este dispositivo.";
+    return shouldClearKioskoSession(mensaje)
+      ? "La sesión de este kiosko cambió o fue reactivada. Abre el nuevo link de activación en este dispositivo."
+      : mensaje;
   }
 
   return mensajeErrorApi(error, fallback);
