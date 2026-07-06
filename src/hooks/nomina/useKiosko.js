@@ -25,7 +25,7 @@ const API_URL     = import.meta.env.VITE_API_URL;
 const STORAGE_URL = API_URL + "/storage/";
 const MODEL_URL   = "/models";
 const FACE_IMAGE_MIN_CONFIDENCE = 0.5;
-const FACE_MATCH_THRESHOLD = 0.5;
+const FACE_MATCH_THRESHOLD = 0.42;
 const BOOTSTRAP_CACHE_TIMEOUT_MS = 7000;
 
 async function loadModels() {

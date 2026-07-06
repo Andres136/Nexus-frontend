@@ -6,8 +6,10 @@ import { workSessionService, permisoService } from "../../../services/nominaServ
 import { removeKioskoGuestSession, removeKioskoSession } from "../../../helpers/nomina/kioskoSession";
 import { hablar } from "../../../helpers/voz";
 
-const FACE_LIVE_MIN_CONFIDENCE = 0.5;
-const FACE_REQUIRED_CONSECUTIVE_MATCHES = 2;
+const FACE_LIVE_MIN_CONFIDENCE = 0.65;
+const FACE_MAX_MATCH_DISTANCE = 0.42;
+const FACE_AMBIGUOUS_DISTANCE_MARGIN = 0.06;
+const FACE_REQUIRED_CONSECUTIVE_MATCHES = 3;
 const FACE_CONSECUTIVE_WINDOW_MS = 1800;
 const RECOGNITION_ACTIVE_MS = 60000;
 
@@ -248,6 +250,39 @@ function decir(jornada, texto) {
   hablar(texto);
 }
 
+function evaluarCoincidenciaFacial(faceMatcher, descriptor) {
+  const mejoresPorUsuario = new Map();
+
+  faceMatcher.labeledDescriptors.forEach((labeled) => {
+    const distance = Math.min(
+      ...labeled.descriptors.map((knownDescriptor) =>
+        faceapi.euclideanDistance(knownDescriptor, descriptor)
+      )
+    );
+    const previo = mejoresPorUsuario.get(labeled.label);
+
+    if (!previo || distance < previo.distance) {
+      mejoresPorUsuario.set(labeled.label, { label: labeled.label, distance });
+    }
+  });
+
+  const candidatos = Array.from(mejoresPorUsuario.values())
+    .sort((a, b) => a.distance - b.distance);
+
+  const mejor = candidatos[0] ?? null;
+  const segundo = candidatos[1] ?? null;
+
+  if (!mejor || mejor.distance > FACE_MAX_MATCH_DISTANCE) {
+    return null;
+  }
+
+  if (segundo && segundo.distance - mejor.distance < FACE_AMBIGUOUS_DISTANCE_MARGIN) {
+    return null;
+  }
+
+  return mejor;
+}
+
 export default function KioskoScanner({
   faceMatcher,
   empleadosMap,
@@ -384,8 +419,8 @@ export default function KioskoScanner({
         return;
       }
 
-      const match = faceMatcher.findBestMatch(det.descriptor);
-      if (match.label === "unknown") {
+      const match = evaluarCoincidenciaFacial(faceMatcher, det.descriptor);
+      if (!match) {
         matchPendiente.current = { userId: null, count: 0, lastAt: 0 };
         return;
       }

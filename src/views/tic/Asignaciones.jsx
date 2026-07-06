@@ -55,7 +55,7 @@ export default function Asignaciones() {
           {/* Acciones */}
           <div className="flex items-center gap-3">
             <Link
-              to="/auth/tic/paradas-equipos tickets"
+              to="/auth/tic/paradas-equipos"
               className="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors"
             >
               <Activity className="w-4 h-4" />
