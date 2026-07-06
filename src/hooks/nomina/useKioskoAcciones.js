@@ -86,6 +86,11 @@ function minutosTardeContraHora(horaProgramada, fecha = new Date()) {
   return Math.max(0, minutosDia(fecha) - limite);
 }
 
+function minutosPausaConfigurada(jornada) {
+  const minutos = Number(jornada?.duracion_pausa_minutos);
+  return Number.isFinite(minutos) && minutos > 0 ? minutos : null;
+}
+
 function detectarAccion(session, jornada, ahora = new Date()) {
   const actual        = minutosDia(ahora);
   const salida        = minutosHora(jornada?.hora_salida);
@@ -93,8 +98,9 @@ function detectarAccion(session, jornada, ahora = new Date()) {
   const ingresoAlm    = minutosHora(jornada?.hora_ingreso_almuerzo);
   const salidaPausa   = minutosHora(jornada?.hora_salida_pausa);
   const ingresoPausa  = minutosHora(jornada?.hora_ingreso_pausa);
+  const minutosPausa  = minutosPausaConfigurada(jornada);
   const pausaFin      = salidaPausa !== null
-    ? (ingresoPausa ?? salidaPausa + (jornada?.duracion_pausa_minutos ?? 10))
+    ? (ingresoPausa ?? (minutosPausa !== null ? salidaPausa + minutosPausa : null))
     : null;
 
   if (session?.hora_salida_brake    && !session?.hora_ingreso_brake)   return "pausaEntrada";
@@ -223,7 +229,7 @@ export function useKioskoAcciones({ empleado, jornadaActiva, onRefrescarJornada,
     if (guardando || exitoMsg) return;
 
     const tardanza = minutosTardeContraHora(jornada?.hora_ingreso_almuerzo);
-    const minutosPausa = jornada?.duracion_pausa_minutos ?? 10;
+    const minutosPausa = minutosPausaConfigurada(jornada);
     const acciones = {
       salida: () => ejecutar(
         { hora_salida: tiempoHHMMSS() },
@@ -234,8 +240,12 @@ export function useKioskoAcciones({ empleado, jornadaActiva, onRefrescarJornada,
       ),
       pausaSalida: () => ejecutar(
         { hora_salida_brake: tiempoHHMMSS() },
-        VOZ.pausaSalida(empleado.nombre, minutosPausa),
-        `Salida a break exitosa, ${empleado.nombre}. Tu próximo registro será en ${minutosPausa} minutos.`
+        minutosPausa !== null
+          ? VOZ.pausaSalida(empleado.nombre, minutosPausa)
+          : `Salida a break exitosa, ${empleado.nombre}. Tu pausa queda registrada según el horario configurado.`,
+        minutosPausa !== null
+          ? `Salida a break exitosa, ${empleado.nombre}. Tu próximo registro será en ${minutosPausa} minutos.`
+          : `Salida a break exitosa, ${empleado.nombre}. Pausa registrada según el horario configurado.`
       ),
       pausaEntrada: () => ejecutar(
         { hora_ingreso_brake: tiempoHHMMSS() },
