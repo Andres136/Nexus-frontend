@@ -177,6 +177,10 @@ function aplicarHorarioUsuario(jornada, horarioUsuario) {
   };
 }
 
+function instruccionEsDeUsuario(instruccion) {
+  return instruccion?.user_id !== null && instruccion?.user_id !== undefined;
+}
+
 function fechaLocal() {
   const fecha = new Date();
   const yyyy  = fecha.getFullYear();
@@ -286,8 +290,14 @@ export function useKiosko() {
         : Promise.resolve(null),
     ]);
 
-    const baseConHorarioUsuario = aplicarHorarioUsuario(jornadaBaseActiva, horarioUsuario) ?? jornadaBaseActiva;
-    return construirJornadaOperativa(instruccionDiaria, baseConHorarioUsuario) ?? baseConHorarioUsuario ?? jornadaActiva;
+    const baseConInstruccionGeneral = instruccionEsDeUsuario(instruccionDiaria)
+      ? jornadaBaseActiva
+      : construirJornadaOperativa(instruccionDiaria, jornadaBaseActiva) ?? jornadaBaseActiva;
+    const baseConHorarioUsuario = aplicarHorarioUsuario(baseConInstruccionGeneral, horarioUsuario) ?? baseConInstruccionGeneral;
+
+    return instruccionEsDeUsuario(instruccionDiaria)
+      ? construirJornadaOperativa(instruccionDiaria, baseConHorarioUsuario) ?? baseConHorarioUsuario ?? jornadaActiva
+      : baseConHorarioUsuario ?? jornadaActiva;
   }, [construirJornadaOperativa, fechaOperacion, invalidarSesionKiosko, jornadaActiva, jornadaBaseActiva, jornadasLaborales, queryClient]);
 
   useEffect(() => {
