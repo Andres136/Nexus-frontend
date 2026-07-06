@@ -175,10 +175,9 @@ Pagination.propTypes = {
 export default function PageWorkSessions() {
   const queryClient = useQueryClient();
   const today = fechaLocal();
-  const firstDay = today.slice(0, 8) + "01";
 
   const [search, setSearch]         = useState("");
-  const [fechaInicio, setFechaInicio] = useState(firstDay);
+  const [fechaInicio, setFechaInicio] = useState(today);
   const [fechaFin, setFechaFin]     = useState(today);
   const [sedeId, setSedeId]         = useState("");
   const [userId, setUserId]         = useState("");
