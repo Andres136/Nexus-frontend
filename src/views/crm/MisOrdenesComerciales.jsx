@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
-import { FaPen, FaSearch } from "react-icons/fa";
+import { FaSearch } from "react-icons/fa";
 import { Package, Calendar, User, Eye, ChevronLeft, ChevronRight } from "lucide-react";
 import useMisOrdenesCompra from "../../hooks/useMisOrdenesCompra";
+import { useEffect, useState } from "react";
 
 export default function MisOrdenesComerciales() {
   const {
@@ -14,8 +15,16 @@ export default function MisOrdenesComerciales() {
     setPagina,
     totalPaginas,
   } = useMisOrdenesCompra();
-  
-  console.log(ordenes);
+
+  const [busquedaLocal, setBusquedaLocal] = useState(busqueda);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setBusqueda(busquedaLocal.trim());
+    }, 400);
+
+    return () => clearTimeout(timeoutId);
+  }, [busquedaLocal, setBusqueda]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50">
@@ -56,8 +65,8 @@ export default function MisOrdenesComerciales() {
                 type="text"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm placeholder-gray-500"
                 placeholder="Buscar por ID, cliente, fecha..."
-                value={busqueda}
-                onChange={(e) => setBusqueda(e.target.value)}
+                value={busquedaLocal}
+                onChange={(e) => setBusquedaLocal(e.target.value)}
               />
             </div>
           </div>

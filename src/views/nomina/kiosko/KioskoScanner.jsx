@@ -131,7 +131,7 @@ function PinModal({ cedulaMap, empleadosMap, jornadaId, jornadaActiva, kioskoInf
     <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
       <div className="bg-gray-900 border border-gray-700 rounded-3xl w-full max-w-xs p-6 flex flex-col gap-5">
         <div className="text-center">
-          <p className="text-indigo-400 text-xs font-semibold uppercase tracking-widest mb-1">PIN Alterno</p>
+          <p className="text-indigo-400 text-xs font-semibold uppercase tracking-widest mb-1">Cédula</p>
           <p className="text-white text-lg font-bold">Ingresa tu cédula</p>
         </div>
 
@@ -532,7 +532,7 @@ export default function KioskoScanner({
     if (!reconocimientoActivo || candidato || exitoMsg || showPin || reconocimientoFallido) return;
 
     autoPinRef.current = setTimeout(() => {
-      decir(jornadaActiva, "No fue posible validar el reconocimiento facial. Puedes usar el PIN alterno con tu número de cédula.");
+      decir(jornadaActiva, "No fue posible validar el reconocimiento facial. Ingresa tu número de cédula.");
       setReconocimientoFallido(true);
     }, 10000);
 
@@ -596,7 +596,7 @@ export default function KioskoScanner({
           {candidato
             ? checkingSession ? "Verificando sesión..." : "Reconocimiento completado"
             : !reconocimientoActivo ? "Reconocimiento en espera · Toca activar"
-            : reconocimientoFallido || camError ? "Reconocimiento no validado · Usa PIN alterno"
+            : reconocimientoFallido || camError ? "Reconocimiento no validado · Usa tu cédula"
             : "Reconocimiento facial · Acércate a la cámara"}
         </p>
       </div>
@@ -688,7 +688,7 @@ export default function KioskoScanner({
                   onClick={() => setShowPin(true)}
                   className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-indigo-700/70 border border-indigo-500/40 text-indigo-200 text-sm font-medium hover:bg-indigo-600/80 transition-colors">
                   <KeyRound className="h-4 w-4" strokeWidth={2} />
-                  Usar PIN alterno
+                  Usar cédula
                 </button>
               </>
             ) : !reconocimientoFallido && !camError ? (
@@ -701,7 +701,7 @@ export default function KioskoScanner({
                   onClick={() => setShowPin(true)}
                   className="flex items-center justify-center gap-2 flex-1 py-2.5 rounded-xl bg-indigo-700/70 border border-indigo-500/40 text-indigo-200 text-sm font-medium hover:bg-indigo-600/80 transition-colors">
                   <KeyRound className="h-4 w-4" strokeWidth={2} />
-                  PIN alterno
+                  Usar cédula
                 </button>
                 <a
                   href="https://wa.me/573108157335"

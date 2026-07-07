@@ -1,5 +1,5 @@
 // hooks/useMisOrdenesCompra.js
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import clienteAxios from "../config/axios";
 
 export default function useMisOrdenesCompra() {
@@ -10,7 +10,7 @@ export default function useMisOrdenesCompra() {
   const [pagina, setPagina]         = useState(1);
   const [totalPaginas, setTotalPaginas] = useState(1);
 
-  const fetchOrdenes = async () => {
+  const fetchOrdenes = useCallback(async () => {
     try {
       setIsLoading(true);
       const token = localStorage.getItem("token");
@@ -31,18 +31,23 @@ export default function useMisOrdenesCompra() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [busqueda, pagina]);
 
   useEffect(() => {
     fetchOrdenes();
-  }, [busqueda, pagina]);
+  }, [fetchOrdenes]);
+
+  const actualizarBusqueda = useCallback((value) => {
+    setBusqueda(value);
+    setPagina(1);
+  }, []);
 
   return {
     ordenes,
     isLoading,
     isError,
     busqueda,
-    setBusqueda,
+    setBusqueda: actualizarBusqueda,
     pagina,
     setPagina,
     totalPaginas,

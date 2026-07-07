@@ -53,7 +53,7 @@ export default function ObtenerOrdenesTrabajo() {
 
     handler();
     return () => handler.cancel();
-  }, [busquedaLocal, fechaInicioLocal, fechaFinLocal]);
+  }, [busquedaLocal, fechaInicioLocal, fechaFinLocal, setBusqueda, setFechaInicio, setFechaFin, setPagina]);
 
   if (isLoading)
     return (
