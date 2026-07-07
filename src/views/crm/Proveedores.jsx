@@ -21,7 +21,8 @@ import {
   MapPin,
   FileText,
   X,
-  PieChart
+  PieChart,
+  FilePlus2
 } from "lucide-react"
 
 import ModalRegistroProcesoBolsa from "../../components/crm/ModalRegistroProcesoBolsa"
@@ -199,7 +200,7 @@ export default function Proveedores() {
           })
           toast.success(response.data.message)
           obtenerProveedores()
-        } catch (error) {
+        } catch {
           toast.error("Error al eliminar proveedor")
         }
       }
@@ -269,6 +270,28 @@ export default function Proveedores() {
       <div>
         <div className="font-medium text-sm">Ver Órdenes</div>
         <div className="text-xs text-blue-600">Órdenes registradas</div>
+      </div>
+    </Link>
+
+    <Link
+      to="/auth/crm/requerimientos-compra"
+      className="flex items-center gap-3 p-3 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-lg border border-purple-200 transition-colors"
+    >
+      <FilePlus2 className="w-4 h-4" />
+      <div>
+        <div className="font-medium text-sm">Mis requerimientos</div>
+        <div className="text-xs text-purple-600">Crear y consultar</div>
+      </div>
+    </Link>
+
+    <Link
+      to="/auth/crm/requerimientos-compra/gestion"
+      className="flex items-center gap-3 p-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg border border-indigo-200 transition-colors"
+    >
+      <FilePlus2 className="w-4 h-4" />
+      <div>
+        <div className="font-medium text-sm">Aprobar requerimientos</div>
+        <div className="text-xs text-indigo-600">Por sede y compras</div>
       </div>
     </Link>
 

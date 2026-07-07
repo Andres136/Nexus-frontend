@@ -35,6 +35,10 @@ import EditarVehiculo from "../components/crm/EditarVehiculo";
 import Proveedores from "../views/crm/Proveedores";
 import FormOrdenesProveedores from "../views/crm/FormOrdenesProveedores";
 import ObtenerOrdenesProveedores from "../views/crm/ObtenerOrdenesProveedores";
+import RequerimientosCompra from "../views/crm/RequerimientosCompra";
+import GestionRequerimientosCompra from "../views/crm/GestionRequerimientosCompra";
+import RequerimientoCompraDetalle from "../views/crm/RequerimientoCompraDetalle";
+import GestionRequerimientoCompraDetalle from "../views/crm/GestionRequerimientoCompraDetalle";
 
 import RegistrarEntregaProveedor from "../views/crm/RegistrarEntregaProveedor";
 import KpiTareas from "../components/calidad/KpiTareas";
@@ -550,6 +554,38 @@ export default function Router() {
             element={
               <DynamicProtectedRoute permission="/auth/crm/proveedores">
                 <Proveedores />
+              </DynamicProtectedRoute>
+            }
+          />
+          <Route
+            path="requerimientos-compra"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/requerimientos-compra">
+                <RequerimientosCompra />
+              </DynamicProtectedRoute>
+            }
+          />
+          <Route
+            path="requerimientos-compra/gestion"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/requerimientos-compra/gestion">
+                <GestionRequerimientosCompra />
+              </DynamicProtectedRoute>
+            }
+          />
+          <Route
+            path="requerimientos-compra/gestion/:uuid"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/requerimientos-compra/gestion">
+                <GestionRequerimientoCompraDetalle />
+              </DynamicProtectedRoute>
+            }
+          />
+          <Route
+            path="requerimientos-compra/:uuid"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/requerimientos-compra">
+                <RequerimientoCompraDetalle />
               </DynamicProtectedRoute>
             }
           />

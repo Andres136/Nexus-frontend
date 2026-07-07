@@ -220,6 +220,25 @@ export const proveedoresApi = {
   
 };
 
+//Requerimientos internos de compra
+export const requerimientosCompraApi = {
+  getAll: (params = {}) => apiClient.get("/api/requerimientos-compra", { params }),
+  getByUuid: (uuid) => apiClient.get(`/api/requerimientos-compra/${uuid}`),
+  create: (data) => apiClient.post("/api/requerimientos-compra", data),
+  update: (uuid, data) => apiClient.put(`/api/requerimientos-compra/${uuid}`, data),
+  getBodegasDisponibles: () => apiClient.get("/api/requerimientos-compra/bodegas-disponibles"),
+  analizar: (uuid, data = {}) => apiClient.patch(`/api/requerimientos-compra/${uuid}/analizar`, data),
+  aprobar: (uuid, data = {}) => apiClient.patch(`/api/requerimientos-compra/${uuid}/aprobar`, data),
+  rechazar: (uuid, data = {}) => apiClient.patch(`/api/requerimientos-compra/${uuid}/rechazar`, data),
+  cancelar: (uuid, data = {}) => apiClient.patch(`/api/requerimientos-compra/${uuid}/cancelar`, data),
+  generarOrdenCompra: (uuid, data) =>
+    apiClient.post(`/api/requerimientos-compra/${uuid}/generar-orden-compra`, data),
+  getPdf: (uuid) =>
+    apiClient.get(`/api/requerimientos-compra/${uuid}/pdf`, {
+      responseType: "blob",
+    }),
+};
+
 //Ordenes de compra a proveedores API
 export const ordenesCompraProveedoresApi = {
   //Peticion al pdf al crear la orden de compra
