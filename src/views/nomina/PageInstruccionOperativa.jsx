@@ -19,7 +19,7 @@ const hoyLocal = () => {
 
 const INSTRUCCION_DEFAULT = {
   fecha: hoyLocal(),
-  kiosko_device_id: "",
+  kiosko_device_ids: [],
   jornada_laboral_id: "",
   hora_entrada: "07:00",
   hora_entrada_limite: "08:00",
@@ -175,36 +175,36 @@ export default function PageInstruccionOperativa({ embedded = false }) {
 
   const lista = useMemo(() => jornadas?.data?.data ?? [], [jornadas]);
   const kioscosLista = useMemo(() => kioscos?.data?.data ?? kioscos?.data ?? [], [kioscos]);
-  const kioskoSeleccionado = useMemo(
-    () => kioscosLista.find((item) => String(item.id) === String(instruccionForm.kiosko_device_id)),
-    [instruccionForm.kiosko_device_id, kioscosLista]
-  );
+  const kioskoUnicoSeleccionado = useMemo(() => {
+    if ((instruccionForm.kiosko_device_ids ?? []).length !== 1) return undefined;
+    return kioscosLista.find((item) => String(item.id) === String(instruccionForm.kiosko_device_ids[0]));
+  }, [instruccionForm.kiosko_device_ids, kioscosLista]);
   const { empleados, isLoading: loadingEmpleados } = useGetEmpleados({
     con_contrato: true,
-    sede_id: kioskoSeleccionado?.sede_id || kioskoSeleccionado?.sede?.id || undefined,
+    sede_id: kioskoUnicoSeleccionado?.sede_id || kioskoUnicoSeleccionado?.sede?.id || undefined,
   });
 
+  const kioskosParaCargar = instruccionForm.kiosko_device_ids ?? [];
   const { data: instruccionData, isLoading: loadingInstruccion } = useQuery({
-    queryKey: ["horarioOperacionHoy", instruccionForm.fecha, instruccionForm.kiosko_device_id],
+    queryKey: ["horarioOperacionHoy", instruccionForm.fecha, kioskosParaCargar[0] ?? null],
     queryFn: async () => {
       const response = await horarioOperacionService.getHoy({
         fecha: instruccionForm.fecha || hoyLocal(),
-        kiosko_device_id: instruccionForm.kiosko_device_id || undefined,
+        kiosko_device_id: kioskosParaCargar[0] || undefined,
       });
 
       return response.data.data;
     },
-    enabled: !!instruccionForm.fecha,
+    enabled: !!instruccionForm.fecha && kioskosParaCargar.length <= 1,
   });
 
   useEffect(() => {
     setInstruccionForm((prev) => ({
       ...INSTRUCCION_DEFAULT,
       ...prev,
-      ...(instruccionData ?? {}),
       users: prev.users ?? [],
       fecha: instruccionData?.fecha ? String(instruccionData.fecha).slice(0, 10) : prev.fecha,
-      kiosko_device_id: instruccionData?.kiosko_device_id ?? prev.kiosko_device_id,
+      kiosko_device_ids: instruccionData?.kiosko_device_id ? [instruccionData.kiosko_device_id] : prev.kiosko_device_ids,
       jornada_laboral_id: instruccionData?.jornada_laboral_id ?? prev.jornada_laboral_id,
       hora_entrada: normalizarHora(instruccionData?.hora_entrada) || prev.hora_entrada,
       hora_entrada_limite: normalizarHora(instruccionData?.hora_entrada_limite) || prev.hora_entrada_limite,
@@ -230,18 +230,12 @@ export default function PageInstruccionOperativa({ embedded = false }) {
   const handleInstruccion = (event) => {
     const { name, value } = event.target;
 
-    setInstruccionForm((prev) => {
-      const next = {
+    setInstruccionForm((prev) =>
+      aplicarRegresosPorDuracion({
         ...prev,
         [name]: name.includes("duracion") ? Number(value) : value,
-      };
-
-      if (name === "kiosko_device_id") {
-        next.users = [];
-      }
-
-      return aplicarRegresosPorDuracion(next);
-    });
+      })
+    );
   };
 
   const handleInstruccionTime = (name, value) => {
@@ -260,12 +254,20 @@ export default function PageInstruccionOperativa({ embedded = false }) {
     }));
   };
 
+  const handleKioscos = (options) => {
+    setInstruccionForm((prev) => ({
+      ...prev,
+      kiosko_device_ids: (options ?? []).map((option) => option.value),
+      users: [],
+    }));
+  };
+
   const guardarInstruccion = (event) => {
     event.preventDefault();
 
     instruccionMutation.mutate({
       ...instruccionForm,
-      kiosko_device_id: instruccionForm.kiosko_device_id ? Number(instruccionForm.kiosko_device_id) : null,
+      kiosko_device_ids: (instruccionForm.kiosko_device_ids ?? []).map(Number),
       jornada_laboral_id: instruccionForm.jornada_laboral_id ? Number(instruccionForm.jornada_laboral_id) : null,
       duracion_pausa_minutos: instruccionForm.duracion_pausa_minutos ? Number(instruccionForm.duracion_pausa_minutos) : null,
       duracion_almuerzo_minutos: instruccionForm.duracion_almuerzo_minutos ? Number(instruccionForm.duracion_almuerzo_minutos) : null,
@@ -297,6 +299,7 @@ export default function PageInstruccionOperativa({ embedded = false }) {
           onFieldChange={handleInstruccion}
           onTimeChange={handleInstruccionTime}
           onUsersChange={handleUsuarios}
+          onKioscosChange={handleKioscos}
         />
       </div>
     </div>
