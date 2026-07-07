@@ -22,33 +22,55 @@ async function sha256(value) {
     .join("");
 }
 
+function stableFingerprintSource(nonce) {
+  return `kiosko:${nonce}`;
+}
+
+function legacyFingerprintSource(nonce) {
+  return [
+    navigator.userAgent,
+    navigator.language,
+    Intl.DateTimeFormat().resolvedOptions().timeZone,
+    screen.width,
+    screen.height,
+    screen.colorDepth,
+    nonce,
+  ].join("|");
+}
+
 export async function getKioskoFingerprint() {
   const storedFingerprint = localStorage.getItem(FINGERPRINT_KEY);
   if (storedFingerprint) return storedFingerprint;
 
   let nonce = localStorage.getItem(NONCE_KEY);
-  const hadNonce = !!nonce;
 
   if (!nonce) {
     nonce = crypto.randomUUID();
     localStorage.setItem(NONCE_KEY, nonce);
   }
 
-  const source = hadNonce
-    ? [
-        navigator.userAgent,
-        navigator.language,
-        Intl.DateTimeFormat().resolvedOptions().timeZone,
-        screen.width,
-        screen.height,
-        screen.colorDepth,
-        nonce,
-      ].join("|")
-    : `kiosko:${nonce}`;
-  const fingerprint = await sha256(source);
+  const fingerprint = await sha256(stableFingerprintSource(nonce));
   localStorage.setItem(FINGERPRINT_KEY, fingerprint);
 
   return fingerprint;
+}
+
+export async function getKioskoFingerprintCandidates() {
+  const storedFingerprint = localStorage.getItem(FINGERPRINT_KEY);
+  if (storedFingerprint) return [storedFingerprint];
+
+  let nonce = localStorage.getItem(NONCE_KEY);
+
+  if (!nonce) {
+    nonce = crypto.randomUUID();
+    localStorage.setItem(NONCE_KEY, nonce);
+  }
+
+  const stableFingerprint = await sha256(stableFingerprintSource(nonce));
+  const legacyFingerprint = await sha256(legacyFingerprintSource(nonce));
+  localStorage.setItem(FINGERPRINT_KEY, stableFingerprint);
+
+  return [...new Set([stableFingerprint, legacyFingerprint])];
 }
 
 export function shouldClearKioskoSession(message = "") {

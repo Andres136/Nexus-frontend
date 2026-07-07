@@ -9,6 +9,7 @@ import {
 } from "../../services/nominaService";
 import {
   getKioskoFingerprint,
+  getKioskoFingerprintCandidates,
   getKioskoSession,
   removeKioskoSession,
   getKioskoGuestSession,
@@ -130,14 +131,20 @@ function timeout(ms) {
 }
 
 async function bootstrapKiosko({ code, sessionToken, guestToken }) {
-  const fingerprint = await getKioskoFingerprint();
+  const fingerprintCandidates = await getKioskoFingerprintCandidates();
+  const fingerprint = fingerprintCandidates[0] || await getKioskoFingerprint();
 
   if (guestToken) {
     const response = await kioskoDeviceService.bootstrapGuest({ uuid: code, guest_token: guestToken, fingerprint });
     return response.data?.data;
   }
 
-  const response = await kioskoDeviceService.bootstrapDevice({ uuid: code, session_token: sessionToken, fingerprint });
+  const response = await kioskoDeviceService.bootstrapDevice({
+    uuid: code,
+    session_token: sessionToken,
+    fingerprint,
+    fingerprint_candidates: fingerprintCandidates,
+  });
   return response.data?.data;
 }
 
