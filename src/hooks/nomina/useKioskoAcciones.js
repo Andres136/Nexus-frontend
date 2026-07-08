@@ -42,6 +42,27 @@ const tiempoHHMMSS = () => {
   return `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}:${String(d.getSeconds()).padStart(2,"0")}`;
 };
 
+function horaRegresoDesdeAhora(minutos) {
+  if (minutos === null) return null;
+  const regreso = new Date();
+  regreso.setMinutes(regreso.getMinutes() + minutos);
+  return regreso.toLocaleTimeString("es-CO", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "America/Bogota",
+  });
+}
+
+function mensajeDescanso(nombre, tipo, minutos) {
+  const horaRegreso = horaRegresoDesdeAhora(minutos);
+  if (!horaRegreso) return null;
+
+  return tipo === "pausa"
+    ? `Salida a break exitosa, ${nombre}. Tu pausa es de ${minutos} minutos. Regresa a las ${horaRegreso}.`
+    : `Buen provecho, ${nombre}. Tu almuerzo es de ${minutos} minutos. Regresa a las ${horaRegreso}.`;
+}
+
 function mensajeErrorApi(error, fallback = "Error al registrar. Intenta de nuevo.") {
   return error?.response?.data?.message || error?.message || fallback;
 }
@@ -91,6 +112,27 @@ function minutosPausaConfigurada(jornada) {
   return Number.isFinite(minutos) && minutos > 0 ? minutos : null;
 }
 
+function minutosAlmuerzoConfigurado(jornada) {
+  const minutos = Number(jornada?.duracion_almuerzo_minutos);
+  return Number.isFinite(minutos) && minutos > 0 ? minutos : null;
+}
+
+function minutosTardeAlmuerzo(session, jornada, fecha = new Date()) {
+  const tardanzaHorario = minutosTardeContraHora(jornada?.hora_ingreso_almuerzo, fecha);
+  const minutosAlmuerzo = minutosAlmuerzoConfigurado(jornada);
+  const salidaAlmuerzo = parseTime(session?.hora_salida_almuerzo);
+
+  if (!salidaAlmuerzo || minutosAlmuerzo === null) {
+    return tardanzaHorario;
+  }
+
+  const regresoPermitido = new Date(salidaAlmuerzo);
+  regresoPermitido.setMinutes(regresoPermitido.getMinutes() + minutosAlmuerzo);
+
+  const tardanzaDuracion = Math.max(0, Math.floor((fecha.getTime() - regresoPermitido.getTime()) / 60000));
+  return Math.max(tardanzaHorario, tardanzaDuracion);
+}
+
 function detectarAccion(session, jornada, ahora = new Date()) {
   const actual        = minutosDia(ahora);
   const salida        = minutosHora(jornada?.hora_salida);
@@ -105,9 +147,13 @@ function detectarAccion(session, jornada, ahora = new Date()) {
 
   if (session?.hora_salida_brake    && !session?.hora_ingreso_brake)   return "pausaEntrada";
   if (session?.hora_salida_almuerzo && !session?.hora_ingreso_almuerzo) return "almuerzoEntrada";
-  if (!session?.hora_salida && salida !== null && actual >= salida)     return "salida";
   if (!session?.hora_salida_almuerzo && salidaAlm !== null && ingresoAlm !== null && actual >= salidaAlm && actual < ingresoAlm) return "almuerzoSalida";
   if (!session?.hora_salida_brake   && salidaPausa !== null && pausaFin !== null && actual >= salidaPausa && actual < pausaFin)  return "pausaSalida";
+  if (!session?.hora_salida_brake) return "pausaSalida";
+  if (!session?.hora_ingreso_brake) return "pausaEntrada";
+  if (!session?.hora_salida_almuerzo) return "almuerzoSalida";
+  if (!session?.hora_ingreso_almuerzo) return "almuerzoEntrada";
+  if (!session?.hora_salida && (salida === null || actual >= salida)) return "salida";
   return null;
 }
 
@@ -230,8 +276,11 @@ export function useKioskoAcciones({ empleado, jornadaActiva, onRefrescarJornada,
     if (!jornadaSincronizada) return;
     if (guardando || exitoMsg) return;
 
-    const tardanza = minutosTardeContraHora(jornada?.hora_ingreso_almuerzo);
+    const tardanza = minutosTardeAlmuerzo(session, jornada);
     const minutosPausa = minutosPausaConfigurada(jornada);
+    const minutosAlmuerzo = minutosAlmuerzoConfigurado(jornada);
+    const mensajePausa = mensajeDescanso(empleado.nombre, "pausa", minutosPausa);
+    const mensajeAlmuerzo = mensajeDescanso(empleado.nombre, "almuerzo", minutosAlmuerzo);
     const acciones = {
       salida: () => ejecutar(
         { hora_salida: tiempoHHMMSS() },
@@ -242,12 +291,8 @@ export function useKioskoAcciones({ empleado, jornadaActiva, onRefrescarJornada,
       ),
       pausaSalida: () => ejecutar(
         { hora_salida_brake: tiempoHHMMSS() },
-        minutosPausa !== null
-          ? VOZ.pausaSalida(empleado.nombre, minutosPausa)
-          : `Salida a break exitosa, ${empleado.nombre}. Tu pausa queda registrada según el horario configurado.`,
-        minutosPausa !== null
-          ? `Salida a break exitosa, ${empleado.nombre}. Tu próximo registro será en ${minutosPausa} minutos.`
-          : `Salida a break exitosa, ${empleado.nombre}. Pausa registrada según el horario configurado.`
+        mensajePausa || `Salida a break exitosa, ${empleado.nombre}. Tu pausa queda registrada según el horario configurado.`,
+        mensajePausa || `Salida a break exitosa, ${empleado.nombre}. Pausa registrada según el horario configurado.`
       ),
       pausaEntrada: () => ejecutar(
         { hora_ingreso_brake: tiempoHHMMSS() },
@@ -256,8 +301,8 @@ export function useKioskoAcciones({ empleado, jornadaActiva, onRefrescarJornada,
       ),
       almuerzoSalida: () => ejecutar(
         { hora_salida_almuerzo: tiempoHHMMSS() },
-        VOZ.almuerzoSalida(empleado.nombre),
-        `Buen provecho, ${empleado.nombre}. Salida a almuerzo registrada.`
+        mensajeAlmuerzo || VOZ.almuerzoSalida(empleado.nombre),
+        mensajeAlmuerzo || `Buen provecho, ${empleado.nombre}. Salida a almuerzo registrada.`
       ),
       almuerzoEntrada: () => ejecutar(
         { hora_ingreso_almuerzo: tiempoHHMMSS() },
@@ -320,9 +365,7 @@ export function useKioskoAcciones({ empleado, jornadaActiva, onRefrescarJornada,
     jornadaSincronizada,
     llegadaTarde,
     onCancelar,
-    session?.hora_salida,
-    session?.hora_salida_almuerzo,
-    session?.hora_salida_brake,
+    session,
   ]);
 
   return {

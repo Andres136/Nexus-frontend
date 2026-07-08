@@ -6,8 +6,8 @@ import { workSessionService, permisoService } from "../../../services/nominaServ
 import { removeKioskoGuestSession, removeKioskoSession, shouldClearKioskoSession } from "../../../helpers/nomina/kioskoSession";
 import { hablar } from "../../../helpers/voz";
 
-const FACE_LIVE_MIN_CONFIDENCE = 0.65;
-const FACE_MAX_MATCH_DISTANCE = 0.42;
+const FACE_LIVE_MIN_CONFIDENCE = 0.6;
+const FACE_MAX_MATCH_DISTANCE = 0.46;
 const FACE_AMBIGUOUS_DISTANCE_MARGIN = 0.06;
 const FACE_REQUIRED_CONSECUTIVE_MATCHES = 3;
 const FACE_CONSECUTIVE_WINDOW_MS = 1800;

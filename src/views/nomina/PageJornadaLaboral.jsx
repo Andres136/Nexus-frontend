@@ -5,7 +5,7 @@ import { useConfiguracionHorarios } from "../../hooks/nomina/useConfiguracionHor
 import { useGetJornadaLaboral } from "../../hooks/nomina/useGetJornadaLaboral";
 
 export default function PageJornadaLaboral() {
-  const { jornadas, isLoading } = useGetJornadaLaboral();
+  const { jornadas, isLoading } = useGetJornadaLaboral({ per_page: 100 });
   const configuracionHorarios = useConfiguracionHorarios();
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedUuid, setSelectedUuid] = useState(null);
@@ -33,7 +33,7 @@ export default function PageJornadaLaboral() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-semibold text-gray-800">Jornadas Laborales</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Gestiona las jornadas laborales de la empresa.</p>
+          <p className="text-sm text-gray-500 mt-0.5">Gestiona las jornadas laborales de la empresa. La jornada activa será la base del kiosko.</p>
         </div>
         <button
           onClick={openCreate}
@@ -67,6 +67,7 @@ export default function PageJornadaLaboral() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horas semanales</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Uso</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
               </tr>
             </thead>
@@ -81,6 +82,9 @@ export default function PageJornadaLaboral() {
                     }`}>
                       {item.status ? "Activo" : "Inactivo"}
                     </span>
+                  </td>
+                  <td className="px-6 py-4 text-gray-600">
+                    {item.status ? "Base del kiosko" : "Disponible para asignar"}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <button
