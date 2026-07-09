@@ -14,9 +14,11 @@ import {
   Pencil,
   Plus,
   Search,
+  Ticket as TicketIcon,
   Trash2,
   X,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useTickets } from "../../hooks/tic/useTickets";
 import { useAuth } from "../../hooks/useAuth";
 
@@ -176,14 +178,23 @@ export default function Tickets() {
             <h1 className="text-2xl font-bold text-gray-900">Tickets TIC</h1>
             <p className="mt-0.5 text-xs text-gray-500">Solicitudes, equipos asignados y seguimiento técnico.</p>
           </div>
-          <button
-            type="button"
-            onClick={() => setShowCreate(true)}
-            className="inline-flex h-10 items-center gap-2 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
-          >
-            <Plus className="h-4 w-4" />
-            Nuevo ticket
-          </button>
+          <div className="flex items-center gap-2">
+            <Link
+              to="/auth/tic/indicadores-tickets"
+              className="inline-flex h-10 items-center gap-2 rounded-lg border border-gray-300 px-4 text-sm font-medium text-gray-700 hover:bg-white"
+            >
+              <TicketIcon className="h-4 w-4" />
+              Indicadores tickets
+            </Link>
+            <button
+              type="button"
+              onClick={() => setShowCreate(true)}
+              className="inline-flex h-10 items-center gap-2 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
+            >
+              <Plus className="h-4 w-4" />
+              Nuevo ticket
+            </button>
+          </div>
         </div>
 
         <div className="mb-4 grid grid-cols-1 gap-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm md:grid-cols-4">

@@ -134,29 +134,22 @@ function minutosTardeAlmuerzo(session, jornada, fecha = new Date()) {
 }
 
 function detectarAccion(session, jornada, ahora = new Date()) {
-  const actual        = minutosDia(ahora);
-  const salida        = minutosHora(jornada?.hora_salida);
-  const salidaAlm     = minutosHora(jornada?.hora_salida_almuerzo);
-  const ingresoAlm    = minutosHora(jornada?.hora_ingreso_almuerzo);
-  const salidaPausa   = minutosHora(jornada?.hora_salida_pausa);
-  const ingresoPausa  = minutosHora(jornada?.hora_ingreso_pausa);
-  const minutosPausa  = minutosPausaConfigurada(jornada);
-  const minutosAlm    = minutosAlmuerzoConfigurado(jornada);
-  const pausaFin      = salidaPausa !== null
-    ? (ingresoPausa ?? (minutosPausa !== null ? salidaPausa + minutosPausa : null))
-    : null;
-  const almuerzoFin   = salidaAlm !== null
-    ? (ingresoAlm ?? (minutosAlm !== null ? salidaAlm + minutosAlm : null))
-    : null;
+  const actual      = minutosDia(ahora);
+  const salida      = minutosHora(jornada?.hora_salida);
+  const salidaAlm   = minutosHora(jornada?.hora_salida_almuerzo);
+  const salidaPausa = minutosHora(jornada?.hora_salida_pausa);
 
   if (session?.hora_salida_brake && !session?.hora_ingreso_brake) {
-    return pausaFin !== null && actual >= pausaFin ? "pausaEntrada" : null;
+    return "pausaEntrada";
   }
   if (session?.hora_salida_almuerzo && !session?.hora_ingreso_almuerzo) {
-    return almuerzoFin !== null && actual >= almuerzoFin ? "almuerzoEntrada" : null;
+    return "almuerzoEntrada";
   }
-  if (!session?.hora_salida_almuerzo && salidaAlm !== null && almuerzoFin !== null && actual >= salidaAlm && actual < almuerzoFin) return "almuerzoSalida";
-  if (!session?.hora_salida_brake   && salidaPausa !== null && pausaFin !== null && actual >= salidaPausa && actual < pausaFin)  return "pausaSalida";
+  // Solo exige no ser antes de la hora programada (igual que "salida" de jornada),
+  // sin límite superior: así no depende de una instrucción operativa diaria para
+  // seguir reconociendo la marcación cuando la operación se corre de horario.
+  if (!session?.hora_salida_almuerzo && salidaAlm !== null && actual >= salidaAlm) return "almuerzoSalida";
+  if (!session?.hora_salida_brake   && salidaPausa !== null && actual >= salidaPausa) return "pausaSalida";
   if (!session?.hora_salida && (salida === null || actual >= salida)) return "salida";
   return null;
 }

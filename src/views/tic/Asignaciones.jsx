@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Search, Plus, Package, Calendar, ChevronLeft, ChevronRight, Trash2, AlertCircle, X, Activity } from 'lucide-react';
+import { Search, Plus, Package, Calendar, ChevronLeft, ChevronRight, Trash2, AlertCircle, X, Activity, Ticket } from 'lucide-react';
 import AsignarEquipo from '../../components/tic/AsignarEquipo'
 import { useAsignacionesEquipo } from '../../hooks/tic/useAsignacionesEquipo'
 import Select from 'react-select';  

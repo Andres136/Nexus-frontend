@@ -95,6 +95,7 @@ import DashboardProcesosAnuales from "../components/RegistroDiario/DashboardProc
 import Asignaciones from "../views/tic/Asignaciones";
 import Tickets from "../views/tic/Tickets";
 import ParadasEquipos from "../views/tic/ParadasEquipos";
+import IndicadoresTickets from "../views/tic/IndicadoresTickets";
 
 import NovedadesCalidad from "../components/calidad/NovedadesCalidad";
 import MantenimientoEquiposTic from "../components/tic/MantenimientoEquiposTic";
@@ -328,6 +329,15 @@ export default function Router() {
             element={
               <DynamicProtectedRoute permission="/auth/tic/paradas-equipos">
                 <ParadasEquipos />
+              </DynamicProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/auth/tic/indicadores-tickets"
+            element={
+              <DynamicProtectedRoute permission="/auth/tic/indicadores-tickets">
+                <IndicadoresTickets />
               </DynamicProtectedRoute>
             }
           />

@@ -73,6 +73,9 @@ export const ticketService = {
   getDowntimeStats(params = {}) {
     return apiClient.get("api/tickets/estadisticas-paradas", { params });
   },
+  getTicketStats(params = {}) {
+    return apiClient.get("api/tickets/estadisticas-generales", { params });
+  },
   create(data) {
     return apiClient.post("api/tickets", data, {
       headers: { "Content-Type": "multipart/form-data" },
