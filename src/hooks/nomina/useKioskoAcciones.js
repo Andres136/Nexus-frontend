@@ -145,12 +145,16 @@ function detectarAccion(session, jornada, ahora = new Date()) {
   if (session?.hora_salida_almuerzo && !session?.hora_ingreso_almuerzo) {
     return "almuerzoEntrada";
   }
-  // Solo exige no ser antes de la hora programada (igual que "salida" de jornada),
-  // sin límite superior: así no depende de una instrucción operativa diaria para
-  // seguir reconociendo la marcación cuando la operación se corre de horario.
+  // Cada condición solo exige no ser antes de la hora programada (sin límite
+  // superior), para no depender de una instrucción operativa diaria que ajuste
+  // la ventana cuando la operación se corre de horario. Se prioriza el hito
+  // más avanzado ya alcanzado: si ya es hora de salida, se sale aunque no se
+  // haya tomado pausa/almuerzo; si ya es hora de almuerzo pero no hubo pausa,
+  // se toma almuerzo directamente en vez de forzar la pausa vencida.
+  if (!session?.hora_salida && salida !== null && actual >= salida) return "salida";
   if (!session?.hora_salida_almuerzo && salidaAlm !== null && actual >= salidaAlm) return "almuerzoSalida";
   if (!session?.hora_salida_brake   && salidaPausa !== null && actual >= salidaPausa) return "pausaSalida";
-  if (!session?.hora_salida && (salida === null || actual >= salida)) return "salida";
+  if (!session?.hora_salida && salida === null) return "salida";
   return null;
 }
 
