@@ -1,9 +1,9 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Select from "react-select";
-import { Activity, AlertTriangle, Clock, Loader2, RotateCcw, Search, ShieldCheck } from "lucide-react";
+import { Activity, AlertTriangle, Clock, Loader2, RotateCcw, Search, ShieldCheck, Ticket } from "lucide-react";
 import { Link } from "react-router-dom";
-import { productsApi } from "../../services/api";
+import { departamentosApi, productsApi } from "../../services/api";
 import { ticketService } from "../../services/ticService";
 
 const today = new Date().toISOString().slice(0, 10);
@@ -21,12 +21,21 @@ export default function ParadasEquipos() {
     fecha_desde: firstDayOfMonth,
     fecha_hasta: today,
     producto_id: "",
+    departamento_id: "",
   });
 
   const productosQuery = useQuery({
     queryKey: ["tic-paradas-productos"],
     queryFn: async () => {
       const response = await productsApi.getAll();
+      return response.data?.data ?? response.data ?? [];
+    },
+  });
+
+  const departamentosQuery = useQuery({
+    queryKey: ["tic-paradas-departamentos"],
+    queryFn: async () => {
+      const response = await departamentosApi.getAll();
       return response.data?.data ?? response.data ?? [];
     },
   });
@@ -48,7 +57,17 @@ export default function ParadasEquipos() {
     [productosQuery.data]
   );
 
+  const departamentosOptions = useMemo(
+    () =>
+      (departamentosQuery.data ?? []).map((departamento) => ({
+        value: departamento.id,
+        label: departamento.nombre ?? `Departamento #${departamento.id}`,
+      })),
+    [departamentosQuery.data]
+  );
+
   const selectedProducto = productosOptions.find((option) => String(option.value) === String(filters.producto_id)) ?? null;
+  const selectedDepartamento = departamentosOptions.find((option) => String(option.value) === String(filters.departamento_id)) ?? null;
   const estadisticas = estadisticasQuery.data;
   const resumen = estadisticas?.resumen;
   const productos = estadisticas?.productos ?? [];
@@ -85,6 +104,7 @@ export default function ParadasEquipos() {
       fecha_desde: firstDayOfMonth,
       fecha_hasta: today,
       producto_id: "",
+      departamento_id: "",
     });
   };
 
@@ -104,7 +124,7 @@ export default function ParadasEquipos() {
           </Link>
         </div>
 
-        <div className="mb-4 grid grid-cols-1 gap-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm lg:grid-cols-[180px_180px_minmax(0,1fr)_auto]">
+        <div className="mb-4 grid grid-cols-1 gap-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm lg:grid-cols-[180px_180px_minmax(0,1fr)_minmax(0,1fr)_auto]">
           <div>
             <label className="mb-1 block text-xs font-semibold text-gray-600">Desde</label>
             <input
@@ -136,6 +156,19 @@ export default function ParadasEquipos() {
               classNamePrefix="react-select"
             />
           </div>
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-gray-600">Departamento</label>
+            <Select
+              value={selectedDepartamento}
+              onChange={(option) => updateFilter("departamento_id", option?.value ?? "")}
+              options={departamentosOptions}
+              isLoading={departamentosQuery.isFetching}
+              isClearable
+              placeholder="Todos los departamentos"
+              className="text-sm"
+              classNamePrefix="react-select"
+            />
+          </div>
           <div className="flex items-end gap-2">
             <button
               type="button"
@@ -156,7 +189,8 @@ export default function ParadasEquipos() {
           </div>
         </div>
 
-        <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-4">
+        <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-5">
+          {renderStatCard(Ticket, "Total tickets", resumen?.tickets_total ?? 0)}
           {renderStatCard(Clock, "Horas del periodo", `${formatNumber(estadisticas?.periodo?.horas_periodo)} h`)}
           {renderStatCard(AlertTriangle, "Horas parado total", `${formatNumber(resumen?.horas_parado_total)} h`, "amber")}
           {renderStatCard(Activity, "% parada total", `${formatNumber(resumen?.porcentaje_parada_total)}%`, "red")}
