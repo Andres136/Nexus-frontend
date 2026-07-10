@@ -67,7 +67,7 @@ export default function ObtenerFacturas() {
 
   return (
     <>
-      <div className="p-6 max-w-7xl mx-auto">
+      <div className="p-6 max-w-[1800px] mx-auto">
         <div className="grid grid-cols-1">
          
 
@@ -275,6 +275,7 @@ export default function ObtenerFacturas() {
                   <th className="px-3 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">N° Factura Proveedor</th>
                   <th className="px-3 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Proveedor</th>
                   <th className="px-3 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Empresa</th>
+                  <th className="px-3 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Creado por</th>
                   <th className="px-3 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Emisión</th>
                   <th className="px-3 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Vencimiento</th>
                   <th className="px-3 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Total</th>
@@ -287,7 +288,7 @@ export default function ObtenerFacturas() {
                 {isLoading ? (
                   [...Array(6)].map((_, i) => (
                     <tr key={i} className="animate-pulse">
-                      {[...Array(11)].map((__, j) => (
+                      {[...Array(12)].map((__, j) => (
                         <td key={j} className="px-3 py-3">
                           <div className="h-4 bg-gray-200 rounded w-full" />
                         </td>
@@ -296,7 +297,7 @@ export default function ObtenerFacturas() {
                   ))
                 ) : facturas.length === 0 ? (
                   <tr>
-                    <td colSpan="11" className="px-6 py-12 text-center text-gray-400 text-sm italic">
+                    <td colSpan="12" className="px-6 py-12 text-center text-gray-400 text-sm italic">
                       No se encontraron facturas.
                     </td>
                   </tr>
@@ -308,6 +309,9 @@ export default function ObtenerFacturas() {
                       <td className="px-3 py-3 text-sm text-gray-600">{factura.numero_factura_proveedor || "N/A"}</td>
                       <td className="px-3 py-3 text-sm font-medium text-gray-800">{factura.proveedor?.nombre || "Sin proveedor"}</td>
                       <td className="px-3 py-3 text-sm text-gray-600">{factura.empresa?.nombre || "Sin empresa"}</td>
+                      <td className="px-3 py-3 text-sm text-gray-600">
+                        {factura.usuario ? `${factura.usuario.name} ${factura.usuario.apellidos || ""}`.trim() : "N/A"}
+                      </td>
                       <td className="px-3 py-3 text-sm text-gray-600">{factura.fecha_emision}</td>
                       <td className="px-3 py-3 text-sm text-gray-600">{factura.fecha_vencimiento}</td>
                       <td className="px-3 py-3 text-sm font-semibold text-gray-800">
