@@ -28,16 +28,21 @@ function elegirVozFemenina() {
 
 export function hablar(texto) {
   if (!window.speechSynthesis) return;
-  speechSynthesis.cancel();
 
   const decir = () => {
-    const utt = new SpeechSynthesisUtterance(texto);
-    utt.lang  = "es-CO";
-    utt.rate  = 0.88;
-    utt.pitch = 1.2;
-    const voz = elegirVozFemenina();
-    if (voz) utt.voice = voz;
-    speechSynthesis.speak(utt);
+    speechSynthesis.cancel();
+    // Chrome deja el motor "pegado" si speak() se llama en el mismo tick que
+    // cancel(): la utterance anterior no alcanza a limpiarse y la nueva queda
+    // pendiente sin sonar. Un pequeño respiro evita el bloqueo.
+    setTimeout(() => {
+      const utt = new SpeechSynthesisUtterance(texto);
+      utt.lang  = "es-CO";
+      utt.rate  = 0.88;
+      utt.pitch = 1.2;
+      const voz = elegirVozFemenina();
+      if (voz) utt.voice = voz;
+      speechSynthesis.speak(utt);
+    }, 80);
   };
 
   if (vozLista || speechSynthesis.getVoices().length > 0) {

@@ -118,19 +118,19 @@ function minutosAlmuerzoConfigurado(jornada) {
 }
 
 function minutosTardeAlmuerzo(session, jornada, fecha = new Date()) {
-  const tardanzaHorario = minutosTardeContraHora(jornada?.hora_ingreso_almuerzo, fecha);
   const minutosAlmuerzo = minutosAlmuerzoConfigurado(jornada);
   const salidaAlmuerzo = parseTime(session?.hora_salida_almuerzo);
 
   if (!salidaAlmuerzo || minutosAlmuerzo === null) {
-    return tardanzaHorario;
+    return minutosTardeContraHora(jornada?.hora_ingreso_almuerzo, fecha);
   }
 
+  // La tardanza corre desde la salida real a almuerzo + duración configurada,
+  // no contra la hora fija de regreso: salir tarde no reduce el tiempo disponible.
   const regresoPermitido = new Date(salidaAlmuerzo);
   regresoPermitido.setMinutes(regresoPermitido.getMinutes() + minutosAlmuerzo);
 
-  const tardanzaDuracion = Math.max(0, Math.floor((fecha.getTime() - regresoPermitido.getTime()) / 60000));
-  return Math.max(tardanzaHorario, tardanzaDuracion);
+  return Math.max(0, Math.floor((fecha.getTime() - regresoPermitido.getTime()) / 60000));
 }
 
 function detectarAccion(session, jornada, ahora = new Date()) {
@@ -151,9 +151,13 @@ function detectarAccion(session, jornada, ahora = new Date()) {
   // más avanzado ya alcanzado: si ya es hora de salida, se sale aunque no se
   // haya tomado pausa/almuerzo; si ya es hora de almuerzo pero no hubo pausa,
   // se toma almuerzo directamente en vez de forzar la pausa vencida.
+  const yaPasoHoraAlmuerzo = !!session?.hora_salida_almuerzo || (salidaAlm !== null && actual >= salidaAlm);
+
   if (!session?.hora_salida && salida !== null && actual >= salida) return "salida";
   if (!session?.hora_salida_almuerzo && salidaAlm !== null && actual >= salidaAlm) return "almuerzoSalida";
-  if (!session?.hora_salida_brake   && salidaPausa !== null && actual >= salidaPausa) return "pausaSalida";
+  // Si ya llegó/pasó la hora de almuerzo, la pausa pendiente queda descartada
+  // para el resto del día: no se vuelve a ofrecer después de almorzar.
+  if (!session?.hora_salida_brake && !yaPasoHoraAlmuerzo && salidaPausa !== null && actual >= salidaPausa) return "pausaSalida";
   if (!session?.hora_salida && salida === null) return "salida";
   return null;
 }
