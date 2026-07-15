@@ -135,23 +135,23 @@ const handleReanudarSede = async () => {
   );
 
   return (
-    <div className="space-y-6 p-4">
+    <div className="space-y-4 sm:space-y-6 p-0 sm:p-4">
 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
 
   {/* IZQUIERDA */}
-  <div className="flex items-center gap-3">
+  <div className="flex items-center gap-2 sm:gap-3 min-w-0">
     <div className="bg-blue-600 p-2 rounded-lg text-white shadow-lg">
       <Clock className="w-5 h-5" />
     </div>
-    <h2 className="text-2xl font-bold text-gray-800">Alistamientos Activos</h2>
-    <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-black">
+    <h2 className="text-lg sm:text-2xl font-bold text-gray-800 truncate">Alistamientos Activos</h2>
+    <span className="shrink-0 bg-blue-100 text-blue-700 px-2 sm:px-3 py-1 rounded-full text-xs font-black">
       {alistamientos.length}
     </span>
   </div>
 {puedeVerTodasSedes && (
   <button
     onClick={handlePausaSede}
-    className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-700"
+    className="w-full md:w-auto bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-700"
   >
     ⛔ Pausar toda la sede
   </button>
@@ -160,7 +160,7 @@ const handleReanudarSede = async () => {
 {puedeVerTodasSedes && (
   <button
     onClick={handleReanudarSede}
-    className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-green-700"
+    className="w-full md:w-auto bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-green-700"
   >
     ▶️ Reanudar toda la sede
   </button>
@@ -168,14 +168,14 @@ const handleReanudarSede = async () => {
 
   {/* Selector de sede solo para roles con acceso multisede */}
   {puedeVerTodasSedes && (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 w-full md:w-auto">
       <select
         value={sedeSeleccionada}
         onChange={(e) => {
           setSedeSeleccionada(e.target.value);
           refresh({ sede_id: e.target.value });
         }}
-        className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+        className="w-full md:w-auto border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
       >
         <option value="">Mi sede</option>
         {sedes?.map(s => (
@@ -189,7 +189,7 @@ const handleReanudarSede = async () => {
 
 </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-6">
         {alistamientos.map((alist) => (
           <AlistamientoCard 
             key={alist.id} 
@@ -255,13 +255,17 @@ function AlistamientoCard({ alist, onUpdate, onPausa, onReanudar, onFinalizar })
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-full">
+    <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-full min-w-0">
       {/* HEADER */}
-      <div className="p-4 bg-gradient-to-br from-slate-50 to-blue-50 border-b">
+      <div className="p-3 sm:p-4 bg-gradient-to-br from-slate-50 to-blue-50 border-b">
         <div className="flex justify-between items-start mb-2">
           <div>
-            <span className="text-[10px] font-bold text-blue-600 uppercase tracking-tighter">Orden Trabajo</span>
-            <h3 className="font-black text-gray-900 text-lg leading-tight">#{alist.orden_trabajo_id}</h3>
+            <span className="text-[10px] font-bold text-blue-600 uppercase tracking-tighter">
+              {alist.tipo_origen === "LIBRE" ? "Rendimiento libre" : "Orden Trabajo"}
+            </span>
+            <h3 className="font-black text-gray-900 text-lg leading-tight">
+              #{alist.tipo_origen === "LIBRE" ? alist.id : alist.orden_trabajo_id}
+            </h3>
             <p className="text-xs text-gray-500 truncate w-40">{alist.cliente?.nombre}</p>
           </div>
           <div className={`px-2 py-1 rounded-md   text-[10px] font-bold border ${
@@ -277,7 +281,7 @@ function AlistamientoCard({ alist, onUpdate, onPausa, onReanudar, onFinalizar })
       </div>
 
       {/* CONTENIDO */}
-      <div className="p-4 flex-1 space-y-4 overflow-y-auto max-h-[450px]">
+      <div className="p-3 sm:p-4 flex-1 space-y-4 overflow-y-auto max-h-none sm:max-h-[450px]">
         {/* RESUMEN PRODUCTOS (Solo Lectura) */}
         <div className="space-y-1">
           <div className="flex items-center gap-2 mb-2 text-gray-400">
@@ -287,7 +291,9 @@ function AlistamientoCard({ alist, onUpdate, onPausa, onReanudar, onFinalizar })
           {alist.detalles.map(d => (
             <div key={d.id} className="flex justify-between text-[11px] bg-gray-50 p-1.5 rounded">
               <span className="truncate pr-2">{d.product}</span>
-              <span className="font-mono font-bold">{d.alistada}/{d.programada}</span>
+              <span className="font-mono font-bold">
+                {alist.tipo_origen === "LIBRE" ? d.alistada : `${d.alistada}/${d.programada}`}
+              </span>
             </div>
           ))}
         </div>
@@ -343,9 +349,11 @@ function AlistamientoCard({ alist, onUpdate, onPausa, onReanudar, onFinalizar })
       {/* MODAL AGREGAR USUARIO */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm mx-4 p-6 space-y-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm mx-3 sm:mx-4 p-4 sm:p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-black text-gray-800">Agregar operario</h3>
-            <p className="text-xs text-gray-400">Orden #{alist.orden_trabajo_id}</p>
+            <p className="text-xs text-gray-400">
+              {alist.tipo_origen === "LIBRE" ? `Rendimiento libre #${alist.id}` : `Orden #${alist.orden_trabajo_id}`}
+            </p>
 
             {loadingUsuarios ? (
               <div className="flex justify-center py-4">
@@ -544,7 +552,9 @@ function ProductionForm({ usuario, detalles, alistId, onUpdate }) {
 
   const handleRegister = async (detalleId) => {
     const data = vals[detalleId] || {};
-    const total = (Number(data.paq) || 0) * (Number(data.und) || 0);
+    const paquetes = Number(data.paq) || 0;
+    const unidades = Number(data.und) || 0;
+    const total = paquetes > 0 ? paquetes * unidades : unidades;
 
     if (total <= 0) return toast.warning("Ingresa cantidades");
 
@@ -573,29 +583,31 @@ function ProductionForm({ usuario, detalles, alistId, onUpdate }) {
     <div className="space-y-3">
       <p className="text-[10px] font-black text-blue-600 uppercase mb-2 tracking-widest">Panel de Producción</p>
       {detalles.map(d => {
-        const subtotal = (Number(vals[d.id]?.paq || 0) * Number(vals[d.id]?.und || 0));
+        const paquetes = Number(vals[d.id]?.paq || 0);
+        const unidades = Number(vals[d.id]?.und || 0);
+        const subtotal = paquetes > 0 ? paquetes * unidades : unidades;
         return (
           <div key={d.id} className="bg-white border rounded-lg p-2 shadow-sm">
             <div className="flex justify-between items-center mb-2">
               <span className="text-[11px] font-bold text-gray-700 truncate w-32">{d.product}</span>
           
             </div>
-            <div className="flex gap-1">
+            <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] gap-1">
               <input 
                 type="number" placeholder="Paq" 
-                className="w-full text-xs p-1.5 border rounded"
+                className="w-full min-w-0 h-10 text-xs p-1.5 border rounded"
                 value={vals[d.id]?.paq || ''}
                 onChange={e => setVals({...vals, [d.id]: {...vals[d.id], paq: e.target.value}})}
               />
               <input 
-                type="number" placeholder="Und" 
-                className="w-full text-xs p-1.5 border rounded"
+                type="number" placeholder={vals[d.id]?.paq ? "Und/paq" : "Und total"}
+                className="w-full min-w-0 h-10 text-xs p-1.5 border rounded"
                 value={vals[d.id]?.und || ''}
                 onChange={e => setVals({...vals, [d.id]: {...vals[d.id], und: e.target.value}})}
               />
               <button 
                 onClick={() => handleRegister(d.id)}
-                className="bg-blue-600 text-white px-3 rounded-lg hover:bg-blue-700 flex items-center gap-1 shrink-0"
+                className="min-w-10 h-10 bg-blue-600 text-white px-2 sm:px-3 rounded-lg hover:bg-blue-700 flex items-center justify-center gap-1 shrink-0"
               >
                 <CheckCircle2 size={14} />
                 {subtotal > 0 && <span className="text-[10px] font-bold">{subtotal}</span>}

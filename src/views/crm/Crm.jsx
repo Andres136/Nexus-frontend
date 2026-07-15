@@ -147,7 +147,7 @@ const filteredMenuLinks = menuLinks;
         </button>
       </header>
 
-      <div className="flex bg-gray-100 min-h-screen">
+      <div className="flex w-full min-w-0 max-w-full overflow-x-hidden bg-gray-100 min-h-screen">
         {/* Barra lateral con hover en pantallas grandes */}
         <aside
           className={`fixed top-[4rem] left-0 h-screen bg-gray-900 text-white shadow-lg transition-all duration-300 z-50
@@ -263,11 +263,11 @@ const filteredMenuLinks = menuLinks;
         </aside>
 
         <main
-          className={`flex-1 pt-6 pb-10 transition-all duration-300 ${
+          className={`w-0 min-w-0 max-w-full flex-1 pt-3 sm:pt-6 pb-10 transition-all duration-300 overflow-x-hidden ${
             isExpanded ? "md:ml-64" : "md:ml-16"
           }`}
         >
-          <div className="overflow-x-auto mt-4 mx-4 md:mx-6 p-4 md:p-6 bg-white shadow-md">
+          <div className="w-full md:w-auto min-w-0 max-w-full overflow-x-hidden mt-2 sm:mt-4 mx-0 md:mx-6 p-0 sm:p-4 md:p-6 bg-white shadow-md box-border">
             {/* SOLO MUESTRA ESTE CONTENIDO EN /auth/crm, NO EN SUBRUTAS */}
             {location.pathname === "/auth/crm" && <Dashboard />}
 

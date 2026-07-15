@@ -29,14 +29,14 @@ export default function AlistamientosAuditoria() {
   // ✅ Obtener clientes únicos para filtro
   const uniqueClients = useMemo(() => {
     if (!data) return [];
-    const clients = data.map(item => item.cliente.nombre).filter(Boolean);
+    const clients = data.map(item => item.cliente?.nombre).filter(Boolean);
     return [...new Set(clients)].sort();
   }, [data]);
 
   // ✅ Obtener sedes únicas para filtro
   const uniqueSedes = useMemo(() => {
     if (!data) return [];
-    const sedes = data.map(item => item.sede.nombre).filter(Boolean);
+    const sedes = data.map(item => item.sede?.nombre).filter(Boolean);
     return [...new Set(sedes)].sort();
   }, [data]);
 
@@ -46,11 +46,11 @@ export default function AlistamientosAuditoria() {
     
     return data.filter(item => {
       const matchesSearch = searchTerm === "" || 
-        item.orden_trabajo_id.toString().includes(searchTerm) ||
-        item.cliente.nombre.toLowerCase().includes(searchTerm.toLowerCase());
+        String(item.orden_trabajo_id ?? item.id).includes(searchTerm) ||
+        (item.cliente?.nombre || "").toLowerCase().includes(searchTerm.toLowerCase());
       
-      const matchesClient = selectedClient === "" || item.cliente.nombre === selectedClient;
-      const matchesSede = selectedSede === "" || item.sede.nombre === selectedSede;
+      const matchesClient = selectedClient === "" || item.cliente?.nombre === selectedClient;
+      const matchesSede = selectedSede === "" || item.sede?.nombre === selectedSede;
       
       return matchesSearch && matchesClient && matchesSede;
     });
@@ -243,7 +243,9 @@ export default function AlistamientosAuditoria() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <CheckCircle2 className="w-4 h-4 text-green-600" />
-                        <span className="font-bold text-gray-900">OT #{alist.orden_trabajo_id}</span>
+                        <span className="font-bold text-gray-900">
+                          {alist.tipo_origen === "LIBRE" ? `Libre #${alist.id}` : `OT #${alist.orden_trabajo_id}`}
+                        </span>
                       </div>
                       <div className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
                         Finalizado
@@ -260,16 +262,16 @@ export default function AlistamientosAuditoria() {
                         <Building2 className="w-3 h-3" />
                         Cliente
                       </div>
-                      <p className="font-medium text-gray-900 text-sm truncate" title={alist.cliente.nombre}>
-                        {alist.cliente.nombre}
+                      <p className="font-medium text-gray-900 text-sm truncate" title={alist.cliente?.nombre}>
+                        {alist.cliente?.nombre || "Rendimiento libre"}
                       </p>
                       
                       <div className="flex items-center gap-1 text-xs text-gray-500 mb-1 mt-2">
                         <User className="w-3 h-3" />
                         Sede
                       </div>
-                      <p className="text-sm text-gray-600 truncate" title={alist.sede.nombre}>
-                        {alist.sede.nombre}
+                      <p className="text-sm text-gray-600 truncate" title={alist.sede?.nombre}>
+                        {alist.sede?.nombre || "Sin sede"}
                       </p>
                     </div>
 
