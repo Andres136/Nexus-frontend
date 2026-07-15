@@ -125,19 +125,20 @@ export const analisisProductoNoConformeService = {
     apiClient.put(`/api/analisis-producto-no-conforme/${id}`, data),
 
   // Cambiar estado
-  cambiarEstado: (id, estado) =>
+  cambiarEstado: (id, estado_id) =>
     apiClient.patch(`/api/analisis-producto-no-conforme/${id}/estado`, {
-      estado,
+      estado_id,
     }),
 };
 export const productoNoConformeService = {
   createProductoNoConforme: (data) => apiClient.post("/api/productos-no-conformes", data),
-  getProductoNoConformeById: (id) => apiClient.get(`/api/productos-no-conforme/${id}`),
-  updateProductoNoConforme: (id, data) => apiClient.put(`/api/producto-no-conforme/${id}`, data),
-  deleteProductoNoConforme: (id) => apiClient.delete(`/api/producto-no-conforme/${id}`),
-  estadisticasProductoNoConforme: (data) => apiClient.get("/api/productos-no-conformes/estadisticas", { params: data }  ),
-  cambiarEstado: (id, estado) => apiClient.patch(`/api/productos-no-conforme/${id}/estado`, {
-    estado,
+  updateProductoNoConforme: (id, data) => apiClient.put(`/api/productos-no-conformes/${id}`, data),
+  deleteProductoNoConforme: (id) => apiClient.delete(`/api/productos-no-conformes/${id}`),
+  estadisticasProductoNoConforme: (params) => apiClient.get("/api/productos-no-conformes/estadisticas", { params }),
+  getAll: (params) => apiClient.get("/api/productos-no-conformes", { params }),
+  getById: (id) => apiClient.get(`/api/productos-no-conformes/${id}`),
+  cambiarEstado: (id, estado_id) => apiClient.patch(`/api/productos-no-conformes/${id}/estado`, {
+    estado_id,
   }),
 };
 

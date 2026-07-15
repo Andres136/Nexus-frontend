@@ -158,6 +158,9 @@ import PageObtenerPagos from "../views/contabilidad/PageObtenerPagos";
 import CreateImpuestos from "../components/contabilidad/CreateImpuestos";
 
 import RegisterProductoNoConforme from "../components/calidad/RegisterProductoNoConforme";
+import ListaProductoNoConforme from "../components/calidad/ListaProductoNoConforme";
+import DashboardProductoNoConforme from "../components/calidad/DashboardProductoNoConforme";
+import GestionProductoNoConforme from "../views/calidad/GestionProductoNoConforme";
 import EncuestasPage from "../views/crm/EncuestasPage";
 import ResultadosEncuesta from "../views/crm/ResultadosEncuesta";
 import EncuestaPublica from "../views/crm/EncuestaPublica";
@@ -1028,7 +1031,31 @@ export default function Router() {
               </DynamicProtectedRoute>
             }
           />
-       {/*   ORDENES COMPRA PROVEEDOR*/} 
+          <Route
+            path="/auth/crm/no-conformidades"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/producto-no-conforme">
+                <ListaProductoNoConforme />
+              </DynamicProtectedRoute>
+            }
+          />
+          <Route
+            path="/auth/crm/no-conformidades/dashboard"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/producto-no-conforme">
+                <DashboardProductoNoConforme />
+              </DynamicProtectedRoute>
+            }
+          />
+          <Route
+            path="/auth/crm/no-conformidades/:id/gestionar"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/producto-no-conforme">
+                <GestionProductoNoConforme />
+              </DynamicProtectedRoute>
+            }
+          />
+       {/*   ORDENES COMPRA PROVEEDOR*/}
           <Route
             path="/auth/crm/proveedores-ordenes-compra"
             element={<DynamicProtectedRoute permission="/auth/crm/proveedores-ordenes-compra">

@@ -1,11 +1,14 @@
+import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ClipboardX, ChevronRight } from "lucide-react";
 import { useRegisterProductoNoConforme } from "../../hooks/calidad/useRegisterproductoNoConforme";
 import { useClientes } from "../../hooks/useClientes";
 import Select from "react-select";
 import { useProducts } from "../../hooks/useProducts";
 import useMisOrdenesCompra from "../../hooks/useMisOrdenesCompra";
+import { useProveedores } from "../../hooks/useProveedores";
+import { proveedoresApi } from "../../services/api";
 
 const TIPOS_FALLA = [
   { value: "", label: "Seleccione tipo de falla" },
@@ -16,16 +19,45 @@ const TIPOS_FALLA = [
   { value: "otro", label: "Otro" },
 ];
 
+const TIPOS_ORIGEN = [
+  { value: "cliente", label: "Cliente (OC de venta)" },
+  { value: "proveedor", label: "Proveedor (OC de compra)" },
+  { value: "interno", label: "Interno (proceso propio)" },
+];
+
 export default function RegisterProductoNoConforme({ onClose }) {
+  const navigate = useNavigate();
   const { formData, loading, error, handleChange, handleSubmit } = useRegisterProductoNoConforme();
   const { clientesTodos: clientes } = useClientes();
   const { products, isLoading, isEmpty } = useProducts({ search: " " });
   const { ordenes } = useMisOrdenesCompra();
+  const { ordenes: ordenesProveedor, obtenerOrdenes: obtenerOrdenesProveedor } = useProveedores();
+  const [proveedores, setProveedores] = useState([]);
+
+  const esOrigenCliente = formData.origen === "cliente";
+  const esOrigenProveedor = formData.origen === "proveedor";
+
+  useEffect(() => {
+    if (esOrigenProveedor) obtenerOrdenesProveedor();
+  }, [esOrigenProveedor, obtenerOrdenesProveedor]);
+
+  useEffect(() => {
+    if (!esOrigenProveedor || proveedores.length > 0) return;
+    proveedoresApi.getAll().then((res) => setProveedores(res.data.proveedores ?? []));
+  }, [esOrigenProveedor, proveedores.length]);
+
+  const ordenesProveedorLista = ordenesProveedor?.data ?? [];
+
 
   const onSubmit = async (e) => {
     e.preventDefault();
     const result = await handleSubmit(formData);
-    if (result && onClose) onClose();
+    if (!result) return;
+    if (onClose) {
+      onClose();
+    } else {
+      navigate("/auth/crm/no-conformidades");
+    }
   };
 
   // Clases CSS compactas
@@ -64,9 +96,9 @@ export default function RegisterProductoNoConforme({ onClose }) {
           <div>
             <h1 className="text-xl font-bold text-gray-800">Registro Producto No Conforme</h1>
             <nav className="flex items-center gap-1 text-xs text-gray-400 mt-0.5">
-              <Link to="/auth/novedades" className="hover:text-indigo-600 transition-colors">Calidad</Link>
+              <Link to="/auth/crm/no-conformidades" className="hover:text-indigo-600 transition-colors">Productos No Conformes</Link>
               <ChevronRight className="h-3 w-3" />
-              <span className="text-gray-600 font-medium">Producto No Conforme</span>
+              <span className="text-gray-600 font-medium">Registrar</span>
             </nav>
           </div>
         </div>
@@ -76,24 +108,107 @@ export default function RegisterProductoNoConforme({ onClose }) {
       <div className="flex justify-center">
     <form onSubmit={onSubmit} className="grid grid-cols-2 gap-x-3 gap-y-2.5 bg-white p-1 w-full max-w-lg">
 
-      {/* Cliente */}
-      <div>
-        <label className={labelCls}>Cliente</label>
-        <div className="mt-0.5">
-          <Select
-            name="cliente_id"
-            options={clientes.map(c => ({ value: c.id, label: c.nombre }))}
-            value={clientes.find(c => c.id === formData.cliente_id) ? { value: formData.cliente_id, label: clientes.find(c => c.id === formData.cliente_id).nombre } : null}
-            onChange={(option) => handleChange({ target: { name: "cliente_id", value: option ? option.value : "" } })}
-            placeholder="Buscar..."
-            classNamePrefix="rs"
-            styles={selectStyles}
-            menuPortalTarget={document.body}
-            menuPosition="fixed"
-          />
-        </div>
-        {error?.cliente_id && <span className={errCls}>{error.cliente_id[0]}</span>}
+      {/* Origen del no conforme */}
+      <div className="col-span-2">
+        <label className={labelCls}>Origen</label>
+        <select
+          name="origen"
+          value={formData.origen}
+          onChange={handleChange}
+          className={`${inputCls} bg-white`}
+        >
+          {TIPOS_ORIGEN.map((t) => (
+            <option key={t.value} value={t.value}>{t.label}</option>
+          ))}
+        </select>
+        {error?.origen && <span className={errCls}>{error.origen[0]}</span>}
       </div>
+
+      {esOrigenCliente && (
+        <>
+          {/* Cliente */}
+          <div>
+            <label className={labelCls}>Cliente</label>
+            <div className="mt-0.5">
+              <Select
+                name="cliente_id"
+                options={clientes.map(c => ({ value: c.id, label: c.nombre }))}
+                value={clientes.find(c => c.id === formData.cliente_id) ? { value: formData.cliente_id, label: clientes.find(c => c.id === formData.cliente_id).nombre } : null}
+                onChange={(option) => handleChange({ target: { name: "cliente_id", value: option ? option.value : "" } })}
+                placeholder="Buscar..."
+                classNamePrefix="rs"
+                styles={selectStyles}
+                menuPortalTarget={document.body}
+                menuPosition="fixed"
+              />
+            </div>
+            {error?.cliente_id && <span className={errCls}>{error.cliente_id[0]}</span>}
+          </div>
+
+          {/* Orden de compra cliente */}
+          <div>
+            <label className={labelCls}>Orden de compra (cliente)</label>
+            <div className="mt-0.5">
+              <Select
+                name="orden_compra_id"
+                options={ordenes.map(o => ({ value: o.id, label: `OC-${o.id} - ${o.cliente.nombre}` }))}
+                value={ordenes.find(o => o.id === formData.orden_compra_id) ? { value: formData.orden_compra_id, label: `OC-${formData.orden_compra_id}` } : null}
+                onChange={(option) => handleChange({ target: { name: "orden_compra_id", value: option ? option.value : "" } })}
+                placeholder="Seleccionar..."
+                isDisabled={ordenes.length === 0}
+                classNamePrefix="rs"
+                styles={selectStyles}
+                menuPortalTarget={document.body}
+                menuPosition="fixed"
+              />
+            </div>
+            {error?.orden_compra_id && <span className={errCls}>{error.orden_compra_id[0]}</span>}
+          </div>
+        </>
+      )}
+
+      {esOrigenProveedor && (
+        <>
+          {/* Proveedor */}
+          <div>
+            <label className={labelCls}>Proveedor</label>
+            <div className="mt-0.5">
+              <Select
+                name="proveedor_id"
+                options={proveedores.map(p => ({ value: p.id, label: p.nombre }))}
+                value={proveedores.find(p => p.id === formData.proveedor_id) ? { value: formData.proveedor_id, label: proveedores.find(p => p.id === formData.proveedor_id).nombre } : null}
+                onChange={(option) => handleChange({ target: { name: "proveedor_id", value: option ? option.value : "" } })}
+                placeholder="Buscar..."
+                classNamePrefix="rs"
+                styles={selectStyles}
+                menuPortalTarget={document.body}
+                menuPosition="fixed"
+              />
+            </div>
+            {error?.proveedor_id && <span className={errCls}>{error.proveedor_id[0]}</span>}
+          </div>
+
+          {/* Orden de compra proveedor */}
+          <div>
+            <label className={labelCls}>Orden de compra (proveedor)</label>
+            <div className="mt-0.5">
+              <Select
+                name="orden_compra_proveedor_id"
+                options={ordenesProveedorLista.map(o => ({ value: o.id, label: `${o.numero_orden} - ${o.proveedor?.nombre ?? ""}` }))}
+                value={ordenesProveedorLista.find(o => o.id === formData.orden_compra_proveedor_id) ? { value: formData.orden_compra_proveedor_id, label: ordenesProveedorLista.find(o => o.id === formData.orden_compra_proveedor_id).numero_orden } : null}
+                onChange={(option) => handleChange({ target: { name: "orden_compra_proveedor_id", value: option ? option.value : "" } })}
+                placeholder="Seleccionar..."
+                isDisabled={ordenesProveedorLista.length === 0}
+                classNamePrefix="rs"
+                styles={selectStyles}
+                menuPortalTarget={document.body}
+                menuPosition="fixed"
+              />
+            </div>
+            {error?.orden_compra_proveedor_id && <span className={errCls}>{error.orden_compra_proveedor_id[0]}</span>}
+          </div>
+        </>
+      )}
 
       {/* Producto */}
       <div>
@@ -114,26 +229,6 @@ export default function RegisterProductoNoConforme({ onClose }) {
           />
         </div>
         {error?.producto_id && <span className={errCls}>{error.producto_id[0]}</span>}
-      </div>
-
-      {/* Orden de compra */}
-      <div>
-        <label className={labelCls}>Orden de compra</label>
-        <div className="mt-0.5">
-          <Select
-            name="orden_compra_id"
-            options={ordenes.map(o => ({ value: o.id, label: `OC-${o.id} - ${o.cliente.nombre}` }))}
-            value={ordenes.find(o => o.id === formData.orden_compra_id) ? { value: formData.orden_compra_id, label: `OC-${formData.orden_compra_id}` } : null}
-            onChange={(option) => handleChange({ target: { name: "orden_compra_id", value: option ? option.value : "" } })}
-            placeholder="Seleccionar..."
-            isDisabled={ordenes.length === 0}
-            classNamePrefix="rs"
-            styles={selectStyles}
-            menuPortalTarget={document.body}
-            menuPosition="fixed"
-          />
-        </div>
-        {error?.orden_compra_id && <span className={errCls}>{error.orden_compra_id[0]}</span>}
       </div>
 
       {/* Tipo de falla */}

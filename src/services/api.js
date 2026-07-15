@@ -217,7 +217,12 @@ getAlistamientosByOT: (id) =>
 //Api para api/proveedores-all
 export const proveedoresApi = {
   getAll: () => apiClient.get("/api/proveedores-all"),
-  
+
+};
+
+//Api para api/estados (catálogo genérico de estados)
+export const estadosApi = {
+  getAll: () => apiClient.get("/api/estados"),
 };
 
 //Requerimientos internos de compra

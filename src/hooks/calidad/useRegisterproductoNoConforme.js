@@ -4,9 +4,12 @@ import { showToast } from "../../helpers/utils/showToast";
 import { productoNoConformeService } from "../../services/calidaService";
 
 const initialForm = {
+    origen: 'cliente',
     cliente_id: '',
-    producto_id: '',
     orden_compra_id: '',
+    proveedor_id: '',
+    orden_compra_proveedor_id: '',
+    producto_id: '',
     cantidad_afectada: '',
     descripcion_inicial: '',
     tipo_falla: '',
@@ -22,6 +25,19 @@ export const useRegisterProductoNoConforme = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
+
+        if (name === "origen") {
+            setFormData(prev => ({
+                ...prev,
+                origen: value,
+                cliente_id: '',
+                orden_compra_id: '',
+                proveedor_id: '',
+                orden_compra_proveedor_id: '',
+            }));
+            return;
+        }
+
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
