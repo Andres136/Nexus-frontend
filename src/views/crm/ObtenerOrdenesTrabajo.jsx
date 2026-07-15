@@ -1,4 +1,4 @@
-import { FaSearch, FaEye, FaFilter, FaCalendarAlt } from "react-icons/fa";
+import { FaSearch, FaEye, FaFilter, FaCalendarAlt, FaClipboardList, FaKey, FaBook, FaClock } from "react-icons/fa";
 import { HiOutlineClipboardList } from "react-icons/hi";
 import useOrdenesTrabajo from "../../hooks/useOrdenesTrabajo";
 import { Link } from "react-router-dom";
@@ -93,29 +93,36 @@ export default function ObtenerOrdenesTrabajo() {
             </div>
           </div>
           
-          <div className="mt-4 flex items-center gap-3">
+          <div className="mt-4 flex flex-wrap gap-2 sm:gap-3">
             <Link
               to="/auth/crm/alistamientos"
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white px-4 py-2 sm:px-5 sm:py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 shadow-lg text-sm sm:text-base"
-            >Gestionar Alistamientos
+              className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-lg font-medium transition-colors duration-150 shadow-sm text-xs sm:text-sm"
+            >
+              <FaClipboardList className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              Gestionar Alistamientos
             </Link>
 
             <Link
               to="/auth/crm/nomina/acceso-temporal"
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white px-4 py-2 sm:px-5 sm:py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 shadow-lg text-sm sm:text-base"
+              className="inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-lg font-medium transition-colors duration-150 shadow-sm text-xs sm:text-sm"
             >
+              <FaKey className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               Acceso Temporal
             </Link>
+
             <Link
-             to="/auth/crm/nomina/instruccion-operativa"
-             className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2 sm:px-5 sm:py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 shadow-lg text-sm sm:text-base"
+              to="/auth/crm/nomina/instruccion-operativa"
+              className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-lg font-medium transition-colors duration-150 shadow-sm text-xs sm:text-sm"
             >
-             Instrucción Operativa
+              <FaBook className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              Instrucción Operativa
             </Link>
+
             <Link
               to="/auth/crm/nomina/solicitar-horas-extras"
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-sky-600 to-cyan-600 hover:from-sky-700 hover:to-cyan-700 text-white px-4 py-2 sm:px-5 sm:py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 shadow-lg text-sm sm:text-base"
+              className="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-lg font-medium transition-colors duration-150 shadow-sm text-xs sm:text-sm"
             >
+              <FaClock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               Solicitar Horas Extra
             </Link>
           </div>

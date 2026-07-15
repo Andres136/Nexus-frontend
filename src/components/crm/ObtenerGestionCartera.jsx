@@ -6,8 +6,10 @@ import { useDebounce } from "../../hooks/useDebounce"
 import { useGestionCartera } from "../../hooks/crm/useGestionCartera"
 import { useAuth } from "../../hooks/useAuth"
 import { Link } from "react-router-dom"
-import { Briefcase, CheckCircle, DollarSign, Pencil } from "lucide-react"
+import { Briefcase, CheckCircle, DollarSign, Download, Pencil } from "lucide-react"
 import { formatDate } from "../../helpers"
+import { carteraApi } from "../../services/api"
+import { showToast } from "../../helpers/utils/showToast"
 
 export default function ObtenerGestionCartera() {
 const { user } = useAuth({middleware: 'auth'})
@@ -25,6 +27,7 @@ const { user } = useAuth({middleware: 'auth'})
 
   const [carteraSeleccionada, setCarteraSeleccionada] = useState(null)
   const [openModal, setOpenModal] = useState(false)
+  const [exportando, setExportando] = useState(false)
 const{cancelarDeuda, eliminarFactura}=useGestionCartera()
   const { registros, pagination, isLoading, error, total_cartera, total_vencido} = useListaCartera(useDebounce(filtros, 500))
   
@@ -87,6 +90,39 @@ const{cancelarDeuda, eliminarFactura}=useGestionCartera()
       per_page: 10
     })
   }
+  const handleExportar = async () => {
+    setExportando(true)
+    try {
+      const { buscar, fecha_inicio, fecha_fin, cliente_id, user_comercial_id, estado } = filtros
+      const response = await carteraApi.exportarCartera({
+        buscar, fecha_inicio, fecha_fin, cliente_id, user_comercial_id, estado
+      })
+      const url = window.URL.createObjectURL(new Blob([response.data], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      }))
+      const link = document.createElement("a")
+      link.href = url
+      link.setAttribute("download", `cartera_${new Date().toISOString().slice(0, 10)}.xlsx`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      let message = "No se pudo exportar la cartera."
+      if (error.response?.data instanceof Blob) {
+        try {
+          const data = JSON.parse(await error.response.data.text())
+          message = data.message || message
+        } catch {
+          // La respuesta no contiene un error JSON legible.
+        }
+      }
+      showToast("error", message)
+    } finally {
+      setExportando(false)
+    }
+  }
+
   const puedeGestionar = ![7, 9].includes(user?.role_id)
 
  const hayFiltrosActivos =
@@ -136,6 +172,15 @@ const{cancelarDeuda, eliminarFactura}=useGestionCartera()
         </svg>
         Historial de Gestión de Factura
       </Link>
+
+      <button
+        onClick={handleExportar}
+        disabled={exportando}
+        className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        <Download className="w-4 h-4" />
+        {exportando ? "Exportando..." : "Exportar Excel"}
+      </button>
 
 
       <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full font-medium">

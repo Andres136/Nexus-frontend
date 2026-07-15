@@ -433,7 +433,7 @@ export const carteraApi = {
 
   getDetalleCartera: (id) => apiClient.get(`/api/gestion-cartera/${id}`),
   exportarCartera: (params = {}) =>
-    apiClient.get("/api/gestion-cartera/exportar", { params }),
+    apiClient.get("/api/gestion-cartera/exportar", { params, responseType: "blob" }),
   update: (id, data) => apiClient.put(`/api/gestion-cartera/${id}`, data),
   createAbono: (data) =>
     apiClient.post("/api/abonos-cartera", data),

@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import Swal from "sweetalert2";
 import { horaExtraService } from "../../services/nominaService";
 import { showToast } from "../../helpers/utils/showToast";
 import { useGetEmpleados } from "./useGetEmpleados";
@@ -35,8 +36,10 @@ export function useHorasExtrasOperacion() {
   const [gestion, setGestion] = useState(null);
   const [creando, setCreando] = useState(false);
   const [loadingUuid, setLoadingUuid] = useState(null);
+  const [aprobandoTodas, setAprobandoTodas] = useState(false);
+  const [exportando, setExportando] = useState(false);
 
-  const params = useMemo(() => ({
+  const filtrosActivos = useMemo(() => ({
     search: search || undefined,
     status: status || undefined,
     sede_id: sedeId || undefined,
@@ -44,9 +47,13 @@ export function useHorasExtrasOperacion() {
     kiosko_device_id: kioskoDeviceId || undefined,
     fecha_desde: fechaDesde || undefined,
     fecha_hasta: fechaHasta || undefined,
+  }), [fechaDesde, fechaHasta, kioskoDeviceId, search, sedeId, status, userId]);
+
+  const params = useMemo(() => ({
+    ...filtrosActivos,
     page,
     per_page: 15,
-  }), [fechaDesde, fechaHasta, kioskoDeviceId, page, search, sedeId, status, userId]);
+  }), [filtrosActivos, page]);
 
   const { horasExtras, isLoading } = useGetHorasExtras(params);
   const { empleados, isLoading: loadingEmpleados } = useGetEmpleados({
@@ -137,6 +144,62 @@ export function useHorasExtrasOperacion() {
     }
   };
 
+  const handleAprobarTodas = async () => {
+    const confirmacion = await Swal.fire({
+      title: "¿Aprobar todas las horas extras pendientes?",
+      text: "Se aprobarán todas las horas extras en estado pendiente que cumplan los filtros aplicados.",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#4f46e5",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: "Sí, aprobar todas",
+      cancelButtonText: "Cancelar",
+    });
+
+    if (!confirmacion.isConfirmed) return;
+
+    setAprobandoTodas(true);
+    try {
+      const res = await horaExtraService.aprobarTodas(filtrosActivos);
+      showToast("success", res.data.message || "Horas extras aprobadas");
+      queryClient.invalidateQueries({ queryKey: ["horasExtras"] });
+    } catch (error) {
+      showToast("error", error.response?.data?.message || "Error al aprobar las horas extras");
+    } finally {
+      setAprobandoTodas(false);
+    }
+  };
+
+  const handleExportar = async () => {
+    setExportando(true);
+    try {
+      const response = await horaExtraService.exportarAprobadas(filtrosActivos);
+      const url = window.URL.createObjectURL(new Blob([response.data], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      }));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `horas_extras_aprobadas_${fechaDesde}_${fechaHasta}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      let message = "No se pudo exportar el archivo.";
+      if (error.response?.data instanceof Blob) {
+        try {
+          const data = JSON.parse(await error.response.data.text());
+          message = data.message || message;
+        } catch {
+          // La respuesta no contiene un error JSON legible.
+        }
+      }
+      showToast("error", message);
+    } finally {
+      setExportando(false);
+    }
+  };
+
   return {
     lista,
     meta,
@@ -154,5 +217,9 @@ export function useHorasExtrasOperacion() {
     setGestion,
     loadingUuid,
     handleGestion,
+    aprobandoTodas,
+    handleAprobarTodas,
+    exportando,
+    handleExportar,
   };
 }

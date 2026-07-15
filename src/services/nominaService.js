@@ -717,6 +717,15 @@ export const horaExtraService = {
   rechazar(uuid, data = {}) {
     return apiClient.patch(`api/nomina/horas-extras/${uuid}/rechazar`, data);
   },
+  aprobarTodas(params = {}, data = {}) {
+    return apiClient.patch("api/nomina/horas-extras/aprobar-todas", data, { params });
+  },
+  exportarAprobadas(params = {}) {
+    return apiClient.get("api/nomina/horas-extras/exportar", {
+      params,
+      responseType: "blob",
+    });
+  },
   async getHorasExtrasAprobadasHoy(userId) {
     const kioskConfig = await kioskRequestConfig();
     const params = { user_id: userId };

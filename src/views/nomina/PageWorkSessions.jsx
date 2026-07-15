@@ -329,7 +329,7 @@ export default function PageWorkSessions() {
 
 
 
-      <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         <Indicador
           label="Registros de hoy"
           value={loadingDaily ? "—" : (dailyMeta?.total ?? 0)}
@@ -350,6 +350,13 @@ export default function PageWorkSessions() {
           detail={`${dailyList.length} sesiones registradas hoy`}
           icon={CircleCheck}
           color="bg-emerald-50 text-emerald-600"
+        />
+        <Indicador
+          label="Tardanza hoy"
+          value={loadingDaily ? "—" : minsToHM(resumen.minutosTardanza)}
+          detail={`${resumen.conTardanza} sesión(es) con tardanza`}
+          icon={CircleAlert}
+          color="bg-orange-50 text-orange-600"
         />
         <Indicador
           label="Novedades de hoy"
@@ -512,6 +519,7 @@ export default function PageWorkSessions() {
           </button>
         </div>
       </div>
+
 
       {/* Tabla */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
