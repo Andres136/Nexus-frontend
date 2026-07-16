@@ -23,7 +23,7 @@ export default function AlistamientoPanel() {
 
   const [selectedOT, setSelectedOT] = useState(null);
   const [tipoOrigen, setTipoOrigen] = useState("OT");
-  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedProducts, setSelectedProducts] = useState([]);
   const [products, setProducts] = useState([]);
   const [users, setUsers] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
@@ -79,7 +79,7 @@ export default function AlistamientoPanel() {
       const payload = {
         tipo_origen: tipoOrigen,
         orden_trabajo_id: tipoOrigen === "OT" ? selectedOT?.value : null,
-        producto_id: tipoOrigen === "LIBRE" ? selectedProduct?.value : selectedOT?.producto_id,
+        productos: tipoOrigen === "LIBRE" ? selectedProducts.map(p => p.value) : undefined,
         usuarios: selectedUsers.map(u => u.value),
         cantidad: tipoOrigen === "LIBRE" ? 0 : selectedOT?.cantidad_programada,
         fecha: new Date().toISOString().split("T")[0],
@@ -92,7 +92,7 @@ export default function AlistamientoPanel() {
       toast(res.data.message || "Alistamiento iniciado con éxito");
       // Limpiar formulario
       setSelectedOT(null);
-      setSelectedProduct(null);
+      setSelectedProducts([]);
       setSelectedUsers([]);
       setErrors({});
 
@@ -256,7 +256,7 @@ export default function AlistamientoPanel() {
             <div className="min-w-0 lg:col-span-1">
               <label className="flex items-center gap-1 text-sm font-medium text-gray-700 mb-2">
                 <Package className="w-3 h-3 text-blue-600" />
-                {tipoOrigen === "OT" ? "Orden de Trabajo" : "Producto"}
+                {tipoOrigen === "OT" ? "Orden de Trabajo" : `Producto(s) (${selectedProducts.length})`}
               </label>
 
               {tipoOrigen === "OT" ? <Select
@@ -271,16 +271,17 @@ export default function AlistamientoPanel() {
                 styles={selectStyles}
                 isClearable
               /> : <Select
-                placeholder="Seleccione producto..."
+                isMulti
+                placeholder="Seleccione producto(s)..."
                 options={products.map((product) => ({
                   value: product.id,
                   label: `${product.code ? `${product.code} – ` : ""}${product.name}`,
                 }))}
-                onChange={setSelectedProduct}
-                value={selectedProduct}
+                onChange={setSelectedProducts}
+                value={selectedProducts}
                 styles={selectStyles}
-                isClearable
                 isSearchable
+                maxMenuHeight={150}
               />}
 
               {errors.orden_trabajo_id && (
@@ -289,10 +290,10 @@ export default function AlistamientoPanel() {
                   <span>{errors.orden_trabajo_id}</span>
                 </div>
               )}
-              {errors.producto_id && (
+              {errors.productos && (
                 <div className="flex items-center gap-1 mt-1 text-red-600 text-xs">
                   <AlertCircle className="w-3 h-3" />
-                  <span>{errors.producto_id}</span>
+                  <span>{errors.productos}</span>
                 </div>
               )}
 
@@ -349,7 +350,7 @@ export default function AlistamientoPanel() {
               <button
                 className="w-full min-h-11 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:from-gray-400 disabled:to-gray-500 text-white px-4 py-2.5 rounded-lg font-medium transition-all duration-200 sm:hover:scale-[1.02] disabled:scale-100 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
                 onClick={iniciar}
-                disabled={loading || selectedUsers.length === 0 || (tipoOrigen === "OT" ? !selectedOT : !selectedProduct)}
+                disabled={loading || selectedUsers.length === 0 || (tipoOrigen === "OT" ? !selectedOT : selectedProducts.length === 0)}
               >
                 {loading ? (
                   <>
@@ -372,13 +373,13 @@ export default function AlistamientoPanel() {
                     Selecciona OT
                   </p>
                 )}
-                {tipoOrigen === "LIBRE" && !selectedProduct && (
+                {tipoOrigen === "LIBRE" && selectedProducts.length === 0 && (
                   <p className="text-xs text-gray-500 flex items-center justify-center gap-1">
                     <AlertCircle className="w-3 h-3" />
-                    Selecciona un producto
+                    Selecciona al menos un producto
                   </p>
                 )}
-                {((tipoOrigen === "OT" && selectedOT) || (tipoOrigen === "LIBRE" && selectedProduct)) && selectedUsers.length === 0 && (
+                {((tipoOrigen === "OT" && selectedOT) || (tipoOrigen === "LIBRE" && selectedProducts.length > 0)) && selectedUsers.length === 0 && (
                   <p className="text-xs text-gray-500 flex items-center justify-center gap-1">
                     <AlertCircle className="w-3 h-3" />
                     Asigna usuarios
