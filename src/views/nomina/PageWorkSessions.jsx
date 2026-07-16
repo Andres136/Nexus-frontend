@@ -100,9 +100,16 @@ function avatarColor(name = "") {
   return COLORS[Math.abs(h) % COLORS.length];
 }
 
-function Indicador({ label, value, detail, icon: Icon, color }) {
+function Indicador({ label, value, detail, icon: Icon, color, onClick }) {
+  const Tag = onClick ? "button" : "div";
+
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+    <Tag
+      type={onClick ? "button" : undefined}
+      onClick={onClick}
+      className={`w-full rounded-xl border border-gray-200 bg-white p-4 shadow-sm text-left ${
+        onClick ? "hover:border-indigo-300 hover:shadow-md transition-all cursor-pointer" : ""
+      }`}>
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
@@ -115,7 +122,7 @@ function Indicador({ label, value, detail, icon: Icon, color }) {
           <Icon className="h-5 w-5" />
         </div>
       </div>
-    </div>
+    </Tag>
   );
 }
 
@@ -125,6 +132,7 @@ Indicador.propTypes = {
   detail: PropTypes.string.isRequired,
   icon: PropTypes.elementType.isRequired,
   color: PropTypes.string.isRequired,
+  onClick: PropTypes.func,
 };
 
 function Pagination({ meta, page, onPage }) {
@@ -187,6 +195,7 @@ export default function PageWorkSessions() {
   const [userId, setUserId]         = useState("");
   const [page, setPage]             = useState(1);
   const [fotoAbierta, setFotoAbierta] = useState(null);
+  const [galeriaAbierta, setGaleriaAbierta] = useState(false);
   const [recuperacionForm, setRecuperacionForm] = useState({
     fecha: today,
     hora_inicio: "",
@@ -264,6 +273,7 @@ export default function PageWorkSessions() {
       if (Number(item.minutos_tardanza ?? 0) === 0) acc.aTiempo += 1;
       if (Number(item.minutos_tardanza ?? 0) > 0) acc.conTardanza += 1;
       if (item.hora_entrada && !item.hora_salida) acc.abiertas += 1;
+      if (item.foto_respaldo) acc.conFoto += 1;
       return acc;
     }, {
       minutosTrabajados: 0,
@@ -271,8 +281,13 @@ export default function PageWorkSessions() {
       aTiempo: 0,
       conTardanza: 0,
       abiertas: 0,
+      conFoto: 0,
     });
   }, [dailyList]);
+  const fotosHoy = useMemo(
+    () => dailyList.filter((item) => item.foto_respaldo),
+    [dailyList]
+  );
 
   const handleSearch     = (e) => { setSearch(e.target.value); setPage(1); };
   const handleFechaInicio = (e) => { setFechaInicio(e.target.value); setPage(1); };
@@ -334,7 +349,7 @@ export default function PageWorkSessions() {
 
 
 
-      <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+      <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <Indicador
           label="Registros de hoy"
           value={loadingDaily ? "—" : (dailyMeta?.total ?? 0)}
@@ -369,6 +384,14 @@ export default function PageWorkSessions() {
           detail={`${resumen.abiertas} abiertas · ${resumen.conTardanza} con tardanza`}
           icon={CircleAlert}
           color="bg-amber-50 text-amber-600"
+        />
+        <Indicador
+          label="Marcaciones por cédula"
+          value={loadingDaily ? "—" : resumen.conFoto}
+          detail={resumen.conFoto > 0 ? "Con foto de respaldo · Ver todas" : "Ninguna hoy"}
+          icon={Camera}
+          color="bg-purple-50 text-purple-600"
+          onClick={resumen.conFoto > 0 ? () => setGaleriaAbierta(true) : undefined}
         />
       </div>
 
@@ -662,6 +685,47 @@ export default function PageWorkSessions() {
         )}
         <Pagination meta={meta} page={page} onPage={setPage} />
       </div>
+
+      {galeriaAbierta && (
+        <div
+          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+          onClick={() => setGaleriaAbierta(false)}>
+          <div
+            className="relative max-w-2xl w-full max-h-[80vh] bg-white rounded-xl shadow-2xl flex flex-col"
+            onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+              <div>
+                <p className="text-sm font-semibold text-gray-900">Marcaciones por cédula de hoy</p>
+                <p className="text-xs text-gray-500">{fotosHoy.length} marcación(es) con foto de respaldo</p>
+              </div>
+              <button type="button" onClick={() => setGaleriaAbierta(false)} className="text-gray-400 hover:text-gray-700">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="p-5 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 gap-4">
+              {fotosHoy.map((item) => (
+                <button
+                  key={item.uuid}
+                  type="button"
+                  onClick={() => {
+                    setFotoAbierta({ url: STORAGE_URL + item.foto_respaldo, nombre: item.empleado?.name ?? "Empleado" });
+                    setGaleriaAbierta(false);
+                  }}
+                  className="group text-left">
+                  <img
+                    src={STORAGE_URL + item.foto_respaldo}
+                    alt={item.empleado?.name ?? "Empleado"}
+                    className="w-full aspect-square object-cover rounded-lg border border-gray-200 group-hover:border-indigo-400 transition-colors"
+                  />
+                  <p className="mt-1 text-xs font-medium text-gray-800 truncate">{item.empleado?.name ?? "—"}</p>
+                  <p className="text-[11px] text-gray-400">{fmtHora(item.hora_entrada)}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {fotoAbierta && (
         <div
