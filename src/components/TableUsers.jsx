@@ -2,9 +2,11 @@ import { PencilIcon } from '@heroicons/react/16/solid';
 import useSystem from '../hooks/useSystem';
 import { useAuth } from '../hooks/useAuth';
 import { useEffect, useState, } from 'react';
+import PropTypes from 'prop-types';
 import Modal from './calidad/Modal';
 import UpdateUser from './calidad/UpdateUser';
 import NexusLoader from './NexusLoader';
+import { useDebounce } from '../hooks/useDebounce';
 
 
 
@@ -51,49 +53,41 @@ import NexusLoader from './NexusLoader';
  * @name useSystem
  * @description Recupera la configuración de modo oscuro del sistema.
  */
-export default function TableUsers() {
- 
+export default function TableUsers({ refreshKey }) {
+
  const { darkMode} = useSystem();
  const [isUserModalOpen, setUserModalOpen] = useState(false);
 
  const {users, pagination,obtenerUsuarios,toggleEstadoUsuario,  loading}=useAuth({middleware: "auth"})
- 
+
   const  [selectedUser, setSelectedUser] = useState(null);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 400);
 
-  const handleSearch = () => {
-    obtenerUsuarios(1, search);
-  };
-  
   useEffect(() => {
-    obtenerUsuarios();
-  }, []);
+    obtenerUsuarios(1, debouncedSearch);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch, refreshKey]);
 
 
- 
+
 
   return (
     <div className="overflow-x-auto">
+      <div className="flex items-center mb-4">
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Buscar usuario..."
+          className="border p-2 rounded mr-2"
+        />
+      </div>
+
       {loading ? (
         <NexusLoader text='Cargando usuarios...' />
       ) : (
         <>
-        <div className="flex items-center mb-4">
-  <input
-    type="text"
-    value={search}
-    onChange={(e) => setSearch(e.target.value)}
-    placeholder="Buscar usuario..."
-    className="border p-2 rounded mr-2"
-  />
-  <button
-    onClick={handleSearch}
-    className="bg-blue-600 text-white px-3 py-1 rounded"
-  >
-    Buscar
-  </button>
-</div>
-
           <table className={
             darkMode
               ? "bg-gray-800 text-white p-4 table-auto w-full border-collapse "
@@ -131,8 +125,12 @@ export default function TableUsers() {
 
                     </button>
                     <Modal isOpen={isUserModalOpen} onClose={() => setUserModalOpen(false)}>
-                      
-              <UpdateUser userId={selectedUser} onClose={()=>setUserModalOpen(false)} />
+
+              <UpdateUser
+                userId={selectedUser}
+                onClose={() => setUserModalOpen(false)}
+                onSaved={() => obtenerUsuarios(pagination.current_page, debouncedSearch)}
+              />
             </Modal>
                   </td>
                   <td className="border border-gray-300 px-4 py-2 text-center">
@@ -165,7 +163,7 @@ export default function TableUsers() {
               <button
                 disabled={pagination.current_page === 1}
                 className="bg-gray-300 px-3 py-1 rounded hover:bg-gray-400 disabled:opacity-50"
-                onClick={() => obtenerUsuarios(pagination.current_page - 1)}
+                onClick={() => obtenerUsuarios(pagination.current_page - 1, debouncedSearch)}
               >
                 Anterior
               </button>
@@ -173,7 +171,7 @@ export default function TableUsers() {
               <button
                 disabled={pagination.current_page === pagination.last_page}
                 className="bg-gray-300 px-3 py-1 rounded hover:bg-gray-400 disabled:opacity-50"
-                onClick={() => obtenerUsuarios(pagination.current_page + 1)}
+                onClick={() => obtenerUsuarios(pagination.current_page + 1, debouncedSearch)}
               >
                 Siguiente
               </button>
@@ -185,3 +183,7 @@ export default function TableUsers() {
     </div>
   );
 }
+
+TableUsers.propTypes = {
+  refreshKey: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+};

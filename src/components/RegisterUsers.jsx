@@ -6,7 +6,7 @@ import { useSedes } from "../hooks/useSedes";
 import Select from 'react-select';
 import PropTypes from "prop-types";
 
-export default function RegisterUsers({ onClose }) {
+export default function RegisterUsers({ onClose, onCreated }) {
     const nameRef = createRef   ();
     const apellidosRef = createRef();
     const emailRef = createRef();
@@ -54,8 +54,8 @@ export default function RegisterUsers({ onClose }) {
         // 3) Llamar a la función register (haz que acepte FormData)
         const success = await register(formData, setErrores);
         if (success) {
+          onCreated?.();
           onClose();
-        
         }
       };
       
@@ -244,4 +244,5 @@ export default function RegisterUsers({ onClose }) {
 
 RegisterUsers.propTypes = {
     onClose: PropTypes.func.isRequired,
+    onCreated: PropTypes.func,
 };

@@ -6,7 +6,7 @@ import { useSedes } from "../../hooks/useSedes";
 import Select from 'react-select';
 import PropTypes from "prop-types";
 
-export default function UpdateUser({ onClose, userId }) {
+export default function UpdateUser({ onClose, userId, onSaved }) {
   // IDs únicos por instancia del componente
   const uid = useId();
   const nameId = `${uid}-name`;
@@ -60,7 +60,10 @@ export default function UpdateUser({ onClose, userId }) {
     if (imagenRef.current.files[0]) formData.append("imagen", imagenRef.current.files[0]);
 
     const ok = await updateUsuario(userId, formData, setErrores);
-    if (ok) onClose();
+    if (ok) {
+      onSaved?.();
+      onClose();
+    }
   };
 
   const obtenerDepartamentos = async () => {
@@ -297,4 +300,5 @@ export default function UpdateUser({ onClose, userId }) {
 UpdateUser.propTypes = {
   onClose: PropTypes.func.isRequired,
   userId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+  onSaved: PropTypes.func,
 };
