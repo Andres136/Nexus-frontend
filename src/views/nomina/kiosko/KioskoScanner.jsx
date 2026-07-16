@@ -103,7 +103,7 @@ function PinModal({ cedulaMap, empleadosMap, jornadaId, jornadaActiva, kioskoInf
       const mm    = String(ahora.getMonth() + 1).padStart(2, "0");
       const dd    = String(ahora.getDate()).padStart(2, "0");
 
-      const foto_respaldo = capturarFoto?.();
+      const foto_respaldo = await capturarFoto?.();
 
       await workSessionService.createSession({
         user_id:            userId,
@@ -331,12 +331,32 @@ export default function KioskoScanner({
     if (videoRef.current) videoRef.current.srcObject = null;
   }, []);
 
-  // Foto de respaldo cuando el reconocimiento facial falla y se marca por
-  // cédula: solo evidencia, nunca debe bloquear la marcación si falla.
-  const capturarFoto = useCallback(() => {
+  // Foto de respaldo siempre que se marca por cédula (con o sin error previo
+  // de reconocimiento): solo evidencia, nunca debe bloquear la marcación si
+  // falla. Si la cámara del reconocimiento ya está activa la reutiliza; si no
+  // (cédula usada directamente, sin haber intentado la cara), abre un stream
+  // temporal solo para la foto y lo cierra de inmediato.
+  const capturarFoto = useCallback(async () => {
+    let streamTemporal = null;
+    let videoTemporal = null;
+
     try {
-      const video = videoRef.current;
-      if (!video || video.readyState < 2 || !streamRef.current) return null;
+      let video = videoRef.current;
+
+      if (!streamRef.current) {
+        streamTemporal = await navigator.mediaDevices.getUserMedia({ video: true });
+        videoTemporal = document.createElement("video");
+        videoTemporal.muted = true;
+        videoTemporal.playsInline = true;
+        videoTemporal.srcObject = streamTemporal;
+        await videoTemporal.play();
+        if (videoTemporal.readyState < 2) {
+          await new Promise((resolve) => { videoTemporal.onloadeddata = resolve; });
+        }
+        video = videoTemporal;
+      } else if (!video || video.readyState < 2) {
+        return null;
+      }
 
       const canvas = document.createElement("canvas");
       canvas.width = video.videoWidth;
@@ -348,6 +368,8 @@ export default function KioskoScanner({
       return canvas.toDataURL("image/jpeg", 0.8);
     } catch {
       return null;
+    } finally {
+      streamTemporal?.getTracks().forEach((t) => t.stop());
     }
   }, []);
 
