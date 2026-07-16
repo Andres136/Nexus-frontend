@@ -11,12 +11,16 @@ import {
   CircleAlert,
   Timer,
   Users,
+  Camera,
+  X,
 } from "lucide-react";
 import { useGetWorkSessions } from "../../hooks/nomina/useGetWorkSessions";
 import { useGetEmpleados } from "../../hooks/nomina/useGetEmpleados";
 import { useSedes } from "../../hooks/useSedes";
 import { recuperacionTiempoService, workSessionService } from "../../services/nominaService";
 import { showToast } from "../../helpers/utils/showToast";
+
+const STORAGE_URL = import.meta.env.VITE_API_URL + "/storage/";
 
 function minsToHM(mins) {
   if (!mins && mins !== 0) return "—";
@@ -182,6 +186,7 @@ export default function PageWorkSessions() {
   const [sedeId, setSedeId]         = useState("");
   const [userId, setUserId]         = useState("");
   const [page, setPage]             = useState(1);
+  const [fotoAbierta, setFotoAbierta] = useState(null);
   const [recuperacionForm, setRecuperacionForm] = useState({
     fecha: today,
     hora_inicio: "",
@@ -559,6 +564,15 @@ export default function PageWorkSessions() {
                             {getInitials(nombre)}
                           </div>
                           <span className="font-medium text-gray-800 whitespace-nowrap">{nombre}</span>
+                          {item.foto_respaldo && (
+                            <button
+                              type="button"
+                              onClick={() => setFotoAbierta({ url: STORAGE_URL + item.foto_respaldo, nombre })}
+                              title="Ver foto de respaldo (marcación por cédula)"
+                              className="flex-shrink-0 text-gray-400 hover:text-indigo-600 transition-colors">
+                              <Camera className="h-4 w-4" />
+                            </button>
+                          )}
                         </div>
                       </td>
 
@@ -648,6 +662,29 @@ export default function PageWorkSessions() {
         )}
         <Pagination meta={meta} page={page} onPage={setPage} />
       </div>
+
+      {fotoAbierta && (
+        <div
+          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+          onClick={() => setFotoAbierta(null)}>
+          <div className="relative max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => setFotoAbierta(null)}
+              className="absolute -top-10 right-0 text-white/80 hover:text-white">
+              <X className="h-6 w-6" />
+            </button>
+            <img
+              src={fotoAbierta.url}
+              alt={`Foto de respaldo de ${fotoAbierta.nombre}`}
+              className="w-full rounded-xl shadow-2xl"
+            />
+            <p className="text-center text-white/70 text-xs mt-2">
+              {fotoAbierta.nombre} · Marcación por cédula
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

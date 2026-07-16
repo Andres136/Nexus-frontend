@@ -48,7 +48,7 @@ function mensajeKioskoError(error, fallback = "Error al registrar. Intenta de nu
 }
 
 // ── Teclado PIN ───────────────────────────────────────────────────────────────
-function PinModal({ cedulaMap, empleadosMap, jornadaId, jornadaActiva, kioskoInfo, onRefrescarJornada, onReconocido, onEntradaCompleta, onClose }) {
+function PinModal({ cedulaMap, empleadosMap, jornadaId, jornadaActiva, kioskoInfo, onRefrescarJornada, capturarFoto, onReconocido, onEntradaCompleta, onClose }) {
   const [pin, setPin]       = useState("");
   const [estado, setEstado] = useState("idle"); // idle | buscando | error | exito
   const [msg, setMsg]       = useState("");
@@ -103,12 +103,15 @@ function PinModal({ cedulaMap, empleadosMap, jornadaId, jornadaActiva, kioskoInf
       const mm    = String(ahora.getMonth() + 1).padStart(2, "0");
       const dd    = String(ahora.getDate()).padStart(2, "0");
 
+      const foto_respaldo = capturarFoto?.();
+
       await workSessionService.createSession({
         user_id:            userId,
         kiosko_id:          kioskoInfo.id,
         registro_diario:    `${yy}-${mm}-${dd}`,
         hora_entrada:       tiempoHHMMSS(ahora),
         horario_laboral_id: jornadaOperativa?.id ?? jornadaId,
+        ...(foto_respaldo ? { foto_respaldo } : {}),
       });
 
       const hora = hhmm(ahora);
@@ -193,6 +196,7 @@ PinModal.propTypes = {
   jornadaActiva:     PropTypes.object,
   onRefrescarJornada: PropTypes.func,
   kioskoInfo:        PropTypes.shape({ id: PropTypes.number, name: PropTypes.string }).isRequired,
+  capturarFoto:      PropTypes.func,
   onReconocido:      PropTypes.func.isRequired,
   onEntradaCompleta: PropTypes.func.isRequired,
   onClose:           PropTypes.func.isRequired,
@@ -325,6 +329,26 @@ export default function KioskoScanner({
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
     if (videoRef.current) videoRef.current.srcObject = null;
+  }, []);
+
+  // Foto de respaldo cuando el reconocimiento facial falla y se marca por
+  // cédula: solo evidencia, nunca debe bloquear la marcación si falla.
+  const capturarFoto = useCallback(() => {
+    try {
+      const video = videoRef.current;
+      if (!video || video.readyState < 2 || !streamRef.current) return null;
+
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext("2d");
+      if (!ctx || !canvas.width || !canvas.height) return null;
+
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      return canvas.toDataURL("image/jpeg", 0.8);
+    } catch {
+      return null;
+    }
   }, []);
 
   const activarReconocimiento = useCallback(() => {
@@ -569,6 +593,7 @@ export default function KioskoScanner({
           jornadaActiva={jornadaActiva}
           onRefrescarJornada={onRefrescarJornada}
           kioskoInfo={kioskoInfo}
+          capturarFoto={capturarFoto}
           onReconocido={(userId, session) => {
             usuarioBloqueado.current = userId;
             setShowPin(false);
