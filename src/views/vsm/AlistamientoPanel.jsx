@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import Select from "react-select";
 import { useAlistamientos } from "../../hooks/vsm/useAlistamiento";
-import { productsApi, usersApi } from "../../services/api";
+import { useProducts } from "../../hooks/useProducts";
+import { usersApi } from "../../services/api";
 import { toast } from "react-toastify";
 import { otAlistamientoService, vsmService } from "../../services/vsm";
 import AlistamientosActivos from "../../components/vsm/AlistamientosActivos";
@@ -24,12 +25,14 @@ export default function AlistamientoPanel() {
   const [selectedOT, setSelectedOT] = useState(null);
   const [tipoOrigen, setTipoOrigen] = useState("OT");
   const [selectedProducts, setSelectedProducts] = useState([]);
-  const [products, setProducts] = useState([]);
+  const [productSearch, setProductSearch] = useState("");
   const [users, setUsers] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [errors, setErrors] = useState({});
   const [ordenesTrabajo, setOrdenesTrabajo] = useState([]);
   const location = useLocation();
+
+  const { products, isLoading: loadingProducts, isFetching: fetchingProducts } = useProducts({ search: productSearch });
 
   const fetchUsers = async () => {
     try {
@@ -43,9 +46,6 @@ export default function AlistamientoPanel() {
 
   useEffect(() => {
     fetchUsers();
-    productsApi.getAll()
-      .then((res) => setProducts(res.data?.data || []))
-      .catch(() => toast.error("No se pudieron cargar los productos"));
   }, []);
 
   // Filtra por sede del usuario autenticado en el render, sin bloquear la carga inicial
@@ -272,15 +272,18 @@ export default function AlistamientoPanel() {
                 isClearable
               /> : <Select
                 isMulti
-                placeholder="Seleccione producto(s)..."
+                placeholder="Escribe para buscar producto(s)..."
                 options={products.map((product) => ({
                   value: product.id,
                   label: `${product.code ? `${product.code} – ` : ""}${product.name}`,
                 }))}
                 onChange={setSelectedProducts}
+                onInputChange={(value) => setProductSearch(value)}
                 value={selectedProducts}
                 styles={selectStyles}
                 isSearchable
+                isLoading={loadingProducts || fetchingProducts}
+                noOptionsMessage={() => (loadingProducts ? "Cargando..." : "Sin resultados, prueba con otro término")}
                 maxMenuHeight={150}
               />}
 
