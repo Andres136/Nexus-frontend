@@ -2,14 +2,35 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   BarChart,
   Bar,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
+  CartesianGrid,
   Tooltip,
   Legend,
   ResponsiveContainer,
   Cell,
 } from "recharts";
 import useResumenDashboard from "../../hooks/crm/useResumenDashboard";
+import { useResumenSemanalMes } from "../../hooks/crm/useResumenSemanalMes";
+
+// Métricas con lectura semanal con sentido (sin metas/cumplimiento/cartera,
+// que son montos y porcentajes pensados a nivel mensual).
+const METRICAS_SEMANALES = ["gestiones", "cotizaciones", "ordenes", "clientes_con_orden", "valor_ventas"];
+
+function mesAnterior(mesStr) {
+  if (!mesStr) return "";
+  const [y, m] = mesStr.split("-").map(Number);
+  const fecha = new Date(y, m - 2, 1);
+  return `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function variacion(actual, anterior) {
+  if (!anterior) return null;
+  const cambio = ((actual - anterior) / anterior) * 100;
+  return { texto: `${cambio > 0 ? "↑" : cambio < 0 ? "↓" : "→"} ${Math.abs(cambio).toFixed(1)}%`, positivo: cambio >= 0 };
+}
 
 // ─── Paleta de métricas ────────────────────────────────────────────────────
 const metrics = [
@@ -72,6 +93,7 @@ export default function ResumenDashboard() {
   const { data = [], isLoading, error } = useResumenDashboard();
 //console.log("Datos del dashboard:", data);
   const [selectedMonth, setSelectedMonth] = useState("");
+  const [vista, setVista] = useState("mensual"); // "mensual" | "semanal"
   const [activeMetrics, setActiveMetrics] = useState(
     metrics.map((m) => m.key)
   );
@@ -91,16 +113,27 @@ export default function ResumenDashboard() {
     [data, selectedMonth]
   );
 
-  // KPI totales del mes seleccionado
-  const kpiTotals = useMemo(() => {
-    return kpiKeys.map(({ key, label, prefix, suffix }) => {
-      const total = chartData.reduce((acc, row) => acc + (Number(row[key]) || 0), 0);
-      const avg   = chartData.length ? total / chartData.length : 0;
+  const chartDataAnterior = useMemo(
+    () => data.filter((i) => i.mes === mesAnterior(selectedMonth)),
+    [data, selectedMonth]
+  );
+
+  const { semanas, isLoading: loadingSemanas } = useResumenSemanalMes({
+    mes: vista === "semanal" ? selectedMonth : undefined,
+  });
+
+  // KPI totales del mes seleccionado (y del mes anterior, para la variación)
+  const totalesPorGrupo = (grupo) =>
+    kpiKeys.map(({ key, label, prefix, suffix }) => {
+      const total = grupo.reduce((acc, row) => acc + (Number(row[key]) || 0), 0);
+      const avg   = grupo.length ? total / grupo.length : 0;
       const isAvg = key === "cumplimiento_pct";
       const val   = isAvg ? avg : total;
       return { label, prefix, suffix, value: val, key };
     });
-  }, [chartData]);
+
+  const kpiTotals = useMemo(() => totalesPorGrupo(chartData), [chartData]);
+  const kpiTotalesAnterior = useMemo(() => totalesPorGrupo(chartDataAnterior), [chartDataAnterior]);
 
   const toggleMetric = (key) => {
     setActiveMetrics((prev) =>
@@ -186,12 +219,36 @@ export default function ResumenDashboard() {
             </button>
           ))}
         </div>
+
+        <span style={{ fontSize: 13, color: "#475569", fontWeight: 500, marginLeft: 12 }}>Vista:</span>
+        <div style={{ display: "flex", gap: 4, background: "#e2e8f0", borderRadius: 20, padding: 3 }}>
+          {[{ key: "mensual", label: "Mensual" }, { key: "semanal", label: "Semanal" }].map((v) => (
+            <button
+              key={v.key}
+              onClick={() => setVista(v.key)}
+              style={{
+                padding: "5px 14px",
+                borderRadius: 18,
+                border: "none",
+                cursor: "pointer",
+                fontSize: 12,
+                fontWeight: 600,
+                background: vista === v.key ? "#fff" : "transparent",
+                color: vista === v.key ? "#4338ca" : "#64748b",
+                boxShadow: vista === v.key ? "0 1px 3px rgba(0,0,0,0.15)" : "none",
+              }}
+            >
+              {v.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* ── KPI Cards ── */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 16, marginBottom: 28 }}>
-        {kpiTotals.map(({ label, prefix, suffix, value, key }) => {
+        {kpiTotals.map(({ label, prefix, suffix, value, key }, i) => {
           const metric = metrics.find((m) => m.key === key);
+          const varMes = variacion(value, kpiTotalesAnterior[i]?.value);
           return (
             <div key={key} style={{
               background: "#fff",
@@ -211,6 +268,9 @@ export default function ResumenDashboard() {
                   ? `${Number(value).toFixed(1)}${suffix}`
                   : Math.round(value)}
               </p>
+              <p style={{ fontSize: 11, fontWeight: 600, marginTop: 4, color: varMes ? (varMes.positivo ? "#16a34a" : "#dc2626") : "#cbd5e1" }}>
+                {varMes ? `${varMes.texto} vs mes anterior` : "Sin dato del mes anterior"}
+              </p>
             </div>
           );
         })}
@@ -229,7 +289,9 @@ export default function ResumenDashboard() {
         alignItems: "center",
       }}>
         <span style={{ fontSize: 12, color: "#94a3b8", fontWeight: 600, marginRight: 4 }}>MÉTRICAS:</span>
-        {metrics.map((m) => (
+        {metrics
+          .filter((m) => vista === "mensual" || METRICAS_SEMANALES.includes(m.key))
+          .map((m) => (
           <button
             key={m.key}
             onClick={() => toggleMetric(m.key)}
@@ -257,7 +319,45 @@ export default function ResumenDashboard() {
         padding: "24px 16px 16px",
         boxShadow: "0 1px 4px rgba(0,0,0,0.07)",
       }}>
-        {chartData.length === 0 ? (
+        {vista === "semanal" ? (
+          loadingSemanas ? (
+            <div style={{ textAlign:"center", color:"#94a3b8", padding: 40 }}>
+              Cargando semanas...
+            </div>
+          ) : semanas.length === 0 ? (
+            <div style={{ textAlign:"center", color:"#94a3b8", padding: 40 }}>
+              Sin datos para este mes
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={420}>
+              <LineChart data={semanas} margin={{ top: 10, right: 20, left: 10, bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis
+                  dataKey="label"
+                  tick={{ fontSize: 12, fill: "#475569", fontWeight: 600 }}
+                  axisLine={{ stroke: "#e2e8f0" }}
+                  tickLine={false}
+                />
+                <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend wrapperStyle={{ fontSize: 11, paddingTop: 16, color: "#64748b" }} />
+                {metrics
+                  .filter((m) => METRICAS_SEMANALES.includes(m.key) && activeMetrics.includes(m.key))
+                  .map((m) => (
+                    <Line
+                      key={m.key}
+                      type="monotone"
+                      dataKey={m.key}
+                      name={m.name}
+                      stroke={m.color}
+                      strokeWidth={2.5}
+                      dot={{ r: 4 }}
+                    />
+                  ))}
+              </LineChart>
+            </ResponsiveContainer>
+          )
+        ) : chartData.length === 0 ? (
           <div style={{ textAlign:"center", color:"#94a3b8", padding: 40 }}>
             Sin datos para este mes
           </div>
@@ -302,8 +402,8 @@ export default function ResumenDashboard() {
         )}
       </div>
 
-      {/* ── Tabla resumen ── */}
-      {chartData.length > 0 && (
+      {/* ── Tabla resumen (solo vista mensual: es por vendedor) ── */}
+      {vista === "mensual" && chartData.length > 0 && (
         <div style={{
           background: "#fff",
           borderRadius: 16,

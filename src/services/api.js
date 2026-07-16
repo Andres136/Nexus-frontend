@@ -468,6 +468,8 @@ export  const RevisarOtApi = {
 export const dashboardComercialApi = {
   getEstadisticasComerciales: (params = {}) =>
     apiClient.get("/api/estadisticas-comerciales", { params }),
+  getEstadisticasSemanales: (params = {}) =>
+    apiClient.get("/api/estadisticas-comerciales/semanas", { params }),
 };
 
 export const reportesBicApi = {
