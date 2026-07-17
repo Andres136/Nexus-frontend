@@ -74,6 +74,11 @@ function PinModal({ cedulaMap, empleadosMap, jornadaId, jornadaActiva, kioskoInf
     }
 
     setEstado("buscando");
+    // Inicia la cámara dentro del gesto de "Confirmar". En navegadores móviles,
+    // solicitar/reproducir el video después de esperar las consultas al servidor
+    // puede ser bloqueado por haber perdido la activación del usuario.
+    const fotoRespaldoPromise = capturarFoto?.() ?? Promise.resolve(null);
+
     try {
       const res      = await workSessionService.getSessionHoy(userId);
       const sessions = res.data?.data?.data ?? res.data?.data ?? [];
@@ -103,7 +108,7 @@ function PinModal({ cedulaMap, empleadosMap, jornadaId, jornadaActiva, kioskoInf
       const mm    = String(ahora.getMonth() + 1).padStart(2, "0");
       const dd    = String(ahora.getDate()).padStart(2, "0");
 
-      const foto_respaldo = await capturarFoto?.();
+      const foto_respaldo = await fotoRespaldoPromise;
 
       await workSessionService.createSession({
         user_id:            userId,

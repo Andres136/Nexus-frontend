@@ -299,7 +299,7 @@ export default function AlistamientoPanel() {
                 options={[
                   "Alistamiento de material", "Aseo y organización", "Recepción de material",
                   "Conteo de inventario", "Cargue y descargue", "Apoyo en otro alistamiento",
-                  "Apoyo en otra orden de trabajo",
+                  "Capacitacion",
                 ].map((nombre) => ({ value: nombre, label: nombre }))}
                 onChange={(option) => setNombreActividad(option?.value || "")}
                 value={nombreActividad ? { value: nombreActividad, label: nombreActividad } : null}
