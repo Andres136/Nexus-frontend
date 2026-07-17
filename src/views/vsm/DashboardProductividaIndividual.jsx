@@ -19,6 +19,7 @@ const ESTADO_COLORS = {
   BAJO:      "bg-red-100 text-red-700 border-red-300",
   NORMAL:    "bg-yellow-100 text-yellow-700 border-yellow-300",
   EFICIENTE: "bg-green-100 text-green-700 border-green-300",
+  OPERATIVO: "bg-blue-100 text-blue-700 border-blue-300",
 }
 
 // Paleta de colores para usuarios (hasta 10)
@@ -99,6 +100,8 @@ export default function DashboardProductividaIndividual() {
   // KPIs del período completo (datos de usuario agregado)
   const totalProduccion    = useMemo(() => usuarios.reduce((a, i) => a + i.produccion_total, 0), [usuarios])
   const totalPausas = useMemo(() => usuarios.reduce((a, i) => a + (i.tiempo_pausa_segundos || 0), 0), [usuarios])
+  const totalTiempoMuerto = useMemo(() => usuarios.reduce((a, i) => a + (i.tiempo_muerto_segundos || 0), 0), [usuarios])
+  const totalApoyoOperativo = useMemo(() => usuarios.reduce((a, i) => a + (i.tiempo_apoyo_operativo_segundos || 0), 0), [usuarios])
   const promedioEficiencia = useMemo(() =>
     usuarios.length
       ? (usuarios.reduce((a, i) => a + i.eficiencia_porcentaje, 0) / usuarios.length).toFixed(1)
@@ -309,6 +312,8 @@ export default function DashboardProductividaIndividual() {
                   {usuarios.length} usuario{usuarios.length !== 1 ? "s" : ""} &nbsp;·&nbsp;
                   Producción total: <strong>{totalProduccion.toLocaleString()}</strong> &nbsp;·&nbsp;
                   Tiempo detenido: <strong>{formatDuration(totalPausas)}</strong> &nbsp;·&nbsp;
+                  Tiempo muerto: <strong>{formatDuration(totalTiempoMuerto)}</strong> &nbsp;·&nbsp;
+                  Apoyo operativo: <strong>{formatDuration(totalApoyoOperativo)}</strong> &nbsp;·&nbsp;
                   Eficiencia promedio: <strong>{promedioEficiencia}%</strong>
                 </p>
                 <table className="w-full text-sm text-center">
@@ -318,6 +323,8 @@ export default function DashboardProductividaIndividual() {
                       <th className="py-2">Producción</th>
                       <th className="py-2">Tiempo productivo</th>
                       <th className="py-2">Tiempo detenido y motivos</th>
+                      <th className="py-2">Tiempo muerto</th>
+                      <th className="py-2">Apoyo operativo</th>
                       <th className="py-2">Jornada</th>
                       <th className="py-2">u/hora real</th>
                       <th className="py-2">Eficiencia</th>
@@ -338,12 +345,25 @@ export default function DashboardProductividaIndividual() {
                                 <li key={pausa.motivo} className="flex justify-between gap-2">
                                   <span className="truncate" title={pausa.motivo}>{pausa.motivo}</span>
                                   <span className="shrink-0 font-mono">{formatDuration(pausa.segundos)}</span>
+                                  {pausa.clasificacion === "APOYO_OPERATIVO" && <span className="shrink-0 text-blue-600">Operativo</span>}
                                 </li>
                               ))}
                             </ul>
                           ) : (
                             <small className="block text-gray-400">Sin pausas trazables</small>
                           )}
+                        </td>
+                        <td className="py-2 whitespace-nowrap">
+                          <strong className="text-red-600">{formatDuration(item.tiempo_muerto_segundos)}</strong>
+                          <small className="block text-gray-400">Kiosko sin actividad</small>
+                        </td>
+                        <td className="py-2 min-w-[190px]">
+                          <strong className="text-blue-600">{formatDuration(item.tiempo_apoyo_operativo_segundos)}</strong>
+                          {item.actividades_apoyo_operativo?.map((actividad) => (
+                            <small key={actividad.alistamiento_id} className="block text-left text-gray-500">
+                              {actividad.nombre}: {formatDuration(actividad.segundos)}
+                            </small>
+                          ))}
                         </td>
                         <td className="py-2">
                           {item.horas_semanales_jornada}h/sem
