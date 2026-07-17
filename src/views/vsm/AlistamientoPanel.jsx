@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import Select from "react-select";
+import CreatableSelect from "react-select/creatable";
 import { useAlistamientos } from "../../hooks/vsm/useAlistamiento";
 import { useProducts } from "../../hooks/useProducts";
 import { usersApi } from "../../services/api";
@@ -24,6 +25,8 @@ export default function AlistamientoPanel() {
 
   const [selectedOT, setSelectedOT] = useState(null);
   const [tipoOrigen, setTipoOrigen] = useState("OT");
+  const [nombreActividad, setNombreActividad] = useState("");
+  const [modalidadLibre, setModalidadLibre] = useState("PRODUCTOS");
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [productSearch, setProductSearch] = useState("");
   const [users, setUsers] = useState([]);
@@ -79,7 +82,12 @@ export default function AlistamientoPanel() {
       const payload = {
         tipo_origen: tipoOrigen,
         orden_trabajo_id: tipoOrigen === "OT" ? selectedOT?.value : null,
-        productos: tipoOrigen === "LIBRE" ? selectedProducts.map(p => p.value) : undefined,
+        nombre_actividad: tipoOrigen === "LIBRE" && modalidadLibre === "OPERATIVA"
+          ? nombreActividad
+          : undefined,
+        productos: tipoOrigen === "LIBRE" && modalidadLibre === "PRODUCTOS"
+          ? selectedProducts.map((product) => product.value)
+          : undefined,
         usuarios: selectedUsers.map(u => u.value),
         cantidad: tipoOrigen === "LIBRE" ? 0 : selectedOT?.cantidad_programada,
         fecha: new Date().toISOString().split("T")[0],
@@ -92,6 +100,7 @@ export default function AlistamientoPanel() {
       toast(res.data.message || "Alistamiento iniciado con éxito");
       // Limpiar formulario
       setSelectedOT(null);
+      setNombreActividad("");
       setSelectedProducts([]);
       setSelectedUsers([]);
       setErrors({});
@@ -256,7 +265,7 @@ export default function AlistamientoPanel() {
             <div className="min-w-0 lg:col-span-1">
               <label className="flex items-center gap-1 text-sm font-medium text-gray-700 mb-2">
                 <Package className="w-3 h-3 text-blue-600" />
-                {tipoOrigen === "OT" ? "Orden de Trabajo" : `Producto(s) (${selectedProducts.length})`}
+                {tipoOrigen === "OT" ? "Orden de Trabajo" : modalidadLibre === "PRODUCTOS" ? `Producto(s) (${selectedProducts.length})` : "Actividad operativa"}
               </label>
 
               {tipoOrigen === "OT" ? <Select
@@ -270,7 +279,7 @@ export default function AlistamientoPanel() {
                 value={selectedOT}
                 styles={selectStyles}
                 isClearable
-              /> : <Select
+              /> : modalidadLibre === "PRODUCTOS" ? <Select
                 isMulti
                 placeholder="Escribe para buscar producto(s)..."
                 options={products.map((product) => ({
@@ -285,7 +294,28 @@ export default function AlistamientoPanel() {
                 isLoading={loadingProducts || fetchingProducts}
                 noOptionsMessage={() => (loadingProducts ? "Cargando..." : "Sin resultados, prueba con otro término")}
                 maxMenuHeight={150}
+              /> : <CreatableSelect
+                placeholder="Ej. Aseo y organización..."
+                options={[
+                  "Alistamiento de material", "Aseo y organización", "Recepción de material",
+                  "Conteo de inventario", "Cargue y descargue", "Apoyo en otro alistamiento",
+                  "Apoyo en otra orden de trabajo",
+                ].map((nombre) => ({ value: nombre, label: nombre }))}
+                onChange={(option) => setNombreActividad(option?.value || "")}
+                value={nombreActividad ? { value: nombreActividad, label: nombreActividad } : null}
+                styles={selectStyles}
+                isSearchable
+                isClearable
+                formatCreateLabel={(value) => `Usar "${value}"`}
+                maxMenuHeight={150}
               />}
+
+              {tipoOrigen === "LIBRE" && (
+                <div className="mt-2 grid grid-cols-2 rounded-lg bg-gray-100 p-1 text-xs">
+                  <button type="button" onClick={() => setModalidadLibre("PRODUCTOS")} className={`rounded-md px-2 py-1.5 ${modalidadLibre === "PRODUCTOS" ? "bg-white font-semibold text-blue-700 shadow-sm" : "text-gray-500"}`}>Con productos</button>
+                  <button type="button" onClick={() => setModalidadLibre("OPERATIVA")} className={`rounded-md px-2 py-1.5 ${modalidadLibre === "OPERATIVA" ? "bg-white font-semibold text-blue-700 shadow-sm" : "text-gray-500"}`}>Actividad operativa</button>
+                </div>
+              )}
 
               {errors.orden_trabajo_id && (
                 <div className="flex items-center gap-1 mt-1 text-red-600 text-xs">
@@ -353,7 +383,9 @@ export default function AlistamientoPanel() {
               <button
                 className="w-full min-h-11 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:from-gray-400 disabled:to-gray-500 text-white px-4 py-2.5 rounded-lg font-medium transition-all duration-200 sm:hover:scale-[1.02] disabled:scale-100 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
                 onClick={iniciar}
-                disabled={loading || selectedUsers.length === 0 || (tipoOrigen === "OT" ? !selectedOT : selectedProducts.length === 0)}
+                disabled={loading || selectedUsers.length === 0 || (tipoOrigen === "OT"
+                  ? !selectedOT
+                  : modalidadLibre === "PRODUCTOS" ? selectedProducts.length === 0 : !nombreActividad.trim())}
               >
                 {loading ? (
                   <>
@@ -376,13 +408,19 @@ export default function AlistamientoPanel() {
                     Selecciona OT
                   </p>
                 )}
-                {tipoOrigen === "LIBRE" && selectedProducts.length === 0 && (
+                {tipoOrigen === "LIBRE" && modalidadLibre === "PRODUCTOS" && selectedProducts.length === 0 && (
                   <p className="text-xs text-gray-500 flex items-center justify-center gap-1">
                     <AlertCircle className="w-3 h-3" />
                     Selecciona al menos un producto
                   </p>
                 )}
-                {((tipoOrigen === "OT" && selectedOT) || (tipoOrigen === "LIBRE" && selectedProducts.length > 0)) && selectedUsers.length === 0 && (
+                {tipoOrigen === "LIBRE" && modalidadLibre === "OPERATIVA" && !nombreActividad.trim() && (
+                  <p className="text-xs text-gray-500 flex items-center justify-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    Selecciona o escribe una actividad
+                  </p>
+                )}
+                {((tipoOrigen === "OT" && selectedOT) || (tipoOrigen === "LIBRE" && (selectedProducts.length > 0 || nombreActividad.trim()))) && selectedUsers.length === 0 && (
                   <p className="text-xs text-gray-500 flex items-center justify-center gap-1">
                     <AlertCircle className="w-3 h-3" />
                     Asigna usuarios

@@ -16,6 +16,40 @@ import { useAuth } from "../../hooks/useAuth";
 
 const ROLES_MULTISEDE = [1, 4]; // ADMINISTRADOR y ADMINISTRATIVO
 
+const RAZONES_PAUSA_OPERATIVA = {
+  "Espera de material": "Espera de material",
+  "Falla de equipo": "Falla de equipo",
+  "Cambio de referencia": "Cambio de referencia",
+  OTRO: "Otro motivo",
+};
+
+async function solicitarRazonPausa(titulo, texto = "Selecciona qué hará el operario durante la pausa") {
+  const { value } = await Swal.fire({
+    title: titulo,
+    text: texto,
+    input: "select",
+    inputOptions: RAZONES_PAUSA_OPERATIVA,
+    inputPlaceholder: "Selecciona una razón...",
+    showCancelButton: true,
+    confirmButtonText: "Pausar",
+    confirmButtonColor: "#d97706",
+    inputValidator: (razon) => !razon && "Debes seleccionar una razón.",
+  });
+
+  if (!value) return null;
+  if (value !== "OTRO") return value;
+
+  const { value: otro } = await Swal.fire({
+    title: "Otro motivo",
+    input: "text",
+    inputPlaceholder: "Describe la actividad o el motivo...",
+    showCancelButton: true,
+    inputValidator: (razon) => !razon?.trim() && "Debes escribir el motivo.",
+  });
+
+  return otro?.trim() || null;
+}
+
 export default function AlistamientosActivos() {
   const { alistamientos, loading, refresh,  } = useAlistamientosActivos();
   const { pausar, reanudar, finalizar } = useAlistamientos();
@@ -26,16 +60,7 @@ export default function AlistamientosActivos() {
   const puedeVerTodasSedes = ROLES_MULTISEDE.includes(user?.role_id);
 
   const handlePausa = async (alistId) => {
-    const { value: razon } = await Swal.fire({
-      title: "Pausar alistamiento",
-      text: "Describe el motivo de la pausa",
-      input: "text",
-      inputPlaceholder: "Motivo...",
-      showCancelButton: true,
-      confirmButtonText: "Guardar",
-      confirmButtonColor: "#d97706",
-      inputValidator: (value) => !value && "Debes escribir un motivo."
-    });
+    const razon = await solicitarRazonPausa("Pausar alistamiento");
     if (razon) { await pausar(alistId, razon); refresh(sedeSeleccionada ? { sede_id: sedeSeleccionada } : {}); }
   };
 
@@ -67,17 +92,10 @@ export default function AlistamientosActivos() {
 
   const handlePausaSede = async () => {
     
-  const { value: razon } = await Swal.fire({
-    title: "Pausar TODA la sede",
-    text: "Esto pausará TODAS las órdenes activas",
-    input: "text",
-    inputPlaceholder: "Motivo de la pausa...",
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonText: "Sí, pausar todo",
-    confirmButtonColor: "#dc2626",
-    inputValidator: (value) => !value && "Debes escribir un motivo."
-  });
+  const razon = await solicitarRazonPausa(
+    "Pausar TODA la sede",
+    "La razón seleccionada se aplicará a todas las órdenes activas"
+  );
 
   if (!razon) return;
 
@@ -206,6 +224,7 @@ const handleReanudarSede = async () => {
 }
 
 function AlistamientoCard({ alist, onUpdate, onPausa, onReanudar, onFinalizar }) {
+  const esLibreOperativo = alist.tipo_origen === "LIBRE" && Boolean(alist.nombre_actividad);
   const [activeUserPanel, setActiveUserPanel] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [usuariosDisp, setUsuariosDisp] = useState([]);
@@ -266,7 +285,7 @@ function AlistamientoCard({ alist, onUpdate, onPausa, onReanudar, onFinalizar })
             <h3 className="font-black text-gray-900 text-lg leading-tight">
               #{alist.tipo_origen === "LIBRE" ? alist.id : alist.orden_trabajo_id}
             </h3>
-            <p className="text-xs text-gray-500 truncate w-40">{alist.cliente?.nombre}</p>
+            <p className="text-xs text-gray-500 truncate w-48">{esLibreOperativo ? alist.nombre_actividad : alist.cliente?.nombre}</p>
           </div>
           <div className={`px-2 py-1 rounded-md   text-[10px] font-bold border ${
             alist.estado === 'PAUSADO' ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-green-100 text-green-700 border-green-200'
@@ -283,7 +302,7 @@ function AlistamientoCard({ alist, onUpdate, onPausa, onReanudar, onFinalizar })
       {/* CONTENIDO */}
       <div className="p-3 sm:p-4 flex-1 space-y-4 overflow-y-auto max-h-none sm:max-h-[450px]">
         {/* RESUMEN PRODUCTOS (Solo Lectura) */}
-        <div className="space-y-1">
+        {!esLibreOperativo && <div className="space-y-1">
           <div className="flex items-center gap-2 mb-2 text-gray-400">
             <Package className="w-3 h-3" />
             <h4 className="text-[10px] font-bold uppercase">Estado de Productos</h4>
@@ -296,12 +315,12 @@ function AlistamientoCard({ alist, onUpdate, onPausa, onReanudar, onFinalizar })
               </span>
             </div>
           ))}
-        </div>
+        </div>}
 
         {/* LISTA DE USUARIOS */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <h4 className="text-[10px] font-bold uppercase text-gray-400">Personal & Producción</h4>
+            <h4 className="text-[10px] font-bold uppercase text-gray-400">{esLibreOperativo ? "Personal & Tiempo" : "Personal & Producción"}</h4>
             <button onClick={abrirModalUsuarios} className="text-blue-600 hover:text-blue-800 text-[10px] font-bold flex items-center gap-1">
               <Plus className="w-3 h-3" /> AGREGAR
             </button>
@@ -315,9 +334,10 @@ function AlistamientoCard({ alist, onUpdate, onPausa, onReanudar, onFinalizar })
                 onUpdate={onUpdate}
                 isExpanded={activeUserPanel === u.id}
                 onToggle={() => setActiveUserPanel(activeUserPanel === u.id ? null : u.id)}
+                expandible={!esLibreOperativo}
               />
               
-              {activeUserPanel === u.id && (
+              {activeUserPanel === u.id && !esLibreOperativo && (
                 <div className="bg-slate-50 border-t p-3 animate-in fade-in duration-200">
                   <ProductionForm 
                     usuario={u} 
@@ -451,7 +471,7 @@ function AlistamientoCard({ alist, onUpdate, onPausa, onReanudar, onFinalizar })
   );
 }
 
-function UsuarioRow({ usuario, alistId, onUpdate, isExpanded, onToggle }) {
+function UsuarioRow({ usuario, alistId, onUpdate, isExpanded, onToggle, expandible = true }) {
   const toggleEstado = async (e) => {
     e.stopPropagation(); // Evitar que abra el panel de producción al hacer clic en el botón
     try {
@@ -469,13 +489,10 @@ function UsuarioRow({ usuario, alistId, onUpdate, isExpanded, onToggle }) {
         });
         if (res.isConfirmed) { await vsmService.reanudarUsuario(alistId, usuario.id); onUpdate(); }
       } else {
-        const { value: razon } = await Swal.fire({
-          title: "Pausar usuario",
-          input: "text",
-          inputPlaceholder: "Motivo de la pausa...",
-          showCancelButton: true,
-          inputValidator: (value) => !value && "Requerido"
-        });
+        const razon = await solicitarRazonPausa(
+          `Pausar a ${usuario.name}`,
+          "Registra la labor operativa o el motivo de tiempo detenido"
+        );
         if (razon) { await vsmService.pausarUsuario(alistId, usuario.id, { razon }); onUpdate(); }
       }
     } catch (e) { toast.error("Error al cambiar estado"); }
@@ -513,8 +530,8 @@ const formatUserTime = (seg) => {
 };
   return (
     <div 
-      onClick={onToggle}
-      className="flex items-center justify-between p-3 cursor-pointer hover:bg-slate-50 transition-colors"
+      onClick={expandible ? onToggle : undefined}
+      className={`flex items-center justify-between p-3 transition-colors ${expandible ? "cursor-pointer hover:bg-slate-50" : ""}`}
     >
       <div className="flex items-center gap-3 min-w-0">
         <div className={`w-2 h-2 rounded-full ${usuario.estado === 'PAUSADO' ? 'bg-amber-500' : 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]'}`} />
@@ -533,7 +550,7 @@ const formatUserTime = (seg) => {
         >
           {usuario.estado === 'PAUSADO' ? <FaPlay size={10} /> : <FaPause size={10} />}
         </button>
-        {isExpanded ? <ChevronUp size={16} className="text-gray-300" /> : <ChevronDown size={16} className="text-gray-300" />}
+        {expandible && (isExpanded ? <ChevronUp size={16} className="text-gray-300" /> : <ChevronDown size={16} className="text-gray-300" />)}
 
 
         <button 

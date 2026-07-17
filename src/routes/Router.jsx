@@ -158,6 +158,9 @@ import PageObtenerPagos from "../views/contabilidad/PageObtenerPagos";
 import CreateImpuestos from "../components/contabilidad/CreateImpuestos";
 
 import RegisterProductoNoConforme from "../components/calidad/RegisterProductoNoConforme";
+import PageMiDia from "../views/MiDia/PageMiDia";
+import PageAdminProductividad from "../views/MiDia/PageAdminProductividad";
+import PageDetalleUsuarioProductividad from "../views/MiDia/PageDetalleUsuarioProductividad";
 import ListaProductoNoConforme from "../components/calidad/ListaProductoNoConforme";
 import DashboardProductoNoConforme from "../components/calidad/DashboardProductoNoConforme";
 import GestionProductoNoConforme from "../views/calidad/GestionProductoNoConforme";
@@ -190,6 +193,13 @@ export default function Router() {
         element={<ProtectedRoute allowedRoles={[1, 2, 3, 4, 5, 6, 7, 8, 9]} />}
       >
         <Route path="/auth" element={<AuthLyout />}>
+          <Route path="mi-dia" element={<PageMiDia />} />
+
+          <Route element={<ProtectedRoute allowedRoles={[1]} />}>
+            <Route path="admin/productividad" element={<PageAdminProductividad />} />
+            <Route path="admin/productividad/usuarios/:id" element={<PageDetalleUsuarioProductividad />} />
+          </Route>
+
           <Route
             path="responsabilidades"
             element={<DynamicProtectedRoute permission="/auth/responsabilidades">

@@ -26,6 +26,7 @@ import {
   PackageX,
   TicketCheck,
   CalendarDays,
+  Gauge,
 
 } from "lucide-react";
 
@@ -258,6 +259,24 @@ export default function Navbar() {
                   <p className="text-sm text-gray-300">Conectado como:</p>
                   <p className="text-sm font-medium text-white truncate">{user?.name}</p>
                 </div>
+                <Link
+                  to="/auth/mi-dia"
+                  onClick={() => setOpenUserMenu(false)}
+                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 hover:text-white transition-colors"
+                >
+                  <ListChecks className="w-4 h-4" />
+                  Mi día
+                </Link>
+                {user?.role_id === 1 && (
+                  <Link
+                    to="/auth/admin/productividad"
+                    onClick={() => setOpenUserMenu(false)}
+                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 hover:text-white transition-colors"
+                  >
+                    <Gauge className="w-4 h-4" />
+                    Productividad del equipo
+                  </Link>
+                )}
                 <button
                   onClick={() => {
                     logout();
@@ -326,6 +345,28 @@ export default function Navbar() {
               )}
             </button>
           </li>
+          <li>
+            <Link
+              to="/auth/mi-dia"
+              onClick={() => setIsSidebarOpen(false)}
+              className="flex items-center gap-2 rounded px-4 py-2 text-white hover:bg-gray-700"
+            >
+              <ListChecks className="h-4 w-4" />
+              Mi día
+            </Link>
+          </li>
+          {user?.role_id === 1 && (
+            <li>
+              <Link
+                to="/auth/admin/productividad"
+                onClick={() => setIsSidebarOpen(false)}
+                className="flex items-center gap-2 rounded px-4 py-2 text-white hover:bg-gray-700"
+              >
+                <Gauge className="h-4 w-4" />
+                Productividad del equipo
+              </Link>
+            </li>
+          )}
           <li>
             <button
               onClick={logout}
