@@ -12,6 +12,7 @@ const FACE_AMBIGUOUS_DISTANCE_MARGIN = 0.06;
 const FACE_REQUIRED_CONSECUTIVE_MATCHES = 3;
 const FACE_CONSECUTIVE_WINDOW_MS = 1800;
 const RECOGNITION_ACTIVE_MS = 60000;
+const CAMERA_FRAME_TIMEOUT_MS = 5000;
 
 const hhmm = (date) =>
   date.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit", timeZone: "America/Bogota" });
@@ -344,15 +345,43 @@ export default function KioskoScanner({
       let video = videoRef.current;
 
       if (!streamRef.current) {
-        streamTemporal = await navigator.mediaDevices.getUserMedia({ video: true });
+        streamTemporal = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "user" },
+          audio: false,
+        });
         videoTemporal = document.createElement("video");
         videoTemporal.muted = true;
         videoTemporal.playsInline = true;
+        videoTemporal.autoplay = true;
+        videoTemporal.setAttribute("aria-hidden", "true");
+        Object.assign(videoTemporal.style, {
+          position: "fixed",
+          width: "1px",
+          height: "1px",
+          left: "-9999px",
+          opacity: "0",
+          pointerEvents: "none",
+        });
+        document.body.appendChild(videoTemporal);
         videoTemporal.srcObject = streamTemporal;
         await videoTemporal.play();
-        if (videoTemporal.readyState < 2) {
-          await new Promise((resolve) => { videoTemporal.onloadeddata = resolve; });
-        }
+
+        await new Promise((resolve, reject) => {
+          if (videoTemporal.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA
+            && videoTemporal.videoWidth > 0) {
+            resolve();
+            return;
+          }
+
+          const timeout = setTimeout(
+            () => reject(new Error("La cámara no entregó un fotograma a tiempo.")),
+            CAMERA_FRAME_TIMEOUT_MS,
+          );
+          videoTemporal.addEventListener("loadeddata", () => {
+            clearTimeout(timeout);
+            resolve();
+          }, { once: true });
+        });
         video = videoTemporal;
       } else if (!video || video.readyState < 2) {
         return null;
@@ -370,6 +399,10 @@ export default function KioskoScanner({
       return null;
     } finally {
       streamTemporal?.getTracks().forEach((t) => t.stop());
+      if (videoTemporal) {
+        videoTemporal.srcObject = null;
+        videoTemporal.remove();
+      }
     }
   }, []);
 
