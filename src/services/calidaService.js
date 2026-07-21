@@ -80,6 +80,10 @@ export const gestionOperativaService = {
   getPrioridadesActivas: (params) => apiClient.get('/api/vsm/prioridades', { params }),
   actualizarPrioridadOrigen: (id, cantidad_prioridad) =>
     apiClient.patch(`/api/vsm/origenes/${id}/prioridad`, { cantidad_prioridad }),
+  actualizarObservacionItem: (id, observaciones) =>
+    apiClient.patch(`/api/vsm/orden-compra-detalles/${id}/observacion`, { observaciones }),
+  exportarPdf: (params) =>
+    apiClient.get('/api/vsm/ordenes-pdf', { params, responseType: 'blob' }),
 };
 
 export const seguimentoHallazgosService = {
