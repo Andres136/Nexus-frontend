@@ -9,9 +9,10 @@ import { useGetDashboardOperativo } from '../../hooks/calidad/useGetDasboardOper
 import { gestionOperativaService } from '../../services/calidaService';
 import {useSedes} from "../../hooks/useSedes";
 import MantenimientoCalendar from '../../components/tic/MantenimientoCalendar';
-import  {RevisarOtApi} from "../../services/api";
+import  {RevisarOtApi, productsApi} from "../../services/api";
 import { showToast } from '../../helpers/utils/showToast';
 import { useClientes } from '../../hooks/useClientes';
+import { useProducts } from '../../hooks/useProducts';
 import  NexusLoader from '../../components/NexusLoader';
 import { useRegisterOcComprasHistorial } from '../../hooks/crm/useRegisterOcComprasHistorial';
 import Select from 'react-select';
@@ -23,7 +24,118 @@ const VSMCard = ({ orden, formData, handleChange, handleSubmit  }) => {
   const [prioridadesPrioridad, setPrioridadesPrioridad] = useState({});
   const [productoCompraModal, setProductoCompraModal] = useState(null);
   const [localRevisada, setLocalRevisada] = useState(orden.revisada);
+  const [observaciones, setObservaciones] = useState(() =>
+    Object.fromEntries(orden.productos.map((p) => [p.detalle_id, p.observaciones || '']))
+  );
+  const [guardandoObservacion, setGuardandoObservacion] = useState(null);
+  const [homologarModal, setHomologarModal] = useState(null);
+  const [equivalenteBusqueda, setEquivalenteBusqueda] = useState('');
+  const [equivalenteId, setEquivalenteId] = useState(null);
+  const [equivalenteBodegaId, setEquivalenteBodegaId] = useState('');
+  const [equivalenteCantidad, setEquivalenteCantidad] = useState('');
+  const [equivalenteObservacion, setEquivalenteObservacion] = useState('');
+  const [guardandoEquivalente, setGuardandoEquivalente] = useState(false);
+  const [equivalenteStockPorBodega, setEquivalenteStockPorBodega] = useState([]);
+  const [cargandoStockEquivalente, setCargandoStockEquivalente] = useState(false);
 const queryClient = useQueryClient();
+  const { products: productosEquivalentes } = useProducts({ search: equivalenteBusqueda });
+  const { bodegasAll } = useSedes();
+  const bodegasDeLaSede = bodegasAll.filter((b) => Number(b.sede_id) === Number(orden.sede_id));
+
+  // Al elegir el producto equivalente, traer su stock real por bodega (mismo
+  // endpoint que usa Orden de Trabajo) para no dejar homologar más de lo
+  // que realmente hay disponible.
+  useEffect(() => {
+    if (!equivalenteId) {
+      setEquivalenteStockPorBodega([]);
+      return;
+    }
+
+    let cancelado = false;
+    setCargandoStockEquivalente(true);
+    setEquivalenteBodegaId('');
+    productsApi.getStock(equivalenteId, { sede_id: orden.sede_id })
+      .then((res) => {
+        if (!cancelado) setEquivalenteStockPorBodega(res.data?.stock?.resumen_por_bodega ?? []);
+      })
+      .catch(() => {
+        if (!cancelado) setEquivalenteStockPorBodega([]);
+      })
+      .finally(() => {
+        if (!cancelado) setCargandoStockEquivalente(false);
+      });
+
+    return () => { cancelado = true; };
+  }, [equivalenteId, orden.sede_id]);
+
+  const stockBodegaSeleccionada = equivalenteStockPorBodega.find(
+    (b) => Number(b.bodega_id) === Number(equivalenteBodegaId)
+  )?.stock_total ?? null;
+
+  const guardarObservacionItem = async (detalleId) => {
+    setGuardandoObservacion(detalleId);
+    try {
+      await gestionOperativaService.actualizarObservacionItem(detalleId, observaciones[detalleId] ?? '');
+      showToast('success', 'Observación guardada');
+    } catch {
+      showToast('error', 'No se pudo guardar la observación');
+    } finally {
+      setGuardandoObservacion(null);
+    }
+  };
+
+  const abrirHomologarModal = (producto) => {
+    setHomologarModal(producto);
+    setEquivalenteBusqueda('');
+    setEquivalenteId(null);
+    setEquivalenteBodegaId('');
+    setEquivalenteCantidad(Number(producto.faltante ?? 0).toFixed(1));
+    setEquivalenteObservacion('');
+  };
+
+  const guardarHomologacion = async () => {
+    if (!equivalenteId) {
+      showToast('error', 'Selecciona el producto equivalente');
+      return;
+    }
+    if (!equivalenteBodegaId) {
+      showToast('error', 'Selecciona la bodega');
+      return;
+    }
+    const cantidad = Number(equivalenteCantidad);
+    if (!(cantidad > 0)) {
+      showToast('error', 'Indica una cantidad mayor a 0');
+      return;
+    }
+
+    setGuardandoEquivalente(true);
+    try {
+      await productsApi.postInstruccionesAlistamiento({
+        items: [{
+          orden_trabajo_id: orden.orden_trabajo_id,
+          orden_compra_detalle_id: homologarModal.detalle_id,
+          producto_id: equivalenteId,
+          bodega_id: Number(equivalenteBodegaId),
+          cantidad,
+          tipo: 'equivalente',
+          observacion: equivalenteObservacion || null,
+        }],
+      });
+      showToast('success', 'Homologación registrada');
+      queryClient.invalidateQueries(['dashboardOperativo']);
+      setHomologarModal(null);
+    } catch (error) {
+      // El backend responde 400 con { errores: [...] } (validación de stock
+      // por item) o 422 con { message, errors } (validación de campos).
+      const data = error.response?.data;
+      const detalle = Array.isArray(data?.errores)
+        ? data.errores.map((e) => (typeof e === 'string' ? e : (e.mensaje || JSON.stringify(e)))).join(' | ')
+        : null;
+      showToast('error', detalle || data?.message || 'No se pudo registrar la homologación');
+    } finally {
+      setGuardandoEquivalente(false);
+    }
+  };
 
   const getStatusConfig = (estado) => {
     const configs = {
@@ -292,9 +404,20 @@ const marcarDocumentoRevisado = async () => {
               <tbody className="divide-y divide-gray-200">
                 {orden.productos.map((prod, idx) => (
                   <tr key={idx} className="hover:bg-white transition-colors">
-                    <td className="px-3 py-2 font-medium">
+                    <td className="px-3 py-2 font-medium align-top">
                        {prod.producto || `ID: ${prod.producto_id}`}
                        {prod.tiene_equivalente && <span className="ml-2 text-[9px] bg-purple-100 text-purple-700 px-1 rounded font-bold">EQ</span>}
+                       <textarea
+                         value={observaciones[prod.detalle_id] ?? ''}
+                         onChange={(e) => setObservaciones((prev) => ({ ...prev, [prod.detalle_id]: e.target.value }))}
+                         onBlur={() => guardarObservacionItem(prod.detalle_id)}
+                         placeholder="Observación..."
+                         rows={2}
+                         className="mt-1 w-full rounded border border-gray-200 bg-white px-1.5 py-1 text-[10px] font-normal text-gray-600 focus:border-blue-400 focus:outline-none"
+                       />
+                       {guardandoObservacion === prod.detalle_id && (
+                         <span className="text-[9px] text-gray-400">Guardando...</span>
+                       )}
                     </td>
                  <td className="px-3 py-2 text-right font-mono">
   <span className="text-green-600 font-bold">
@@ -370,13 +493,26 @@ const marcarDocumentoRevisado = async () => {
                           <span className="text-[10px] text-gray-400">Sin compra</span>
                         )}
                         {prod.faltante > 0 && (
-                          <button
-                            type="button"
-                            onClick={() => setProductoCompraModal(prod)}
-                            className="w-full rounded border border-blue-200 bg-blue-50 px-2 py-1.5 text-[10px] font-bold text-blue-700 hover:bg-blue-100"
-                          >
-                            Compra / prioridad
-                          </button>
+                          <div className="flex gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => setProductoCompraModal(prod)}
+                              title="Compra / prioridad"
+                              className="flex flex-1 items-center justify-center gap-1 rounded border border-blue-200 bg-blue-50 px-2 py-1.5 text-[10px] font-bold text-blue-700 hover:bg-blue-100"
+                            >
+                              <ShoppingCart size={12} />
+                              Compra
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => abrirHomologarModal(prod)}
+                              title="Homologar con otro producto"
+                              className="flex flex-1 items-center justify-center gap-1 rounded border border-purple-200 bg-purple-50 px-2 py-1.5 text-[10px] font-bold text-purple-700 hover:bg-purple-100"
+                            >
+                              <Beaker size={12} />
+                              Homologar
+                            </button>
+                          </div>
                         )}
                       </div>
                     </td>
@@ -503,6 +639,105 @@ const marcarDocumentoRevisado = async () => {
     </div>
   </div>
 )}
+{homologarModal && (
+  <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/45 px-4">
+    <div className="w-full max-w-lg rounded-lg bg-white shadow-2xl">
+      <div className="flex items-start justify-between gap-4 border-b px-5 py-4">
+        <div>
+          <p className="text-xs font-bold uppercase text-purple-600">Homologar producto</p>
+          <h3 className="text-base font-bold text-gray-900">
+            {homologarModal.producto || `Producto ${homologarModal.producto_id}`}
+          </h3>
+          <p className="text-sm text-gray-500">
+            Faltante: {Number(homologarModal.faltante ?? 0).toFixed(1)} kg
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setHomologarModal(null)}
+          className="rounded border border-gray-200 px-3 py-1.5 text-sm font-semibold text-gray-600 hover:bg-gray-50"
+        >
+          Cerrar
+        </button>
+      </div>
+
+      <div className="space-y-4 p-5">
+        <div>
+          <label className="mb-1 block text-xs font-bold uppercase text-gray-500">
+            Producto equivalente
+          </label>
+          <Select
+            options={productosEquivalentes
+              ?.filter((p) => p.id !== homologarModal.producto_id)
+              .map((p) => ({ value: p.id, label: `${p.code ? `${p.code} – ` : ''}${p.name}` }))}
+            onInputChange={(value) => setEquivalenteBusqueda(value)}
+            onChange={(selected) => setEquivalenteId(selected?.value || null)}
+            placeholder="Buscar producto homólogo..."
+            isClearable
+          />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-xs font-bold uppercase text-gray-500">
+            Bodega {cargandoStockEquivalente && '(consultando stock...)'}
+          </label>
+          <select
+            value={equivalenteBodegaId}
+            onChange={(e) => setEquivalenteBodegaId(e.target.value)}
+            disabled={!equivalenteId}
+            className="w-full rounded border border-gray-300 px-3 py-2 text-sm disabled:bg-gray-100"
+          >
+            <option value="">Seleccionar bodega</option>
+            {(equivalenteStockPorBodega.length > 0 ? equivalenteStockPorBodega : bodegasDeLaSede).map((b) => (
+              <option key={b.bodega_id ?? b.id} value={b.bodega_id ?? b.id}>
+                {b.bodega_nombre ?? b.nombre}
+                {b.stock_total !== undefined ? ` — ${Number(b.stock_total).toFixed(1)} kg disponibles` : ''}
+              </option>
+            ))}
+          </select>
+          {equivalenteId && !cargandoStockEquivalente && equivalenteStockPorBodega.length === 0 && (
+            <p className="mt-1 text-[11px] text-red-500">Este producto no tiene stock registrado en esta sede.</p>
+          )}
+        </div>
+
+        <div>
+          <label className="mb-1 block text-xs font-bold uppercase text-gray-500">
+            Cantidad (kg) {stockBodegaSeleccionada !== null && `— disponible: ${Number(stockBodegaSeleccionada).toFixed(1)} kg`}
+          </label>
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            value={equivalenteCantidad}
+            onChange={(e) => setEquivalenteCantidad(e.target.value)}
+            className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
+          />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-xs font-bold uppercase text-gray-500">
+            Observación
+          </label>
+          <textarea
+            value={equivalenteObservacion}
+            onChange={(e) => setEquivalenteObservacion(e.target.value)}
+            placeholder="Motivo de la homologación..."
+            className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
+          />
+        </div>
+
+        <button
+          type="button"
+          onClick={guardarHomologacion}
+          disabled={guardandoEquivalente}
+          className="w-full rounded bg-purple-600 px-3 py-2 text-sm font-bold text-white hover:bg-purple-700 disabled:opacity-50"
+        >
+          {guardandoEquivalente ? 'Guardando...' : 'Registrar homologación'}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 {/* 🔥 FORMULARIO DE REPROGRAMACIÓN */}
 <div className="border-t p-4 space-y-3">
   <h4 className="text-sm font-bold text-gray-600">
@@ -585,6 +820,9 @@ export default function DashboardOperativo() {
   const { sedes } = useSedes();
   const [sedeId, setSedeId] = useState(null);
   const [clienteId, setClienteId] = useState(null);
+  const [productoId, setProductoId] = useState(null);
+  const [productoSearch, setProductoSearch] = useState("");
+  const { products: productosOpciones } = useProducts({ search: productoSearch });
   const [estadoVsm, setEstadoVsm] = useState("");
   const [revisada, setRevisada] = useState(null);
   const [ordenSeleccionada, setOrdenSeleccionada] = useState(null);
@@ -601,6 +839,7 @@ const [search, setSearch] = useState("");
   const { data, isLoading } = useGetDashboardOperativo({ sede_id: sedeId ,
     estado_vsm: estadoVsm,
      cliente: clienteId,
+     producto_id: productoId,
      revisada: revisada,
       search: search
     });
@@ -750,6 +989,34 @@ const {
     showToast('success', 'Prioridades limpiadas');
   };
 
+  const [exportandoPdf, setExportandoPdf] = useState(false);
+
+  const handleExportarPdf = async () => {
+    setExportandoPdf(true);
+    try {
+      const response = await gestionOperativaService.exportarPdf({
+        sede_id: sedeId,
+        estado_vsm: estadoVsm,
+        cliente: clienteId,
+        producto_id: productoId,
+        revisada,
+        search,
+      });
+      const url = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `torre-control-vsm_${new Date().toISOString().slice(0, 10)}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      showToast('error', 'No se pudo generar el PDF');
+    } finally {
+      setExportandoPdf(false);
+    }
+  };
+
 
 
   
@@ -760,6 +1027,13 @@ const events = data?.map((orden) => {
 
   const vencido = fechaEntrega < hoy && orden.estado_vsm !== 'ENTREGADO';
 
+  // "Revisado hoy": distingue las que ya revisaste en la sesión de hoy de
+  // las que comparten la misma fecha de entrega pero se revisaron otro día.
+  const revisadaHoy = Boolean(
+    orden.revisada_at &&
+    new Date(orden.revisada_at).toDateString() === hoy.toDateString()
+  );
+
   return {
     id: orden.orden_id,
       title: `${orden.revisada ? "✔️ " : ""}OC #${orden.orden_id} / OT #${orden.orden_trabajo_id || 'N/A'} - ${orden.sede} - ${orden.cliente}`,
@@ -769,17 +1043,28 @@ const events = data?.map((orden) => {
     extendedProps: {
       ...orden,
       revisada: orden.revisada, // para control visual de revisión
-      vencido // 
+      revisadaHoy,
+      vencido //
     }
   };
 });
 
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <header className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-800">Torre de Control VSM</h1>
-        <p className="text-gray-600">Monitoreo de flujo de valor en tiempo real</p>
+    <div className="p-3 bg-gray-50 min-h-screen">
+      <header className="mb-8 flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">Torre de Control VSM</h1>
+          <p className="text-gray-600">Monitoreo de flujo de valor en tiempo real</p>
+        </div>
+        <button
+          type="button"
+          onClick={handleExportarPdf}
+          disabled={exportandoPdf}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {exportandoPdf ? 'Generando PDF...' : 'Descargar PDF'}
+        </button>
       </header>
 <div className="flex flex-wrap gap-4 mb-6">
 
@@ -834,6 +1119,31 @@ const events = data?.map((orden) => {
         </option>
       ))}
     </select>
+  </div>
+
+  {/* PRODUCTO / INVENTARIO */}
+  <div className="flex flex-col w-56">
+    <label className="text-xs font-semibold text-gray-500 mb-1">
+      Producto
+    </label>
+    <Select
+      options={productosOpciones?.map((p) => ({
+        value: p.id,
+        label: `${p.code ? `${p.code} – ` : ""}${p.name}`,
+      }))}
+      value={
+        productoId
+          ? productosOpciones
+              ?.map((p) => ({ value: p.id, label: `${p.code ? `${p.code} – ` : ""}${p.name}` }))
+              .find((option) => option.value === productoId) || null
+          : null
+      }
+      onInputChange={(value) => setProductoSearch(value)}
+      onChange={(selected) => setProductoId(selected?.value || null)}
+      placeholder="Buscar producto..."
+      isClearable
+      className="text-sm"
+    />
   </div>
 
   {/* ESTADO */}
@@ -957,7 +1267,7 @@ eventClassNames={(arg) => {
     />
 
     {/* drawer */}
-    <div className="w-[500px] bg-white h-full shadow-xl overflow-y-auto p-4">
+    <div className="w-[720px] max-w-[90vw] bg-white h-full shadow-xl overflow-y-auto p-4">
       
       <button
         onClick={() => setOrdenSeleccionada(null)}
