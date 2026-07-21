@@ -59,19 +59,27 @@ export  const hallazgosNovedadesService = {
   getHallazgoById: (id) => apiClient.get(`/api/hallazgos/${id}`),
   updateHallazgo: (id, data) => apiClient.put(`/api/hallazgos/${id}`, data),
   deleteHallazgo: (id) => apiClient.delete(`/api/hallazgos/${id}`),
-  getEstadisticasSemestrales: () => apiClient.get("/api/indicador-semestral"),
+  getEstadisticasSemestrales: (params) => apiClient.get("/api/indicador-semestral", { params }),
 };
 
 export const gestionOperativaService = {
-  getvsm:(params)=> apiClient.get("/api/vsm/ordenes", { params }),
+  getvsm: (params) => apiClient.get("/api/vsm/ordenes", { params }),
 
   updateGestion: (id, data) => apiClient.put(`/api/control-operativo/${id}`, data),
 
   deleteGestion: (id) => apiClient.delete(`/api/control-operativo/${id}`),
- createHistorialOrdenes(data) {
-  return apiClient.post('/api/ordenes-compras-historial', data);
-}
 
+  createHistorialOrdenes(data) {
+    return apiClient.post('/api/ordenes-compras-historial', data);
+  },
+
+  agregarDetalleOcProveedor: (data) => apiClient.post('/api/detalles-orden', data),
+  agregarPrioridadDetalleExistente: (data) =>
+    apiClient.post('/api/detalles-orden/prioridad-existente', data),
+
+  getPrioridadesActivas: (params) => apiClient.get('/api/vsm/prioridades', { params }),
+  actualizarPrioridadOrigen: (id, cantidad_prioridad) =>
+    apiClient.patch(`/api/vsm/origenes/${id}/prioridad`, { cantidad_prioridad }),
 };
 
 export const seguimentoHallazgosService = {
@@ -117,19 +125,20 @@ export const analisisProductoNoConformeService = {
     apiClient.put(`/api/analisis-producto-no-conforme/${id}`, data),
 
   // Cambiar estado
-  cambiarEstado: (id, estado) =>
+  cambiarEstado: (id, estado_id) =>
     apiClient.patch(`/api/analisis-producto-no-conforme/${id}/estado`, {
-      estado,
+      estado_id,
     }),
 };
 export const productoNoConformeService = {
   createProductoNoConforme: (data) => apiClient.post("/api/productos-no-conformes", data),
-  getProductoNoConformeById: (id) => apiClient.get(`/api/productos-no-conforme/${id}`),
-  updateProductoNoConforme: (id, data) => apiClient.put(`/api/producto-no-conforme/${id}`, data),
-  deleteProductoNoConforme: (id) => apiClient.delete(`/api/producto-no-conforme/${id}`),
-  estadisticasProductoNoConforme: (data) => apiClient.get("/api/productos-no-conformes/estadisticas", { params: data }  ),
-  cambiarEstado: (id, estado) => apiClient.patch(`/api/productos-no-conforme/${id}/estado`, {
-    estado,
+  updateProductoNoConforme: (id, data) => apiClient.put(`/api/productos-no-conformes/${id}`, data),
+  deleteProductoNoConforme: (id) => apiClient.delete(`/api/productos-no-conformes/${id}`),
+  estadisticasProductoNoConforme: (params) => apiClient.get("/api/productos-no-conformes/estadisticas", { params }),
+  getAll: (params) => apiClient.get("/api/productos-no-conformes", { params }),
+  getById: (id) => apiClient.get(`/api/productos-no-conformes/${id}`),
+  cambiarEstado: (id, estado_id) => apiClient.patch(`/api/productos-no-conformes/${id}/estado`, {
+    estado_id,
   }),
 };
 

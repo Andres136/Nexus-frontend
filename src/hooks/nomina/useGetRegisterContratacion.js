@@ -20,12 +20,20 @@ const EMPTY_FORM = {
   auxilio_transporte: "",
   pago_frecuencia: "",
   inicio_contratacion: "",
+  dias_vacaciones_iniciales: 0,
   fin_contrato: "",
   status: true,
   eps_id: "",
   arl_id: "",
   fondo_pensiones_id: "",
   caja_penciones_id: "",
+  fondo_cesantias_id: "",
+  aplica_salud: true,
+  aplica_pension: true,
+  aplica_arl: true,
+  aplica_sena: true,
+  aplica_icbf: true,
+  aplica_caja_compensacion: true,
 };
 
 function normalizeMoneyValue(value) {
@@ -63,8 +71,9 @@ export const useGetRegisterContratacion = ({ uuid = null, onSuccess } = {}) => {
       const {
         id_contrato, users_id, empresa_id, centro_costo, tipo_documento, numero_documento, correo, cargo,
         tipo_salario, parametro_laboral_id, no_salarial, base_salario, salario_integral, auxilio_transporte, pago_frecuencia,
-        inicio_contratacion, fin_contrato, status, eps_id, arl_id,
-        fondo_pensiones_id, caja_penciones_id,
+        inicio_contratacion, dias_vacaciones_iniciales, fin_contrato, status, eps_id, arl_id,
+        fondo_pensiones_id, caja_penciones_id, fondo_cesantias_id,
+        aplica_salud, aplica_pension, aplica_arl, aplica_sena, aplica_icbf, aplica_caja_compensacion,
       } = contratacion.data;
       setFormData({
         id_contrato: id_contrato ?? "",
@@ -83,12 +92,20 @@ export const useGetRegisterContratacion = ({ uuid = null, onSuccess } = {}) => {
         auxilio_transporte: auxilio_transporte ?? "",
         pago_frecuencia: pago_frecuencia ?? "",
         inicio_contratacion: inicio_contratacion?.slice(0, 10) ?? "",
+        dias_vacaciones_iniciales: dias_vacaciones_iniciales ?? 0,
         fin_contrato: fin_contrato?.slice(0, 10) ?? "",
         status: status ?? true,
         eps_id: eps_id ?? "",
         arl_id: arl_id ?? "",
         fondo_pensiones_id: fondo_pensiones_id ?? "",
         caja_penciones_id: caja_penciones_id ?? "",
+        fondo_cesantias_id: fondo_cesantias_id ?? "",
+        aplica_salud: aplica_salud ?? true,
+        aplica_pension: aplica_pension ?? true,
+        aplica_arl: aplica_arl ?? true,
+        aplica_sena: aplica_sena ?? true,
+        aplica_icbf: aplica_icbf ?? true,
+        aplica_caja_compensacion: aplica_caja_compensacion ?? true,
       });
     } else if (!uuid) {
       setFormData(EMPTY_FORM);
@@ -111,6 +128,7 @@ export const useGetRegisterContratacion = ({ uuid = null, onSuccess } = {}) => {
         base_salario: normalizeMoneyValue(formData.base_salario),
         auxilio_transporte: normalizeMoneyValue(formData.auxilio_transporte) || 0,
         no_salarial: normalizeMoneyValue(formData.no_salarial) || 0,
+        dias_vacaciones_iniciales: formData.dias_vacaciones_iniciales || 0,
         parametro_laboral_id: formData.parametro_laboral_id || null,
         tipo_salario: formData.tipo_salario || "personalizado",
       };

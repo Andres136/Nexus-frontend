@@ -19,6 +19,7 @@ const ESTADO_COLORS = {
   BAJO:      "bg-red-100 text-red-700 border-red-300",
   NORMAL:    "bg-yellow-100 text-yellow-700 border-yellow-300",
   EFICIENTE: "bg-green-100 text-green-700 border-green-300",
+  OPERATIVO: "bg-blue-100 text-blue-700 border-blue-300",
 }
 
 // Paleta de colores para usuarios (hasta 10)
@@ -26,6 +27,14 @@ const USER_PALETTE = [
   "#3b82f6", "#22c55e", "#f59e0b", "#ef4444", "#8b5cf6",
   "#06b6d4", "#ec4899", "#14b8a6", "#f97316", "#6366f1",
 ]
+
+const formatDuration = (seconds) => {
+  const value = Math.max(0, Math.floor(Number(seconds) || 0))
+  const hours = Math.floor(value / 3600)
+  const minutes = Math.floor((value % 3600) / 60)
+  const secs = value % 60
+  return `${hours}h ${minutes}m ${secs}s`
+}
 
 // ── tooltip personalizado para el chart de período ────────────────────────────
 
@@ -37,7 +46,14 @@ const TooltipPeriodo = ({ active, payload, label }) => {
       {payload.map((entry) => (
         <div key={entry.dataKey} className="flex justify-between gap-4">
           <span style={{ color: entry.color }}>{entry.name}</span>
-          <span className="font-medium">{entry.value}%</span>
+          <span className="font-medium text-right">
+            {entry.value}%
+            {entry.payload?.[`${entry.dataKey}_meta`] && (
+              <small className="block font-normal text-gray-400">
+                Meta {Number(entry.payload[`${entry.dataKey}_meta`]).toLocaleString()} u · {entry.payload[`${entry.dataKey}_horas`]}h/sem
+              </small>
+            )}
+          </span>
         </div>
       ))}
     </div>
@@ -83,6 +99,9 @@ export default function DashboardProductividaIndividual() {
 
   // KPIs del período completo (datos de usuario agregado)
   const totalProduccion    = useMemo(() => usuarios.reduce((a, i) => a + i.produccion_total, 0), [usuarios])
+  const totalPausas = useMemo(() => usuarios.reduce((a, i) => a + (i.tiempo_pausa_segundos || 0), 0), [usuarios])
+  const totalTiempoMuerto = useMemo(() => usuarios.reduce((a, i) => a + (i.tiempo_muerto_segundos || 0), 0), [usuarios])
+  const totalApoyoOperativo = useMemo(() => usuarios.reduce((a, i) => a + (i.tiempo_apoyo_operativo_segundos || 0), 0), [usuarios])
   const promedioEficiencia = useMemo(() =>
     usuarios.length
       ? (usuarios.reduce((a, i) => a + i.eficiencia_porcentaje, 0) / usuarios.length).toFixed(1)
@@ -115,7 +134,11 @@ export default function DashboardProductividaIndividual() {
     periodos.map((p) => ({
       label: p.label,
       meta:  p.meta,
-      ...Object.fromEntries(p.usuarios.map((u) => [u.usuario_id, u.rendimiento])),
+      ...Object.fromEntries(p.usuarios.flatMap((u) => [
+        [u.usuario_id, u.rendimiento],
+        [`${u.usuario_id}_meta`, u.meta],
+        [`${u.usuario_id}_horas`, u.horas_semanales_jornada],
+      ])),
     })),
     [periodos]
   )
@@ -156,7 +179,7 @@ export default function DashboardProductividaIndividual() {
 
       {!isLoading && (
         <>
-          {/* KPI CARDS — metas de referencia */}
+          {/* KPI CARDS — metas generales de respaldo/referencia */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="bg-white shadow p-3 rounded flex flex-col items-center">
               <span className="text-gray-500 text-xs">Meta / hora</span>
@@ -214,7 +237,7 @@ export default function DashboardProductividaIndividual() {
                 Rendimiento por usuario — vista {PERIODOS.find((p) => p.key === tipoPeriodo)?.label.toLowerCase()}
               </h3>
               <p className="text-xs text-gray-400 mb-3">
-                % de cumplimiento vs meta {tipoPeriodo} ({metaPeriodo.toLocaleString()} u).
+                % de cumplimiento frente a la meta individual según la jornada de Nómina.
                 Verde ≥ 100% · Amarillo ≥ 80% · Rojo &lt; 80%
               </p>
               <ResponsiveContainer width="100%" height={320}>
@@ -288,6 +311,9 @@ export default function DashboardProductividaIndividual() {
                 <p className="text-xs text-gray-500 mb-2">
                   {usuarios.length} usuario{usuarios.length !== 1 ? "s" : ""} &nbsp;·&nbsp;
                   Producción total: <strong>{totalProduccion.toLocaleString()}</strong> &nbsp;·&nbsp;
+                  Tiempo detenido: <strong>{formatDuration(totalPausas)}</strong> &nbsp;·&nbsp;
+                  Tiempo muerto: <strong>{formatDuration(totalTiempoMuerto)}</strong> &nbsp;·&nbsp;
+                  Apoyo operativo: <strong>{formatDuration(totalApoyoOperativo)}</strong> &nbsp;·&nbsp;
                   Eficiencia promedio: <strong>{promedioEficiencia}%</strong>
                 </p>
                 <table className="w-full text-sm text-center">
@@ -295,7 +321,11 @@ export default function DashboardProductividaIndividual() {
                     <tr className="border-b text-gray-500 text-xs">
                       <th className="py-2 text-left">Usuario</th>
                       <th className="py-2">Producción</th>
-                      <th className="py-2">Horas</th>
+                      <th className="py-2">Tiempo productivo</th>
+                      <th className="py-2">Tiempo detenido y motivos</th>
+                      <th className="py-2">Tiempo muerto</th>
+                      <th className="py-2">Apoyo operativo</th>
+                      <th className="py-2">Jornada</th>
                       <th className="py-2">u/hora real</th>
                       <th className="py-2">Eficiencia</th>
                       <th className="py-2">Estado</th>
@@ -306,7 +336,39 @@ export default function DashboardProductividaIndividual() {
                       <tr key={item.usuario_id} className="border-t hover:bg-gray-50">
                         <td className="py-2 text-left">{item.nombre}</td>
                         <td className="py-2">{item.produccion_total.toLocaleString()}</td>
-                        <td className="py-2">{item.horas}</td>
+                        <td className="py-2 whitespace-nowrap">{formatDuration(item.tiempo_total_segundos)}</td>
+                        <td className="py-2 min-w-[220px]">
+                          <strong>{formatDuration(item.tiempo_pausa_segundos)}</strong>
+                          {item.motivos_pausa?.length > 0 ? (
+                            <ul className="mt-1 space-y-0.5 text-left text-xs text-gray-500">
+                              {item.motivos_pausa.map((pausa) => (
+                                <li key={pausa.motivo} className="flex justify-between gap-2">
+                                  <span className="truncate" title={pausa.motivo}>{pausa.motivo}</span>
+                                  <span className="shrink-0 font-mono">{formatDuration(pausa.segundos)}</span>
+                                  {pausa.clasificacion === "APOYO_OPERATIVO" && <span className="shrink-0 text-blue-600">Operativo</span>}
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <small className="block text-gray-400">Sin pausas trazables</small>
+                          )}
+                        </td>
+                        <td className="py-2 whitespace-nowrap">
+                          <strong className="text-red-600">{formatDuration(item.tiempo_muerto_segundos)}</strong>
+                          <small className="block text-gray-400">Kiosko sin actividad</small>
+                        </td>
+                        <td className="py-2 min-w-[190px]">
+                          <strong className="text-blue-600">{formatDuration(item.tiempo_apoyo_operativo_segundos)}</strong>
+                          {item.actividades_apoyo_operativo?.map((actividad) => (
+                            <small key={actividad.alistamiento_id} className="block text-left text-gray-500">
+                              {actividad.nombre}: {formatDuration(actividad.segundos)}
+                            </small>
+                          ))}
+                        </td>
+                        <td className="py-2">
+                          {item.horas_semanales_jornada}h/sem
+                          <small className="block text-gray-400">{item.origen_jornada === "NOMINA" ? "Nómina" : "Respaldo VSM"}</small>
+                        </td>
                         <td className="py-2">{item.bolsas_por_hora}</td>
                         <td className="py-2 font-semibold">{item.eficiencia_porcentaje}%</td>
                         <td className="py-2">

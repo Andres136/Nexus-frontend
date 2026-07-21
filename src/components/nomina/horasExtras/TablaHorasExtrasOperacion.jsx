@@ -7,13 +7,6 @@ const STATUS_BADGE = {
   rechazada: "bg-red-100 text-red-700",
 };
 
-const TIPO_LABEL = {
-  diurna: "Diurna",
-  nocturna: "Nocturna",
-  festiva: "Festiva",
-  nocturna_festiva: "Nocturna festiva",
-};
-
 function formatHora(value) {
   if (!value) return "—";
   const [hour, minute] = String(value).slice(0, 5).split(":");
@@ -39,7 +32,7 @@ export default function TablaHorasExtrasOperacion({ lista, isLoading, loadingUui
     <table className="min-w-full divide-y divide-gray-100 text-sm">
       <thead className="bg-gray-50">
         <tr>
-          {["Empleado", "Sede", "Fecha", "Desde", "Hasta", "Tipo", "Horas", "Estado", "Solicitó", "Aprobó", "Acciones"].map((header) => (
+          {["Empleado", "Sede", "Fecha", "Desde", "Hasta", "Horas", "Estado", "Solicitó", "Aprobó", "Acciones"].map((header) => (
             <th key={header} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">{header}</th>
           ))}
         </tr>
@@ -52,11 +45,6 @@ export default function TablaHorasExtrasOperacion({ lista, isLoading, loadingUui
             <td className="px-4 py-3.5 text-gray-600 whitespace-nowrap">{item.fecha?.slice(0, 10) ?? "-"}</td>
             <td className="px-4 py-3.5 text-gray-600 whitespace-nowrap">{formatHora(item.hora_inicio)}</td>
             <td className="px-4 py-3.5 text-gray-600 whitespace-nowrap">{formatHora(item.hora_fin)}</td>
-            <td className="px-4 py-3.5 text-gray-600 whitespace-nowrap">
-              <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700">
-                {TIPO_LABEL[item.tipo] ?? item.tipo ?? "-"}
-              </span>
-            </td>
             <td className="px-4 py-3.5 text-center font-semibold text-gray-800">{item.horas ?? "-"}h</td>
             <td className="px-4 py-3.5">
               <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${STATUS_BADGE[item.status] ?? "bg-gray-100 text-gray-500"}`}>

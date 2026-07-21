@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { CheckCircle2, Loader2, ShieldAlert } from "lucide-react";
 import { kioskoDeviceService } from "../../../services/nominaService";
-import { saveKioskoGuestSession } from "../../../helpers/nomina/kioskoSession";
+import { getKioskoFingerprint, saveKioskoGuestSession } from "../../../helpers/nomina/kioskoSession";
 
 export default function PageKioskoAccesoTemporal() {
   const { uuid, token } = useParams();
@@ -13,7 +13,8 @@ export default function PageKioskoAccesoTemporal() {
   useEffect(() => {
     async function validar() {
       try {
-        const response = await kioskoDeviceService.bootstrapGuest({ uuid, guest_token: token });
+        const fingerprint = await getKioskoFingerprint();
+        const response = await kioskoDeviceService.bootstrapGuest({ uuid, guest_token: token, fingerprint });
         const data = response.data?.data;
 
         if (!data?.device?.uuid) {

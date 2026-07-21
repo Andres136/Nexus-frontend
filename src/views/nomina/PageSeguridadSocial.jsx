@@ -7,6 +7,7 @@ const TIPO_LABEL = {
   arl: "ARL",
   afp: "AFP",
   ccf: "CCF",
+  cesantias: "Cesantías",
 };
 
 const TIPO_BADGE = {
@@ -14,9 +15,10 @@ const TIPO_BADGE = {
   arl: "bg-orange-100 text-orange-700",
   afp: "bg-purple-100 text-purple-700",
   ccf: "bg-teal-100 text-teal-700",
+  cesantias: "bg-sky-100 text-sky-700",
 };
 
-const TIPOS = ["eps", "arl", "afp", "ccf"];
+const TIPOS = ["eps", "arl", "afp", "ccf", "cesantias"];
 
 export default function PageSeguridadSocial() {
   const { seguridadSociales, isLoading } = useGetSeguridadSocial();

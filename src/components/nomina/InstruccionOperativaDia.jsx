@@ -1,4 +1,5 @@
 import PropTypes from "prop-types";
+import Select from "react-select";
 import { AlarmClock, CheckCircle2, Coffee, Save, TimerReset } from "lucide-react";
 
 export default function InstruccionOperativaDia({
@@ -6,18 +7,29 @@ export default function InstruccionOperativaDia({
   form,
   jornadas,
   kioscos,
+  empleados,
+  loadingEmpleados,
   loading,
   saving,
   onSubmit,
   onFieldChange,
   onTimeChange,
+  onUsersChange,
+  onKioscosChange,
 }) {
+  const usuariosSeleccionados = empleados.filter((item) => (form.users ?? []).some((id) => String(id) === String(item.value)));
+  const kioscoOpciones = kioscos.map((item) => ({
+    value: item.id,
+    label: `${item.name} · ${item.sede?.nombre ?? "Sin sede"} · ${item.bodega?.nombre ?? "Sin bodega"}`,
+  }));
+  const kioscosSeleccionados = kioscoOpciones.filter((item) => (form.kiosko_device_ids ?? []).some((id) => String(id) === String(item.value)));
+
   return (
     <form onSubmit={onSubmit} className="mb-5 rounded-xl border border-gray-200 bg-white shadow-sm">
       <div className="flex flex-col gap-3 border-b border-gray-100 px-5 py-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-lg font-bold text-gray-900">Instrucción operativa del día</h2>
-          <p className="text-sm text-gray-500">El kiosko usa estos horarios solo para la fecha indicada, por encima de la jornada base.</p>
+          <p className="text-sm text-gray-500">Los kioskos seleccionados usan estos horarios solo para la fecha indicada, por encima de la jornada base.</p>
         </div>
         <button
           type="submit"
@@ -40,21 +52,18 @@ export default function InstruccionOperativaDia({
           />
         </label>
 
-        <label className="block">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Kiosko</span>
-          <select
-            name="kiosko_device_id"
-            value={form.kiosko_device_id}
-            onChange={onFieldChange}
-            className="mt-1 h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-800 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
-          >
-            <option value="">Global</option>
-            {kioscos.map((item) => (
-              <option key={item.uuid ?? item.id} value={item.id}>
-                {item.name} · {item.sede?.nombre ?? "Sin sede"} · {item.bodega?.nombre ?? "Sin bodega"}
-              </option>
-            ))}
-          </select>
+        <label className="block xl:col-span-2">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Kioskos</span>
+          <Select
+            isMulti
+            isClearable
+            options={kioscoOpciones}
+            value={kioscosSeleccionados}
+            onChange={onKioscosChange}
+            placeholder="Vacio: aplica a todos los kioskos (global)"
+            className="mt-1 text-sm"
+            classNamePrefix="nomina-select"
+          />
         </label>
 
         <label className="block">
@@ -72,6 +81,21 @@ export default function InstruccionOperativaDia({
               </option>
             ))}
           </select>
+        </label>
+
+        <label className="block xl:col-span-2">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Empleados específicos</span>
+          <Select
+            isMulti
+            isClearable
+            isLoading={loadingEmpleados}
+            options={empleados}
+            value={usuariosSeleccionados}
+            onChange={onUsersChange}
+            placeholder="Opcional: si seleccionas empleados, solo aplica para ellos"
+            className="mt-1 text-sm"
+            classNamePrefix="nomina-select"
+          />
         </label>
 
         <CampoHoraStepper label="Entrada desde" name="hora_entrada" value={form.hora_entrada} onChange={onTimeChange} icon={AlarmClock} fallback="07:00" />
@@ -134,7 +158,7 @@ InstruccionOperativaDia.propTypes = {
   CampoHoraStepper: PropTypes.elementType.isRequired,
   form: PropTypes.shape({
     fecha: PropTypes.string,
-    kiosko_device_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    kiosko_device_ids: PropTypes.arrayOf(PropTypes.oneOfType([PropTypes.string, PropTypes.number])),
     jornada_laboral_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     hora_entrada: PropTypes.string,
     hora_entrada_limite: PropTypes.string,
@@ -145,6 +169,7 @@ InstruccionOperativaDia.propTypes = {
     hora_ingreso_almuerzo: PropTypes.string,
     duracion_pausa_minutos: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     duracion_almuerzo_minutos: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    users: PropTypes.arrayOf(PropTypes.oneOfType([PropTypes.string, PropTypes.number])),
     motivo: PropTypes.string,
   }).isRequired,
   jornadas: PropTypes.arrayOf(PropTypes.shape({
@@ -160,9 +185,16 @@ InstruccionOperativaDia.propTypes = {
     sede: PropTypes.shape({ nombre: PropTypes.string }),
     bodega: PropTypes.shape({ nombre: PropTypes.string }),
   })).isRequired,
+  empleados: PropTypes.arrayOf(PropTypes.shape({
+    value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    label: PropTypes.string,
+  })).isRequired,
+  loadingEmpleados: PropTypes.bool,
   loading: PropTypes.bool,
   saving: PropTypes.bool,
   onSubmit: PropTypes.func.isRequired,
   onFieldChange: PropTypes.func.isRequired,
   onTimeChange: PropTypes.func.isRequired,
+  onUsersChange: PropTypes.func.isRequired,
+  onKioscosChange: PropTypes.func.isRequired,
 };

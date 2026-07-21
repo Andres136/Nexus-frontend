@@ -63,45 +63,6 @@ const kpisCards = [
     ticket: m.ordenes ? m.ventas / m.ordenes : 0
   }))
 
-  /* Ranking vendedores */
-
-  const rankingMap = new Map()
-
-  for (const mes of series) {
-
-    const usuarios = mes.ventas_por_usuario || []
-
-    for (const u of usuarios) {
-
-      const id = u.user_id
-
-      const current = rankingMap.get(id) || {
-        user_id: id,
-        name: u.user?.name,
-        ventas: 0,
-        ordenes: 0
-      }
-
-      current.ventas += Number(u.ventas)
-      current.ordenes += Number(u.total_ordenes)
-
-      rankingMap.set(id, current)
-
-    }
-
-  }
-  // Fusionar cartera en series por mes — agrega esto antes del return
-const seriesConCartera = series.map((s) => {
-  const c = cartera.find((c) => c.month === s.month) || {};
-  return {
-    ...s,
-    cartera_pct_gestion: c.cartera_pct_gestion ?? 0,
-  };
-});
-
-  const ranking = Array.from(rankingMap.values())
-    .sort((a, b) => b.ventas - a.ventas)
-
   return (
 
     <div className="p-6 space-y-8 bg-gray-50 min-h-screen">
@@ -305,7 +266,6 @@ const seriesConCartera = series.map((s) => {
         name="Fidelización"
         strokeWidth={3}
       />
-            {/* ✅ Nueva línea */}
       <Line
         type="monotone"
         dataKey="cartera_pct_gestion"
@@ -347,43 +307,6 @@ const seriesConCartera = series.map((s) => {
   </LineChart>
 </ResponsiveContainer>
 </div>
-
-      {/* RANKING VENDEDORES 
-
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-
-        <h3 className="font-semibold text-gray-700 mb-6">
-          Ranking de vendedores
-        </h3>
-
-        {ranking.map((u, i) => (
-
-          <div
-            key={u.user_id}
-            className="flex justify-between border-b py-3"
-          >
-
-            <div className="flex gap-3 items-center">
-
-              <span className="w-6 text-gray-500">
-                {i + 1}
-              </span>
-
-              <span className="font-medium">
-                {u.name}
-              </span>
-
-            </div>
-
-            <div className="text-indigo-600 font-semibold">
-              {money(u.ventas)}
-            </div>
-
-          </div>
-
-        ))}
-
-      </div>*/}
 
     </div>
   )

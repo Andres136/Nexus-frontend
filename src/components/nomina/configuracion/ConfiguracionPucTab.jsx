@@ -1,6 +1,16 @@
 import PropTypes from "prop-types";
 import { Download, RotateCcw } from "lucide-react";
 
+const CLASIFICACIONES = [
+  { value: "salarial", label: "Salarial" },
+  { value: "pago_no_salarial", label: "Pago no salarial" },
+  { value: "bonificacion", label: "Bonificación" },
+  { value: "prestacion", label: "Prestación" },
+  { value: "aporte", label: "Aporte" },
+  { value: "deduccion", label: "Deducción" },
+  { value: "otro", label: "Otro" },
+];
+
 export default function ConfiguracionPucTab({
   conceptosLista,
   cuentasMovimiento,
@@ -10,6 +20,7 @@ export default function ConfiguracionPucTab({
   sincronizarConceptosMutation,
   descargandoPlantillaPuc,
   actualizarCuentaConcepto,
+  actualizarClasificacionConcepto,
   sincronizarCuentasPuc,
   descargarPlantillaPucFaltante,
 }) {
@@ -58,11 +69,12 @@ export default function ConfiguracionPucTab({
         </div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="min-w-[860px] w-full text-sm">
+          <table className="min-w-[1040px] w-full text-sm">
             <thead className="bg-gray-50 text-xs uppercase tracking-wider text-gray-500">
               <tr>
                 <th className="px-4 py-3 text-left">Concepto</th>
                 <th className="px-4 py-3 text-left">Tipo</th>
+                <th className="px-4 py-3 text-left">Clasificación</th>
                 <th className="px-4 py-3 text-left">Naturaleza</th>
                 <th className="px-4 py-3 text-left">Cuenta PUC</th>
                 <th className="px-4 py-3 text-left">Estado</th>
@@ -83,6 +95,22 @@ export default function ConfiguracionPucTab({
                   </td>
                   <td className="px-4 py-3 capitalize text-gray-600">
                     {concepto.tipo}
+                  </td>
+                  <td className="px-4 py-3">
+                    <select
+                      value={concepto.clasificacion_nomina ?? "otro"}
+                      disabled={updateConceptoMutation.isPending}
+                      onChange={(event) =>
+                        actualizarClasificacionConcepto(concepto, event.target.value)
+                      }
+                      className="h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none focus:border-indigo-300"
+                    >
+                      {CLASIFICACIONES.map((clasificacion) => (
+                        <option key={clasificacion.value} value={clasificacion.value}>
+                          {clasificacion.label}
+                        </option>
+                      ))}
+                    </select>
                   </td>
                   <td className="px-4 py-3 capitalize text-gray-600">
                     {concepto.naturaleza}
@@ -134,6 +162,7 @@ ConfiguracionPucTab.propTypes = {
   sincronizarConceptosMutation: PropTypes.shape({ isPending: PropTypes.bool }).isRequired,
   descargandoPlantillaPuc: PropTypes.bool.isRequired,
   actualizarCuentaConcepto: PropTypes.func.isRequired,
+  actualizarClasificacionConcepto: PropTypes.func.isRequired,
   sincronizarCuentasPuc: PropTypes.func.isRequired,
   descargarPlantillaPucFaltante: PropTypes.func.isRequired,
 };

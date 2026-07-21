@@ -407,6 +407,8 @@ function ModalEnviar({ encuesta, onClose }) {
 
 // ─── Tarjeta de encuesta ──────────────────────────────────────────────────────
 function TarjetaEncuesta({ enc, onEditar, onEnviar, onEliminar, onVerResultados, esAdmin, puedeVerResultados }) {
+  const puedeEliminar = enc.puede_eliminar ?? esAdmin;
+
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow space-y-3">
       <div className="flex items-start justify-between gap-3">
@@ -452,10 +454,11 @@ function TarjetaEncuesta({ enc, onEditar, onEnviar, onEliminar, onVerResultados,
             <BarChart2 className="w-3.5 h-3.5" /> Resultados
           </button>
         )}
-        {esAdmin && (
+        {puedeEliminar && (
           <button
             onClick={() => onEliminar(enc.id)}
             className="flex items-center justify-center px-2.5 py-1.5 rounded-lg text-xs font-medium text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+            title={enc.fecha_pasada ? "Solo Administrador puede eliminar encuestas de fechas pasadas" : "Eliminar encuesta"}
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>

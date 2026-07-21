@@ -1,9 +1,12 @@
 import PropTypes from "prop-types";
+import { useParams } from "react-router-dom";
+import { Download } from "lucide-react";
 import KioskoScanner from "./KioskoScanner";
 import KioskoAcciones from "./KioskoAcciones";
 import { useKiosko } from "../../../hooks/nomina/useKiosko";
+import { useKioskoInstall } from "../../../hooks/nomina/useKioskoInstall";
 
-function PantallaEstado({ titulo, detalle, error }) {
+function PantallaEstado({ titulo, detalle, error, onRetry }) {
   return (
     <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center gap-4 px-6 text-center">
       {error ? (
@@ -20,6 +23,15 @@ function PantallaEstado({ titulo, detalle, error }) {
       )}
       <p className="text-white text-lg font-semibold">{titulo}</p>
       {detalle && <p className="text-gray-400 text-sm max-w-xs">{detalle}</p>}
+      {error && onRetry && (
+        <button
+          type="button"
+          onClick={onRetry}
+          className="mt-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-950/40 transition-colors hover:bg-indigo-500"
+        >
+          Reintentar
+        </button>
+      )}
     </div>
   );
 }
@@ -28,9 +40,11 @@ PantallaEstado.propTypes = {
   titulo: PropTypes.string.isRequired,
   detalle: PropTypes.string,
   error: PropTypes.bool,
+  onRetry: PropTypes.func,
 };
 
 export default function PageKiosko() {
+  const { code } = useParams();
   const {
     status,
     loadMsg,
@@ -50,11 +64,22 @@ export default function PageKiosko() {
     handleCancelar,
   } = useKiosko();
 
+  const { canInstall, promptInstall } = useKioskoInstall(code, kioskoInfo?.name);
+
   if (status === "loading") return <PantallaEstado titulo={loadMsg} />;
-  if (status === "error")   return <PantallaEstado titulo="Error al iniciar" detalle={errorMsg} error />;
+  if (status === "error")   return <PantallaEstado titulo="Error al iniciar" detalle={errorMsg} error onRetry={() => window.location.reload()} />;
 
   return (
     <div className="min-h-screen bg-gray-950 overflow-hidden">
+      {canInstall && (
+        <button
+          type="button"
+          onClick={promptInstall}
+          className="fixed bottom-4 right-4 z-50 flex items-center gap-2 rounded-full bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-950/40 hover:bg-indigo-500 transition-colors"
+        >
+          <Download size={16} /> Instalar en este dispositivo
+        </button>
+      )}
       {step === "scanner" && (
         <KioskoScanner
           faceMatcher={faceMatcher}

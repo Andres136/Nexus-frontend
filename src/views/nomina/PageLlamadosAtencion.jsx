@@ -312,6 +312,8 @@ ModalLlamado.propTypes = {
   onClose: PropTypes.func.isRequired,
 };
 
+const PAGE_SIZE = 20;
+
 // ── Página principal ──────────────────────────────────────────────────────────
 export default function PageLlamadosAtencion() {
   const hoy       = new Date().toISOString().slice(0, 10);
@@ -324,6 +326,10 @@ export default function PageLlamadosAtencion() {
   const [modalOtro, setModalOtro]     = useState(false);
   const [manuales, setManuales]       = useState([]);
   const [empleados, setEmpleados]     = useState([]);
+  const [page, setPage]               = useState(1);
+
+  // Reset page when filters change
+  useEffect(() => { setPage(1); }, [search, fechaInicio, fechaFin]);
 
   useEffect(() => {
     contratacionService.getEmpleados()
@@ -334,10 +340,17 @@ export default function PageLlamadosAtencion() {
   const params = useMemo(() => ({
     fecha_inicio: fechaInicio,
     fecha_fin:    fechaFin,
-    per_page:     200,
-  }), [fechaInicio, fechaFin]);
+    per_page:     20,
+    page,
+  }), [fechaInicio, fechaFin, page]);
 
   const { workSessions, isLoading } = useGetWorkSessions(params);
+
+  const paginaMeta = workSessions?.data ?? {};
+  const totalPages  = paginaMeta.last_page  ?? 1;
+  const currentPage = paginaMeta.current_page ?? 1;
+  const totalItems  = paginaMeta.total ?? 0;
+
   // Construir infracciones: automáticas (sesiones) + manuales
   const infracciones = useMemo(() => {
     const lista = workSessions?.data?.data ?? [];
@@ -478,6 +491,50 @@ export default function PageLlamadosAtencion() {
           </table>
         )}
       </div>
+
+      {/* Paginación */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between mt-4 px-1">
+          <p className="text-xs text-gray-500">
+            Página <span className="font-medium">{currentPage}</span> de <span className="font-medium">{totalPages}</span>
+            {" · "}<span className="font-medium">{totalItems}</span> sesiones
+          </p>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage <= 1 || isLoading}
+              className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              Anterior
+            </button>
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              const start = Math.max(1, Math.min(currentPage - 2, totalPages - 4));
+              const p = start + i;
+              return (
+                <button
+                  key={p}
+                  onClick={() => setPage(p)}
+                  disabled={isLoading}
+                  className={`w-8 h-8 text-xs font-medium rounded-lg transition-colors disabled:cursor-not-allowed ${
+                    p === currentPage
+                      ? "bg-indigo-600 text-white"
+                      : "text-gray-600 bg-white border border-gray-200 hover:bg-gray-50"
+                  }`}
+                >
+                  {p}
+                </button>
+              );
+            })}
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage >= totalPages || isLoading}
+              className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              Siguiente
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -79,10 +79,10 @@ export default function ConfiguracionParametrosLaboralesTab({
               Salario mínimo
             </span>
             <input
-              type="number"
+              type="text"
+              inputMode="numeric"
               name="salario_minimo"
-              min="0"
-              step="1"
+              pattern="[0-9.]*"
               value={parametroLaboralForm.salario_minimo}
               onChange={handleParametroLaboral}
               className="mt-1 h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-800 outline-none focus:border-indigo-300"
@@ -94,10 +94,10 @@ export default function ConfiguracionParametrosLaboralesTab({
               Auxilio transporte
             </span>
             <input
-              type="number"
+              type="text"
+              inputMode="numeric"
               name="auxilio_transporte"
-              min="0"
-              step="1"
+              pattern="[0-9.]*"
               value={parametroLaboralForm.auxilio_transporte}
               onChange={handleParametroLaboral}
               className="mt-1 h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-800 outline-none focus:border-indigo-300"

@@ -71,6 +71,7 @@ export default function RegisterSeguridadSocial({ uuid = null, onClose }) {
             <option value="arl">ARL — Administradora de Riesgos Laborales</option>
             <option value="afp">AFP — Fondo de Pensiones</option>
             <option value="ccf">CCF — Caja de Compensación Familiar</option>
+            <option value="cesantias">Fondo de cesantías</option>
           </select>
           {fieldErrors.tipo && <p className="mt-1 text-xs text-red-500">{fieldErrors.tipo[0]}</p>}
         </div>

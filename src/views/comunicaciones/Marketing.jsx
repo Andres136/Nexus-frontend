@@ -3,6 +3,7 @@ import {
   QrCode, 
   Mail, 
   FileText, 
+  Files,
   Sparkles, 
   Zap,
   Target,
@@ -13,6 +14,7 @@ import {
 import CreateQr from "./CreateQr";
 import EnviarCorreo from "./EnviarCorreo";
 import PlantillaEditor from "./PlantillaEditor";
+import PageCorporateDocuments from "../corporate/PageCorporateDocuments";
 
 export default function Marketing() {
   const [activeTab, setActiveTab] = useState("plantillas");
@@ -41,6 +43,14 @@ export default function Marketing() {
       description: "Genera códigos QR personalizados",
       color: "purple",
       component: <CreateQr />
+    },
+    {
+      id: "documentos",
+      label: "Documentos",
+      icon: Files,
+      description: "Administra recursos corporativos",
+      color: "slate",
+      component: <PageCorporateDocuments embedded />
     }
   ];
 
@@ -66,12 +76,20 @@ export default function Marketing() {
         border: isActive ? "border-purple-300" : "border-transparent",
         accent: "text-purple-600",
         icon: isActive ? "text-purple-600" : "text-gray-400"
+      },
+      slate: {
+        bg: isActive ? "bg-slate-100" : "hover:bg-slate-50",
+        text: isActive ? "text-slate-800" : "text-gray-600 hover:text-slate-700",
+        border: isActive ? "border-slate-300" : "border-transparent",
+        accent: "text-slate-700",
+        icon: isActive ? "text-slate-700" : "text-gray-400"
       }
     };
     return colors[color];
   };
 
   const currentTab = tabs.find(tab => tab.id === activeTab);
+  const contentWidthClass = activeTab === "documentos" ? "max-w-[1520px]" : "max-w-7xl";
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
@@ -166,6 +184,7 @@ export default function Marketing() {
                         ${tab.color === 'green' ? 'bg-green-500' : ''}
                         ${tab.color === 'blue' ? 'bg-blue-500' : ''}
                         ${tab.color === 'purple' ? 'bg-purple-500' : ''}
+                        ${tab.color === 'slate' ? 'bg-slate-500' : ''}
                         shadow-md animate-pulse
                       `} />
                     )}
@@ -181,7 +200,7 @@ export default function Marketing() {
       </div>
 
       {/* ✅ CONTENT AREA MEJORADA */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className={`${contentWidthClass} mx-auto px-4 sm:px-6 lg:px-8 py-8`}>
         {/* Breadcrumb y título de sección */}
         <div className="mb-6">
           <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
@@ -198,6 +217,7 @@ export default function Marketing() {
               ${currentTab.color === 'green' ? 'bg-green-100' : ''}
               ${currentTab.color === 'blue' ? 'bg-blue-100' : ''}
               ${currentTab.color === 'purple' ? 'bg-purple-100' : ''}
+              ${currentTab.color === 'slate' ? 'bg-slate-100' : ''}
             `}>
               <currentTab.icon className={`
                 w-6 h-6

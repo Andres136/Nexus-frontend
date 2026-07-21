@@ -80,6 +80,8 @@ export const useGetCosteos = (params = {}) => {
                 total_kg_vendidos: 0,
                 total_ingreso: 0,
                 total_costo: 0,
+                total_kg_comprado: 0,
+                total_costo_comprado: 0,
                 total_utilidad: 0,
                 margen_global: 0,
             },

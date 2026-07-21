@@ -33,6 +33,13 @@ export function usePageKioscos() {
   const handleSearch = useCallback((e) => { setSearch(e.target.value); setPage(1); }, []);
 
   const copyActivationLink = useCallback(async (item) => {
+    if (item.status === "active") {
+      const confirmed = window.confirm(
+        `¿Generar un nuevo link de activación para ${item.name}? Esto cerrará la activación actual de ese kiosko y deberá activarse de nuevo en el dispositivo.`
+      );
+      if (!confirmed) return;
+    }
+
     setLoadingAction(`link-${item.uuid}`);
     try {
       const response = await kioskoDeviceService.generateActivationLink(item.uuid);
@@ -41,7 +48,10 @@ export function usePageKioscos() {
         ? activationUrl
         : `${window.location.origin}${activationUrl}`;
       await navigator.clipboard.writeText(url);
-      showToast("success", "Link de activación copiado");
+      showToast("success", item.status === "active"
+        ? "Nuevo link de reactivación copiado"
+        : "Link de activación copiado"
+      );
       refreshKioscos();
     } catch (error) {
       showToast("error", error.response?.data?.message || "No se pudo generar el link");

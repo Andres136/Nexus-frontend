@@ -2,21 +2,13 @@ import { useMemo, useState } from "react";
 import { useGetEmpleados } from "./useGetEmpleados";
 import { useSedes } from "../useSedes";
 
-function fechaLocal(date = new Date()) {
-  const yyyy = date.getFullYear();
-  const mm = String(date.getMonth() + 1).padStart(2, "0");
-  const dd = String(date.getDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
-}
-
 export function useFiltrosSolicitudes({ estadoKey = "status" } = {}) {
-  const hoy = fechaLocal();
   const [search, setSearch] = useState("");
   const [userId, setUserId] = useState("");
   const [sedeId, setSedeId] = useState("");
-  const [fechaDesde, setFechaDesde] = useState(`${hoy.slice(0, 8)}01`);
-  const [fechaHasta, setFechaHasta] = useState(hoy);
-  const [estado, setEstado] = useState("");
+  const [fechaDesde, setFechaDesde] = useState("");
+  const [fechaHasta, setFechaHasta] = useState("");
+  const [estado, setEstado] = useState("pendiente");
   const [page, setPage] = useState(1);
 
   const { empleados, isLoading: loadingEmpleados } = useGetEmpleados({

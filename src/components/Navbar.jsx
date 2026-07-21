@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
-import { Link } from "react-router-dom";
-import { departamentosApi } from "../services/api";
+import { Link, useNavigate } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { departamentosApi, notificacionesApi } from "../services/api";
 import { useAuth } from "../hooks/useAuth";
 import {
   Home,
@@ -11,30 +12,87 @@ import {
   BarChart2,
 
   ChevronDown,
-  Menu,
 
   Megaphone,
   TruckIcon,
   LogOutIcon,
   User2Icon,
  
-  Cpu,
   Monitor,
   ShieldCheck,
   Wallet,
   Settings,
   PackageX,
+  TicketCheck,
+  CalendarDays,
+  Gauge,
 
 } from "lucide-react";
+
+const TRADUCCIONES_NOTIFICACION = {
+  TicketAsignadoNotification: "Ticket asignado",
+  OrdenTrabajoCreada: "Orden de trabajo creada",
+  OrdenTrabajoListaParcial: "Orden con productos listos parcialmente",
+  TareaVencidaNotificacion: "Tarea vencida",
+  NuevaTareaAsignada: "Nueva tarea asignada",
+  ContactoNotificacion: "Nuevo contacto recibido",
+  OrdenCompraNotificacion: "Nueva orden de compra",
+  OrdenCompraNotificacionMejorada: "Nueva orden de compra",
+  OrdenesPorVencerNotificacion: "Órdenes por vencer",
+  PqrNotifycaciones: "Nuevo mensaje de PQR",
+  FacturaCarteraNotification: "Factura de cartera",
+  NotificacionTrasladoCreado: "Traslado creado",
+  TrasladoActualizadoNotification: "Traslado actualizado",
+  TrasladoPendienteBodegaNotificacion: "Traslado pendiente en bodega",
+};
+
+const nombreCortoTipo = (type) => type?.split("\\").pop();
+
+const traducirTipoNotificacion = (type) => {
+  const corto = nombreCortoTipo(type);
+  return TRADUCCIONES_NOTIFICACION[corto] || corto || "Notificación";
+};
+
+// Convierte la url absoluta guardada en `data.url` en una ruta interna
+// navegable con react-router (evita un refresh completo de página).
+const rutaInterna = (url) => {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    return parsed.pathname + parsed.search;
+  } catch {
+    return url;
+  }
+};
 
 export default function Navbar() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [departamento, setDepartamento] = useState(null);
   const [openMenu, setOpenMenu] = useState(null);
   const [openUserMenu, setOpenUserMenu] = useState(false); // ✅ Solo agregué este estado
+  const [showNotifPanel, setShowNotifPanel] = useState(false);
   const { logout, user } = useAuth({ middleware: "auth" });
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const menuRef = useRef(null);
   const userMenuRef = useRef(null); // ✅ Solo agregué esta ref
+
+  const notificacionesQuery = useQuery({
+    queryKey: ["navbar-notificaciones", user?.id],
+    queryFn: async () => {
+      const response = await notificacionesApi.getAll();
+      return {
+        notificaciones: response.data?.notificaciones ?? [],
+        total: response.data?.total_no_leidas ?? 0,
+      };
+    },
+    enabled: Boolean(user?.id),
+    refetchInterval: 15000,
+    refetchOnWindowFocus: true,
+  });
+
+  const notificaciones = notificacionesQuery.data?.notificaciones ?? [];
+  const totalNoLeidas = notificacionesQuery.data?.total ?? 0;
 
   useEffect(() => {
     const fetchDepartamento = async () => {
@@ -54,6 +112,7 @@ export default function Navbar() {
     { name: "Inicio", to: "/", icon: Home, allowedRoles: [1,10,11] },
     { name: "Procesos", to: "/auth/procesos", icon: FolderKanban, alwaysVisible: true },
     { name: "Entregas ", to: "/auth/entregas", icon: TruckIcon, alwaysVisible: true },
+    { name: "Capacitaciones", to: "/auth/capacitaciones", icon: CalendarDays, alwaysVisible: true },
     { name: "CRM", to: "/auth/crm", icon: Building2, alwaysVisible: true },
     {name: "KPIS", to: "dashboard/indicadores", icon: Building2, alwaysVisible: true },
     {name: "Portal Empleado", to: "/auth/crm/nomina/portal-empleado", icon: User2Icon, alwaysVisible: true },
@@ -70,12 +129,16 @@ export default function Navbar() {
         {name: "Settings", to: "/admin/settings-permisos", icon: Settings, allowedRoles: [1] },
         {name: "Responsabilidades", to: "/auth/responsabilidades", icon: User2Icon, allowedRoles: [1] },
         {name: "TIC", to: "/auth/tic", icon: Monitor, allowedRoles: [1, 2] },
+        {name: "Tickets", to: "/auth/tic/tickets", icon: TicketCheck, allowedRoles: [1, 2, 3, 4, 5, 6, 7, 8, 9] },
+
+     
         {name: "Cartera", to: "/auth/crm/cartera-clientes", icon: Wallet, alwaysVisible: true },
         {name: "HSEQ", to: "/auth/crm/hseq/inspecciones", icon: ShieldCheck, alwaysVisible: true },
+        {name: "Producto No Conforme", to: "/auth/crm/no-conformidades", icon: PackageX, alwaysVisible: true },
         {name: "Contabilidad", to: "/auth/crm/contabilidad", icon: Wallet, alwaysVisible: true },
 
         {name: "Nomina", to: "/auth/crm/nomina", icon: Wallet, alwaysVisible: true },
-              {name: "Producto no conforme", to: "/auth/crm/producto-no-conforme", icon: PackageX, alwaysVisible: true },
+          
 
       ],
     },
@@ -100,6 +163,31 @@ export default function Navbar() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const abrirNotificacion = async (noti) => {
+    setShowNotifPanel(false);
+    setOpenUserMenu(false);
+    setIsSidebarOpen(false);
+
+    try {
+      await notificacionesApi.marcarLeida(noti.id);
+      queryClient.invalidateQueries({ queryKey: ["navbar-notificaciones", user?.id] });
+    } catch (error) {
+      console.error("Error al marcar notificación como leída:", error);
+    }
+
+    const destino = rutaInterna(noti.data?.url);
+    if (destino) navigate(destino);
+  };
+
+  const marcarTodasLeidas = async () => {
+    try {
+      await notificacionesApi.marcarTodasLeidas();
+      queryClient.invalidateQueries({ queryKey: ["navbar-notificaciones", user?.id] });
+    } catch (error) {
+      console.error("Error al marcar notificaciones como leídas:", error);
+    }
+  };
 
   return (
     <nav className="sticky top-0 z-50 bg-gray-900 text-white shadow-md p-4">
@@ -128,7 +216,19 @@ export default function Navbar() {
           </Link>
         </h1>
 
-        
+        <button
+          type="button"
+          onClick={() => setShowNotifPanel(true)}
+          className="relative rounded-lg p-2 text-gray-200 transition hover:bg-gray-800 hover:text-green-400 lg:hidden"
+          aria-label="Ver notificaciones"
+        >
+          <Bell className="h-5 w-5" />
+          {totalNoLeidas > 0 && (
+            <span className="absolute -right-1 -top-1 min-w-5 rounded-full bg-red-500 px-1.5 py-0.5 text-center text-[10px] font-bold text-white">
+              {totalNoLeidas > 99 ? "99+" : totalNoLeidas}
+            </span>
+          )}
+        </button>
 
         {/* Menú escritorio */}
         <div ref={menuRef} className="hidden lg:flex items-center space-x-6">
@@ -175,6 +275,20 @@ export default function Navbar() {
               </Link>
             )
           )}
+
+          <button
+            type="button"
+            onClick={() => setShowNotifPanel(true)}
+            className="relative rounded-lg p-2 text-gray-200 transition hover:bg-gray-800 hover:text-green-400"
+            aria-label="Ver notificaciones"
+          >
+            <Bell className="h-5 w-5" />
+            {totalNoLeidas > 0 && (
+              <span className="absolute -right-1 -top-1 min-w-5 rounded-full bg-red-500 px-1.5 py-0.5 text-center text-[10px] font-bold text-white">
+                {totalNoLeidas > 99 ? "99+" : totalNoLeidas}
+              </span>
+            )}
+          </button>
           
           {/* ✅ Solo reemplacé esta sección del usuario y botón */}
           <div ref={userMenuRef} className="relative">
@@ -192,6 +306,24 @@ export default function Navbar() {
                   <p className="text-sm text-gray-300">Conectado como:</p>
                   <p className="text-sm font-medium text-white truncate">{user?.name}</p>
                 </div>
+                <Link
+                  to="/auth/mi-dia"
+                  onClick={() => setOpenUserMenu(false)}
+                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 hover:text-white transition-colors"
+                >
+                  <ListChecks className="w-4 h-4" />
+                  Mi día
+                </Link>
+                {user?.role_id === 1 && (
+                  <Link
+                    to="/auth/admin/productividad"
+                    onClick={() => setOpenUserMenu(false)}
+                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 hover:text-white transition-colors"
+                  >
+                    <Gauge className="w-4 h-4" />
+                    Productividad del equipo
+                  </Link>
+                )}
                 <button
                   onClick={() => {
                     logout();
@@ -242,6 +374,48 @@ export default function Navbar() {
           <li className="px-4 py-2 text-green-300 font-medium">👤 {user?.name}</li>
           <li>
             <button
+              type="button"
+              onClick={() => {
+                setShowNotifPanel(true);
+                setIsSidebarOpen(false);
+              }}
+              className="flex w-full items-center justify-between rounded px-4 py-2 text-left text-white hover:bg-gray-700"
+            >
+              <span className="flex items-center gap-2">
+                <Bell className="h-4 w-4" />
+                Notificaciones
+              </span>
+              {totalNoLeidas > 0 && (
+                <span className="rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
+                  {totalNoLeidas}
+                </span>
+              )}
+            </button>
+          </li>
+          <li>
+            <Link
+              to="/auth/mi-dia"
+              onClick={() => setIsSidebarOpen(false)}
+              className="flex items-center gap-2 rounded px-4 py-2 text-white hover:bg-gray-700"
+            >
+              <ListChecks className="h-4 w-4" />
+              Mi día
+            </Link>
+          </li>
+          {user?.role_id === 1 && (
+            <li>
+              <Link
+                to="/auth/admin/productividad"
+                onClick={() => setIsSidebarOpen(false)}
+                className="flex items-center gap-2 rounded px-4 py-2 text-white hover:bg-gray-700"
+              >
+                <Gauge className="h-4 w-4" />
+                Productividad del equipo
+              </Link>
+            </li>
+          )}
+          <li>
+            <button
               onClick={logout}
               className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded"
             >
@@ -250,6 +424,79 @@ export default function Navbar() {
           </li>
         </ul>
       </div>
+
+      {showNotifPanel && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 p-4 text-gray-900">
+          <div className="w-full max-w-lg overflow-hidden rounded-lg bg-white shadow-2xl">
+            <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">Notificaciones</p>
+                <h2 className="mt-1 text-lg font-bold text-gray-900">
+                  {totalNoLeidas > 0
+                    ? `Tienes ${totalNoLeidas} notificación${totalNoLeidas === 1 ? "" : "es"} sin leer`
+                    : "No tienes notificaciones nuevas"}
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowNotifPanel(false)}
+                className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                aria-label="Cerrar notificaciones"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="max-h-[360px] overflow-y-auto px-5 py-4">
+              {notificaciones.length === 0 ? (
+                <p className="rounded-lg bg-gray-50 p-4 text-sm text-gray-600">
+                  Aquí verás avisos de tickets asignados, facturas de cartera por vencer/vencidas, tareas y más.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {notificaciones.map((noti) => (
+                    <button
+                      key={noti.id}
+                      type="button"
+                      onClick={() => abrirNotificacion(noti)}
+                      className="w-full rounded-lg border border-gray-200 p-3 text-left transition hover:border-blue-300 hover:bg-blue-50"
+                    >
+                      <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">
+                        {traducirTipoNotificacion(noti.type)}
+                      </p>
+                      <p className="mt-1 text-sm text-gray-800">
+                        {noti.data?.mensaje ?? "Nueva notificación"}
+                      </p>
+                      <p className="mt-1 text-xs text-gray-400">
+                        {new Date(noti.created_at).toLocaleString("es-CO")}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-2 border-t border-gray-200 px-5 py-4">
+              <button
+                type="button"
+                onClick={() => setShowNotifPanel(false)}
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Cerrar
+              </button>
+              {totalNoLeidas > 0 && (
+                <button
+                  type="button"
+                  onClick={marcarTodasLeidas}
+                  className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                >
+                  Marcar todas como leídas
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </nav>
   );
 }

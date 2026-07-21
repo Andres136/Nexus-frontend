@@ -62,13 +62,21 @@ export default function RegisterContrato({ uuid = null, onClose }) {
   const { parametroLaboralVigente, isLoading: loadingParametroLaboral } = useGetNominaParametroLaboralVigente(formData.inicio_contratacion);
   const { tipoContratos } = useGetTipoContrato();
   const { empresas } = useEmpresas();
-  const { seguridadSociales } = useGetSeguridadSocial();
+  const { seguridadSociales } = useGetSeguridadSocial({ params: { per_page: 500 } });
 
   const tipoContratoLista = tipoContratos?.data ?? [];
   const seguridadSocialLista = seguridadSociales?.data?.data ?? [];
   const empresasLista = Array.isArray(empresas) ? empresas : [];
   const isEdit = !!uuid;
   const auxilioTransporteConfigurado = parametroLaboralVigente?.auxilio_transporte ?? "";
+  const entidadesPorTipo = (tipo) => seguridadSocialLista.filter((entidad) => entidad.tipo === tipo);
+  const opcionesEntidad = {
+    eps_id: entidadesPorTipo("eps"),
+    arl_id: entidadesPorTipo("arl"),
+    fondo_pensiones_id: entidadesPorTipo("afp"),
+    caja_penciones_id: entidadesPorTipo("ccf"),
+    fondo_cesantias_id: entidadesPorTipo("cesantias"),
+  };
 
   const handleSelectChange = (name) => (option) =>
     handleChange({ target: { name, value: option ? option.value : "" } });
@@ -322,6 +330,28 @@ export default function RegisterContrato({ uuid = null, onClose }) {
             Salario integral
           </label>
 
+          <div className="grid grid-cols-2 gap-2 rounded-md border border-gray-100 bg-gray-50 px-3 py-2 sm:grid-cols-3">
+            {[
+              ["aplica_salud", "Aplica salud"],
+              ["aplica_pension", "Aplica pensión"],
+              ["aplica_arl", "Aplica ARL"],
+              ["aplica_sena", "Aplica SENA"],
+              ["aplica_icbf", "Aplica ICBF"],
+              ["aplica_caja_compensacion", "Aplica caja"],
+            ].map(([name, text]) => (
+              <label key={name} className="inline-flex items-center gap-2 text-[11px] font-medium text-gray-600">
+                <input
+                  type="checkbox"
+                  name={name}
+                  checked={Boolean(formData[name])}
+                  onChange={handleChange}
+                  className="h-3.5 w-3.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                />
+                {text}
+              </label>
+            ))}
+          </div>
+
           {/* Frecuencia + Fechas */}
           <div className="grid grid-cols-3 gap-3">
             <div>
@@ -344,6 +374,27 @@ export default function RegisterContrato({ uuid = null, onClose }) {
               {err("fin_contrato")}
             </div>
           </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              {label("Vacaciones ya disfrutadas")}
+              <input
+                type="number"
+                inputMode="decimal"
+                min="0"
+                step="0.0001"
+                name="dias_vacaciones_iniciales"
+                value={formData.dias_vacaciones_iniciales}
+                onChange={handleChange}
+                placeholder="0"
+                className={inputClass("dias_vacaciones_iniciales")}
+              />
+              {err("dias_vacaciones_iniciales")}
+            </div>
+            <div className="sm:col-span-2 self-end rounded-md border border-amber-100 bg-amber-50 px-3 py-2 text-[11px] text-amber-700">
+              Úsalo para empleados que ya traen vacaciones tomadas antes de registrarlos en el sistema.
+            </div>
+          </div>
         </div>
 
         {/* — Seguridad social — */}
@@ -351,16 +402,17 @@ export default function RegisterContrato({ uuid = null, onClose }) {
           <SectionTitle>Seguridad Social</SectionTitle>
           <div className="grid grid-cols-2 gap-3">
             {[
-              { name: "eps_id", label: "EPS" },
-              { name: "arl_id", label: "ARL" },
-              { name: "fondo_pensiones_id", label: "Fondo de pensiones" },
-              { name: "caja_penciones_id", label: "Caja de compensación" },
-            ].map(({ name, label: lbl }) => (
+              { name: "eps_id", label: "EPS", required: true },
+              { name: "arl_id", label: "ARL", required: true },
+              { name: "fondo_pensiones_id", label: "Fondo de pensiones", required: true },
+              { name: "caja_penciones_id", label: "Caja de compensación", required: true },
+              { name: "fondo_cesantias_id", label: "Fondo de cesantías", required: false },
+            ].map(({ name, label: lbl, required }) => (
               <div key={name}>
-                {label(lbl, true)}
+                {label(lbl, required)}
                 <select name={name} value={formData[name]} onChange={handleChange} className={inputClass(name)}>
                   <option value="">Seleccionar {lbl}...</option>
-                  {seguridadSocialLista.map((s) => <option key={s.id} value={s.id}>{s.nombre}</option>)}
+                  {opcionesEntidad[name].map((s) => <option key={s.id} value={s.id}>{s.nombre}</option>)}
                 </select>
                 {err(name)}
               </div>

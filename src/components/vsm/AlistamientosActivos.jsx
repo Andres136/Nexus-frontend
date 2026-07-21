@@ -16,6 +16,40 @@ import { useAuth } from "../../hooks/useAuth";
 
 const ROLES_MULTISEDE = [1, 4]; // ADMINISTRADOR y ADMINISTRATIVO
 
+const RAZONES_PAUSA_OPERATIVA = {
+  "Espera de material": "Espera de material",
+  "Falla de equipo": "Falla de equipo",
+  "Cambio de referencia": "Cambio de referencia",
+  OTRO: "Otro motivo",
+};
+
+async function solicitarRazonPausa(titulo, texto = "Selecciona qué hará el operario durante la pausa") {
+  const { value } = await Swal.fire({
+    title: titulo,
+    text: texto,
+    input: "select",
+    inputOptions: RAZONES_PAUSA_OPERATIVA,
+    inputPlaceholder: "Selecciona una razón...",
+    showCancelButton: true,
+    confirmButtonText: "Pausar",
+    confirmButtonColor: "#d97706",
+    inputValidator: (razon) => !razon && "Debes seleccionar una razón.",
+  });
+
+  if (!value) return null;
+  if (value !== "OTRO") return value;
+
+  const { value: otro } = await Swal.fire({
+    title: "Otro motivo",
+    input: "text",
+    inputPlaceholder: "Describe la actividad o el motivo...",
+    showCancelButton: true,
+    inputValidator: (razon) => !razon?.trim() && "Debes escribir el motivo.",
+  });
+
+  return otro?.trim() || null;
+}
+
 export default function AlistamientosActivos() {
   const { alistamientos, loading, refresh,  } = useAlistamientosActivos();
   const { pausar, reanudar, finalizar } = useAlistamientos();
@@ -26,16 +60,7 @@ export default function AlistamientosActivos() {
   const puedeVerTodasSedes = ROLES_MULTISEDE.includes(user?.role_id);
 
   const handlePausa = async (alistId) => {
-    const { value: razon } = await Swal.fire({
-      title: "Pausar alistamiento",
-      text: "Describe el motivo de la pausa",
-      input: "text",
-      inputPlaceholder: "Motivo...",
-      showCancelButton: true,
-      confirmButtonText: "Guardar",
-      confirmButtonColor: "#d97706",
-      inputValidator: (value) => !value && "Debes escribir un motivo."
-    });
+    const razon = await solicitarRazonPausa("Pausar alistamiento");
     if (razon) { await pausar(alistId, razon); refresh(sedeSeleccionada ? { sede_id: sedeSeleccionada } : {}); }
   };
 
@@ -67,17 +92,10 @@ export default function AlistamientosActivos() {
 
   const handlePausaSede = async () => {
     
-  const { value: razon } = await Swal.fire({
-    title: "Pausar TODA la sede",
-    text: "Esto pausará TODAS las órdenes activas",
-    input: "text",
-    inputPlaceholder: "Motivo de la pausa...",
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonText: "Sí, pausar todo",
-    confirmButtonColor: "#dc2626",
-    inputValidator: (value) => !value && "Debes escribir un motivo."
-  });
+  const razon = await solicitarRazonPausa(
+    "Pausar TODA la sede",
+    "La razón seleccionada se aplicará a todas las órdenes activas"
+  );
 
   if (!razon) return;
 
@@ -135,23 +153,23 @@ const handleReanudarSede = async () => {
   );
 
   return (
-    <div className="space-y-6 p-4">
+    <div className="space-y-4 sm:space-y-6 p-0 sm:p-4">
 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
 
   {/* IZQUIERDA */}
-  <div className="flex items-center gap-3">
+  <div className="flex items-center gap-2 sm:gap-3 min-w-0">
     <div className="bg-blue-600 p-2 rounded-lg text-white shadow-lg">
       <Clock className="w-5 h-5" />
     </div>
-    <h2 className="text-2xl font-bold text-gray-800">Alistamientos Activos</h2>
-    <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-black">
+    <h2 className="text-lg sm:text-2xl font-bold text-gray-800 truncate">Alistamientos Activos</h2>
+    <span className="shrink-0 bg-blue-100 text-blue-700 px-2 sm:px-3 py-1 rounded-full text-xs font-black">
       {alistamientos.length}
     </span>
   </div>
 {puedeVerTodasSedes && (
   <button
     onClick={handlePausaSede}
-    className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-700"
+    className="w-full md:w-auto bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-700"
   >
     ⛔ Pausar toda la sede
   </button>
@@ -160,7 +178,7 @@ const handleReanudarSede = async () => {
 {puedeVerTodasSedes && (
   <button
     onClick={handleReanudarSede}
-    className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-green-700"
+    className="w-full md:w-auto bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-green-700"
   >
     ▶️ Reanudar toda la sede
   </button>
@@ -168,14 +186,14 @@ const handleReanudarSede = async () => {
 
   {/* Selector de sede solo para roles con acceso multisede */}
   {puedeVerTodasSedes && (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 w-full md:w-auto">
       <select
         value={sedeSeleccionada}
         onChange={(e) => {
           setSedeSeleccionada(e.target.value);
           refresh({ sede_id: e.target.value });
         }}
-        className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+        className="w-full md:w-auto border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
       >
         <option value="">Mi sede</option>
         {sedes?.map(s => (
@@ -189,7 +207,7 @@ const handleReanudarSede = async () => {
 
 </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-6">
         {alistamientos.map((alist) => (
           <AlistamientoCard 
             key={alist.id} 
@@ -206,6 +224,7 @@ const handleReanudarSede = async () => {
 }
 
 function AlistamientoCard({ alist, onUpdate, onPausa, onReanudar, onFinalizar }) {
+  const esLibreOperativo = alist.tipo_origen === "LIBRE" && Boolean(alist.nombre_actividad);
   const [activeUserPanel, setActiveUserPanel] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [usuariosDisp, setUsuariosDisp] = useState([]);
@@ -255,14 +274,18 @@ function AlistamientoCard({ alist, onUpdate, onPausa, onReanudar, onFinalizar })
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-full">
+    <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-full min-w-0">
       {/* HEADER */}
-      <div className="p-4 bg-gradient-to-br from-slate-50 to-blue-50 border-b">
+      <div className="p-3 sm:p-4 bg-gradient-to-br from-slate-50 to-blue-50 border-b">
         <div className="flex justify-between items-start mb-2">
           <div>
-            <span className="text-[10px] font-bold text-blue-600 uppercase tracking-tighter">Orden Trabajo</span>
-            <h3 className="font-black text-gray-900 text-lg leading-tight">#{alist.orden_trabajo_id}</h3>
-            <p className="text-xs text-gray-500 truncate w-40">{alist.cliente?.nombre}</p>
+            <span className="text-[10px] font-bold text-blue-600 uppercase tracking-tighter">
+              {alist.tipo_origen === "LIBRE" ? "Rendimiento libre" : "Orden Trabajo"}
+            </span>
+            <h3 className="font-black text-gray-900 text-lg leading-tight">
+              #{alist.tipo_origen === "LIBRE" ? alist.id : alist.orden_trabajo_id}
+            </h3>
+            <p className="text-xs text-gray-500 truncate w-48">{esLibreOperativo ? alist.nombre_actividad : alist.cliente?.nombre}</p>
           </div>
           <div className={`px-2 py-1 rounded-md   text-[10px] font-bold border ${
             alist.estado === 'PAUSADO' ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-green-100 text-green-700 border-green-200'
@@ -277,9 +300,9 @@ function AlistamientoCard({ alist, onUpdate, onPausa, onReanudar, onFinalizar })
       </div>
 
       {/* CONTENIDO */}
-      <div className="p-4 flex-1 space-y-4 overflow-y-auto max-h-[450px]">
+      <div className="p-3 sm:p-4 flex-1 space-y-4 overflow-y-auto max-h-none sm:max-h-[450px]">
         {/* RESUMEN PRODUCTOS (Solo Lectura) */}
-        <div className="space-y-1">
+        {!esLibreOperativo && <div className="space-y-1">
           <div className="flex items-center gap-2 mb-2 text-gray-400">
             <Package className="w-3 h-3" />
             <h4 className="text-[10px] font-bold uppercase">Estado de Productos</h4>
@@ -287,15 +310,17 @@ function AlistamientoCard({ alist, onUpdate, onPausa, onReanudar, onFinalizar })
           {alist.detalles.map(d => (
             <div key={d.id} className="flex justify-between text-[11px] bg-gray-50 p-1.5 rounded">
               <span className="truncate pr-2">{d.product}</span>
-              <span className="font-mono font-bold">{d.alistada}/{d.programada}</span>
+              <span className="font-mono font-bold">
+                {alist.tipo_origen === "LIBRE" ? d.alistada : `${d.alistada}/${d.programada}`}
+              </span>
             </div>
           ))}
-        </div>
+        </div>}
 
         {/* LISTA DE USUARIOS */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <h4 className="text-[10px] font-bold uppercase text-gray-400">Personal & Producción</h4>
+            <h4 className="text-[10px] font-bold uppercase text-gray-400">{esLibreOperativo ? "Personal & Tiempo" : "Personal & Producción"}</h4>
             <button onClick={abrirModalUsuarios} className="text-blue-600 hover:text-blue-800 text-[10px] font-bold flex items-center gap-1">
               <Plus className="w-3 h-3" /> AGREGAR
             </button>
@@ -309,9 +334,10 @@ function AlistamientoCard({ alist, onUpdate, onPausa, onReanudar, onFinalizar })
                 onUpdate={onUpdate}
                 isExpanded={activeUserPanel === u.id}
                 onToggle={() => setActiveUserPanel(activeUserPanel === u.id ? null : u.id)}
+                expandible={!esLibreOperativo}
               />
               
-              {activeUserPanel === u.id && (
+              {activeUserPanel === u.id && !esLibreOperativo && (
                 <div className="bg-slate-50 border-t p-3 animate-in fade-in duration-200">
                   <ProductionForm 
                     usuario={u} 
@@ -343,9 +369,11 @@ function AlistamientoCard({ alist, onUpdate, onPausa, onReanudar, onFinalizar })
       {/* MODAL AGREGAR USUARIO */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm mx-4 p-6 space-y-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm mx-3 sm:mx-4 p-4 sm:p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-black text-gray-800">Agregar operario</h3>
-            <p className="text-xs text-gray-400">Orden #{alist.orden_trabajo_id}</p>
+            <p className="text-xs text-gray-400">
+              {alist.tipo_origen === "LIBRE" ? `Rendimiento libre #${alist.id}` : `Orden #${alist.orden_trabajo_id}`}
+            </p>
 
             {loadingUsuarios ? (
               <div className="flex justify-center py-4">
@@ -443,7 +471,7 @@ function AlistamientoCard({ alist, onUpdate, onPausa, onReanudar, onFinalizar })
   );
 }
 
-function UsuarioRow({ usuario, alistId, onUpdate, isExpanded, onToggle }) {
+function UsuarioRow({ usuario, alistId, onUpdate, isExpanded, onToggle, expandible = true }) {
   const toggleEstado = async (e) => {
     e.stopPropagation(); // Evitar que abra el panel de producción al hacer clic en el botón
     try {
@@ -461,13 +489,10 @@ function UsuarioRow({ usuario, alistId, onUpdate, isExpanded, onToggle }) {
         });
         if (res.isConfirmed) { await vsmService.reanudarUsuario(alistId, usuario.id); onUpdate(); }
       } else {
-        const { value: razon } = await Swal.fire({
-          title: "Pausar usuario",
-          input: "text",
-          inputPlaceholder: "Motivo de la pausa...",
-          showCancelButton: true,
-          inputValidator: (value) => !value && "Requerido"
-        });
+        const razon = await solicitarRazonPausa(
+          `Pausar a ${usuario.name}`,
+          "Registra la labor operativa o el motivo de tiempo detenido"
+        );
         if (razon) { await vsmService.pausarUsuario(alistId, usuario.id, { razon }); onUpdate(); }
       }
     } catch (e) { toast.error("Error al cambiar estado"); }
@@ -505,8 +530,8 @@ const formatUserTime = (seg) => {
 };
   return (
     <div 
-      onClick={onToggle}
-      className="flex items-center justify-between p-3 cursor-pointer hover:bg-slate-50 transition-colors"
+      onClick={expandible ? onToggle : undefined}
+      className={`flex items-center justify-between p-3 transition-colors ${expandible ? "cursor-pointer hover:bg-slate-50" : ""}`}
     >
       <div className="flex items-center gap-3 min-w-0">
         <div className={`w-2 h-2 rounded-full ${usuario.estado === 'PAUSADO' ? 'bg-amber-500' : 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]'}`} />
@@ -525,7 +550,7 @@ const formatUserTime = (seg) => {
         >
           {usuario.estado === 'PAUSADO' ? <FaPlay size={10} /> : <FaPause size={10} />}
         </button>
-        {isExpanded ? <ChevronUp size={16} className="text-gray-300" /> : <ChevronDown size={16} className="text-gray-300" />}
+        {expandible && (isExpanded ? <ChevronUp size={16} className="text-gray-300" /> : <ChevronDown size={16} className="text-gray-300" />)}
 
 
         <button 
@@ -544,7 +569,9 @@ function ProductionForm({ usuario, detalles, alistId, onUpdate }) {
 
   const handleRegister = async (detalleId) => {
     const data = vals[detalleId] || {};
-    const total = (Number(data.paq) || 0) * (Number(data.und) || 0);
+    const paquetes = Number(data.paq) || 0;
+    const unidades = Number(data.und) || 0;
+    const total = paquetes > 0 ? paquetes * unidades : unidades;
 
     if (total <= 0) return toast.warning("Ingresa cantidades");
 
@@ -573,29 +600,31 @@ function ProductionForm({ usuario, detalles, alistId, onUpdate }) {
     <div className="space-y-3">
       <p className="text-[10px] font-black text-blue-600 uppercase mb-2 tracking-widest">Panel de Producción</p>
       {detalles.map(d => {
-        const subtotal = (Number(vals[d.id]?.paq || 0) * Number(vals[d.id]?.und || 0));
+        const paquetes = Number(vals[d.id]?.paq || 0);
+        const unidades = Number(vals[d.id]?.und || 0);
+        const subtotal = paquetes > 0 ? paquetes * unidades : unidades;
         return (
           <div key={d.id} className="bg-white border rounded-lg p-2 shadow-sm">
             <div className="flex justify-between items-center mb-2">
               <span className="text-[11px] font-bold text-gray-700 truncate w-32">{d.product}</span>
           
             </div>
-            <div className="flex gap-1">
+            <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] gap-1">
               <input 
                 type="number" placeholder="Paq" 
-                className="w-full text-xs p-1.5 border rounded"
+                className="w-full min-w-0 h-10 text-xs p-1.5 border rounded"
                 value={vals[d.id]?.paq || ''}
                 onChange={e => setVals({...vals, [d.id]: {...vals[d.id], paq: e.target.value}})}
               />
               <input 
-                type="number" placeholder="Und" 
-                className="w-full text-xs p-1.5 border rounded"
+                type="number" placeholder={vals[d.id]?.paq ? "Und/paq" : "Und total"}
+                className="w-full min-w-0 h-10 text-xs p-1.5 border rounded"
                 value={vals[d.id]?.und || ''}
                 onChange={e => setVals({...vals, [d.id]: {...vals[d.id], und: e.target.value}})}
               />
               <button 
                 onClick={() => handleRegister(d.id)}
-                className="bg-blue-600 text-white px-3 rounded-lg hover:bg-blue-700 flex items-center gap-1 shrink-0"
+                className="min-w-10 h-10 bg-blue-600 text-white px-2 sm:px-3 rounded-lg hover:bg-blue-700 flex items-center justify-center gap-1 shrink-0"
               >
                 <CheckCircle2 size={14} />
                 {subtotal > 0 && <span className="text-[10px] font-bold">{subtotal}</span>}

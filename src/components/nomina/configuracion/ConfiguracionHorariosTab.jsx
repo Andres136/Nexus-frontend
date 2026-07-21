@@ -1,6 +1,9 @@
 import PropTypes from "prop-types";
+import Select from "react-select";
 import {
   AlarmClock,
+  Building2,
+  CalendarDays,
   CheckCircle2,
   ChevronDown,
   ChevronUp,
@@ -9,8 +12,10 @@ import {
   RotateCcw,
   Save,
   TimerReset,
+  UserRound,
   X,
 } from "lucide-react";
+import { DIAS_SEMANA } from "../../../hooks/nomina/useConfiguracionHorarios";
 
 function pad(value) {
   return String(value).padStart(2, "0");
@@ -185,17 +190,32 @@ export default function ConfiguracionHorariosTab({
   form,
   setForm,
   instruccionForm,
+  horarioUsuarioForm,
+  empleados,
+  horariosUsuario,
   isLoading,
+  loadingEmpleados,
+  loadingHorariosUsuario,
   mutation,
   instruccionMutation,
+  horarioUsuarioMutation,
   handleTimeChange,
   handleNumber,
   handleInstruccion,
   handleInstruccionTime,
+  handleHorarioUsuario,
+  handleAlcanceHorarioUsuario,
+  toggleDiaUsuario,
   aplicarDefault,
   guardar,
   guardarHorarioPorFecha,
+  guardarHorarioUsuario,
 }) {
+  const diasGuardados = new Set(horariosUsuario.map((item) => Number(item.dia_semana)));
+  const aplicaEmpresa = horarioUsuarioForm.alcance === "empresa";
+  const empleadoSeleccionado =
+    empleados.find((empleado) => String(empleado.value) === String(horarioUsuarioForm.user_id)) ?? null;
+
   return (
     <div className="grid grid-cols-1 gap-5 lg:grid-cols-[280px_minmax(0,1fr)]">
       <aside className="h-fit rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
@@ -432,6 +452,133 @@ export default function ConfiguracionHorariosTab({
               label="Jornada activa"
               description="Solo las jornadas activas se toman como opción principal del kiosko."
             />
+
+            <section className="rounded-xl border border-gray-200 bg-white p-4">
+              <div className="mb-3 flex items-center gap-2">
+                <UserRound className="h-4 w-4 text-emerald-600" />
+                <h3 className="text-sm font-bold text-gray-800">
+                  Horario por usuario
+                </h3>
+              </div>
+
+              <label className="block">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+                  Alcance
+                </span>
+                <div className="mt-1 grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleAlcanceHorarioUsuario("empleado")}
+                    className={`inline-flex h-10 items-center justify-center gap-2 rounded-lg border text-xs font-bold transition-colors ${
+                      !aplicaEmpresa
+                        ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                        : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    <UserRound className="h-4 w-4" />
+                    Empleado
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleAlcanceHorarioUsuario("empresa")}
+                    className={`inline-flex h-10 items-center justify-center gap-2 rounded-lg border text-xs font-bold transition-colors ${
+                      aplicaEmpresa
+                        ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                        : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    <Building2 className="h-4 w-4" />
+                    Empresa
+                  </button>
+                </div>
+              </label>
+
+              <label className="mt-4 block">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+                  Empleado
+                </span>
+                <Select
+                  className="mt-1 text-sm"
+                  classNamePrefix="react-select"
+                  options={empleados}
+                  value={empleadoSeleccionado}
+                  onChange={(option) =>
+                    handleHorarioUsuario({
+                      target: { name: "user_id", value: option?.value ?? "" },
+                    })
+                  }
+                  isClearable
+                  isSearchable
+                  isDisabled={aplicaEmpresa}
+                  isLoading={loadingEmpleados}
+                  placeholder={aplicaEmpresa ? "Aplica a todos" : loadingEmpleados ? "Cargando empleados..." : "Seleccionar empleado"}
+                  noOptionsMessage={() => "Sin empleados"}
+                  menuPortalTarget={document.body}
+                  styles={{
+                    control: (base, state) => ({
+                      ...base,
+                      minHeight: "40px",
+                      borderRadius: "0.5rem",
+                      borderColor: state.isFocused ? "#34d399" : "#e5e7eb",
+                      boxShadow: state.isFocused ? "0 0 0 2px #d1fae5" : "none",
+                      "&:hover": { borderColor: "#34d399" },
+                    }),
+                    menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                  }}
+                />
+              </label>
+
+              <div className="mt-4">
+                <div className="mb-2 flex items-center gap-2">
+                  <CalendarDays className="h-4 w-4 text-gray-400" />
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+                    Días
+                  </span>
+                </div>
+                <div className="grid grid-cols-4 gap-2">
+                  {DIAS_SEMANA.map((dia) => {
+                    const checked = horarioUsuarioForm.dias.includes(dia.value);
+                    const guardado = !aplicaEmpresa && diasGuardados.has(dia.value);
+
+                    return (
+                      <button
+                        key={dia.value}
+                        type="button"
+                        onClick={() => toggleDiaUsuario(dia.value)}
+                        className={`h-9 rounded-lg border text-xs font-bold transition-colors ${
+                          checked
+                            ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                            : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                        }`}
+                        title={guardado ? "Ya tiene horario guardado" : "Sin horario guardado"}
+                      >
+                        {dia.label}
+                        {guardado && <span className="ml-1 text-[10px]">•</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={guardarHorarioUsuario}
+                disabled={
+                  (!aplicaEmpresa && !horarioUsuarioForm.user_id) ||
+                  !horarioUsuarioForm.dias.length ||
+                  loadingHorariosUsuario ||
+                  horarioUsuarioMutation.isPending
+                }
+                className="mt-4 inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+              >
+                <Save className="h-4 w-4" />
+                {horarioUsuarioMutation.isPending
+                  ? "Guardando..."
+                  : aplicaEmpresa
+                    ? "Aplicar a toda empresa"
+                    : "Guardar horario semanal"}
+              </button>
+            </section>
           </aside>
         </div>
       </form>
@@ -446,14 +593,24 @@ ConfiguracionHorariosTab.propTypes = {
   form: PropTypes.object.isRequired,
   setForm: PropTypes.func.isRequired,
   instruccionForm: PropTypes.object.isRequired,
+  horarioUsuarioForm: PropTypes.object.isRequired,
+  empleados: PropTypes.array.isRequired,
+  horariosUsuario: PropTypes.array.isRequired,
   isLoading: PropTypes.bool,
+  loadingEmpleados: PropTypes.bool,
+  loadingHorariosUsuario: PropTypes.bool,
   mutation: PropTypes.shape({ isPending: PropTypes.bool }).isRequired,
   instruccionMutation: PropTypes.shape({ isPending: PropTypes.bool }).isRequired,
+  horarioUsuarioMutation: PropTypes.shape({ isPending: PropTypes.bool }).isRequired,
   handleTimeChange: PropTypes.func.isRequired,
   handleNumber: PropTypes.func.isRequired,
   handleInstruccion: PropTypes.func.isRequired,
   handleInstruccionTime: PropTypes.func.isRequired,
+  handleHorarioUsuario: PropTypes.func.isRequired,
+  handleAlcanceHorarioUsuario: PropTypes.func.isRequired,
+  toggleDiaUsuario: PropTypes.func.isRequired,
   aplicarDefault: PropTypes.func.isRequired,
   guardar: PropTypes.func.isRequired,
   guardarHorarioPorFecha: PropTypes.func.isRequired,
+  guardarHorarioUsuario: PropTypes.func.isRequired,
 };

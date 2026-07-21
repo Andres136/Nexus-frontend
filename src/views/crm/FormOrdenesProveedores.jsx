@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import clienteAxios from "../../config/axios";
 import { toast } from "react-toastify";
 import DetallesOrdenCompraProveedores from "../../components/crm/DetallesOrdenCompraProveedores";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import Select from "react-select";
 import { useEmpresas } from "../../hooks/useEmpresas";
 
@@ -13,6 +13,22 @@ export default function FormOrdenesProveedores() {
 
   const [proveedores, setProveedores] = useState([]);
   const navigate = useNavigate();
+  const location = useLocation();
+  const prioridadesStorage = JSON.parse(localStorage.getItem("crm_prioridades_compra") || "[]");
+  const trazabilidadInicial = location.state?.trazabilidadCompra || (
+    prioridadesStorage.length > 0
+      ? {
+          orden_id: prioridadesStorage[0]?.orden_id,
+          codigo: prioridadesStorage.length === 1
+            ? prioridadesStorage[0]?.codigo
+            : `${prioridadesStorage.length} prioridades`,
+          cliente: prioridadesStorage.length === 1
+            ? prioridadesStorage[0]?.cliente
+            : "Múltiples órdenes",
+          detalles: prioridadesStorage.map((prioridad) => prioridad.detalle),
+        }
+      : null
+  );
   const { empresas } = useEmpresas();
   const [errores, setErrores] = useState({});
   const [erroresDetalles, setErroresDetalles] = useState({});
@@ -23,7 +39,7 @@ export default function FormOrdenesProveedores() {
     observaciones: "",
     bodega_id: "",
     fecha_entrega: "",
-    detalles: [],
+    detalles: trazabilidadInicial?.detalles || [],
   });
 
   /*Función para actualizar los datos del formulario PARA OBSERVACIONES
@@ -60,6 +76,8 @@ export default function FormOrdenesProveedores() {
       );
   const orden = response.data; // 👈 aquí obtienes la orden
       toast.success(response.data.message);
+      localStorage.removeItem("crm_prioridades_compra");
+      window.dispatchEvent(new Event("prioridades-compra-updated"));
       
     //  console.log(response.data);
       // Asegúrate de que el backend devuelva el ID correcto
@@ -145,6 +163,20 @@ export default function FormOrdenesProveedores() {
 
       <div className="col-span-1">
       <h2 className="text-2xl font-bold mb-4">Registrar orden de Compra</h2>
+
+      {trazabilidadInicial && (
+        <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+          <p className="font-semibold">Orden trazable desde faltantes</p>
+          <p>
+            Origen: {trazabilidadInicial.codigo} - {trazabilidadInicial.cliente}
+          </p>
+          {trazabilidadInicial.detalles?.[0]?.origenes?.[0]?.prioridad_snapshot && (
+            <p>
+              Prioridades: {trazabilidadInicial.detalles.length} item(s)
+            </p>
+          )}
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-4">
         <div>
@@ -270,6 +302,7 @@ export default function FormOrdenesProveedores() {
       <DetallesOrdenCompraProveedores
         onChange={handleDetallesChange}
         errores={erroresDetalles}
+        initialDetalles={trazabilidadInicial?.detalles || null}
       />
       <div className="mt-6">
         <button

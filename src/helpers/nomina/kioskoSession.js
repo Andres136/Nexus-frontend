@@ -1,4 +1,6 @@
 const STORAGE_KEY = "kiosko_device_sessions";
+const FINGERPRINT_KEY = "kiosko_device_fingerprint";
+const NONCE_KEY = "kiosko_device_nonce";
 
 function getSessionStore() {
   try {
@@ -20,16 +22,12 @@ async function sha256(value) {
     .join("");
 }
 
-export async function getKioskoFingerprint() {
-  const nonceKey = "kiosko_device_nonce";
-  let nonce = localStorage.getItem(nonceKey);
+function stableFingerprintSource(nonce) {
+  return `kiosko:${nonce}`;
+}
 
-  if (!nonce) {
-    nonce = crypto.randomUUID();
-    localStorage.setItem(nonceKey, nonce);
-  }
-
-  const source = [
+function legacyFingerprintSource(nonce) {
+  return [
     navigator.userAgent,
     navigator.language,
     Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -38,8 +36,55 @@ export async function getKioskoFingerprint() {
     screen.colorDepth,
     nonce,
   ].join("|");
+}
 
-  return sha256(source);
+export async function getKioskoFingerprint() {
+  const storedFingerprint = localStorage.getItem(FINGERPRINT_KEY);
+  if (storedFingerprint) return storedFingerprint;
+
+  let nonce = localStorage.getItem(NONCE_KEY);
+
+  if (!nonce) {
+    nonce = crypto.randomUUID();
+    localStorage.setItem(NONCE_KEY, nonce);
+  }
+
+  const fingerprint = await sha256(stableFingerprintSource(nonce));
+  localStorage.setItem(FINGERPRINT_KEY, fingerprint);
+
+  return fingerprint;
+}
+
+export async function getKioskoFingerprintCandidates() {
+  const storedFingerprint = localStorage.getItem(FINGERPRINT_KEY);
+  if (storedFingerprint) return [storedFingerprint];
+
+  let nonce = localStorage.getItem(NONCE_KEY);
+
+  if (!nonce) {
+    nonce = crypto.randomUUID();
+    localStorage.setItem(NONCE_KEY, nonce);
+  }
+
+  const stableFingerprint = await sha256(stableFingerprintSource(nonce));
+  const legacyFingerprint = await sha256(legacyFingerprintSource(nonce));
+  localStorage.setItem(FINGERPRINT_KEY, stableFingerprint);
+
+  return [...new Set([stableFingerprint, legacyFingerprint])];
+}
+
+export function shouldClearKioskoSession(message = "") {
+  const normalized = String(message).toLowerCase();
+
+  return [
+    "sesión del kiosko no es válida",
+    "kiosko no ha sido activado",
+    "activado en otro dispositivo",
+    "kiosko fue revocado",
+    "dispositivo fue revocado",
+    "link temporal ya fue usado en otro dispositivo",
+    "link de acceso temporal no es válido",
+  ].some((pattern) => normalized.includes(pattern));
 }
 
 export function saveKioskoSession(uuid, sessionToken) {

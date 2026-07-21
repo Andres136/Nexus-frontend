@@ -1,5 +1,7 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import PropTypes from "prop-types";
+import Select from "react-select";
 import {
   Search,
   Loader2,
@@ -9,9 +11,16 @@ import {
   CircleAlert,
   Timer,
   Users,
+  Camera,
+  X,
 } from "lucide-react";
 import { useGetWorkSessions } from "../../hooks/nomina/useGetWorkSessions";
+import { useGetEmpleados } from "../../hooks/nomina/useGetEmpleados";
 import { useSedes } from "../../hooks/useSedes";
+import { recuperacionTiempoService, workSessionService } from "../../services/nominaService";
+import { showToast } from "../../helpers/utils/showToast";
+
+const STORAGE_URL = import.meta.env.VITE_API_URL + "/storage/";
 
 function minsToHM(mins) {
   if (!mins && mins !== 0) return "—";
@@ -56,6 +65,20 @@ function fechaLocal(date = new Date()) {
   return `${yyyy}-${mm}-${dd}`;
 }
 
+function rangoQuincena(tipo, base = new Date()) {
+  const yyyy = base.getFullYear();
+  const mm = base.getMonth();
+  const inicio = new Date(yyyy, mm, tipo === "primera" ? 1 : 16);
+  const fin = tipo === "primera"
+    ? new Date(yyyy, mm, 15)
+    : new Date(yyyy, mm + 1, 0);
+
+  return {
+    inicio: fechaLocal(inicio),
+    fin: fechaLocal(fin),
+  };
+}
+
 function fmtFecha(d) {
   if (!d) return "—";
   // d may arrive as full ISO datetime ("2026-05-20T00:00:00.000000Z") or bare date ("2026-05-20")
@@ -77,9 +100,16 @@ function avatarColor(name = "") {
   return COLORS[Math.abs(h) % COLORS.length];
 }
 
-function Indicador({ label, value, detail, icon: Icon, color }) {
+function Indicador({ label, value, detail, icon: Icon, color, onClick }) {
+  const Tag = onClick ? "button" : "div";
+
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+    <Tag
+      type={onClick ? "button" : undefined}
+      onClick={onClick}
+      className={`w-full rounded-xl border border-gray-200 bg-white p-4 shadow-sm text-left ${
+        onClick ? "hover:border-indigo-300 hover:shadow-md transition-all cursor-pointer" : ""
+      }`}>
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
@@ -92,7 +122,7 @@ function Indicador({ label, value, detail, icon: Icon, color }) {
           <Icon className="h-5 w-5" />
         </div>
       </div>
-    </div>
+    </Tag>
   );
 }
 
@@ -102,6 +132,7 @@ Indicador.propTypes = {
   detail: PropTypes.string.isRequired,
   icon: PropTypes.elementType.isRequired,
   color: PropTypes.string.isRequired,
+  onClick: PropTypes.func,
 };
 
 function Pagination({ meta, page, onPage }) {
@@ -154,35 +185,76 @@ Pagination.propTypes = {
 };
 
 export default function PageWorkSessions() {
+  const queryClient = useQueryClient();
   const today = fechaLocal();
-  const firstDay = today.slice(0, 8) + "01";
 
   const [search, setSearch]         = useState("");
-  const [fechaInicio, setFechaInicio] = useState(firstDay);
+  const [fechaInicio, setFechaInicio] = useState(today);
   const [fechaFin, setFechaFin]     = useState(today);
   const [sedeId, setSedeId]         = useState("");
+  const [userId, setUserId]         = useState("");
   const [page, setPage]             = useState(1);
+  const [fotoAbierta, setFotoAbierta] = useState(null);
+  const [galeriaAbierta, setGaleriaAbierta] = useState(false);
+  const [recuperacionForm, setRecuperacionForm] = useState({
+    fecha: today,
+    hora_inicio: "",
+    hora_fin: "",
+    motivo: "",
+  });
   const { sedes } = useSedes();
+  const { empleados, isLoading: loadingEmpleados } = useGetEmpleados({ con_contrato: true });
   const sedesLista = Array.isArray(sedes) ? sedes : [];
+  const empleadoSeleccionado =
+    empleados.find((empleado) => String(empleado.value) === String(userId)) ?? null;
 
   const params = useMemo(() => ({
+    user_id:      userId || undefined,
     search:       search || undefined,
     fecha_inicio: fechaInicio || undefined,
     fecha_fin:    fechaFin    || undefined,
     sede_id:      sedeId || undefined,
     page,
     per_page: 15,
-  }), [search, fechaInicio, fechaFin, sedeId, page]);
+  }), [userId, search, fechaInicio, fechaFin, sedeId, page]);
 
   const dailyParams = useMemo(() => ({
+    user_id: userId || undefined,
     fecha: today,
     sede_id: sedeId || undefined,
     per_page: 1000,
-  }), [sedeId, today]);
+  }), [userId, sedeId, today]);
 
   const { workSessions, isLoading } = useGetWorkSessions(params);
   const { workSessions: dailyWorkSessions, isLoading: loadingDaily } =
     useGetWorkSessions(dailyParams);
+  const { data: resumenPeriodo, isFetching: loadingResumen } = useQuery({
+    queryKey: ["workSessionsResumen", userId, fechaInicio, fechaFin],
+    queryFn: async () => {
+      const response = await workSessionService.getResumen({
+        user_id: userId,
+        fecha_inicio: fechaInicio,
+        fecha_fin: fechaFin,
+      });
+
+      return response.data?.data;
+    },
+    enabled: !!userId && !!fechaInicio && !!fechaFin,
+  });
+  const { data: recuperacionesData } = useQuery({
+    queryKey: ["recuperacionesTiempo", userId, fechaInicio, fechaFin],
+    queryFn: async () => {
+      const response = await recuperacionTiempoService.getRecuperaciones({
+        user_id: userId,
+        fecha_inicio: fechaInicio,
+        fecha_fin: fechaFin,
+        per_page: 100,
+      });
+
+      return response.data?.data;
+    },
+    enabled: !!userId && !!fechaInicio && !!fechaFin,
+  });
   const lista = useMemo(
     () => workSessions?.data?.data ?? [],
     [workSessions]
@@ -193,6 +265,7 @@ export default function PageWorkSessions() {
     [dailyWorkSessions]
   );
   const dailyMeta = dailyWorkSessions?.data ?? null;
+  const recuperaciones = recuperacionesData?.data ?? [];
   const resumen = useMemo(() => {
     return dailyList.reduce((acc, item) => {
       acc.minutosTrabajados += Number(item.minutos_trabajados ?? 0);
@@ -200,6 +273,7 @@ export default function PageWorkSessions() {
       if (Number(item.minutos_tardanza ?? 0) === 0) acc.aTiempo += 1;
       if (Number(item.minutos_tardanza ?? 0) > 0) acc.conTardanza += 1;
       if (item.hora_entrada && !item.hora_salida) acc.abiertas += 1;
+      if (item.foto_respaldo) acc.conFoto += 1;
       return acc;
     }, {
       minutosTrabajados: 0,
@@ -207,13 +281,61 @@ export default function PageWorkSessions() {
       aTiempo: 0,
       conTardanza: 0,
       abiertas: 0,
+      conFoto: 0,
     });
   }, [dailyList]);
+  const fotosHoy = useMemo(
+    () => dailyList.filter((item) => item.foto_respaldo),
+    [dailyList]
+  );
 
   const handleSearch     = (e) => { setSearch(e.target.value); setPage(1); };
   const handleFechaInicio = (e) => { setFechaInicio(e.target.value); setPage(1); };
   const handleFechaFin   = (e) => { setFechaFin(e.target.value); setPage(1); };
   const handleSede       = (e) => { setSedeId(e.target.value); setPage(1); };
+  const handleEmpleado = (option) => { setUserId(option?.value ?? ""); setPage(1); };
+  const aplicarQuincena = (tipo) => {
+    const rango = rangoQuincena(tipo);
+    setFechaInicio(rango.inicio);
+    setFechaFin(rango.fin);
+    setPage(1);
+  };
+  const handleRecuperacion = (event) => {
+    const { name, value } = event.target;
+    setRecuperacionForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  useEffect(() => {
+    setRecuperacionForm((prev) => ({ ...prev, fecha: fechaFin || today }));
+  }, [fechaFin, today]);
+
+  const recuperacionMutation = useMutation({
+    mutationFn: (payload) => recuperacionTiempoService.createRecuperacion(payload),
+    onSuccess: (response) => {
+      showToast("success", response.data?.message || "Recuperación autorizada");
+      setRecuperacionForm({ fecha: fechaFin || today, hora_inicio: "", hora_fin: "", motivo: "" });
+      queryClient.invalidateQueries({ queryKey: ["recuperacionesTiempo"] });
+      queryClient.invalidateQueries({ queryKey: ["workSessionsResumen"] });
+    },
+    onError: (error) => {
+      showToast("error", error.response?.data?.message || "No fue posible autorizar la recuperación");
+    },
+  });
+
+  const guardarRecuperacion = (event) => {
+    event.preventDefault();
+
+    if (!userId) {
+      showToast("error", "Selecciona un empleado.");
+      return;
+    }
+
+    recuperacionMutation.mutate({
+      user_id: Number(userId),
+      ...recuperacionForm,
+      motivo: recuperacionForm.motivo || "Recuperación de tiempo autorizada",
+    });
+  };
 
   return (
     <div className="p-6">
@@ -227,7 +349,7 @@ export default function PageWorkSessions() {
 
 
 
-      <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <Indicador
           label="Registros de hoy"
           value={loadingDaily ? "—" : (dailyMeta?.total ?? 0)}
@@ -250,16 +372,111 @@ export default function PageWorkSessions() {
           color="bg-emerald-50 text-emerald-600"
         />
         <Indicador
+          label="Tardanza hoy"
+          value={loadingDaily ? "—" : minsToHM(resumen.minutosTardanza)}
+          detail={`${resumen.conTardanza} sesión(es) con tardanza`}
+          icon={CircleAlert}
+          color="bg-orange-50 text-orange-600"
+        />
+        <Indicador
           label="Novedades de hoy"
           value={loadingDaily ? "—" : resumen.abiertas + resumen.conTardanza}
           detail={`${resumen.abiertas} abiertas · ${resumen.conTardanza} con tardanza`}
           icon={CircleAlert}
           color="bg-amber-50 text-amber-600"
         />
+        <Indicador
+          label="Marcaciones por cédula"
+          value={loadingDaily ? "—" : resumen.conFoto}
+          detail={resumen.conFoto > 0 ? "Con foto de respaldo · Ver todas" : "Ninguna hoy"}
+          icon={Camera}
+          color="bg-purple-50 text-purple-600"
+          onClick={resumen.conFoto > 0 ? () => setGaleriaAbierta(true) : undefined}
+        />
       </div>
+
+      {userId && (
+        <div className="mb-5 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+            <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-gray-900">Resumen de período</p>
+                <p className="text-xs text-gray-500">
+                  {empleadoSeleccionado?.label ?? "Empleado"} · {fmtFecha(fechaInicio)} a {fmtFecha(fechaFin)}
+                </p>
+              </div>
+              {loadingResumen && (
+                <span className="inline-flex items-center gap-1 text-xs text-indigo-500">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Actualizando
+                </span>
+              )}
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <Indicador label="Horas que debe" value={minsToHM(resumenPeriodo?.minutos_debe)} detail={`${resumenPeriodo?.sesiones ?? 0} sesiones en el período`} icon={Clock} color="bg-slate-50 text-slate-600" />
+              <Indicador label="Trabajadas" value={minsToHM(resumenPeriodo?.minutos_trabajados)} detail="Según marcaciones del kiosko" icon={Timer} color="bg-indigo-50 text-indigo-600" />
+              <Indicador label="Tardanza" value={minsToHM(resumenPeriodo?.minutos_tardanza)} detail={`${resumenPeriodo?.dias_tarde ?? 0} día(s) tarde`} icon={CircleAlert} color="bg-orange-50 text-orange-600" />
+              <Indicador label="Saldo pendiente" value={minsToHM(resumenPeriodo?.minutos_saldo)} detail={`${minsToHM(resumenPeriodo?.minutos_recuperados)} recuperado`} icon={CircleCheck} color="bg-emerald-50 text-emerald-600" />
+            </div>
+          </div>
+
+          <form onSubmit={guardarRecuperacion} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+            <p className="text-sm font-semibold text-gray-900">Autorizar recuperación</p>
+            <p className="mt-0.5 text-xs text-gray-500">
+              El kiosko reconocerá este tiempo como compensación, no como hora extra.
+            </p>
+
+            <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3 lg:grid-cols-1">
+              <input type="date" name="fecha" value={recuperacionForm.fecha} onChange={handleRecuperacion} className="h-9 rounded-lg border border-gray-200 px-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
+              <input type="time" name="hora_inicio" value={recuperacionForm.hora_inicio} onChange={handleRecuperacion} className="h-9 rounded-lg border border-gray-200 px-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
+              <input type="time" name="hora_fin" value={recuperacionForm.hora_fin} onChange={handleRecuperacion} className="h-9 rounded-lg border border-gray-200 px-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
+            </div>
+
+            <input type="text" name="motivo" value={recuperacionForm.motivo} onChange={handleRecuperacion} placeholder="Motivo" className="mt-2 h-9 w-full rounded-lg border border-gray-200 px-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
+
+            <button type="submit" disabled={recuperacionMutation.isPending} className="mt-3 inline-flex h-9 w-full items-center justify-center rounded-lg bg-indigo-600 px-3 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50">
+              {recuperacionMutation.isPending ? "Autorizando..." : "Autorizar recuperación"}
+            </button>
+
+            {recuperaciones.length > 0 && (
+              <div className="mt-3 border-t border-gray-100 pt-3">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">Autorizadas</p>
+                <div className="space-y-1.5">
+                  {recuperaciones.slice(0, 3).map((item) => (
+                    <div key={item.uuid} className="flex items-center justify-between rounded-lg bg-gray-50 px-2 py-1.5 text-xs">
+                      <span className="text-gray-600">
+                        {fmtFecha(item.fecha)} · {item.hora_inicio?.slice(0, 5)}-{item.hora_fin?.slice(0, 5)}
+                      </span>
+                      <span className="font-semibold text-gray-800">
+                        {minsToHM(item.minutos_usados)} / {minsToHM(item.minutos_autorizados)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </form>
+        </div>
+      )}
 
       {/* Filtros */}
       <div className="flex flex-wrap items-center gap-3 mb-4">
+        <div className="min-w-[260px]">
+          <Select
+            className="text-sm"
+            classNamePrefix="react-select"
+            options={empleados}
+            value={empleadoSeleccionado}
+            onChange={handleEmpleado}
+            isClearable
+            isSearchable
+            isLoading={loadingEmpleados}
+            placeholder={loadingEmpleados ? "Cargando empleados..." : "Filtrar empleado"}
+            noOptionsMessage={() => "Sin empleados"}
+          />
+        </div>
+
         {/* Buscador */}
         <div className="relative">
           <Search className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -312,7 +529,25 @@ export default function PageWorkSessions() {
             </option>
           ))}
         </select>
+
+        <div className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white p-1">
+          <button
+            type="button"
+            onClick={() => aplicarQuincena("primera")}
+            className="h-7 rounded-md px-2 text-xs font-semibold text-gray-600 hover:bg-gray-50"
+          >
+            1a quincena
+          </button>
+          <button
+            type="button"
+            onClick={() => aplicarQuincena("segunda")}
+            className="h-7 rounded-md px-2 text-xs font-semibold text-gray-600 hover:bg-gray-50"
+          >
+            2a quincena
+          </button>
+        </div>
       </div>
+
 
       {/* Tabla */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
@@ -352,6 +587,15 @@ export default function PageWorkSessions() {
                             {getInitials(nombre)}
                           </div>
                           <span className="font-medium text-gray-800 whitespace-nowrap">{nombre}</span>
+                          {item.foto_respaldo && (
+                            <button
+                              type="button"
+                              onClick={() => setFotoAbierta({ url: STORAGE_URL + item.foto_respaldo, nombre })}
+                              title="Ver foto de respaldo (marcación por cédula)"
+                              className="flex-shrink-0 text-gray-400 hover:text-indigo-600 transition-colors">
+                              <Camera className="h-4 w-4" />
+                            </button>
+                          )}
                         </div>
                       </td>
 
@@ -441,6 +685,70 @@ export default function PageWorkSessions() {
         )}
         <Pagination meta={meta} page={page} onPage={setPage} />
       </div>
+
+      {galeriaAbierta && (
+        <div
+          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+          onClick={() => setGaleriaAbierta(false)}>
+          <div
+            className="relative max-w-2xl w-full max-h-[80vh] bg-white rounded-xl shadow-2xl flex flex-col"
+            onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+              <div>
+                <p className="text-sm font-semibold text-gray-900">Marcaciones por cédula de hoy</p>
+                <p className="text-xs text-gray-500">{fotosHoy.length} marcación(es) con foto de respaldo</p>
+              </div>
+              <button type="button" onClick={() => setGaleriaAbierta(false)} className="text-gray-400 hover:text-gray-700">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="p-5 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 gap-4">
+              {fotosHoy.map((item) => (
+                <button
+                  key={item.uuid}
+                  type="button"
+                  onClick={() => {
+                    setFotoAbierta({ url: STORAGE_URL + item.foto_respaldo, nombre: item.empleado?.name ?? "Empleado" });
+                    setGaleriaAbierta(false);
+                  }}
+                  className="group text-left">
+                  <img
+                    src={STORAGE_URL + item.foto_respaldo}
+                    alt={item.empleado?.name ?? "Empleado"}
+                    className="w-full aspect-square object-cover rounded-lg border border-gray-200 group-hover:border-indigo-400 transition-colors"
+                  />
+                  <p className="mt-1 text-xs font-medium text-gray-800 truncate">{item.empleado?.name ?? "—"}</p>
+                  <p className="text-[11px] text-gray-400">{fmtHora(item.hora_entrada)}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {fotoAbierta && (
+        <div
+          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+          onClick={() => setFotoAbierta(null)}>
+          <div className="relative max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => setFotoAbierta(null)}
+              className="absolute -top-10 right-0 text-white/80 hover:text-white">
+              <X className="h-6 w-6" />
+            </button>
+            <img
+              src={fotoAbierta.url}
+              alt={`Foto de respaldo de ${fotoAbierta.nombre}`}
+              className="w-full rounded-xl shadow-2xl"
+            />
+            <p className="text-center text-white/70 text-xs mt-2">
+              {fotoAbierta.nombre} · Marcación por cédula
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

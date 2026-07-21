@@ -36,7 +36,7 @@ export function useSolicitudHorasExtrasOperacion() {
   });
   const { kioscos, isLoading: loadingKioscos } = useGetKioscos({
     sede_id: sedeId || undefined,
-    per_page: 100,
+    all: true,
   });
   const { sedes } = useSedes();
 
@@ -54,8 +54,9 @@ export function useSolicitudHorasExtrasOperacion() {
         kiosko_device_id: form.kiosko_device_id ? Number(form.kiosko_device_id) : null,
         origen: "admin",
         fecha: form.fecha,
-        horas: Number(form.horas),
-        tipo: form.tipo,
+        hora_inicio: form.hora_inicio,
+        hora_fin: form.hora_fin,
+        tipo: form.tipo || "diurna",
         motivo: form.motivo,
       };
 

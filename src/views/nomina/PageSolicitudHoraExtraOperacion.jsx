@@ -9,13 +9,6 @@ const STATUS_BADGE = {
   rechazada: "bg-red-100 text-red-700 border-red-200",
 };
 
-const TIPO_LABEL = {
-  diurna: "Diurna",
-  nocturna: "Nocturna",
-  festiva: "Festiva",
-  nocturna_festiva: "Nocturna festiva",
-};
-
 export default function PageSolicitudHoraExtraOperacion() {
   const {
     sedeId,
@@ -85,7 +78,7 @@ export default function PageSolicitudHoraExtraOperacion() {
                       </span>
                     </div>
                     <p className="mt-1 text-sm text-gray-500">
-                      {item.fecha?.slice(0, 10) ?? "-"} · {item.horas ?? 0}h · {TIPO_LABEL[item.tipo] ?? item.tipo}
+                      {item.fecha?.slice(0, 10) ?? "-"} · {item.horas ?? 0}h
                     </p>
                   </div>
                   <div className="flex items-center gap-2 text-xs text-gray-400">

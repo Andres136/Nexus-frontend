@@ -18,14 +18,19 @@ function fechaLocal(date = new Date()) {
 }
 
 async function kioskRequestConfig() {
-  const match = window.location.pathname.match(/^\/kiosko\/([^/]+)/);
-  const uuid = match?.[1];
+  const uuid = kioskRouteUuid();
 
-  if (!uuid || uuid === "activar" || uuid === "acceso-temporal") return null;
+  if (!uuid) return null;
 
   const guestToken   = getKioskoGuestSession(uuid);
   if (guestToken) {
-    return { headers: { "X-Kiosko-Device": uuid, "X-Kiosko-Guest-Token": guestToken } };
+    return {
+      headers: {
+        "X-Kiosko-Device": uuid,
+        "X-Kiosko-Guest-Token": guestToken,
+        "X-Kiosko-Guest-Fingerprint": await getKioskoFingerprint(),
+      },
+    };
   }
 
   const sessionToken = getKioskoSession(uuid);
@@ -38,6 +43,24 @@ async function kioskRequestConfig() {
       "X-Kiosko-Fingerprint": await getKioskoFingerprint(),
     },
   };
+}
+
+function kioskRouteUuid() {
+  const match = window.location.pathname.match(/^\/kiosko\/([^/]+)/);
+  const uuid = match?.[1];
+
+  if (!uuid || uuid === "activar" || uuid === "acceso-temporal") return null;
+
+  return uuid;
+}
+
+function kioskSessionRequiredError() {
+  const error = new Error("La sesión de este kiosko cambió o fue reactivada. Abre el nuevo link de activación en este dispositivo.");
+  error.response = {
+    status: 403,
+    data: { message: error.message },
+  };
+  return error;
 }
 
 // Interceptor para agregar el token de autorización a cada solicitud
@@ -90,8 +113,8 @@ export  const tipoContratoService = {
 };
 
 export const seguridadSocialService = {
-  getSeguridadSocial() {
-    return apiClient.get("api/nomina/seguridad-social");
+  getSeguridadSocial(params = {}) {
+    return apiClient.get("api/nomina/seguridad-social", { params });
   },
   getSeguridadSocialById(id) {
     return apiClient.get(`api/nomina/seguridad-social/${id}`);
@@ -199,12 +222,33 @@ export const horarioOperacionService = {
   getHoy(params = {}) {
     return apiClient.get("api/nomina/horario-operacion/hoy", { params });
   },
-  async getKioskoHoy() {
+  async getKioskoHoy(params = {}) {
     const config = await kioskRequestConfig();
-    return apiClient.get("api/nomina/kiosko-horario-operacion/hoy", config ?? undefined);
+    return apiClient.get("api/nomina/kiosko-horario-operacion/hoy", {
+      ...(config ?? {}),
+      params,
+    });
   },
   guardarHoy(data) {
     return apiClient.put("api/nomina/horario-operacion/hoy", data);
+  },
+};
+
+export const horarioUsuarioSemanalService = {
+  getPorUsuario(userId) {
+    return apiClient.get("api/nomina/horarios-usuario-semanales", {
+      params: { user_id: userId },
+    });
+  },
+  guardarSemana(data) {
+    return apiClient.post("api/nomina/horarios-usuario-semanales", data);
+  },
+  async getKioskoHoy(userId) {
+    const config = await kioskRequestConfig();
+    return apiClient.get("api/nomina/kiosko-horario-usuario/hoy", {
+      ...(config ?? {}),
+      params: { user_id: userId },
+    });
   },
 };
 
@@ -311,6 +355,18 @@ export const contratacionService = {
   },
 };
 
+export const contratacionCambioService = {
+  getCambios(params = {}) {
+    return apiClient.get("api/nomina/contratacion-cambios", { params });
+  },
+  getCambio(uuid) {
+    return apiClient.get(`api/nomina/contratacion-cambios/${uuid}`);
+  },
+  createCambio(data) {
+    return apiClient.post("api/nomina/contratacion-cambios", data);
+  },
+};
+
 export const ajusteSalarialService = {
   getAjustes(params = {}) {
     return apiClient.get("api/nomina/ajustes-salariales", { params });
@@ -394,9 +450,6 @@ export const nominaService = {
   },
   cerrarPeriodo(data) {
     return apiClient.post("api/nomina/nominas/cerrar-periodo", data);
-  },
-  exportarPuc(params = {}) {
-    return apiClient.get("api/nomina/nominas/exportar-puc", { params });
   },
   exportarPucExcel(params = {}) {
     return apiClient.get("api/nomina/nominas/exportar-puc/excel", {
@@ -523,10 +576,17 @@ export const workSessionService = {
   getWorkSessions(params = {}) {
     return apiClient.get("api/nomina/work-sessions", { params });
   },
+  getResumen(params = {}) {
+    return apiClient.get("api/nomina/work-sessions/resumen", { params });
+  },
   async createSession(data) {
     const kioskConfig = await kioskRequestConfig();
     if (kioskConfig) {
       return apiClient.post("api/nomina/kiosko-work-sessions", data, kioskConfig);
+    }
+
+    if (kioskRouteUuid()) {
+      throw kioskSessionRequiredError();
     }
 
     return apiClient.post("api/nomina/work-sessions", data);
@@ -535,6 +595,10 @@ export const workSessionService = {
     const kioskConfig = await kioskRequestConfig();
     if (kioskConfig) {
       return apiClient.put(`api/nomina/kiosko-work-sessions/${uuid}`, data, kioskConfig);
+    }
+
+    if (kioskRouteUuid()) {
+      throw kioskSessionRequiredError();
     }
 
     return apiClient.put(`api/nomina/work-sessions/${uuid}`, data);
@@ -549,9 +613,25 @@ export const workSessionService = {
       });
     }
 
+    if (kioskRouteUuid()) {
+      throw kioskSessionRequiredError();
+    }
+
     return apiClient.get("api/nomina/work-sessions", {
       params: { user_id: userId, fecha: today, per_page: 1 },
     });
+  },
+};
+
+export const recuperacionTiempoService = {
+  getRecuperaciones(params = {}) {
+    return apiClient.get("api/nomina/recuperaciones-tiempo", { params });
+  },
+  createRecuperacion(data) {
+    return apiClient.post("api/nomina/recuperaciones-tiempo", data);
+  },
+  anular(uuid) {
+    return apiClient.patch(`api/nomina/recuperaciones-tiempo/${uuid}/anular`);
   },
 };
 
@@ -636,6 +716,15 @@ export const horaExtraService = {
   },
   rechazar(uuid, data = {}) {
     return apiClient.patch(`api/nomina/horas-extras/${uuid}/rechazar`, data);
+  },
+  aprobarTodas(params = {}, data = {}) {
+    return apiClient.patch("api/nomina/horas-extras/aprobar-todas", data, { params });
+  },
+  exportarAprobadas(params = {}) {
+    return apiClient.get("api/nomina/horas-extras/exportar", {
+      params,
+      responseType: "blob",
+    });
   },
   async getHorasExtrasAprobadasHoy(userId) {
     const kioskConfig = await kioskRequestConfig();

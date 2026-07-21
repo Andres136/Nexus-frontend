@@ -13,6 +13,11 @@ export default function ObtenerOrdenesProveedores() {
 const { user } = useAuth({middleware: 'auth'});
 const [fechaInicio, setFechaInicio] = useState("");
 const [fechaFin, setFechaFin] = useState("");
+const [filtrosAplicados, setFiltrosAplicados] = useState({
+  search: "",
+  fechaInicio: "",
+  fechaFin: "",
+});
 
 //console.log(user);
 const isAdmin = user?.role_id === 1;
@@ -33,12 +38,30 @@ const isAdministrativo = [4, 5, 6,].includes(user?.role_id);
   } = useProveedores();
 
   const handleBuscar = () => {
+    setFiltrosAplicados({
+      search: searchTerm.trim(),
+      fechaInicio,
+      fechaFin,
+    });
     setPagina(1);
-    obtenerOrdenes(1, searchTerm, fechaInicio, fechaFin);
   };
+
+  const limpiarFiltros = () => {
+    setSearchTerm("");
+    setFechaInicio("");
+    setFechaFin("");
+    setFiltrosAplicados({ search: "", fechaInicio: "", fechaFin: "" });
+    setPagina(1);
+  };
+
 useEffect(() => {
-  obtenerOrdenes(pagina, searchTerm, fechaInicio, fechaFin);
-}, [pagina]);
+  obtenerOrdenes(
+    pagina,
+    filtrosAplicados.search,
+    filtrosAplicados.fechaInicio,
+    filtrosAplicados.fechaFin
+  );
+}, [pagina, filtrosAplicados, obtenerOrdenes]);
   //Formatear fecha
 const formatearFecha = (fecha) => {
   if (!fecha) return ""
@@ -90,6 +113,13 @@ const formatearFecha = (fecha) => {
     className="bg-blue-500 text-white px-4 py-2 rounded"
   >
     Buscar
+  </button>
+
+  <button
+    onClick={limpiarFiltros}
+    className="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300"
+  >
+    Limpiar
   </button>
 
 </div>
@@ -201,11 +231,7 @@ const formatearFecha = (fecha) => {
       <div className="mt-4 flex justify-between">
      <button
   disabled={pagina === 1}
-  onClick={() => {
-    const nuevaPagina = pagina - 1;
-    setPagina(nuevaPagina);
-    obtenerOrdenes(nuevaPagina, searchTerm, weekFilter);
-  }}
+  onClick={() => setPagina((prev) => Math.max(prev - 1, 1))}
 >
           Anterior
         </button>
@@ -214,11 +240,7 @@ const formatearFecha = (fecha) => {
         </span>
        <button
   disabled={pagina === lastPage}
-  onClick={() => {
-    const nuevaPagina = pagina + 1;
-    setPagina(nuevaPagina);
-    obtenerOrdenes(nuevaPagina, searchTerm, weekFilter);
-  }}
+  onClick={() => setPagina((prev) => Math.min(prev + 1, lastPage))}
 >
           Siguiente
         </button>

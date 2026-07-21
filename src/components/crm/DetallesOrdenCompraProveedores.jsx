@@ -7,6 +7,7 @@ import RegisterObservacionOcProveedorDetalles from "./RegisterObservacionOcProve
 export default function DetallesOrdenCompraProveedores({
   onChange,
   errores = {},
+  initialDetalles = null,
 }) {
  const createDetalle = (itemNumber) => ({
   uid: crypto.randomUUID(),
@@ -18,14 +19,45 @@ export default function DetallesOrdenCompraProveedores({
   producto_id: null,
   campo_seleccionado: "name",
   procesos: [],
+  origenes: [],
 });
 
-  const [detalles, setDetalles] = useState([createDetalle(1)]);
+  const normalizarDetalleInicial = (detalle, index) => ({
+    ...createDetalle(index + 1),
+    ...detalle,
+    uid: detalle.uid || crypto.randomUUID(),
+    item: index + 1,
+    cantidad_entregada: detalle.cantidad_entregada ?? 0,
+    campo_seleccionado: detalle.campo_seleccionado || "name",
+    procesos: detalle.procesos || [],
+    origenes: detalle.origenes || [],
+  });
+
+  const [detalles, setDetalles] = useState(() => (
+    initialDetalles?.length
+      ? initialDetalles.map(normalizarDetalleInicial)
+      : [createDetalle(1)]
+  ));
   const [search, setSearch] = useState("");
   const [selectorAbierto, setSelectorAbierto] = useState(null);
 
   const { products, isLoading, isFetching, isEmpty } = useProducts({ search });
-  const [productCache, setProductCache] = useState({});
+  const [productCache, setProductCache] = useState(() => {
+    if (!initialDetalles?.length) return {};
+
+    return initialDetalles.reduce((cache, detalle) => {
+      if (!detalle.producto_id) return cache;
+
+      cache[detalle.producto_id] = {
+        id: detalle.producto_id,
+        code: detalle.code,
+        name: detalle.producto_nombre || detalle.descripcion,
+        description: detalle.descripcion,
+      };
+
+      return cache;
+    }, {});
+  });
   const [modalOpen, setModalOpen] = useState(false);
 const [detalleIndexSel, setDetalleIndexSel] = useState(null);
 useEffect(() => {
@@ -154,7 +186,10 @@ useEffect(() => {
                   Campo a Usar
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Cantidad
+                  Cantidad compra kg
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Prioridad kg
                 </th>
               </tr>
             </thead>
@@ -342,7 +377,7 @@ useEffect(() => {
                     <input
                       type="number"
                       min="0"
-                      step="1"
+                      step="0.01"
                       value={detalle.cantidad_solicitada}
                       onChange={(e) =>
                         handleInputChange(
@@ -352,12 +387,33 @@ useEffect(() => {
                         )
                       }
                       className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="0"
+                      placeholder="Cantidad total a comprar"
                     />
                     {errores?.[index]?.cantidad_solicitada && (
                       <p className="text-red-500 text-xs mt-1">
                         {errores[index].cantidad_solicitada[0]}
                       </p>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    {detalle.origenes?.length > 0 ? (
+                      <div className="space-y-1">
+                        {detalle.origenes.map((origen, idx) => (
+                          <div
+                            key={idx}
+                            className="rounded-md border border-orange-200 bg-orange-50 px-2 py-1 text-xs text-orange-800"
+                          >
+                            <div className="font-semibold">
+                              {Number(origen.cantidad_prioridad ?? origen.cantidad_solicitada ?? 0).toFixed(2)} kg prioridad
+                            </div>
+                            <div className="text-[10px] text-orange-700">
+                              {origen.prioridad_snapshot?.orden_codigo}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-xs text-gray-400">Manual</span>
                     )}
                   </td>
                 </tr>

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import Select from "react-select";
+import CreatableSelect from "react-select/creatable";
 import { useAlistamientos } from "../../hooks/vsm/useAlistamiento";
-import { usersApi } from "../../services/api";
+import { productsApi, usersApi } from "../../services/api";
 import { toast } from "react-toastify";
 import { otAlistamientoService, vsmService } from "../../services/vsm";
 import AlistamientosActivos from "../../components/vsm/AlistamientosActivos";
@@ -22,6 +23,11 @@ export default function AlistamientoPanel() {
   const { user: authUser } = useAuth({ middleware: 'auth' });
 
   const [selectedOT, setSelectedOT] = useState(null);
+  const [tipoOrigen, setTipoOrigen] = useState("OT");
+  const [nombreActividad, setNombreActividad] = useState("");
+  const [modalidadLibre, setModalidadLibre] = useState("PRODUCTOS");
+  const [selectedProducts, setSelectedProducts] = useState([]);
+  const [products, setProducts] = useState([]);
   const [users, setUsers] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [errors, setErrors] = useState({});
@@ -40,6 +46,9 @@ export default function AlistamientoPanel() {
 
   useEffect(() => {
     fetchUsers();
+    productsApi.getAll()
+      .then((res) => setProducts(res.data?.data || []))
+      .catch(() => toast.error("No se pudieron cargar los productos"));
   }, []);
 
   // Filtra por sede del usuario autenticado en el render, sin bloquear la carga inicial
@@ -71,10 +80,16 @@ export default function AlistamientoPanel() {
   const iniciar = async () => {
     try {
       const payload = {
-        orden_trabajo_id: selectedOT?.value,
-        producto_id: selectedOT?.producto_id,
+        tipo_origen: tipoOrigen,
+        orden_trabajo_id: tipoOrigen === "OT" ? selectedOT?.value : null,
+        nombre_actividad: tipoOrigen === "LIBRE" && modalidadLibre === "OPERATIVA"
+          ? nombreActividad
+          : undefined,
+        productos: tipoOrigen === "LIBRE" && modalidadLibre === "PRODUCTOS"
+          ? selectedProducts.map((product) => product.value)
+          : undefined,
         usuarios: selectedUsers.map(u => u.value),
-        cantidad: selectedOT?.cantidad_programada,
+        cantidad: tipoOrigen === "LIBRE" ? 0 : selectedOT?.cantidad_programada,
         fecha: new Date().toISOString().split("T")[0],
       };
 
@@ -85,6 +100,8 @@ export default function AlistamientoPanel() {
       toast(res.data.message || "Alistamiento iniciado con éxito");
       // Limpiar formulario
       setSelectedOT(null);
+      setNombreActividad("");
+      setSelectedProducts([]);
       setSelectedUsers([]);
       setErrors({});
 
@@ -117,31 +134,31 @@ export default function AlistamientoPanel() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="min-h-screen w-full min-w-0 max-w-full overflow-x-hidden bg-gradient-to-br from-slate-50 to-blue-50">
       
       {/* ✅ Header compacto */}
-<div className="bg-white shadow-sm border-b">
-  <div className="max-w-6xl mx-auto px-4 py-4">
-    <div className="flex items-center justify-between">
+<div className="w-full min-w-0 max-w-full overflow-hidden bg-white shadow-sm border-b">
+  <div className="w-full min-w-0 max-w-6xl mx-auto px-3 sm:px-4 py-3 sm:py-4 box-border">
+    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
       
       {/* TÍTULO */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 min-w-0">
         <div className="bg-blue-600 p-2 rounded-lg">
           <ClipboardList className="w-5 h-5 text-white" />
         </div>
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Panel de Alistamiento</h1>
+          <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate">Panel de Alistamiento</h1>
           <p className="text-sm text-gray-600">Gestión VSM</p>
         </div>
       </div>
 
  {/* ENLACES DE NAVEGACIÓN */}
-      <div className="flex items-center gap-6">
+      <div className="flex w-full min-w-0 max-w-full items-center gap-5 overflow-x-auto overscroll-x-contain pb-2 lg:pb-0 lg:w-auto">
         
         {/* FLUJO VSM */}
         <Link
           to="/auth/crm/flujo-vsm"
-          className={`text-sm font-medium transition-all ${
+          className={`text-sm font-medium transition-all whitespace-nowrap ${
             location.pathname === "/auth/crm/flujo-vsm"
               ? "text-blue-600 border-b-2 border-blue-600 pb-1"
               : "text-gray-600 hover:text-gray-900"
@@ -153,7 +170,7 @@ export default function AlistamientoPanel() {
         {/* PRONÓSTICO */}
         <Link
           to="/auth/crm/vsm/dashboard"
-          className={`text-sm font-medium transition-all ${
+          className={`text-sm font-medium transition-all whitespace-nowrap ${
             location.pathname === "/auth/crm/vsm/dashboard"
               ? "text-blue-600 border-b-2 border-blue-600 pb-1"
               : "text-gray-600 hover:text-gray-900"
@@ -166,7 +183,7 @@ export default function AlistamientoPanel() {
         {/* AUDITORÍA DE ALISTAMIENTOS */}       
          <Link
           to="/auth/crm/vsm/auditoria"
-          className={`text-sm font-medium transition-all ${
+          className={`text-sm font-medium transition-all whitespace-nowrap ${
             location.pathname === "/auth/crm/vsm/alistamientos-auditoria"
               ? "text-blue-600 border-b-2 border-blue-600 pb-1"
               : "text-gray-600 hover:text-gray-900"
@@ -179,7 +196,7 @@ export default function AlistamientoPanel() {
         {/* PRODUCTIVIDAD INDIVIDUAL */}       
          <Link
           to="/auth/crm/vsm/productividad-individual"
-          className={`text-sm font-medium transition-all ${
+          className={`text-sm font-medium transition-all whitespace-nowrap ${
             location.pathname === "/auth/crm/vsm/productividad-individual"
               ? "text-blue-600 border-b-2 border-blue-600 pb-1"
               : "text-gray-600 hover:text-gray-900"
@@ -191,7 +208,7 @@ export default function AlistamientoPanel() {
         {/* CONFIGURACIÓN VSM */}
         <Link
           to="/auth/crm/vsm/configuracion"
-          className={`text-sm font-medium transition-all ${
+          className={`text-sm font-medium transition-all whitespace-nowrap ${
             location.pathname === "/auth/crm/vsm/configuracion"
               ? "text-blue-600 border-b-2 border-blue-600 pb-1"
               : "text-gray-600 hover:text-gray-900"
@@ -206,10 +223,10 @@ export default function AlistamientoPanel() {
   </div>
 </div>
 
-      <div className="container mx-auto px-4 py-6">
+      <div className="container w-full min-w-0 max-w-full mx-auto px-2 sm:px-4 py-3 sm:py-6 box-border">
         
         {/* ✅ Formulario compacto */}
-        <div className="bg-white rounded-xl shadow-sm border mb-6">
+        <div className="bg-white rounded-xl shadow-sm border mb-4 sm:mb-6 overflow-visible">
           
           {/* Header del formulario */}
           <div className="bg-gradient-to-r from-green-50 to-emerald-50 px-4 py-3 border-b border-gray-200 rounded-t-xl">
@@ -220,16 +237,38 @@ export default function AlistamientoPanel() {
           </div>
 
           {/* ✅ Grid compacto para formulario */}
-          <div className="p-4 grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="w-full min-w-0 p-3 sm:p-4 space-y-4 box-border">
+            <div className="grid grid-cols-2 sm:inline-flex w-full sm:w-auto rounded-lg border border-gray-200 bg-gray-50 p-1">
+              {[
+                ["OT", "Con orden de trabajo"],
+                ["LIBRE", "Rendimiento libre"],
+              ].map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => {
+                    setTipoOrigen(value);
+                    setErrors({});
+                  }}
+                  className={`px-2 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors ${
+                    tipoOrigen === value ? "bg-white text-blue-700 shadow-sm" : "text-gray-600"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+          <div className="grid min-w-0 grid-cols-1 lg:grid-cols-3 gap-4">
             
             {/* Orden de Trabajo */}
-            <div className="lg:col-span-1">
+            <div className="min-w-0 lg:col-span-1">
               <label className="flex items-center gap-1 text-sm font-medium text-gray-700 mb-2">
                 <Package className="w-3 h-3 text-blue-600" />
-                Orden de Trabajo
+                {tipoOrigen === "OT" ? "Orden de Trabajo" : modalidadLibre === "PRODUCTOS" ? `Producto(s) (${selectedProducts.length})` : "Actividad operativa"}
               </label>
-              
-              <Select
+
+              {tipoOrigen === "OT" ? <Select
                 placeholder="Seleccione OT..."
                 options={ordenesTrabajo.map((ot) => ({
                   value: ot.id,
@@ -240,12 +279,51 @@ export default function AlistamientoPanel() {
                 value={selectedOT}
                 styles={selectStyles}
                 isClearable
-              />
+              /> : modalidadLibre === "PRODUCTOS" ? <Select
+                isMulti
+                placeholder="Seleccione producto(s)..."
+                options={products.map((product) => ({
+                  value: product.id,
+                  label: `${product.code ? `${product.code} – ` : ""}${product.name}`,
+                }))}
+                onChange={setSelectedProducts}
+                value={selectedProducts}
+                styles={selectStyles}
+                isSearchable
+                maxMenuHeight={150}
+              /> : <CreatableSelect
+                placeholder="Ej. Aseo y organización..."
+                options={[
+                  "Alistamiento de material", "Aseo y organización", "Recepción de material",
+                  "Conteo de inventario", "Cargue y descargue", "Apoyo en otro alistamiento",
+                  "Apoyo en otra orden de trabajo",
+                ].map((nombre) => ({ value: nombre, label: nombre }))}
+                onChange={(option) => setNombreActividad(option?.value || "")}
+                value={nombreActividad ? { value: nombreActividad, label: nombreActividad } : null}
+                styles={selectStyles}
+                isSearchable
+                isClearable
+                formatCreateLabel={(value) => `Usar "${value}"`}
+                maxMenuHeight={150}
+              />}
+
+              {tipoOrigen === "LIBRE" && (
+                <div className="mt-2 grid grid-cols-2 rounded-lg bg-gray-100 p-1 text-xs">
+                  <button type="button" onClick={() => setModalidadLibre("PRODUCTOS")} className={`rounded-md px-2 py-1.5 ${modalidadLibre === "PRODUCTOS" ? "bg-white font-semibold text-blue-700 shadow-sm" : "text-gray-500"}`}>Con productos</button>
+                  <button type="button" onClick={() => setModalidadLibre("OPERATIVA")} className={`rounded-md px-2 py-1.5 ${modalidadLibre === "OPERATIVA" ? "bg-white font-semibold text-blue-700 shadow-sm" : "text-gray-500"}`}>Actividad operativa</button>
+                </div>
+              )}
 
               {errors.orden_trabajo_id && (
                 <div className="flex items-center gap-1 mt-1 text-red-600 text-xs">
                   <AlertCircle className="w-3 h-3" />
                   <span>{errors.orden_trabajo_id}</span>
+                </div>
+              )}
+              {errors.productos && (
+                <div className="flex items-center gap-1 mt-1 text-red-600 text-xs">
+                  <AlertCircle className="w-3 h-3" />
+                  <span>{errors.productos}</span>
                 </div>
               )}
 
@@ -273,7 +351,7 @@ export default function AlistamientoPanel() {
             </div>
 
             {/* Usuarios */}
-            <div className="lg:col-span-1">
+            <div className="min-w-0 lg:col-span-1">
               <label className="flex items-center gap-1 text-sm font-medium text-gray-700 mb-2">
                 <Users className="w-3 h-3 text-purple-600" />
                 Usuarios ({selectedUsers.length})
@@ -300,9 +378,11 @@ export default function AlistamientoPanel() {
             {/* Botón de acción */}
             <div className="lg:col-span-1 flex flex-col justify-end">
               <button
-                className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:from-gray-400 disabled:to-gray-500 text-white px-4 py-2.5 rounded-lg font-medium transition-all duration-200 transform hover:scale-[1.02] disabled:scale-100 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
+                className="w-full min-h-11 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:from-gray-400 disabled:to-gray-500 text-white px-4 py-2.5 rounded-lg font-medium transition-all duration-200 sm:hover:scale-[1.02] disabled:scale-100 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
                 onClick={iniciar}
-                disabled={loading || !selectedOT || selectedUsers.length === 0}
+                disabled={loading || selectedUsers.length === 0 || (tipoOrigen === "OT"
+                  ? !selectedOT
+                  : modalidadLibre === "PRODUCTOS" ? selectedProducts.length === 0 : !nombreActividad.trim())}
               >
                 {loading ? (
                   <>
@@ -319,13 +399,25 @@ export default function AlistamientoPanel() {
 
               {/* ✅ Estado compacto */}
               <div className="mt-2 text-center">
-                {!selectedOT && (
+                {tipoOrigen === "OT" && !selectedOT && (
                   <p className="text-xs text-gray-500 flex items-center justify-center gap-1">
                     <AlertCircle className="w-3 h-3" />
                     Selecciona OT
                   </p>
                 )}
-                {selectedOT && selectedUsers.length === 0 && (
+                {tipoOrigen === "LIBRE" && modalidadLibre === "PRODUCTOS" && selectedProducts.length === 0 && (
+                  <p className="text-xs text-gray-500 flex items-center justify-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    Selecciona al menos un producto
+                  </p>
+                )}
+                {tipoOrigen === "LIBRE" && modalidadLibre === "OPERATIVA" && !nombreActividad.trim() && (
+                  <p className="text-xs text-gray-500 flex items-center justify-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    Selecciona o escribe una actividad
+                  </p>
+                )}
+                {((tipoOrigen === "OT" && selectedOT) || (tipoOrigen === "LIBRE" && (selectedProducts.length > 0 || nombreActividad.trim()))) && selectedUsers.length === 0 && (
                   <p className="text-xs text-gray-500 flex items-center justify-center gap-1">
                     <AlertCircle className="w-3 h-3" />
                     Asigna usuarios
@@ -333,6 +425,7 @@ export default function AlistamientoPanel() {
                 )}
               </div>
             </div>
+          </div>
           </div>
         </div>
 

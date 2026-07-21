@@ -198,6 +198,7 @@ if(isEdit){
             setFormData={setFormData}
             handleChange={handleChange}
             detallesEditados={detallesEditados}
+            error={error}
           
         
        

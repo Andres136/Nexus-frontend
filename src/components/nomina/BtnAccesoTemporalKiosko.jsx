@@ -18,7 +18,7 @@ function BtnGenerar({ uuid, className = "" }) {
         ? guestUrl
         : `${window.location.origin}${guestUrl}`;
       await navigator.clipboard.writeText(url);
-      const expira = expiresAt ? new Date(expiresAt).toLocaleString("es-CO") : "24 horas";
+      const expira = expiresAt ? new Date(expiresAt).toLocaleString("es-CO") : "20 minutos";
       showToast("success", `Link temporal copiado. Vence: ${expira}`);
     } catch (error) {
       showToast("error", error.response?.data?.message || "No se pudo generar el link temporal");
@@ -46,8 +46,8 @@ BtnGenerar.propTypes = {
 
 // Cuando se usa sin uuid muestra la lista de kioscos activos
 function ListaKioscos() {
-  const { kioscos, isLoading } = useGetKioscos({ per_page: 50 });
-  const activos = (kioscos?.data?.data ?? []).filter((k) => k.status === "active");
+  const { kioscos, isLoading } = useGetKioscos({ all: true });
+  const activos = (kioscos?.data?.data ?? kioscos?.data ?? []).filter((k) => k.status === "active");
 
   if (isLoading) {
     return <p className="text-sm text-gray-400 animate-pulse">Cargando kioscos...</p>;

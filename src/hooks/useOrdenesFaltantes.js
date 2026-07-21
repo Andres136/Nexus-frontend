@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { ordenesApi } from "../services/api";
 
-export function useOrdenesFaltantes(page = 1, search = "") {
+export function useOrdenesFaltantes(page = 1, search = "", estado = "", sedeId = null, bodegaId = null) {
 
   const [ordenes, setOrdenes] = useState([]);
   const [pagination, setPagination] = useState({});
@@ -15,15 +15,17 @@ export function useOrdenesFaltantes(page = 1, search = "") {
       try {
 
         setIsLoading(true);
+        setError(null);
 
-        const res = await ordenesApi.getFaltantesPendientes(page, search);
+        const res = await ordenesApi.getFaltantesPendientes(page, search, estado, sedeId, bodegaId);
 
-      //  console.log("Respuesta de ordenes faltantes:", res.data.original);
+        // Compatibilidad con la respuesta corregida y con el formato anterior
+        // que envolvía un JsonResponse dentro de otro JsonResponse.
+        const payload = res.data?.original ?? res.data ?? {};
+        const normalizedPayload = payload.original ?? payload;
 
-        const payload = res.data.original;
-
-        setOrdenes(payload.data || []);
-        setPagination(payload.pagination || {});
+        setOrdenes(Array.isArray(normalizedPayload.data) ? normalizedPayload.data : []);
+        setPagination(normalizedPayload.pagination || {});
 
       } catch (err) {
 
@@ -40,7 +42,7 @@ export function useOrdenesFaltantes(page = 1, search = "") {
 
     fetchData();
 
-  }, [page, search]);
+  }, [page, search, estado, sedeId, bodegaId]);
 
   return { ordenes, pagination, isLoading, error };
 }

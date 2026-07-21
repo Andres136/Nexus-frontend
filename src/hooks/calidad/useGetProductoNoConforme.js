@@ -12,13 +12,15 @@ export const useGetProductoNoConforme = (params = {}) => {
         staleTime: 1000 * 60 * 5,
     });
 
+    const paginador = data?.data;
+
     return {
-        data: data?.data || [],
+        data: paginador?.data || [],
         pagination: {
-            currentPage: data?.current_page || 1,
-            lastPage: data?.last_page || 1,
-            total: data?.total || 0,
-            perPage: data?.per_page || 10,
+            currentPage: paginador?.current_page || 1,
+            lastPage: paginador?.last_page || 1,
+            total: paginador?.total || 0,
+            perPage: paginador?.per_page || 10,
         },
         error,
         isLoading,
@@ -39,7 +41,7 @@ export const useGetProductoNoConformeById = (id) => {
     });
 
     return {
-        producto: data || null,
+        producto: data?.data || null,
         error,
         isLoading,
         refetch,

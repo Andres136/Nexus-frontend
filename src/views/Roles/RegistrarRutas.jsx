@@ -1,12 +1,187 @@
-import { useState } from "react";
-import { Plus, Trash2, Route, Save, Settings, Globe, Tag, ToggleLeft, ToggleRight } from "lucide-react";
+import { useRef, useState } from "react";
+import { Download, Plus, Trash2, Route, Save, Settings, Globe, Tag, ToggleRight, Upload } from "lucide-react";
 import Swal from "sweetalert2";
+import * as XLSX from "xlsx";
 import clienteAxios from "../../config/axios";
 
 export default function RegistrarRutas() {
   const [rutas, setRutas] = useState([
     { path: "", name: "", module: "", enabled: true }
   ]);
+  const [errors, setErrors] = useState({});
+  const [exportando, setExportando] = useState(false);
+  const fileInputRef = useRef(null);
+
+  const getError = (index, campo) => errors[`rutas.${index}.${campo}`]?.[0];
+
+  const renderError = (message) => {
+    if (!message) return null;
+
+    return (
+      <p className="mt-1 text-xs font-medium text-red-600">
+        {message}
+      </p>
+    );
+  };
+
+  const parseEnabled = (value) => {
+    if (typeof value === "boolean") return value;
+    if (typeof value === "number") return value === 1;
+
+    const normalized = String(value ?? "")
+      .trim()
+      .toLowerCase();
+
+    if (["false", "no", "0", "deshabilitada", "deshabilitado", "inactivo"].includes(normalized)) {
+      return false;
+    }
+
+    return true;
+  };
+
+  const generarExcelRutas = (data, filename) => {
+    const worksheet = XLSX.utils.json_to_sheet(data, {
+      header: ["path", "name", "module", "enabled"],
+    });
+    worksheet["!cols"] = [
+      { wch: 45 },
+      { wch: 32 },
+      { wch: 20 },
+      { wch: 12 },
+    ];
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Rutas");
+    XLSX.writeFile(workbook, filename);
+  };
+
+  const descargarPlantilla = async () => {
+    setExportando(true);
+
+    try {
+      const token = localStorage.getItem("token");
+      const { data } = await clienteAxios.get("/api/permissions", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const permisos = Array.isArray(data) ? data : [];
+      const rutasRegistradas = permisos
+        .map((permiso) => ({
+          path: permiso.path ?? "",
+          name: permiso.name ?? "",
+          module: permiso.module ?? "General",
+          enabled: permiso.enabled ? "SI" : "NO",
+        }))
+        .filter((permiso) => permiso.path || permiso.name || permiso.module);
+
+      if (rutasRegistradas.length > 0) {
+        generarExcelRutas(rutasRegistradas, "rutas_permisos_registradas.xlsx");
+        return;
+      }
+
+      generarExcelRutas(
+        [
+          {
+            path: "/auth/crm/nomina/procesar",
+            name: "Liquidación de Nómina",
+            module: "Nómina",
+            enabled: "SI",
+          },
+          {
+            path: "/auth/crm/nomina/comisiones",
+            name: "Comisiones",
+            module: "Nómina",
+            enabled: "SI",
+          },
+        ],
+        "plantilla_rutas_permisos.xlsx"
+      );
+
+      Swal.fire(
+        "Plantilla generada",
+        "No hay rutas registradas todavía, por eso descargué una plantilla base.",
+        "info"
+      );
+    } catch (error) {
+      console.error(error);
+
+      const hayDatosFormulario = rutas.some((ruta) => ruta.path || ruta.name || ruta.module);
+      const dataFormulario = rutas.map((ruta) => ({
+        path: ruta.path,
+        name: ruta.name,
+        module: ruta.module,
+        enabled: ruta.enabled ? "SI" : "NO",
+      }));
+
+      generarExcelRutas(
+        hayDatosFormulario ? dataFormulario : [
+          {
+            path: "/auth/crm/nomina/procesar",
+            name: "Liquidación de Nómina",
+            module: "Nómina",
+            enabled: "SI",
+          },
+        ],
+        "plantilla_rutas_permisos.xlsx"
+      );
+
+      Swal.fire(
+        "No pude consultar la DB",
+        "Descargué una plantilla con las rutas que tienes en pantalla.",
+        "warning"
+      );
+    } finally {
+      setExportando(false);
+    }
+  };
+
+  const cargarExcel = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const buffer = await file.arrayBuffer();
+      const workbook = XLSX.read(buffer, { type: "array" });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const rows = XLSX.utils.sheet_to_json(worksheet, { defval: "", raw: false });
+
+      const rutasImportadas = rows
+        .map((row) => ({
+          path: String(row.path ?? row.Path ?? row.Ruta ?? row.ruta ?? "").trim(),
+          name: String(row.name ?? row.Name ?? row.Nombre ?? row.nombre ?? "").trim(),
+          module: String(row.module ?? row.Module ?? row.Módulo ?? row.Modulo ?? row.modulo ?? "").trim(),
+          enabled: parseEnabled(row.enabled ?? row.Enabled ?? row.Estado ?? row.estado ?? row.habilitado),
+        }))
+        .filter((ruta) => ruta.path || ruta.name || ruta.module);
+
+      if (rutasImportadas.length === 0) {
+        Swal.fire(
+          "Archivo vacío",
+          "No encontré rutas válidas. Usa columnas path, name, module y enabled.",
+          "warning"
+        );
+        return;
+      }
+
+      setRutas(rutasImportadas);
+      setErrors({});
+      Swal.fire(
+        "Excel cargado",
+        `Se cargaron ${rutasImportadas.length} rutas en el formulario. Revisa y presiona Guardar Cambios.`,
+        "success"
+      );
+    } catch (error) {
+      console.error(error);
+      Swal.fire(
+        "Error",
+        "No se pudo leer el Excel. Verifica que sea un archivo .xlsx o .xls válido.",
+        "error"
+      );
+    } finally {
+      event.target.value = "";
+    }
+  };
 
   // Agregar fila
   const agregarFila = () => {
@@ -27,6 +202,11 @@ export default function RegistrarRutas() {
     const nuevas = [...rutas];
     nuevas[index][campo] = valor;
     setRutas(nuevas);
+    setErrors((prev) => {
+      const next = { ...prev };
+      delete next[`rutas.${index}.${campo}`];
+      return next;
+    });
   };
 
   // Guardar en el backend
@@ -40,11 +220,22 @@ export default function RegistrarRutas() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
+      setErrors({});
       Swal.fire("Guardado", data.message, "success");
     } catch (error) {
+      console.error(error);
+      const backendErrors = error.response?.data?.errors ?? {};
+      setErrors(backendErrors);
+
+      const errorList = Object.values(backendErrors)
+        .flat()
+        .slice(0, 6);
+
       Swal.fire(
         "Error",
-        error.response?.data?.message || "No se pudo guardar",
+        errorList.length > 0
+          ? `<ul class="text-left">${errorList.map((msg) => `<li>• ${msg}</li>`).join("")}</ul>`
+          : error.response?.data?.message || "No se pudo guardar",
         "error"
       );
     }
@@ -120,6 +311,35 @@ export default function RegistrarRutas() {
             
             <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
               <button
+                onClick={descargarPlantilla}
+                disabled={exportando}
+                className={`flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 shadow-lg ${
+                  exportando
+                    ? "cursor-not-allowed opacity-70"
+                    : "hover:from-amber-600 hover:to-orange-600 transform hover:scale-105"
+                }`}
+              >
+                <Download className="w-4 h-4" />
+                <span>{exportando ? "Exportando..." : "Exportar Excel"}</span>
+              </button>
+
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 shadow-lg"
+              >
+                <Upload className="w-4 h-4" />
+                <span>Subir Excel</span>
+              </button>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={cargarExcel}
+                className="hidden"
+              />
+
+              <button
                 onClick={agregarFila}
                 className="flex items-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 shadow-lg"
               >
@@ -179,8 +399,11 @@ export default function RegistrarRutas() {
                       value={ruta.path}
                       placeholder="/auth/crm/clientes"
                       onChange={(e) => handleChange(index, "path", e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm font-mono"
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm font-mono ${
+                        getError(index, "path") ? "border-red-400 bg-red-50" : "border-gray-300"
+                      }`}
                     />
+                    {renderError(getError(index, "path"))}
                   </div>
 
                   {/* Nombre */}
@@ -194,8 +417,11 @@ export default function RegistrarRutas() {
                       value={ruta.name}
                       placeholder="Gestión de Clientes"
                       onChange={(e) => handleChange(index, "name", e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm"
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm ${
+                        getError(index, "name") ? "border-red-400 bg-red-50" : "border-gray-300"
+                      }`}
                     />
+                    {renderError(getError(index, "name"))}
                   </div>
 
                   {/* Módulo */}
@@ -209,8 +435,11 @@ export default function RegistrarRutas() {
                       value={ruta.module}
                       placeholder="CRM"
                       onChange={(e) => handleChange(index, "module", e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm"
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm ${
+                        getError(index, "module") ? "border-red-400 bg-red-50" : "border-gray-300"
+                      }`}
                     />
+                    {renderError(getError(index, "module"))}
                   </div>
 
                   {/* Estado */}
@@ -234,6 +463,7 @@ export default function RegistrarRutas() {
                         {ruta.enabled ? 'Habilitada' : 'Deshabilitada'}
                       </span>
                     </label>
+                    {renderError(getError(index, "enabled"))}
                   </div>
                 </div>
               </div>
@@ -283,8 +513,11 @@ export default function RegistrarRutas() {
                         value={ruta.path}
                         placeholder="/auth/crm/clientes"
                         onChange={(e) => handleChange(index, "path", e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm font-mono bg-gray-50"
+                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm font-mono ${
+                          getError(index, "path") ? "border-red-400 bg-red-50" : "border-gray-300 bg-gray-50"
+                        }`}
                       />
+                      {renderError(getError(index, "path"))}
                     </td>
 
                     <td className="px-6 py-4">
@@ -293,8 +526,11 @@ export default function RegistrarRutas() {
                         value={ruta.name}
                         placeholder="Gestión de Clientes"
                         onChange={(e) => handleChange(index, "name", e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm"
+                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm ${
+                          getError(index, "name") ? "border-red-400 bg-red-50" : "border-gray-300"
+                        }`}
                       />
+                      {renderError(getError(index, "name"))}
                     </td>
 
                     <td className="px-6 py-4">
@@ -303,8 +539,11 @@ export default function RegistrarRutas() {
                         value={ruta.module}
                         placeholder="CRM"
                         onChange={(e) => handleChange(index, "module", e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm"
+                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm ${
+                          getError(index, "module") ? "border-red-400 bg-red-50" : "border-gray-300"
+                        }`}
                       />
+                      {renderError(getError(index, "module"))}
                     </td>
 
                     <td className="px-6 py-4 text-center">
@@ -323,6 +562,7 @@ export default function RegistrarRutas() {
                           }`} />
                         </div>
                       </label>
+                      {renderError(getError(index, "enabled"))}
                     </td>
 
                     <td className="px-6 py-4 text-center">

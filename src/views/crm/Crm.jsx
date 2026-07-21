@@ -5,14 +5,15 @@ import {
   Users,
   BarChart,
   ShoppingCart,
- 
+
   MessageCircle,
   Clipboard,
   Menu,
   ClipboardList,
   FolderPlus,
   Car,
- 
+  ChevronDown,
+
 } from "lucide-react";
 import Navbar from "../../components/Navbar";
 import { useAuth } from "../../hooks/useAuth";
@@ -22,10 +23,11 @@ import { DocumentTextIcon, UserGroupIcon } from "@heroicons/react/16/solid";
 
 export default function Crm() {
   const [isExpanded, setIsExpanded] = useState(false);
-  const { user } = useAuth({ middleware: "auth" });
- 
+  const [openMenu, setOpenMenu] = useState(null);
+  useAuth({ middleware: "auth" });
+
   const location = useLocation();
-  const [totalNotificaciones, setTotalNotificaciones] = useState(0);
+  const [, setTotalNotificaciones] = useState(0);
 
 
   // Alternar manualmente en móviles
@@ -92,7 +94,7 @@ export default function Crm() {
       name: "Compras",
       to: "/auth/crm/proveedores",
       icon: UserGroupIcon,
-      roles: [1, 4, 5, 6, 10,11],
+   
     },
 
     // {
@@ -145,7 +147,7 @@ const filteredMenuLinks = menuLinks;
         </button>
       </header>
 
-      <div className="flex bg-gray-100 min-h-screen">
+      <div className="flex w-full min-w-0 max-w-full overflow-x-hidden bg-gray-100 min-h-screen">
         {/* Barra lateral con hover en pantallas grandes */}
         <aside
           className={`fixed top-[4rem] left-0 h-screen bg-gray-900 text-white shadow-lg transition-all duration-300 z-50
@@ -174,53 +176,98 @@ const filteredMenuLinks = menuLinks;
           </div>
 
           <nav className="flex flex-col space-y-2 px-2">
-            {filteredMenuLinks.map((link) => (
-              <Link
-                key={link.name}
-                to={link.to}
-                className={`flex items-center justify-between p-2 rounded-md transition-all duration-200 group
-          ${
-            location.pathname === link.to
-              ? "bg-gray-700 font-semibold"
-              : "hover:bg-gray-700"
-          }`}
-                onClick={() => setIsExpanded(false)} // Cierra el sidebar al hacer clic
-              >
-                <div className="relative flex items-center space-x-2">
-                  {/* Ícono */}
-                  <link.icon className="w-5 h-5" />
+            {filteredMenuLinks.map((link) => {
+              const hasChildren = Array.isArray(link.children) && link.children.length > 0;
+              const isChildActive =
+                hasChildren &&
+                link.children.some((child) => location.pathname.startsWith(child.to));
+              const isOpen = hasChildren && (openMenu === link.name || isChildActive);
+              const isActive = location.pathname === link.to || isChildActive;
 
-                  {/* 🔴 Punto rojo si el menú está cerrado y hay notificaciones */}
-                  {!isExpanded && link.badge > 0 && (
-                    <span className="absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full"></span>
-                  )}
-
-                  {/* Texto del menú */}
-                  <span
-                    className={`transition-opacity ${
-                      isExpanded ? "opacity-100" : "opacity-0 hidden"
-                    }`}
+              return (
+                <div key={link.name}>
+                  <div
+                    className={`flex items-center justify-between p-2 rounded-md transition-all duration-200 group
+                ${isActive ? "bg-gray-700 font-semibold" : "hover:bg-gray-700"}`}
                   >
-                    {link.name}
-                  </span>
-                </div>
+                    <Link
+                      to={link.to}
+                      className="relative flex items-center space-x-2 flex-1"
+                      onClick={() => setIsExpanded(false)} // Cierra el sidebar al hacer clic
+                    >
+                      {/* Ícono */}
+                      <link.icon className="w-5 h-5" />
 
-                {isExpanded && link.badge > 0 && (
-                  <span className="bg-red-500 text-white px-2 py-0.5 rounded-full text-xs">
-                    {link.badge}
-                  </span>
-                )}
-              </Link>
-            ))}
+                      {/* 🔴 Punto rojo si el menú está cerrado y hay notificaciones */}
+                      {!isExpanded && link.badge > 0 && (
+                        <span className="absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full"></span>
+                      )}
+
+                      {/* Texto del menú */}
+                      <span
+                        className={`transition-opacity ${
+                          isExpanded ? "opacity-100" : "opacity-0 hidden"
+                        }`}
+                      >
+                        {link.name}
+                      </span>
+                    </Link>
+
+                    {isExpanded && link.badge > 0 && (
+                      <span className="bg-red-500 text-white px-2 py-0.5 rounded-full text-xs">
+                        {link.badge}
+                      </span>
+                    )}
+
+                    {hasChildren && isExpanded && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setOpenMenu((prev) => (prev === link.name ? null : link.name))
+                        }
+                        className="p-1 text-gray-300 hover:text-white"
+                      >
+                        <ChevronDown
+                          className={`w-4 h-4 transition-transform ${
+                            isOpen ? "rotate-180" : ""
+                          }`}
+                        />
+                      </button>
+                    )}
+                  </div>
+
+                  {hasChildren && isExpanded && isOpen && (
+                    <div className="ml-6 mt-1 flex flex-col space-y-1">
+                      {link.children.map((child) => (
+                        <Link
+                          key={child.name}
+                          to={child.to}
+                          onClick={() => setIsExpanded(false)}
+                          className={`flex items-center space-x-2 p-2 rounded-md text-sm transition-all duration-200
+                      ${
+                        location.pathname === child.to
+                          ? "bg-gray-700 font-semibold"
+                          : "hover:bg-gray-700"
+                      }`}
+                        >
+                          <child.icon className="w-4 h-4" />
+                          <span>{child.name}</span>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </nav>
         </aside>
 
         <main
-          className={`flex-1 pt-6 pb-10 transition-all duration-300 ${
+          className={`w-0 min-w-0 max-w-full flex-1 pt-3 sm:pt-6 pb-10 transition-all duration-300 overflow-x-hidden ${
             isExpanded ? "md:ml-64" : "md:ml-16"
           }`}
         >
-          <div className="overflow-x-auto mt-4 mx-4 md:mx-6 p-4 md:p-6 bg-white shadow-md">
+          <div className="w-full md:w-auto min-w-0 max-w-full overflow-x-hidden mt-2 sm:mt-4 mx-0 md:mx-6 p-0 sm:p-4 md:p-6 bg-white shadow-md box-border">
             {/* SOLO MUESTRA ESTE CONTENIDO EN /auth/crm, NO EN SUBRUTAS */}
             {location.pathname === "/auth/crm" && <Dashboard />}
 

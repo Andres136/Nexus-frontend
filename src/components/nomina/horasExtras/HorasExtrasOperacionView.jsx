@@ -1,4 +1,4 @@
-import { Calendar, Plus, Search } from "lucide-react";
+import { Calendar, CheckCheck, Download, Plus, Search } from "lucide-react";
 import { useHorasExtrasOperacion } from "../../../hooks/nomina/useHorasExtrasOperacion";
 import FormHoraExtraOperacion from "./FormHoraExtraOperacion";
 import ModalGestionHoraExtra from "./ModalGestionHoraExtra";
@@ -22,6 +22,10 @@ export default function HorasExtrasOperacionView() {
     setGestion,
     loadingUuid,
     handleGestion,
+    aprobandoTodas,
+    handleAprobarTodas,
+    exportando,
+    handleExportar,
   } = useHorasExtrasOperacion();
 
   return (
@@ -31,9 +35,27 @@ export default function HorasExtrasOperacionView() {
           <h1 className="text-xl font-semibold text-gray-800">Horas Extras Operación</h1>
           <p className="text-sm text-gray-500 mt-0.5">Registra, filtra y autoriza horas extra por sede, kiosko y empleado.</p>
         </div>
-        <button onClick={() => setCrear(true)} className="inline-flex items-center justify-center gap-2 h-9 px-3 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700">
-          <Plus className="h-4 w-4" /> Nueva
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={handleAprobarTodas}
+            disabled={aprobandoTodas || (filtros.status && filtros.status !== "pendiente")}
+            title={filtros.status && filtros.status !== "pendiente" ? "Solo disponible con el filtro de estado en 'Pendiente' o 'Todos los estados'." : undefined}
+            className="inline-flex items-center justify-center gap-2 h-9 px-3 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <CheckCheck className="h-4 w-4" /> {aprobandoTodas ? "Aprobando..." : "Aprobar todas"}
+          </button>
+          <button
+            onClick={handleExportar}
+            disabled={exportando || (filtros.status && filtros.status !== "aprobada")}
+            title={filtros.status && filtros.status !== "aprobada" ? "Solo disponible con el filtro de estado en 'Aprobada' o 'Todos los estados'." : undefined}
+            className="inline-flex items-center justify-center gap-2 h-9 px-3 rounded-lg border border-gray-200 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Download className="h-4 w-4" /> {exportando ? "Exportando..." : "Exportar aprobadas"}
+          </button>
+          <button onClick={() => setCrear(true)} className="inline-flex items-center justify-center gap-2 h-9 px-3 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700">
+            <Plus className="h-4 w-4" /> Nueva
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-3 mb-4">
@@ -112,18 +134,6 @@ export default function HorasExtrasOperacionView() {
           <option value="pendiente">Pendiente</option>
           <option value="aprobada">Aprobada</option>
           <option value="rechazada">Rechazada</option>
-        </select>
-
-        <select
-          value={filtros.tipo}
-          onChange={(event) => filtros.setTipo(event.target.value)}
-          className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        >
-          <option value="">Todos los tipos</option>
-          <option value="diurna">Diurna</option>
-          <option value="nocturna">Nocturna</option>
-          <option value="festiva">Festiva</option>
-          <option value="nocturna_festiva">Nocturna festiva</option>
         </select>
 
         {meta?.total != null && (

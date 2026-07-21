@@ -257,7 +257,6 @@ const loadingUser = !user && !error && token;
   
       toast.success(response.data.message);
       setErrores({});
-      mutate(`/api/users?page=${pagination.current_page}`);
       return true;
     } catch (error) {
       if (error.response?.status === 422) {

@@ -44,6 +44,8 @@ export const usersApi = {
   getAll: () => apiClient.get("/api/conductores"),
   // USUARIO TODOS
   getUsers:()=>apiClient.get("/api/usuarios/all"),
+  getByDepartamento: (departamentoId) =>
+    apiClient.get(`/api/usuarios/departamento/${departamentoId}`),
 };
 
 //Api para registro de indicadores por procesos o departamentos
@@ -215,7 +217,31 @@ getAlistamientosByOT: (id) =>
 //Api para api/proveedores-all
 export const proveedoresApi = {
   getAll: () => apiClient.get("/api/proveedores-all"),
-  
+
+};
+
+//Api para api/estados (catálogo genérico de estados)
+export const estadosApi = {
+  getAll: () => apiClient.get("/api/estados"),
+};
+
+//Requerimientos internos de compra
+export const requerimientosCompraApi = {
+  getAll: (params = {}) => apiClient.get("/api/requerimientos-compra", { params }),
+  getByUuid: (uuid) => apiClient.get(`/api/requerimientos-compra/${uuid}`),
+  create: (data) => apiClient.post("/api/requerimientos-compra", data),
+  update: (uuid, data) => apiClient.put(`/api/requerimientos-compra/${uuid}`, data),
+  getBodegasDisponibles: () => apiClient.get("/api/requerimientos-compra/bodegas-disponibles"),
+  analizar: (uuid, data = {}) => apiClient.patch(`/api/requerimientos-compra/${uuid}/analizar`, data),
+  aprobar: (uuid, data = {}) => apiClient.patch(`/api/requerimientos-compra/${uuid}/aprobar`, data),
+  rechazar: (uuid, data = {}) => apiClient.patch(`/api/requerimientos-compra/${uuid}/rechazar`, data),
+  cancelar: (uuid, data = {}) => apiClient.patch(`/api/requerimientos-compra/${uuid}/cancelar`, data),
+  generarOrdenCompra: (uuid, data) =>
+    apiClient.post(`/api/requerimientos-compra/${uuid}/generar-orden-compra`, data),
+  getPdf: (uuid) =>
+    apiClient.get(`/api/requerimientos-compra/${uuid}/pdf`, {
+      responseType: "blob",
+    }),
 };
 
 //Ordenes de compra a proveedores API
@@ -274,6 +300,10 @@ exportar: (params = {}) =>
       headers: { "Content-Type": "multipart/form-data" },
     }),
   createTraslado: (data) => apiClient.post("/api/traslados-internos", data),
+  listarTraslados: (params = {}) =>
+    apiClient.get("/api/traslados-internos", { params }),
+  actualizarTraslado: (id, data) =>
+    apiClient.put(`/api/traslados-internos/${id}`, data),
   sedesTraslados: () => apiClient.get("/api/traslados-internos-sedes"),
   ordenesCompraTraslados: (params = {}) =>
     apiClient.get("/api/traslados-internos-ordenes-compra", { params }),
@@ -311,12 +341,26 @@ export const crearQrApi = {
 //Exportar ordenes con falta de Stock
 export const ordenesApi = {
 
-  getFaltantesPendientes: (page = 1, search = "") => {
+  getFaltantesPendientes: (page = 1, search = "", estado = "", sedeId = null, bodegaId = null) => {
 
     return apiClient.get("/api/ordenes-compra/faltantes/pendientes", {
       params: {
         page,
-        search
+        search,
+        ...(estado && { estado }),
+        ...(sedeId && { sede_id: sedeId }),
+        ...(bodegaId && { bodega_id: bodegaId }),
+      }
+    });
+
+  },
+
+  getFaltantesEstadisticas: (sedeId = null, bodegaId = null) => {
+
+    return apiClient.get("/api/ordenes-compra/faltantes/estadisticas", {
+      params: {
+        ...(sedeId && { sede_id: sedeId }),
+        ...(bodegaId && { bodega_id: bodegaId }),
       }
     });
 
@@ -380,6 +424,12 @@ export const dashboardApi = {
   getKpis: (year) => apiClient.get("/api/dashboard/kpis", { params: { year } }),
 };
 
+export const notificacionesApi = {
+  getAll: () => apiClient.get("/api/notificaciones"),
+  marcarLeida: (id) => apiClient.post(`/api/notificaciones/${id}/marcar-leida`),
+  marcarTodasLeidas: () => apiClient.post("/api/notificaciones/marcar-leidas"),
+};
+
 //Gestion de cartera
 
 export const carteraApi = {
@@ -389,7 +439,7 @@ export const carteraApi = {
 
   getDetalleCartera: (id) => apiClient.get(`/api/gestion-cartera/${id}`),
   exportarCartera: (params = {}) =>
-    apiClient.get("/api/gestion-cartera/exportar", { params }),
+    apiClient.get("/api/gestion-cartera/exportar", { params, responseType: "blob" }),
   update: (id, data) => apiClient.put(`/api/gestion-cartera/${id}`, data),
   createAbono: (data) =>
     apiClient.post("/api/abonos-cartera", data),
@@ -424,6 +474,8 @@ export  const RevisarOtApi = {
 export const dashboardComercialApi = {
   getEstadisticasComerciales: (params = {}) =>
     apiClient.get("/api/estadisticas-comerciales", { params }),
+  getEstadisticasSemanales: (params = {}) =>
+    apiClient.get("/api/estadisticas-comerciales/semanas", { params }),
 };
 
 export const reportesBicApi = {

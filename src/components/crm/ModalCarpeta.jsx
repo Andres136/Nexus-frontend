@@ -68,27 +68,32 @@ export default function ModalCarpeta({ carpeta, onClose }) {
   const [archivo, setArchivo] = useState(null);
   const [nombreDocumento, setNombreDocumento] = useState("");
   const [error, setError] = useState(null);
+  const [page, setPage] = useState(1);
   const queryClient = useQueryClient();
 
   // Obtener documentos de la carpeta
   const { data: documentos, isLoading } = useQuery({
-    queryKey: ["documentos", carpeta.id],
+    queryKey: ["documentos", carpeta.id, page],
     queryFn: async () => {
       const token = localStorage.getItem("token");
       try {
         const response = await clienteAxios.get(
           `/api/registrar-documentacion/${carpeta.id}`,
-          { headers: { Authorization: `Bearer ${token}` } }
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            params: { page, per_page: 10 },
+          }
         );
         return response.data;
       } catch (err) {
-        if (err?.response?.status === 404) return [];
+        if (err?.response?.status === 404) return { data: [] };
         throw err;
       }
     },
   });
 
-  const documentosCarpeta = Array.isArray(documentos) ? documentos : [];
+  const documentosCarpeta = Array.isArray(documentos) ? documentos : (documentos?.data ?? []);
+  const pagination = !Array.isArray(documentos) && documentos?.current_page ? documentos : null;
 
   // Subir nuevo documento
   const subirDocumento = useMutation({
@@ -115,6 +120,7 @@ export default function ModalCarpeta({ carpeta, onClose }) {
       }
     },
     onSuccess: () => {
+      setPage(1);
       queryClient.invalidateQueries({ queryKey: ["documentos", carpeta.id] });
       queryClient.invalidateQueries({ queryKey: ["carpetas"] });
       setArchivo(null);
@@ -132,24 +138,7 @@ export default function ModalCarpeta({ carpeta, onClose }) {
         return data
       },
   
-      onMutate: async (id) => {
-        await queryClient.cancelQueries({ queryKey: ['documentos', carpeta.id] })
-  
-        const previous = queryClient.getQueryData(['documentos', carpeta.id])
-  
-        queryClient.setQueryData(
-          ['documentos', carpeta.id],
-          old => Array.isArray(old) ? old.filter(doc => doc.id !== id) : []
-        )
-  
-        return { previous }
-      },
-  
-      onError: (err, id, context) => {
-        queryClient.setQueryData(
-          ['documentos', carpeta.id],
-          context?.previous ?? []
-        )
+      onError: () => {
         Swal.fire('Error', 'No se pudo eliminar', 'error')
       },
   
@@ -239,7 +228,7 @@ export default function ModalCarpeta({ carpeta, onClose }) {
               <div className="min-w-0">
                 <h2 className="text-2xl font-bold truncate">{carpeta?.nombre}</h2>
                 <p className="text-blue-100 mt-1">
-                  {documentosCarpeta.length} documento{documentosCarpeta.length !== 1 ? 's' : ''}
+                  {pagination?.total ?? documentosCarpeta.length} documento{(pagination?.total ?? documentosCarpeta.length) !== 1 ? 's' : ''}
                 </p>
               </div>
             </div>
@@ -449,13 +438,41 @@ export default function ModalCarpeta({ carpeta, onClose }) {
             <div className="bg-gray-50 p-4 border-t border-gray-200">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm text-gray-600">
                 <span>
-                  Total: {documentosCarpeta.length} documento{documentosCarpeta.length !== 1 ? 's' : ''}
+                  Total: {pagination?.total ?? documentosCarpeta.length} documento{(pagination?.total ?? documentosCarpeta.length) !== 1 ? 's' : ''}
                 </span>
                 <span className="flex items-center gap-2 min-w-0">
                   <FileText className="w-4 h-4" />
                   <span className="truncate">Carpeta: {carpeta?.nombre}</span>
                 </span>
               </div>
+              {pagination && pagination.last_page > 1 && (
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <span className="text-xs font-medium text-gray-500">
+                    Mostrando {pagination.from ?? 0}-{pagination.to ?? 0} de {pagination.total}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setPage((current) => Math.max(1, current - 1))}
+                      disabled={pagination.current_page <= 1 || isLoading}
+                      className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      Anterior
+                    </button>
+                    <span className="text-xs text-gray-500">
+                      Página {pagination.current_page} de {pagination.last_page}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setPage((current) => Math.min(pagination.last_page, current + 1))}
+                      disabled={pagination.current_page >= pagination.last_page || isLoading}
+                      className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      Siguiente
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

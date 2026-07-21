@@ -11,6 +11,7 @@ export default function GestionUsers() {
     const { darkMode, toggleDarkMode}= useSystem()
     const [isUserModalOpen, setUserModalOpen] = useState(false);
     const [isDepartmentModalOpen, setDepartmentModalOpen] = useState(false);
+    const [refreshKey, setRefreshKey] = useState(0);
  
   return (
     <div className={darkMode ? "min-h-screen bg-gray-900 text-white p-6" : "min-h-screen bg-gray-100 text-gray-900 p-6"}>
@@ -51,9 +52,9 @@ export default function GestionUsers() {
     Empresas
       </Link>
   <Modal isOpen={isUserModalOpen} onClose={() => setUserModalOpen(false)}>
-  <RegisterUsers 
-    onClose={() => setUserModalOpen(false)} 
-   
+  <RegisterUsers
+    onClose={() => setUserModalOpen(false)}
+    onCreated={() => setRefreshKey((k) => k + 1)}
   />
 </Modal>
 
@@ -90,7 +91,7 @@ export default function GestionUsers() {
         </main>
       </div>
       <div className='grid grid-cols-1 gap-6'>
-        <TableUsers />
+        <TableUsers refreshKey={refreshKey} />
       </div>
     </div>
   )

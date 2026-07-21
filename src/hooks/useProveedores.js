@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import clienteAxios from "../config/axios";
 import Swal from "sweetalert2";
 
@@ -11,7 +11,7 @@ export function useProveedores (){
     const [lastPage, setLastPage] = useState(1);
     const [searchTerm, setSearchTerm] = useState("");
 
-  const obtenerProveedores = async () => {
+  const obtenerProveedores = useCallback(async () => {
     const token = localStorage.getItem("token");
     try {
       const response = await clienteAxios.get("/api/proveedores", {
@@ -21,10 +21,10 @@ export function useProveedores (){
     } catch (error) {
       console.error("Error al obtener proveedores:", error);
     }
-  }
+  }, []);
 
 
-  const obtenerOrdenes = async (page = 1, search = "", fechaInicio = "", fechaFin = "") => {
+  const obtenerOrdenes = useCallback(async (page = 1, search = "", fechaInicio = "", fechaFin = "") => {
     const token = localStorage.getItem("token");
     setLoading(true);
     try {
@@ -46,10 +46,10 @@ export function useProveedores (){
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
   
 //Eliminar orden de compra proveedor
-const eliminarOrden = async (id) => {
+const eliminarOrden = useCallback(async (id) => {
   const token = localStorage.getItem("token");
 
   const confirma = await Swal.fire({
@@ -80,13 +80,11 @@ const eliminarOrden = async (id) => {
     console.error("Error al eliminar la orden", error);
     Swal.fire("Error", "No se pudo eliminar la orden.", "error");
   }
-};
+}, []);
 
   useEffect(() => {
     obtenerProveedores();
-    obtenerOrdenes(pagina);
-   
-  }, [pagina]);
+  }, [obtenerProveedores]);
 
 
     return{

@@ -1,15 +1,22 @@
-import { FaSearch, FaEye, FaFilter, FaCalendarAlt } from "react-icons/fa";
+import { FaSearch, FaEye, FaFilter, FaCalendarAlt, FaClipboardList, FaKey, FaBook, FaClock } from "react-icons/fa";
 import { HiOutlineClipboardList } from "react-icons/hi";
 import useOrdenesTrabajo from "../../hooks/useOrdenesTrabajo";
+import { useDebounce } from "../../hooks/useDebounce";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { debounce } from "lodash";
+
+const OPCIONES_ESTADO = [
+  { value: "", label: "Pendientes y Parciales" },
+  { value: "todos", label: "Todos los estados" },
+  { value: "1", label: "Pendiente" },
+  { value: "5", label: "Entrega Parcial" },
+  { value: "2", label: "Completado" },
+];
 
 export default function ObtenerOrdenesTrabajo() {
-  // Estados locales temporales para los filtros
+  // Estado local temporal para la búsqueda (se debounce antes de pegarle al backend)
   const [busquedaLocal, setBusquedaLocal] = useState("");
-  const [fechaInicioLocal, setFechaInicioLocal] = useState("");
-  const [fechaFinLocal, setFechaFinLocal] = useState("");
+  const busquedaDebounced = useDebounce(busquedaLocal, 500);
 
   const {
     ordenesTrabajo,
@@ -17,43 +24,53 @@ export default function ObtenerOrdenesTrabajo() {
     error,
     pagina,
     setPagina,
-  
+
+    busqueda,
     setBusqueda,
-  
+
     setSede,
- 
+
+    fechaInicio,
     setFechaInicio,
 
+    fechaFin,
     setFechaFin,
+
+    estado,
+    setEstado,
   } = useOrdenesTrabajo();
-
-  // Función para aplicar los filtros
-
 
   const limpiarFiltros = () => {
     setBusquedaLocal("");
-    setFechaInicioLocal("");
-    setFechaFinLocal("");
-
     setBusqueda("");
     setFechaInicio("");
     setFechaFin("");
-
     setSede("");
+    setEstado("");
     setPagina(1);
   };
 
+  // Solo dispara una petición al backend 500ms después de que el usuario deja de escribir
   useEffect(() => {
-    const handler = debounce(() => {
-      setBusqueda(busquedaLocal);
-      setFechaInicio(fechaInicioLocal);
-      setFechaFin(fechaFinLocal);
-      setPagina(1);
-    }, 500);
+    if (busquedaDebounced === busqueda) return;
+    setBusqueda(busquedaDebounced);
+    setPagina(1);
+  }, [busquedaDebounced, busqueda, setBusqueda, setPagina]);
 
-    handler();
-    return () => handler.cancel();
-  }, [busquedaLocal, fechaInicioLocal, fechaFinLocal]);
+  const handleFechaInicioChange = (value) => {
+    setFechaInicio(value);
+    setPagina(1);
+  };
+
+  const handleFechaFinChange = (value) => {
+    setFechaFin(value);
+    setPagina(1);
+  };
+
+  const handleEstadoChange = (value) => {
+    setEstado(value);
+    setPagina(1);
+  };
 
   if (isLoading)
     return (
@@ -93,29 +110,36 @@ export default function ObtenerOrdenesTrabajo() {
             </div>
           </div>
           
-          <div className="mt-4 flex items-center gap-3">
+          <div className="mt-4 flex flex-wrap gap-2 sm:gap-3">
             <Link
               to="/auth/crm/alistamientos"
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white px-4 py-2 sm:px-5 sm:py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 shadow-lg text-sm sm:text-base"
-            >Gestionar Alistamientos
+              className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-lg font-medium transition-colors duration-150 shadow-sm text-xs sm:text-sm"
+            >
+              <FaClipboardList className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              Gestionar Alistamientos
             </Link>
 
             <Link
               to="/auth/crm/nomina/acceso-temporal"
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white px-4 py-2 sm:px-5 sm:py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 shadow-lg text-sm sm:text-base"
+              className="inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-lg font-medium transition-colors duration-150 shadow-sm text-xs sm:text-sm"
             >
+              <FaKey className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               Acceso Temporal
             </Link>
+
             <Link
-             to="/auth/crm/nomina/instruccion-operativa"
-             className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2 sm:px-5 sm:py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 shadow-lg text-sm sm:text-base"
+              to="/auth/crm/nomina/instruccion-operativa"
+              className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-lg font-medium transition-colors duration-150 shadow-sm text-xs sm:text-sm"
             >
-             Instrucción Operativa
+              <FaBook className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              Instrucción Operativa
             </Link>
+
             <Link
               to="/auth/crm/nomina/solicitar-horas-extras"
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-sky-600 to-cyan-600 hover:from-sky-700 hover:to-cyan-700 text-white px-4 py-2 sm:px-5 sm:py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 shadow-lg text-sm sm:text-base"
+              className="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-lg font-medium transition-colors duration-150 shadow-sm text-xs sm:text-sm"
             >
+              <FaClock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               Solicitar Horas Extra
             </Link>
           </div>
@@ -129,10 +153,14 @@ export default function ObtenerOrdenesTrabajo() {
             <h3 className="font-semibold text-gray-700 text-sm sm:text-base">Filtros de búsqueda</h3>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
             {/* Búsqueda */}
             <div className="relative sm:col-span-2 lg:col-span-1">
-              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <label className="text-xs sm:text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+                <FaSearch className="w-3 h-3" />
+                Cliente
+              </label>
+              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 mt-3 text-gray-400 w-4 h-4" />
               <input
                 type="text"
                 placeholder="Buscar por cliente..."
@@ -145,35 +173,55 @@ export default function ObtenerOrdenesTrabajo() {
 
             {/* Fecha Desde */}
             <div className="relative">
-              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+              <label className="text-xs sm:text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
                 <FaCalendarAlt className="w-3 h-3" />
                 Desde
               </label>
               <input
                 type="date"
                 className="w-full px-3 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm sm:text-base"
-                value={fechaInicioLocal}
-                onChange={(e) => setFechaInicioLocal(e.target.value)}
+                value={fechaInicio}
+                onChange={(e) => handleFechaInicioChange(e.target.value)}
               />
             </div>
 
             {/* Fecha Hasta */}
             <div className="relative">
-              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+              <label className="text-xs sm:text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
                 <FaCalendarAlt className="w-3 h-3" />
                 Hasta
               </label>
               <input
                 type="date"
                 className="w-full px-3 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm sm:text-base"
-                value={fechaFinLocal}
-                onChange={(e) => setFechaFinLocal(e.target.value)}
+                value={fechaFin}
+                onChange={(e) => handleFechaFinChange(e.target.value)}
               />
+            </div>
+
+            {/* Estado */}
+            <div className="relative">
+              <label className="text-xs sm:text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+                <FaFilter className="w-3 h-3" />
+                Estado
+              </label>
+              <select
+                className="w-full px-3 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm sm:text-base"
+                value={estado}
+                onChange={(e) => handleEstadoChange(e.target.value)}
+              >
+                {OPCIONES_ESTADO.map((opcion) => (
+                  <option key={opcion.value} value={opcion.value}>
+                    {opcion.label}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Botón Limpiar */}
             <div className="flex items-end">
               <button
+                type="button"
                 onClick={limpiarFiltros}
                 className="w-full bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white px-4 py-2 sm:py-3 rounded-lg font-medium transition-all duration-200 text-sm sm:text-base"
               >
@@ -308,6 +356,7 @@ export default function ObtenerOrdenesTrabajo() {
               
               <div className="flex items-center gap-2">
                 <button
+                  type="button"
                   onClick={() => setPagina(pagina - 1)}
                   disabled={!ordenesTrabajo?.prev_page_url}
                   className={`px-3 sm:px-4 py-2 rounded-lg font-medium transition-all duration-200 text-xs sm:text-sm ${
@@ -320,6 +369,7 @@ export default function ObtenerOrdenesTrabajo() {
                 </button>
 
                 <button
+                  type="button"
                   onClick={() => setPagina(pagina + 1)}
                   disabled={!ordenesTrabajo?.next_page_url}
                   className={`px-3 sm:px-4 py-2 rounded-lg font-medium transition-all duration-200 text-xs sm:text-sm ${

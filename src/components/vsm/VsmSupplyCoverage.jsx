@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import {
   AlertTriangle,
+  Building2,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
   ChevronsLeft,
   ChevronsRight,
   PackageCheck,
@@ -27,6 +30,7 @@ export default function VsmSupplyCoverage() {
   const [estado, setEstado] = useState("");
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(25);
+  const [expandedProducts, setExpandedProducts] = useState(() => new Set());
   const { data, loading } = useVSMSupplyCoverage({
     search,
     estado,
@@ -35,6 +39,14 @@ export default function VsmSupplyCoverage() {
   });
   const resumen = data.resumen ?? {};
   const paginacion = data.paginacion ?? {};
+
+  const toggleProduct = (productId) => {
+    setExpandedProducts((current) => {
+      const next = new Set(current);
+      next.has(productId) ? next.delete(productId) : next.add(productId);
+      return next;
+    });
+  };
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -129,13 +141,27 @@ export default function VsmSupplyCoverage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {data.productos.map((item) => (
-                  <tr key={item.producto_id} className="hover:bg-gray-50">
+                {data.productos.map((item) => {
+                  const expanded = expandedProducts.has(item.producto_id);
+                  return [
+                  <tr key={`product-${item.producto_id}`} className="hover:bg-gray-50">
                     <td className="px-5 py-4">
-                      <div className="font-medium text-gray-900">{item.producto}</div>
-                      <div className="text-xs text-gray-500">
-                        {item.codigo} · {item.ordenes_cliente.length} necesidad(es)
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => toggleProduct(item.producto_id)}
+                        className="flex w-full items-start justify-between gap-3 text-left"
+                        aria-expanded={expanded}
+                      >
+                        <span>
+                          <span className="block font-medium text-gray-900">{item.producto}</span>
+                          <span className="block text-xs text-gray-500">
+                            {item.codigo} · {item.ordenes_cliente.length} necesidad(es)
+                          </span>
+                        </span>
+                        {expanded
+                          ? <ChevronUp className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
+                          : <ChevronDown className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />}
+                      </button>
                     </td>
                     <NumberCell value={item.necesidad_pendiente_kg} />
                     <NumberCell value={item.stock_fisico_kg} />
@@ -148,7 +174,36 @@ export default function VsmSupplyCoverage() {
                       </span>
                     </td>
                   </tr>
-                ))}
+                  ,
+                  expanded && (
+                    <tr key={`detail-${item.producto_id}`} className="bg-blue-50/50">
+                      <td colSpan={7} className="px-5 py-4">
+                        <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-800">
+                          <Building2 className="h-4 w-4 text-blue-600" />
+                          Clientes que solicitaron el producto
+                        </div>
+                        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+                          {item.ordenes_cliente.map((orden) => (
+                            <div key={orden.detalle_id} className="rounded-lg border border-blue-100 bg-white p-3 shadow-sm">
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                  <p className="truncate font-semibold text-gray-900" title={orden.cliente}>{orden.cliente}</p>
+                                  <p className="text-xs text-gray-500">OC #{orden.orden_id}</p>
+                                </div>
+                                <span className="shrink-0 font-semibold text-blue-700">
+                                  {formatKg(orden.necesidad_pendiente_kg)}
+                                </span>
+                              </div>
+                              <p className="mt-2 text-xs text-gray-500">
+                                Entrega: {orden.fecha_entrega || "Sin fecha definida"}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                ];})}
                 {data.productos.length === 0 && (
                   <tr>
                     <td colSpan={7} className="px-5 py-8 text-center text-gray-500">

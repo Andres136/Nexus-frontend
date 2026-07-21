@@ -5,18 +5,35 @@ import * as faceapi from "face-api.js";
 import {
   kioskoDeviceService,
   horarioOperacionService,
+  horarioUsuarioSemanalService,
 } from "../../services/nominaService";
 import {
   getKioskoFingerprint,
+  getKioskoFingerprintCandidates,
   getKioskoSession,
   removeKioskoSession,
   getKioskoGuestSession,
   removeKioskoGuestSession,
+  shouldClearKioskoSession,
 } from "../../helpers/nomina/kioskoSession";
+import {
+  getFaceDescriptorCache,
+  getKioskoBootstrapCache,
+  saveFaceDescriptorCache,
+  saveKioskoBootstrapCache,
+} from "../../helpers/nomina/kioskoCache";
 
 const API_URL     = import.meta.env.VITE_API_URL;
 const STORAGE_URL = API_URL + "/storage/";
 const MODEL_URL   = "/models";
+const FACE_IMAGE_MIN_CONFIDENCE = 0.5;
+const FACE_MATCH_THRESHOLD = 0.46;
+const BOOTSTRAP_CACHE_TIMEOUT_MS = 7000;
+// Cuántas fotos se descargan/procesan (reconocimiento facial) a la vez en la
+// primera carga del kiosko (o cuando cambia el dataset). Antes era secuencial
+// (una por una); un límite moderado evita saturar el navegador con muchos
+// usuarios a la vez sin perder el beneficio de no esperar cada foto en serie.
+const FACE_MATCHER_CONCURRENCY = 5;
 
 async function loadModels() {
   await Promise.all([
@@ -30,7 +47,7 @@ async function loadImageViaApi(uuid) {
   const deviceUuid   = window.location.pathname.match(/^\/kiosko\/([^/]+)/)?.[1];
   const sessionToken = deviceUuid ? getKioskoSession(deviceUuid) : null;
   const guestToken   = deviceUuid ? getKioskoGuestSession(deviceUuid) : null;
-  const fingerprint  = sessionToken && deviceUuid ? await getKioskoFingerprint() : null;
+  const fingerprint  = (sessionToken || guestToken) && deviceUuid ? await getKioskoFingerprint() : null;
   const authToken    = localStorage.getItem("token");
 
   const isKiosko = sessionToken || guestToken;
@@ -40,7 +57,7 @@ async function loadImageViaApi(uuid) {
 
   let headers;
   if (guestToken) {
-    headers = { "X-Kiosko-Device": deviceUuid, "X-Kiosko-Guest-Token": guestToken };
+    headers = { "X-Kiosko-Device": deviceUuid, "X-Kiosko-Guest-Token": guestToken, "X-Kiosko-Guest-Fingerprint": fingerprint };
   } else if (sessionToken) {
     headers = { "X-Kiosko-Device": deviceUuid, "X-Kiosko-Session": sessionToken, "X-Kiosko-Fingerprint": fingerprint };
   } else {
@@ -59,27 +76,97 @@ async function loadImageViaApi(uuid) {
   });
 }
 
-async function buildFaceMatcher(fotos) {
+function facePhotoCacheKey(foto) {
+  return [
+    foto.uuid,
+    foto.users_id,
+    foto.photo,
+    foto.updated_at ?? foto.created_at ?? "",
+  ].join("|");
+}
+
+// Ejecuta `worker` sobre `items` con a lo sumo `limit` tareas en vuelo al
+// mismo tiempo, en vez de Promise.all (todas a la vez) o un for secuencial.
+async function runWithConcurrency(items, limit, worker) {
+  let index = 0;
+  async function next() {
+    while (index < items.length) {
+      const current = index++;
+      await worker(items[current]);
+    }
+  }
+  await Promise.all(
+    Array.from({ length: Math.min(limit, items.length) }, next)
+  );
+}
+
+async function buildFaceMatcher(fotos, kioskoUuid) {
   if (!fotos.length) return null;
   const labeled = [];
-  for (const foto of fotos) {
+  const descriptorCache = getFaceDescriptorCache(kioskoUuid);
+  const nextDescriptorCache = {};
+  let cacheChanged = false;
+
+  await runWithConcurrency(fotos, FACE_MATCHER_CONCURRENCY, async (foto) => {
+    const cacheKey = facePhotoCacheKey(foto);
+    const cachedDescriptor = descriptorCache[cacheKey];
+
     try {
+      if (Array.isArray(cachedDescriptor) && cachedDescriptor.length) {
+        nextDescriptorCache[cacheKey] = cachedDescriptor;
+        labeled.push(
+          new faceapi.LabeledFaceDescriptors(String(foto.users_id), [new Float32Array(cachedDescriptor)])
+        );
+        return;
+      }
+
       const img = await loadImageViaApi(foto.uuid);
       const det = await faceapi
-        .detectSingleFace(img, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.35 }))
+        .detectSingleFace(img, new faceapi.SsdMobilenetv1Options({ minConfidence: FACE_IMAGE_MIN_CONFIDENCE }))
         .withFaceLandmarks()
         .withFaceDescriptor();
       if (det) {
+        const descriptor = Array.from(det.descriptor);
+        nextDescriptorCache[cacheKey] = descriptor;
+        cacheChanged = true;
         labeled.push(
-          new faceapi.LabeledFaceDescriptors(String(foto.users_id), [det.descriptor])
+          new faceapi.LabeledFaceDescriptors(String(foto.users_id), [new Float32Array(descriptor)])
         );
       }
     } catch {
       // foto no cargó o no se detectó rostro — se omite
     }
+  });
+
+  if (cacheChanged) {
+    saveFaceDescriptorCache(kioskoUuid, nextDescriptorCache);
   }
   if (!labeled.length) return null;
-  return new faceapi.FaceMatcher(labeled, 0.62);
+  return new faceapi.FaceMatcher(labeled, FACE_MATCH_THRESHOLD);
+}
+
+function timeout(ms) {
+  return new Promise((_, reject) => {
+    setTimeout(() => reject(new Error("El backend tardó demasiado en responder.")), ms);
+  });
+}
+
+async function bootstrapKiosko({ code, sessionToken, guestToken }) {
+  const fingerprintCandidates = await getKioskoFingerprintCandidates();
+  const fingerprint = fingerprintCandidates[0] || await getKioskoFingerprint();
+
+  if (guestToken) {
+    const response = await kioskoDeviceService.bootstrapGuest({ uuid: code, guest_token: guestToken, fingerprint });
+    return response.data?.data;
+  }
+
+  const response = await kioskoDeviceService.bootstrapDevice({
+    uuid: code,
+    session_token: sessionToken,
+    fingerprint,
+    fingerprint_candidates: fingerprintCandidates,
+  });
+  return response.data?.data;
 }
 
 function aplicarInstruccionDiaria(jornada, instruccion) {
@@ -97,6 +184,29 @@ function aplicarInstruccionDiaria(jornada, instruccion) {
     duracion_pausa_minutos:    instruccion.duracion_pausa_minutos    ?? jornada?.duracion_pausa_minutos,
     duracion_almuerzo_minutos: instruccion.duracion_almuerzo_minutos ?? jornada?.duracion_almuerzo_minutos,
   };
+}
+
+function aplicarHorarioUsuario(jornada, horarioUsuario) {
+  if (!horarioUsuario) return jornada;
+  const jornadaUsuario = horarioUsuario.jornada_laboral ?? horarioUsuario.jornadaLaboral ?? jornada;
+  return {
+    ...jornada,
+    ...jornadaUsuario,
+    horario_usuario_semanal: horarioUsuario,
+    hora_entrada:              horarioUsuario.hora_entrada              ?? jornadaUsuario?.hora_entrada              ?? jornada?.hora_entrada,
+    hora_entrada_limite:       horarioUsuario.hora_entrada_limite       ?? jornadaUsuario?.hora_entrada_limite       ?? jornada?.hora_entrada_limite,
+    hora_salida_pausa:         horarioUsuario.hora_salida_pausa         ?? jornadaUsuario?.hora_salida_pausa         ?? jornada?.hora_salida_pausa,
+    hora_ingreso_pausa:        horarioUsuario.hora_ingreso_pausa        ?? jornadaUsuario?.hora_ingreso_pausa        ?? jornada?.hora_ingreso_pausa,
+    hora_salida_almuerzo:      horarioUsuario.hora_salida_almuerzo      ?? jornadaUsuario?.hora_salida_almuerzo      ?? jornada?.hora_salida_almuerzo,
+    hora_ingreso_almuerzo:     horarioUsuario.hora_ingreso_almuerzo     ?? jornadaUsuario?.hora_ingreso_almuerzo     ?? jornada?.hora_ingreso_almuerzo,
+    hora_salida:               horarioUsuario.hora_salida               ?? jornadaUsuario?.hora_salida               ?? jornada?.hora_salida,
+    duracion_pausa_minutos:    horarioUsuario.duracion_pausa_minutos    ?? jornadaUsuario?.duracion_pausa_minutos    ?? jornada?.duracion_pausa_minutos,
+    duracion_almuerzo_minutos: horarioUsuario.duracion_almuerzo_minutos ?? jornadaUsuario?.duracion_almuerzo_minutos ?? jornada?.duracion_almuerzo_minutos,
+  };
+}
+
+function instruccionEsDeUsuario(instruccion) {
+  return instruccion?.user_id !== null && instruccion?.user_id !== undefined;
 }
 
 function fechaLocal() {
@@ -126,15 +236,28 @@ export function useKiosko() {
   const [empleadoActual, setEmpleadoActual] = useState(null);
   const [ultimaMarca, setUltimaMarca]     = useState(null);
 
+  const invalidarSesionKiosko = useCallback((message = "La sesión de este kiosko no es válida. Genera un nuevo link de activación y reactívalo en este dispositivo.") => {
+    if (shouldClearKioskoSession(message)) {
+      removeKioskoSession(code);
+      removeKioskoGuestSession(code);
+    }
+
+    const mensajeNormalizado = message === "El kiosko no está activo."
+      ? "Este kiosko está desactivado en administración. Actívalo nuevamente y recarga esta pantalla."
+      : message;
+    setErrorMsg(mensajeNormalizado);
+    setStatus("error");
+  }, [code]);
+
   const jornadaBaseActiva = useMemo(
     () => jornadasLaborales.find((j) => j.status !== false) ?? jornadasLaborales[0] ?? null,
     [jornadasLaborales]
   );
 
-  const construirJornadaOperativa = useCallback((instruccionDiaria) => {
-    if (!jornadaBaseActiva) return null;
+  const construirJornadaOperativa = useCallback((instruccionDiaria, jornadaBase = jornadaBaseActiva) => {
+    if (!jornadaBase) return null;
     const jornadaDelDia =
-      instruccionDiaria?.jornada_laboral ?? instruccionDiaria?.jornadaLaboral ?? jornadaBaseActiva;
+      instruccionDiaria?.jornada_laboral ?? instruccionDiaria?.jornadaLaboral ?? jornadaBase;
     return aplicarInstruccionDiaria(jornadaDelDia, instruccionDiaria);
   }, [jornadaBaseActiva]);
 
@@ -145,13 +268,17 @@ export function useKiosko() {
         const response = await horarioOperacionService.getKioskoHoy();
         return response.data?.data ?? null;
       } catch (error) {
-        if (error.response?.status === 403) throw error;
+        if (error.response?.status === 403) {
+          invalidarSesionKiosko(error.response?.data?.message);
+          throw error;
+        }
         return null;
       }
     },
     enabled: status === "ready" && jornadasLaborales.length > 0,
     refetchInterval: 5000,
     refetchOnWindowFocus: true,
+    retry: false,
     staleTime: 0,
   });
 
@@ -161,23 +288,45 @@ export function useKiosko() {
   );
   const jornadaId = jornadaActiva?.id ?? jornadaBaseActiva?.id ?? null;
 
-  const refrescarJornadaOperativa = useCallback(async () => {
+  const refrescarJornadaOperativa = useCallback(async (userId) => {
     if (!jornadasLaborales.length) return jornadaActiva;
-    const instruccionDiaria = await queryClient.fetchQuery({
-      queryKey: ["horarioOperacionKiosko", fechaOperacion],
-      queryFn: async () => {
-        try {
-          const response = await horarioOperacionService.getKioskoHoy();
-          return response.data?.data ?? null;
-        } catch (error) {
-          if (error.response?.status === 403) throw error;
-          return null;
-        }
-      },
-      staleTime: 0,
-    });
-    return construirJornadaOperativa(instruccionDiaria) ?? jornadaActiva;
-  }, [construirJornadaOperativa, fechaOperacion, jornadaActiva, jornadasLaborales, queryClient]);
+    const [instruccionDiaria, horarioUsuario] = await Promise.all([
+      queryClient.fetchQuery({
+        queryKey: ["horarioOperacionKiosko", fechaOperacion, userId || "global"],
+        queryFn: async () => {
+          try {
+            const response = await horarioOperacionService.getKioskoHoy(userId ? { user_id: userId } : {});
+            return response.data?.data ?? null;
+          } catch (error) {
+            if (error.response?.status === 403) {
+              invalidarSesionKiosko(error.response?.data?.message);
+              throw error;
+            }
+            return null;
+          }
+        },
+        staleTime: 0,
+        retry: false,
+      }),
+      userId
+        ? horarioUsuarioSemanalService.getKioskoHoy(userId)
+            .then((response) => response.data?.data ?? null)
+            .catch((error) => {
+              if (error.response?.status === 403) invalidarSesionKiosko(error.response?.data?.message);
+              return null;
+            })
+        : Promise.resolve(null),
+    ]);
+
+    const baseConInstruccionGeneral = instruccionEsDeUsuario(instruccionDiaria)
+      ? jornadaBaseActiva
+      : construirJornadaOperativa(instruccionDiaria, jornadaBaseActiva) ?? jornadaBaseActiva;
+    const baseConHorarioUsuario = aplicarHorarioUsuario(baseConInstruccionGeneral, horarioUsuario) ?? baseConInstruccionGeneral;
+
+    return instruccionEsDeUsuario(instruccionDiaria)
+      ? construirJornadaOperativa(instruccionDiaria, baseConHorarioUsuario) ?? baseConHorarioUsuario ?? jornadaActiva
+      : baseConHorarioUsuario ?? jornadaActiva;
+  }, [construirJornadaOperativa, fechaOperacion, invalidarSesionKiosko, jornadaActiva, jornadaBaseActiva, jornadasLaborales, queryClient]);
 
   useEffect(() => {
     async function init() {
@@ -193,14 +342,30 @@ export function useKiosko() {
           );
         }
 
+        const cachedBootstrap = sessionToken ? getKioskoBootstrapCache(code) : null;
         let bootstrap;
-        if (guestToken) {
-          const response = await kioskoDeviceService.bootstrapGuest({ uuid: code, guest_token: guestToken });
-          bootstrap = response.data?.data;
-        } else {
-          const fingerprint = await getKioskoFingerprint();
-          const response    = await kioskoDeviceService.bootstrapDevice({ uuid: code, session_token: sessionToken, fingerprint });
-          bootstrap = response.data?.data;
+        let usandoCache = false;
+
+        try {
+          const onlineBootstrap = bootstrapKiosko({ code, sessionToken, guestToken });
+          bootstrap = cachedBootstrap
+            ? await Promise.race([onlineBootstrap, timeout(BOOTSTRAP_CACHE_TIMEOUT_MS)])
+            : await onlineBootstrap;
+
+          if (sessionToken) {
+            saveKioskoBootstrapCache(code, bootstrap);
+          }
+        } catch (error) {
+          if (error.response?.status === 403) {
+            throw error;
+          }
+
+          if (!cachedBootstrap) {
+            throw error;
+          }
+
+          bootstrap = cachedBootstrap;
+          usandoCache = true;
         }
 
         const kiosko = bootstrap?.device;
@@ -210,7 +375,7 @@ export function useKiosko() {
         setLoadMsg("Cargando modelos de reconocimiento facial...");
         await loadModels();
 
-        setLoadMsg("Cargando jornadas laborales...");
+        setLoadMsg(usandoCache ? "Cargando datos guardados del kiosko..." : "Cargando jornadas laborales...");
         const jornadas   = bootstrap?.jornadas ?? [];
         setJornadasLaborales(jornadas);
         const jornadaBase = jornadas.find((j) => j.status !== false) ?? jornadas[0];
@@ -237,11 +402,12 @@ export function useKiosko() {
         setCedulaMap(cedulas);
 
         setLoadMsg("Procesando descriptores faciales...");
-        setFaceMatcher(await buildFaceMatcher(fotos));
+        setFaceMatcher(await buildFaceMatcher(fotos, code));
 
         setStatus("ready");
       } catch (err) {
-        if (err.response?.status === 403) {
+        const mensaje = err.response?.data?.message || err.message || "";
+        if (err.response?.status === 403 && shouldClearKioskoSession(mensaje)) {
           removeKioskoSession(code);
           removeKioskoGuestSession(code);
         }

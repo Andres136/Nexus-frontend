@@ -35,6 +35,10 @@ import EditarVehiculo from "../components/crm/EditarVehiculo";
 import Proveedores from "../views/crm/Proveedores";
 import FormOrdenesProveedores from "../views/crm/FormOrdenesProveedores";
 import ObtenerOrdenesProveedores from "../views/crm/ObtenerOrdenesProveedores";
+import RequerimientosCompra from "../views/crm/RequerimientosCompra";
+import GestionRequerimientosCompra from "../views/crm/GestionRequerimientosCompra";
+import RequerimientoCompraDetalle from "../views/crm/RequerimientoCompraDetalle";
+import GestionRequerimientoCompraDetalle from "../views/crm/GestionRequerimientoCompraDetalle";
 
 import RegistrarEntregaProveedor from "../views/crm/RegistrarEntregaProveedor";
 import KpiTareas from "../components/calidad/KpiTareas";
@@ -57,12 +61,17 @@ import Bodegas from "../components/Bodegas";
 import OrdenesCompraClient from "../components/auditoria/OrdenesCompraClient";
 import RegistrarInventario from "../views/crm/RegistrarInventario";
 import TrasladoInventario from "../views/crm/TrasladoInventario";
+import ListadoTrasladosInventario from "../views/crm/ListadoTrasladosInventario";
 
 import OrdenesFaltantes from "../views/crm/OrdenesFaltantes";
 
 import Marketing from "../views/comunicaciones/Marketing";
 import DividirOcProveedor from "../views/crm/DividirOcProveedor";
 import DeliveryPage from "../views/Rutas/DeliveryPage";
+import PageCapacitaciones from "../views/capacitaciones/PageCapacitaciones";
+import PageCapacitacionEncuestas from "../views/capacitaciones/PageCapacitacionEncuestas";
+import PageResultadosEncuesta from "../views/capacitaciones/PageResultadosEncuesta";
+import CapacitacionEncuestaPublica from "../views/capacitaciones/CapacitacionEncuestaPublica";
 import MovimientoInventario from "../views/crm/MovimientoInventario";
 import DynamicProtectedRoute from "./DynamicProtectedRoute";
 import SettingPermissions from "../views/Roles/SettingPermissions";
@@ -84,6 +93,9 @@ import VerificacionDiaria from "../components/RegistroDiario/VerificacionDiaria"
 import DashboardRegistroDiario from "../components/RegistroDiario/DashboardRegistroDiario";
 import DashboardProcesosAnuales from "../components/RegistroDiario/DashboardProcesosAnuales";
 import Asignaciones from "../views/tic/Asignaciones";
+import Tickets from "../views/tic/Tickets";
+import ParadasEquipos from "../views/tic/ParadasEquipos";
+import IndicadoresTickets from "../views/tic/IndicadoresTickets";
 
 import NovedadesCalidad from "../components/calidad/NovedadesCalidad";
 import MantenimientoEquiposTic from "../components/tic/MantenimientoEquiposTic";
@@ -109,8 +121,32 @@ import DashboardProductividaIndividual from "../views/vsm/DashboardProductividaI
 import GestionarFacturaCartera from "../views/crm/GestionarFacturaCartera";
 import GetHistorialGestionFacturaCartera from "../views/crm/GetHistorialGestionFacturaCartera";
 import DashboardOperativo from "../views/calidad/DashboardOperativo";
+import TrazabilidadPrioridades from "../views/calidad/TrazabilidadPrioridades";
 import Contabilidad from "../views/contabilidad/Contabilidad";
 import NominaLayout from "../layouts/NominaLayout";
+import PageProcesarNomina from "../views/nomina/PageProcesarNomina";
+import PageContratos from "../views/nomina/PageContratos";
+import PageSeguridadSocial from "../views/nomina/PageSeguridadSocial";
+import PageTipoContrato from "../views/nomina/PageTipoContrato";
+import PageDescuentos from "../views/nomina/PageDescuentos";
+import PageJornadaLaboral from "../views/nomina/PageJornadaLaboral";
+import PageIncapacidades from "../views/nomina/PageIncapacidades";
+import PageValores from "../views/nomina/PageValores";
+import PageWorkSessions from "../views/nomina/PageWorkSessions";
+import PagePermisos from "../views/nomina/PagePermisos";
+import PageVacaciones from "../views/nomina/PageVacaciones";
+import PageLicencias from "../views/nomina/PageLicencias";
+import PageHorasExtras from "../views/nomina/PageHorasExtras";
+import PageReconocimientoFacial from "../views/nomina/PageReconocimientoFacial";
+import PageLlamadosAtencion from "../views/nomina/PageLlamadosAtencion";
+import PageDescargos from "../views/nomina/PageDescargos";
+import PageConfiguracionNomina from "../views/nomina/PageConfiguracionNomina";
+import PageNovedadesRetroactivas from "../views/nomina/PageNovedadesRetroactivas";
+import PageControlContableNomina from "../views/nomina/PageControlContableNomina";
+import PageComisiones from "../views/nomina/PageComisiones";
+import PageLiquidacionesRetiro from "../views/nomina/PageLiquidacionesRetiro";
+import PageLiquidacionesPrestaciones from "../views/nomina/PageLiquidacionesPrestaciones";
+import BtnAccesoTemporalKiosko from "../components/nomina/BtnAccesoTemporalKiosko";
 import PageKiosko from "../views/nomina/kiosko/PageKiosko";
 import PageKioskoActivacion from "../views/nomina/kiosko/PageKioskoActivacion";
 import PageKioskoAccesoTemporal from "../views/nomina/kiosko/PageKioskoAccesoTemporal";
@@ -122,6 +158,12 @@ import PageObtenerPagos from "../views/contabilidad/PageObtenerPagos";
 import CreateImpuestos from "../components/contabilidad/CreateImpuestos";
 
 import RegisterProductoNoConforme from "../components/calidad/RegisterProductoNoConforme";
+import PageMiDia from "../views/MiDia/PageMiDia";
+import PageAdminProductividad from "../views/MiDia/PageAdminProductividad";
+import PageDetalleUsuarioProductividad from "../views/MiDia/PageDetalleUsuarioProductividad";
+import ListaProductoNoConforme from "../components/calidad/ListaProductoNoConforme";
+import DashboardProductoNoConforme from "../components/calidad/DashboardProductoNoConforme";
+import GestionProductoNoConforme from "../views/calidad/GestionProductoNoConforme";
 import EncuestasPage from "../views/crm/EncuestasPage";
 import ResultadosEncuesta from "../views/crm/ResultadosEncuesta";
 import EncuestaPublica from "../views/crm/EncuestaPublica";
@@ -144,12 +186,20 @@ export default function Router() {
 
       {/* 🔹 Encuesta pública — sin auth, el cliente responde por token */}
       <Route path="/encuesta/:token" element={<EncuestaPublica />} />
+      <Route path="/capacitacion-encuesta/:token" element={<CapacitacionEncuestaPublica />} />
 
       {/* 🔹 Rutas bajo AuthLayout (Procesos y CRM) */}
       <Route
         element={<ProtectedRoute allowedRoles={[1, 2, 3, 4, 5, 6, 7, 8, 9]} />}
       >
         <Route path="/auth" element={<AuthLyout />}>
+          <Route path="mi-dia" element={<PageMiDia />} />
+
+          <Route element={<ProtectedRoute allowedRoles={[1]} />}>
+            <Route path="admin/productividad" element={<PageAdminProductividad />} />
+            <Route path="admin/productividad/usuarios/:id" element={<PageDetalleUsuarioProductividad />} />
+          </Route>
+
           <Route
             path="responsabilidades"
             element={<DynamicProtectedRoute permission="/auth/responsabilidades">
@@ -239,6 +289,12 @@ export default function Router() {
               <DashboardOperativo />
             </DynamicProtectedRoute>}
           />
+          <Route
+            path="/auth/crm/control-operativo/trazabilidad-prioridades"
+            element={<DynamicProtectedRoute permission="/auth/crm/control-operativo/dashboard">
+              <TrazabilidadPrioridades />
+            </DynamicProtectedRoute>}
+          />
 
      <Route
           path="/auth/crm/vsm/configuracion"
@@ -249,10 +305,10 @@ export default function Router() {
 
           {/*Fin de Rutas para control de calidad */}
 
-          {/*Rutas para TIC */}
-          <Route path="/auth/tic" element={<DynamicProtectedRoute permission="/auth/tic">
-            <Asignaciones />
-          </DynamicProtectedRoute>} />
+         {/*Rutas para TIC */}
+         <Route path="/auth/tic" element={<DynamicProtectedRoute permission="/auth/tic">
+           <Asignaciones />
+         </DynamicProtectedRoute>} />
 
           <Route
             path="marketing"
@@ -271,12 +327,63 @@ export default function Router() {
               </DynamicProtectedRoute>
             }
           />
+
+          <Route
+            path="/auth/tic/tickets"
+            element={
+              <DynamicProtectedRoute permission="/auth/tic/tickets">
+                <Tickets />
+              </DynamicProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/auth/tic/paradas-equipos"
+            element={
+              <DynamicProtectedRoute permission="/auth/tic/paradas-equipos">
+                <ParadasEquipos />
+              </DynamicProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/auth/tic/indicadores-tickets"
+            element={
+              <DynamicProtectedRoute permission="/auth/tic/indicadores-tickets">
+                <IndicadoresTickets />
+              </DynamicProtectedRoute>
+            }
+          />
           {/* Fin de Rutas para TIC */}
           <Route
             path="entregas"
             element={
               <DynamicProtectedRoute permission="/auth/entregas">
                 <DeliveryPage />
+              </DynamicProtectedRoute>
+            }
+          />
+          <Route
+            path="capacitaciones"
+            element={
+              <DynamicProtectedRoute permission="/auth/capacitaciones">
+                <PageCapacitaciones />
+              </DynamicProtectedRoute>
+            }
+          />
+          <Route
+            path="capacitaciones/encuestas"
+            element={
+              <DynamicProtectedRoute permission="/auth/capacitaciones/encuestas">
+                <PageCapacitacionEncuestas />
+              </DynamicProtectedRoute>
+            }
+          />
+          <Route
+            path="capacitaciones/encuestas/:uuid/resultados"
+            element={
+              <DynamicProtectedRoute permission="/auth/capacitaciones/encuestas">
+                <PageResultadosEncuesta />
               </DynamicProtectedRoute>
             }
           />
@@ -473,6 +580,38 @@ export default function Router() {
               </DynamicProtectedRoute>
             }
           />
+          <Route
+            path="requerimientos-compra"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/requerimientos-compra">
+                <RequerimientosCompra />
+              </DynamicProtectedRoute>
+            }
+          />
+          <Route
+            path="requerimientos-compra/gestion"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/requerimientos-compra/gestion">
+                <GestionRequerimientosCompra />
+              </DynamicProtectedRoute>
+            }
+          />
+          <Route
+            path="requerimientos-compra/gestion/:uuid"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/requerimientos-compra/gestion">
+                <GestionRequerimientoCompraDetalle />
+              </DynamicProtectedRoute>
+            }
+          />
+          <Route
+            path="requerimientos-compra/:uuid"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/requerimientos-compra">
+                <RequerimientoCompraDetalle />
+              </DynamicProtectedRoute>
+            }
+          />
 
 
           {/* Rutas para Ordenes a proveedores */}
@@ -552,11 +691,11 @@ export default function Router() {
               </DynamicProtectedRoute>
             }
           />
-
-
-          {/*  Fin Rutas para  gestion de cartera */}
-          {/*   Rutas para  HSEQ */}
-          <Route
+          
+           
+          {/*  Fin Rutas para  gestion de cartera */}  
+            {/*   Rutas para  HSEQ */} 
+            <Route
             path="/auth/crm/hseq/inspecciones"
             element={
               <DynamicProtectedRoute permission="/auth/crm/hseq/inspecciones">
@@ -645,7 +784,8 @@ export default function Router() {
             }
           />
 
-          {/* 🔹 Rutas para Nomina */}
+
+          
           <Route
             path="/auth/crm/nomina"
             element={
@@ -653,7 +793,200 @@ export default function Router() {
                 <NominaLayout />
               </DynamicProtectedRoute>
             }
-          />
+          >
+            <Route index element={<Navigate to="procesar" replace />} />
+
+            <Route
+              path="procesar"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/procesar">
+                  <PageProcesarNomina />
+                </DynamicProtectedRoute>
+              }
+            />
+            <Route
+              path="comisiones"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/comisiones">
+                  <PageComisiones />
+                </DynamicProtectedRoute>
+              }
+            />
+            <Route
+              path="liquidaciones-retiro"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/liquidaciones-retiro">
+                  <PageLiquidacionesRetiro />
+                </DynamicProtectedRoute>
+              }
+            />
+            <Route
+              path="prestaciones"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/prestaciones">
+                  <PageLiquidacionesPrestaciones />
+                </DynamicProtectedRoute>
+              }
+            />
+            <Route
+              path="descuentos"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/descuentos">
+                  <PageDescuentos />
+                </DynamicProtectedRoute>
+              }
+            />
+            <Route
+              path="retroactivos"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/retroactivos">
+                  <PageNovedadesRetroactivas />
+                </DynamicProtectedRoute>
+              }
+            />
+            <Route
+              path="control-contable"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/control-contable">
+                  <PageControlContableNomina />
+                </DynamicProtectedRoute>
+              }
+            />
+
+            <Route
+              path="contratacion/contratos"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/contratacion/contratos">
+                  <PageContratos />
+                </DynamicProtectedRoute>
+              }
+            />
+            <Route
+              path="contratacion/tipo-contrato"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/contratacion/tipo-contrato">
+                  <PageTipoContrato />
+                </DynamicProtectedRoute>
+              }
+            />
+            <Route
+              path="contratacion/seguridad-social"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/contratacion/seguridad-social">
+                  <PageSeguridadSocial />
+                </DynamicProtectedRoute>
+              }
+            />
+
+            <Route
+              path="solicitudes/permisos"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/solicitudes/permisos">
+                  <PagePermisos />
+                </DynamicProtectedRoute>
+              }
+            />
+            <Route
+              path="solicitudes/vacaciones"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/solicitudes/vacaciones">
+                  <PageVacaciones />
+                </DynamicProtectedRoute>
+              }
+            />
+            <Route
+              path="solicitudes/licencias"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/solicitudes/licencias">
+                  <PageLicencias />
+                </DynamicProtectedRoute>
+              }
+            />
+            <Route
+              path="solicitudes/incapacidades"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/solicitudes/incapacidades">
+                  <PageIncapacidades />
+                </DynamicProtectedRoute>
+              }
+            />
+            <Route
+              path="solicitudes/horas-extras"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/solicitudes/horas-extras">
+                  <PageHorasExtras />
+                </DynamicProtectedRoute>
+              }
+            />
+
+            <Route
+              path="asistencia/work-sessions"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/asistencia/work-sessions">
+                  <PageWorkSessions />
+                </DynamicProtectedRoute>
+              }
+            />
+            <Route
+              path="asistencia/reconocimiento"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/asistencia/reconocimiento">
+                  <PageReconocimientoFacial />
+                </DynamicProtectedRoute>
+              }
+            />
+            <Route
+              path="asistencia/acceso-temporal"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/asistencia/acceso-temporal">
+                  <BtnAccesoTemporalKiosko />
+                </DynamicProtectedRoute>
+              }
+            />
+
+            <Route
+              path="jornada-laboral/jornada"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/jornada-laboral/jornada">
+                  <PageJornadaLaboral />
+                </DynamicProtectedRoute>
+              }
+            />
+            <Route
+              path="jornada-laboral/valores"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/jornada-laboral/valores">
+                  <PageValores />
+                </DynamicProtectedRoute>
+              }
+            />
+
+            <Route
+              path="reportes/llamados"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/reportes/llamados">
+                  <PageLlamadosAtencion />
+                </DynamicProtectedRoute>
+              }
+            />
+            <Route
+              path="reportes/descargos"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/reportes/descargos">
+                  <PageDescargos />
+                </DynamicProtectedRoute>
+              }
+            />
+
+            <Route
+              path="configuracion/parametros"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/configuracion/parametros">
+                  <PageConfiguracionNomina />
+                </DynamicProtectedRoute>
+              }
+            />
+          </Route>
 
 
           <Route
@@ -708,10 +1041,36 @@ export default function Router() {
               </DynamicProtectedRoute>
             }
           />
-
           <Route
-            path="proveedores-ordenes-compra"
-            element={<FormOrdenesProveedores />}
+            path="/auth/crm/no-conformidades"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/producto-no-conforme">
+                <ListaProductoNoConforme />
+              </DynamicProtectedRoute>
+            }
+          />
+          <Route
+            path="/auth/crm/no-conformidades/dashboard"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/producto-no-conforme">
+                <DashboardProductoNoConforme />
+              </DynamicProtectedRoute>
+            }
+          />
+          <Route
+            path="/auth/crm/no-conformidades/:id/gestionar"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/producto-no-conforme">
+                <GestionProductoNoConforme />
+              </DynamicProtectedRoute>
+            }
+          />
+       {/*   ORDENES COMPRA PROVEEDOR*/}
+          <Route
+            path="/auth/crm/proveedores-ordenes-compra"
+            element={<DynamicProtectedRoute permission="/auth/crm/proveedores-ordenes-compra">
+              <FormOrdenesProveedores />
+            </DynamicProtectedRoute>}  
           />
           <Route
             path="ordenes-compra-proveedor"
@@ -731,11 +1090,15 @@ export default function Router() {
           />
           <Route
             path="/auth/crm/oc-provedor-update/:id"
-            element={<UpdateOcProvedor />}
+            element={<DynamicProtectedRoute permission="/auth/crm/oc-provedor-update/:id">
+              <UpdateOcProvedor />
+            </DynamicProtectedRoute>}
           />
           <Route
             path="/auth/crm/ordenes-proveedor/dividir-orden/:id"
-            element={<DividirOcProveedor />}
+            element={<DynamicProtectedRoute permission="/auth/crm/ordenes-proveedor/dividir-orden/:id">
+              <DividirOcProveedor />
+            </DynamicProtectedRoute>}
           />
           <Route path="cotizaciones" element={<CotizacionForm />} />
           <Route path="mis-ordenes" element={<MisOrdenesComerciales />} />
@@ -771,6 +1134,10 @@ export default function Router() {
           <Route
             path="/auth/crm/traslado-inventario"
             element={<TrasladoInventario />}
+          />
+          <Route
+            path="/auth/crm/traslados-inventario"
+            element={<ListadoTrasladosInventario />}
           />
           <Route
             path="/auth/crm/crear-productos"
