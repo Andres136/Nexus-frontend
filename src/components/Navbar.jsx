@@ -1,8 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { departamentosApi } from "../services/api";
-import { ticketService } from "../services/ticService";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { departamentosApi, notificacionesApi } from "../services/api";
 import { useAuth } from "../hooks/useAuth";
 import {
   Home,
@@ -30,30 +29,70 @@ import {
 
 } from "lucide-react";
 
+const TRADUCCIONES_NOTIFICACION = {
+  TicketAsignadoNotification: "Ticket asignado",
+  OrdenTrabajoCreada: "Orden de trabajo creada",
+  OrdenTrabajoListaParcial: "Orden con productos listos parcialmente",
+  TareaVencidaNotificacion: "Tarea vencida",
+  NuevaTareaAsignada: "Nueva tarea asignada",
+  ContactoNotificacion: "Nuevo contacto recibido",
+  OrdenCompraNotificacion: "Nueva orden de compra",
+  OrdenCompraNotificacionMejorada: "Nueva orden de compra",
+  OrdenesPorVencerNotificacion: "Órdenes por vencer",
+  PqrNotifycaciones: "Nuevo mensaje de PQR",
+  FacturaCarteraNotification: "Factura de cartera",
+  NotificacionTrasladoCreado: "Traslado creado",
+  TrasladoActualizadoNotification: "Traslado actualizado",
+  TrasladoPendienteBodegaNotificacion: "Traslado pendiente en bodega",
+};
+
+const nombreCortoTipo = (type) => type?.split("\\").pop();
+
+const traducirTipoNotificacion = (type) => {
+  const corto = nombreCortoTipo(type);
+  return TRADUCCIONES_NOTIFICACION[corto] || corto || "Notificación";
+};
+
+// Convierte la url absoluta guardada en `data.url` en una ruta interna
+// navegable con react-router (evita un refresh completo de página).
+const rutaInterna = (url) => {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    return parsed.pathname + parsed.search;
+  } catch {
+    return url;
+  }
+};
+
 export default function Navbar() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [departamento, setDepartamento] = useState(null);
   const [openMenu, setOpenMenu] = useState(null);
   const [openUserMenu, setOpenUserMenu] = useState(false); // ✅ Solo agregué este estado
-  const [showTicketModal, setShowTicketModal] = useState(false);
+  const [showNotifPanel, setShowNotifPanel] = useState(false);
   const { logout, user } = useAuth({ middleware: "auth" });
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const menuRef = useRef(null);
   const userMenuRef = useRef(null); // ✅ Solo agregué esta ref
 
-  const ticketsAsignadosQuery = useQuery({
-    queryKey: ["navbar-tickets-asignados", user?.id],
+  const notificacionesQuery = useQuery({
+    queryKey: ["navbar-notificaciones", user?.id],
     queryFn: async () => {
-      const response = await ticketService.getAssignedSummary();
-      return response.data?.data ?? { total: 0, tickets: [] };
+      const response = await notificacionesApi.getAll();
+      return {
+        notificaciones: response.data?.notificaciones ?? [],
+        total: response.data?.total_no_leidas ?? 0,
+      };
     },
     enabled: Boolean(user?.id),
-    refetchInterval: 60000,
+    refetchInterval: 15000,
+    refetchOnWindowFocus: true,
   });
 
-  const ticketsAsignados = ticketsAsignadosQuery.data?.tickets ?? [];
-  const totalTicketsAsignados = ticketsAsignadosQuery.data?.total ?? 0;
-  const latestTicketId = ticketsAsignados[0]?.id ?? "none";
+  const notificaciones = notificacionesQuery.data?.notificaciones ?? [];
+  const totalNoLeidas = notificacionesQuery.data?.total ?? 0;
 
   useEffect(() => {
     const fetchDepartamento = async () => {
@@ -66,16 +105,6 @@ export default function Navbar() {
     };
     if (user?.departamento_id) fetchDepartamento();
   }, [user?.departamento_id]);
-
-  useEffect(() => {
-    if (!user?.id || totalTicketsAsignados === 0) return;
-
-    const storageKey = `tickets-asignados-aviso-${user.id}-${latestTicketId}-${totalTicketsAsignados}`;
-    if (sessionStorage.getItem(storageKey)) return;
-
-    setShowTicketModal(true);
-    sessionStorage.setItem(storageKey, "true");
-  }, [latestTicketId, totalTicketsAsignados, user?.id]);
 
   const isResponsable = departamento?.responsable_id === user?.id;
 
@@ -135,11 +164,29 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const abrirTickets = () => {
-    setShowTicketModal(false);
+  const abrirNotificacion = async (noti) => {
+    setShowNotifPanel(false);
     setOpenUserMenu(false);
     setIsSidebarOpen(false);
-    navigate("/auth/tic/tickets");
+
+    try {
+      await notificacionesApi.marcarLeida(noti.id);
+      queryClient.invalidateQueries({ queryKey: ["navbar-notificaciones", user?.id] });
+    } catch (error) {
+      console.error("Error al marcar notificación como leída:", error);
+    }
+
+    const destino = rutaInterna(noti.data?.url);
+    if (destino) navigate(destino);
+  };
+
+  const marcarTodasLeidas = async () => {
+    try {
+      await notificacionesApi.marcarTodasLeidas();
+      queryClient.invalidateQueries({ queryKey: ["navbar-notificaciones", user?.id] });
+    } catch (error) {
+      console.error("Error al marcar notificaciones como leídas:", error);
+    }
   };
 
   return (
@@ -171,14 +218,14 @@ export default function Navbar() {
 
         <button
           type="button"
-          onClick={() => setShowTicketModal(true)}
+          onClick={() => setShowNotifPanel(true)}
           className="relative rounded-lg p-2 text-gray-200 transition hover:bg-gray-800 hover:text-green-400 lg:hidden"
-          aria-label="Ver tickets asignados"
+          aria-label="Ver notificaciones"
         >
           <Bell className="h-5 w-5" />
-          {totalTicketsAsignados > 0 && (
+          {totalNoLeidas > 0 && (
             <span className="absolute -right-1 -top-1 min-w-5 rounded-full bg-red-500 px-1.5 py-0.5 text-center text-[10px] font-bold text-white">
-              {totalTicketsAsignados > 99 ? "99+" : totalTicketsAsignados}
+              {totalNoLeidas > 99 ? "99+" : totalNoLeidas}
             </span>
           )}
         </button>
@@ -231,14 +278,14 @@ export default function Navbar() {
 
           <button
             type="button"
-            onClick={() => setShowTicketModal(true)}
+            onClick={() => setShowNotifPanel(true)}
             className="relative rounded-lg p-2 text-gray-200 transition hover:bg-gray-800 hover:text-green-400"
-            aria-label="Ver tickets asignados"
+            aria-label="Ver notificaciones"
           >
             <Bell className="h-5 w-5" />
-            {totalTicketsAsignados > 0 && (
+            {totalNoLeidas > 0 && (
               <span className="absolute -right-1 -top-1 min-w-5 rounded-full bg-red-500 px-1.5 py-0.5 text-center text-[10px] font-bold text-white">
-                {totalTicketsAsignados > 99 ? "99+" : totalTicketsAsignados}
+                {totalNoLeidas > 99 ? "99+" : totalNoLeidas}
               </span>
             )}
           </button>
@@ -329,18 +376,18 @@ export default function Navbar() {
             <button
               type="button"
               onClick={() => {
-                setShowTicketModal(true);
+                setShowNotifPanel(true);
                 setIsSidebarOpen(false);
               }}
               className="flex w-full items-center justify-between rounded px-4 py-2 text-left text-white hover:bg-gray-700"
             >
               <span className="flex items-center gap-2">
                 <Bell className="h-4 w-4" />
-                Tickets asignados
+                Notificaciones
               </span>
-              {totalTicketsAsignados > 0 && (
+              {totalNoLeidas > 0 && (
                 <span className="rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
-                  {totalTicketsAsignados}
+                  {totalNoLeidas}
                 </span>
               )}
             </button>
@@ -378,53 +425,50 @@ export default function Navbar() {
         </ul>
       </div>
 
-      {showTicketModal && (
+      {showNotifPanel && (
         <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 p-4 text-gray-900">
           <div className="w-full max-w-lg overflow-hidden rounded-lg bg-white shadow-2xl">
             <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">Tickets TIC</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">Notificaciones</p>
                 <h2 className="mt-1 text-lg font-bold text-gray-900">
-                  {totalTicketsAsignados > 0
-                    ? `Tienes ${totalTicketsAsignados} ticket${totalTicketsAsignados === 1 ? "" : "s"} asignado${
-                        totalTicketsAsignados === 1 ? "" : "s"
-                      }`
-                    : "No tienes tickets asignados abiertos"}
+                  {totalNoLeidas > 0
+                    ? `Tienes ${totalNoLeidas} notificación${totalNoLeidas === 1 ? "" : "es"} sin leer`
+                    : "No tienes notificaciones nuevas"}
                 </h2>
               </div>
               <button
                 type="button"
-                onClick={() => setShowTicketModal(false)}
+                onClick={() => setShowNotifPanel(false)}
                 className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
-                aria-label="Cerrar aviso de tickets"
+                aria-label="Cerrar notificaciones"
               >
                 ×
               </button>
             </div>
 
             <div className="max-h-[360px] overflow-y-auto px-5 py-4">
-              {totalTicketsAsignados === 0 ? (
+              {notificaciones.length === 0 ? (
                 <p className="rounded-lg bg-gray-50 p-4 text-sm text-gray-600">
-                  Cuando te asignen un ticket pendiente o en proceso, aparecerá aquí.
+                  Aquí verás avisos de tickets asignados, facturas de cartera por vencer/vencidas, tareas y más.
                 </p>
               ) : (
                 <div className="space-y-3">
-                  {ticketsAsignados.map((ticket) => (
+                  {notificaciones.map((noti) => (
                     <button
-                      key={ticket.id}
+                      key={noti.id}
                       type="button"
-                      onClick={abrirTickets}
+                      onClick={() => abrirNotificacion(noti)}
                       className="w-full rounded-lg border border-gray-200 p-3 text-left transition hover:border-blue-300 hover:bg-blue-50"
                     >
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="text-sm font-semibold text-gray-900">Ticket #{ticket.id}</p>
-                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">
-                          {ticket.estado?.replace("_", " ")}
-                        </span>
-                      </div>
-                      <p className="mt-1 line-clamp-2 text-sm text-gray-600">{ticket.descripcion}</p>
-                      <p className="mt-2 text-xs text-gray-400">
-                        Solicitante: {ticket.solicitante?.name ?? "Sin solicitante"}
+                      <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">
+                        {traducirTipoNotificacion(noti.type)}
+                      </p>
+                      <p className="mt-1 text-sm text-gray-800">
+                        {noti.data?.mensaje ?? "Nueva notificación"}
+                      </p>
+                      <p className="mt-1 text-xs text-gray-400">
+                        {new Date(noti.created_at).toLocaleString("es-CO")}
                       </p>
                     </button>
                   ))}
@@ -435,18 +479,18 @@ export default function Navbar() {
             <div className="flex justify-end gap-2 border-t border-gray-200 px-5 py-4">
               <button
                 type="button"
-                onClick={() => setShowTicketModal(false)}
+                onClick={() => setShowNotifPanel(false)}
                 className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
                 Cerrar
               </button>
-              {totalTicketsAsignados > 0 && (
+              {totalNoLeidas > 0 && (
                 <button
                   type="button"
-                  onClick={abrirTickets}
+                  onClick={marcarTodasLeidas}
                   className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
                 >
-                  Ver tickets
+                  Marcar todas como leídas
                 </button>
               )}
             </div>

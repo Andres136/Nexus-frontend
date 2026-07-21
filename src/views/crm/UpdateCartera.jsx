@@ -298,12 +298,11 @@ export default function UpdateCartera() {
                   Saldo Pendiente
                 </label>
                 <input
-                  type="number"
-                  name="saldo_pendiente"
-                  value={form.saldo_pendiente || ''}
-                  onChange={handleChange}
-                  step="0.01"
-                  className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-yellow-50"
+                  type="text"
+                  value={formatCurrency(form.saldo_pendiente)}
+                  readOnly
+                  title="Se recalcula automáticamente a partir de los abonos registrados"
+                  className="w-full border border-gray-200 rounded-lg px-4 py-3 bg-yellow-50 text-gray-600"
                 />
               </div>
 

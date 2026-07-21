@@ -6,7 +6,7 @@ import { useDebounce } from "../../hooks/useDebounce"
 import { useGestionCartera } from "../../hooks/crm/useGestionCartera"
 import { useAuth } from "../../hooks/useAuth"
 import { Link } from "react-router-dom"
-import { Briefcase, CheckCircle, DollarSign, Download, Pencil } from "lucide-react"
+import { Ban, Briefcase, DollarSign, Download, Pencil } from "lucide-react"
 import { formatDate } from "../../helpers"
 import { carteraApi } from "../../services/api"
 import { showToast } from "../../helpers/utils/showToast"
@@ -340,13 +340,19 @@ const{cancelarDeuda, eliminarFactura}=useGestionCartera()
     </span>
     
     {/* Estado */}
-    {reg.estado === "pendiente" ? (
+    {reg.estado === "pendiente" && (
       <span className="inline-flex items-center w-fit px-2 py-0.5 text-[10px] font-medium bg-amber-100 text-amber-700 rounded-full">
         ⏳ Pendiente
       </span>
-    ) : (
+    )}
+    {reg.estado === "completado" && (
       <span className="inline-flex items-center w-fit px-2 py-0.5 text-[10px] font-medium bg-green-100 text-green-700 rounded-full">
         ✓ Pagado
+      </span>
+    )}
+    {reg.estado === "cancelado" && (
+      <span className="inline-flex items-center w-fit px-2 py-0.5 text-[10px] font-medium bg-gray-200 text-gray-600 rounded-full">
+        🚫 Cancelada
       </span>
     )}
 
@@ -436,14 +442,14 @@ const{cancelarDeuda, eliminarFactura}=useGestionCartera()
               <span className="hidden sm:inline">Abonar</span>
             </button>
 
-            {/* Pagar total */}
+            {/* Cancelar/condonar deuda (no es un pago real, marca estado='cancelado') */}
             <button
               onClick={() => cancelarDeuda(reg.id)}
-              className="flex items-center gap-1 px-2.5 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-md text-xs font-medium transition-all"
-              title="Pagar deuda completa"
+              className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-500 hover:bg-slate-600 text-white rounded-md text-xs font-medium transition-all"
+              title="Cancelar / condonar deuda"
             >
-              <CheckCircle size={14} />
-              <span className="hidden sm:inline">Pagar</span>
+              <Ban size={14} />
+              <span className="hidden sm:inline">Cancelar</span>
             </button>
 
                <Link to={`/auth/crm/editar-cartera/${reg.id}`}>

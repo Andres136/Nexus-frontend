@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Select from "react-select";
 import {
   AlertCircle,
@@ -18,7 +18,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useTickets } from "../../hooks/tic/useTickets";
 import { useAuth } from "../../hooks/useAuth";
 
@@ -83,6 +83,7 @@ function fmtTicketDelivery(ticket) {
 
 export default function Tickets() {
   const { user } = useAuth({ middleware: "auth" });
+  const [searchParams] = useSearchParams();
   const {
     tickets,
     pagination,
@@ -116,6 +117,15 @@ export default function Tickets() {
   } = useTickets(user?.id);
 
   const [showCreate, setShowCreate] = useState(false);
+
+  // Deep-link desde la campana de notificaciones (?ticket=123): abre el
+  // detalle del ticket asignado sin que el usuario tenga que buscarlo.
+  useEffect(() => {
+    const ticketId = searchParams.get("ticket");
+    if (ticketId) cargarDetalle(Number(ticketId));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
   const canEditSelectedTicket = selectedTicket && Number(selectedTicket.user_solicitante_id) === Number(user?.id);
   const canDeleteSelectedTicket = selectedTicket && Number(selectedTicket.user_solicitante_id) === Number(user?.id);
   const canChangeSelectedStatus = selectedTicket && Number(selectedTicket.user_asignado_id) === Number(user?.id);
