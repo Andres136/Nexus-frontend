@@ -29,6 +29,11 @@ const MODEL_URL   = "/models";
 const FACE_IMAGE_MIN_CONFIDENCE = 0.5;
 const FACE_MATCH_THRESHOLD = 0.46;
 const BOOTSTRAP_CACHE_TIMEOUT_MS = 7000;
+// Cuántas fotos se descargan/procesan (reconocimiento facial) a la vez en la
+// primera carga del kiosko (o cuando cambia el dataset). Antes era secuencial
+// (una por una); un límite moderado evita saturar el navegador con muchos
+// usuarios a la vez sin perder el beneficio de no esperar cada foto en serie.
+const FACE_MATCHER_CONCURRENCY = 5;
 
 async function loadModels() {
   await Promise.all([
@@ -80,6 +85,21 @@ function facePhotoCacheKey(foto) {
   ].join("|");
 }
 
+// Ejecuta `worker` sobre `items` con a lo sumo `limit` tareas en vuelo al
+// mismo tiempo, en vez de Promise.all (todas a la vez) o un for secuencial.
+async function runWithConcurrency(items, limit, worker) {
+  let index = 0;
+  async function next() {
+    while (index < items.length) {
+      const current = index++;
+      await worker(items[current]);
+    }
+  }
+  await Promise.all(
+    Array.from({ length: Math.min(limit, items.length) }, next)
+  );
+}
+
 async function buildFaceMatcher(fotos, kioskoUuid) {
   if (!fotos.length) return null;
   const labeled = [];
@@ -87,7 +107,7 @@ async function buildFaceMatcher(fotos, kioskoUuid) {
   const nextDescriptorCache = {};
   let cacheChanged = false;
 
-  for (const foto of fotos) {
+  await runWithConcurrency(fotos, FACE_MATCHER_CONCURRENCY, async (foto) => {
     const cacheKey = facePhotoCacheKey(foto);
     const cachedDescriptor = descriptorCache[cacheKey];
 
@@ -97,7 +117,7 @@ async function buildFaceMatcher(fotos, kioskoUuid) {
         labeled.push(
           new faceapi.LabeledFaceDescriptors(String(foto.users_id), [new Float32Array(cachedDescriptor)])
         );
-        continue;
+        return;
       }
 
       const img = await loadImageViaApi(foto.uuid);
@@ -116,7 +136,8 @@ async function buildFaceMatcher(fotos, kioskoUuid) {
     } catch {
       // foto no cargó o no se detectó rostro — se omite
     }
-  }
+  });
+
   if (cacheChanged) {
     saveFaceDescriptorCache(kioskoUuid, nextDescriptorCache);
   }
