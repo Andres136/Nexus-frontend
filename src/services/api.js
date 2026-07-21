@@ -424,6 +424,12 @@ export const dashboardApi = {
   getKpis: (year) => apiClient.get("/api/dashboard/kpis", { params: { year } }),
 };
 
+export const notificacionesApi = {
+  getAll: () => apiClient.get("/api/notificaciones"),
+  marcarLeida: (id) => apiClient.post(`/api/notificaciones/${id}/marcar-leida`),
+  marcarTodasLeidas: () => apiClient.post("/api/notificaciones/marcar-leidas"),
+};
+
 //Gestion de cartera
 
 export const carteraApi = {
