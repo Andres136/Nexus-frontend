@@ -43,6 +43,7 @@ const ESTADO_BADGE = {
   EN_ACTIVIDAD: { label: "En actividad", color: "bg-indigo-100 text-indigo-700" },
   PAUSA: { label: "En pausa", color: "bg-amber-100 text-amber-700" },
   FINALIZADA: { label: "Jornada finalizada", color: "bg-gray-100 text-gray-600" },
+  SIN_CLASIFICAR: { label: "Sin clasificar", color: "bg-gray-100 text-gray-500" },
 };
 
 const ESTADO_ACTIVIDAD_BADGE = {
@@ -119,11 +120,12 @@ export default function PageMiDia() {
   }, [modo, form.titulo]);
 
   const jornada = estado?.jornada;
+  const workSessionHoy = jornada?.work_session ?? estado?.work_session;
   const actividadActiva = estado?.actividad_activa;
   const resumen = estado?.resumen;
   const lineaTiempo = useMemo(() => estado?.linea_tiempo ?? [], [estado]);
 
-  const estadoBadge = ESTADO_BADGE[jornada?.estado_actual] ?? ESTADO_BADGE.DISPONIBLE;
+  const estadoBadge = ESTADO_BADGE[estado?.estado_actual] ?? ESTADO_BADGE.SIN_CLASIFICAR;
 
   const cerrarModo = () => {
     setModo(null);
@@ -211,15 +213,16 @@ export default function PageMiDia() {
       </div>
 
       {/* Indicadores */}
-      {resumen && (
+      {(resumen || workSessionHoy) && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <Indicador
             label="Entrada"
-            value={fmtHora(jornada?.work_session?.hora_entrada)}
+            value={fmtHora(workSessionHoy?.hora_entrada)}
             detail="Registrada por el kiosko"
             icon={Clock}
             color="bg-blue-50 text-blue-600"
           />
+          {resumen && <>
           <Indicador
             label="Tiempo clasificado"
             value={minsToHM(resumen.minutos_tarea + resumen.minutos_otra_actividad + resumen.minutos_disponible)}
@@ -241,6 +244,7 @@ export default function PageMiDia() {
             icon={CircleAlert}
             color="bg-amber-50 text-amber-600"
           />
+          </>}
         </div>
       )}
 
