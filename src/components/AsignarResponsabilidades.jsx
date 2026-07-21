@@ -85,6 +85,8 @@ export default function AsignarResponsabilidades() {
       await updateAsignacion(
   Number(selectedItem.usuario.pivot.id), // ✅ cast a int
   {
+    user_id: Number(formData.user_id),
+    responsabilidad_id: Number(formData.responsabilidad_id),
     sede_id: Number(formData.sede_id),
     bodega_id: Number(formData.bodega_id),
     activo: Boolean(formData.activo),
