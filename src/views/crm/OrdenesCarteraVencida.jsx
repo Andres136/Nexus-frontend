@@ -31,6 +31,7 @@ export default function OrdenesCarteraVencida() {
     cambiarPagina,
     ordenes,
     pagination,
+    totalValor,
     isLoading,
     activar,
     desactivar,
@@ -95,6 +96,15 @@ export default function OrdenesCarteraVencida() {
               <option value="inactiva">Desactivadas</option>
             </select>
           </div>
+        </div>
+
+        <div className="px-5 pb-5 flex items-center justify-between flex-wrap gap-2">
+          <span className="text-sm text-gray-500">
+            <span className="font-semibold text-gray-800">{pagination?.total ?? ordenes.length}</span> órdenes con estos filtros
+          </span>
+          <span className="text-sm text-gray-500">
+            Valor total: <span className="font-bold text-gray-900">{formatCurrency(totalValor)}</span>
+          </span>
         </div>
       </div>
 

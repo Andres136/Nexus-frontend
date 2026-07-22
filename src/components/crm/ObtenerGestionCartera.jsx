@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import Select from "react-select"
 import { useListaCartera } from "../../hooks/crm/useListaCartera"
 import NexusLoader from "../NexusLoader"
 import ModalAbonoCartera from "./ModalAbonoCartera"
@@ -10,6 +11,13 @@ import { AlertTriangle, Ban, Briefcase, DollarSign, Download, Pencil } from "luc
 import { formatDate } from "../../helpers"
 import { carteraApi, departamentosApi } from "../../services/api"
 import { showToast } from "../../helpers/utils/showToast"
+
+const OPCIONES_BUSCAR_POR = [
+  { value: "cliente", label: "Cliente" },
+  { value: "factura", label: "N° Factura" },
+  { value: "comercial", label: "Comercial" },
+  { value: "empresa", label: "Empresa" },
+]
 
 export default function ObtenerGestionCartera() {
 const { user } = useAuth({middleware: 'auth'})
@@ -31,6 +39,7 @@ useEffect(() => {
 const isResponsable = departamento?.responsable_id === user?.id || user?.role_id === 1
   const [filtros, setFiltros] = useState({
     buscar: "",
+    buscar_por: "cliente",
     fecha_inicio: "",
     fecha_fin: "",
     cliente_id: "",
@@ -88,6 +97,14 @@ const{cancelarDeuda, eliminarFactura}=useGestionCartera()
     }))
   }
 
+  const handleBuscarPorChange = (opcion) => {
+    setFiltros(prev => ({
+      ...prev,
+      buscar_por: opcion?.value || "cliente",
+      page: 1
+    }))
+  }
+
   const abrirModalAbono = (cartera) => {
     setCarteraSeleccionada(cartera)
     setOpenModal(true)
@@ -95,7 +112,8 @@ const{cancelarDeuda, eliminarFactura}=useGestionCartera()
 
   const limpiarFiltros = () => {
     setFiltros({
-      buscar: "", 
+      buscar: "",
+      buscar_por: "cliente",
       fecha_inicio: "",
       fecha_fin: "",
       cliente_id: "",
@@ -108,9 +126,9 @@ const{cancelarDeuda, eliminarFactura}=useGestionCartera()
   const handleExportar = async () => {
     setExportando(true)
     try {
-      const { buscar, fecha_inicio, fecha_fin, cliente_id, user_comercial_id, estado } = filtros
+      const { buscar, buscar_por, fecha_inicio, fecha_fin, cliente_id, user_comercial_id, estado } = filtros
       const response = await carteraApi.exportarCartera({
-        buscar, fecha_inicio, fecha_fin, cliente_id, user_comercial_id, estado
+        buscar, buscar_por, fecha_inicio, fecha_fin, cliente_id, user_comercial_id, estado
       })
       const url = window.URL.createObjectURL(new Blob([response.data], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -217,26 +235,40 @@ const{cancelarDeuda, eliminarFactura}=useGestionCartera()
 
         {/* FILTROS */}
         <div className="p-5">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            {/* Búsqueda de cliente */}
-            <div className="lg:col-span-2">
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">Cliente</label>
-              <div className="relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+            {/* Búsqueda: selector "buscar por" + texto */}
+            <div className="lg:col-span-3">
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">Buscar</label>
+              <div className="flex gap-2">
+                <div className="w-36 shrink-0">
+                  <Select
+                    options={OPCIONES_BUSCAR_POR}
+                    value={OPCIONES_BUSCAR_POR.find(o => o.value === filtros.buscar_por) || OPCIONES_BUSCAR_POR[0]}
+                    onChange={handleBuscarPorChange}
+                    isSearchable={false}
+                    classNamePrefix="select"
+                    styles={{
+                      control: (base) => ({ ...base, minHeight: "42px", fontSize: "14px" }),
+                    }}
+                  />
                 </div>
-                <input
-                  type="text"
-                  name="buscar"
-                  placeholder="Buscar por cliente..."
-                  value={filtros.buscar}
-                  onChange={handleChange}
-                  className="w-full border border-gray-200 pl-10 pr-4 py-2.5 rounded-lg text-sm
-                    focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 
-                    transition placeholder:text-gray-400"
-                />
+                <div className="relative flex-1">
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                  <input
+                    type="text"
+                    name="buscar"
+                    placeholder={`Buscar por ${(OPCIONES_BUSCAR_POR.find(o => o.value === filtros.buscar_por) || OPCIONES_BUSCAR_POR[0]).label.toLowerCase()}...`}
+                    value={filtros.buscar}
+                    onChange={handleChange}
+                    className="w-full border border-gray-200 pl-10 pr-4 py-2.5 rounded-lg text-sm
+                      focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500
+                      transition placeholder:text-gray-400"
+                  />
+                </div>
               </div>
             </div>
 

@@ -22,6 +22,7 @@ return {
  queryKey: [
  "cartera",
  filtros.buscar,
+ filtros.buscar_por,
  filtros.fecha_inicio,
  filtros.fecha_fin,
  filtros.cliente_id,
