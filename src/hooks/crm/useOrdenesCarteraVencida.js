@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import Swal from "sweetalert2";
 import { showToast } from "../../helpers/utils/showToast";
 import { ordenesCarteraApi } from "../../services/api";
@@ -25,7 +25,7 @@ export const useOrdenesCarteraVencida = () => {
   const query = useQuery({
     queryKey: ["ordenesCarteraVencida", filtrosDebounced],
     queryFn: obtenerOrdenes,
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
 
   const handleChange = (e) => {

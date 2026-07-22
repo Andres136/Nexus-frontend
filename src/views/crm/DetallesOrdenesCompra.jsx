@@ -411,7 +411,9 @@ const tieneDocumentoCliente = Boolean(ordenSeleccionada?.cliente_documento);
               <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
               <div className="text-sm">
                 <p className="font-semibold">
-                  {carteraInfo.tiene_vencida
+                  {carteraInfo.tiene_vencida && carteraInfo.tiene_proxima
+                    ? "🚨 Este cliente tiene cartera vencida y próxima a vencer"
+                    : carteraInfo.tiene_vencida
                     ? "🚨 Este cliente tiene cartera vencida"
                     : "⚠️ Este cliente tiene cartera próxima a vencer"}
                 </p>
