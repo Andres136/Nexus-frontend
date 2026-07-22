@@ -104,6 +104,7 @@ import ViewOrdenesOs from "../views/crm/ViewOrdenesOs/ViewOrdenesOs";
 import RegistrarOs from "../components/crm/ordenesServicio/RegistrarOs";
 import GestionCartera from "../views/crm/GestionCartera";
 import ObtenerGestionCartera from "../components/crm/ObtenerGestionCartera";
+import OrdenesCarteraVencida from "../views/crm/OrdenesCarteraVencida";
 import ViewHseq from "../views/hseq/ViewHseq";
 import RegistroTipoInspecciones from "../components/hseq/RegistroTipoInspecciones";
 import RegistrarPreguntasInspecciones from "../components/hseq/RegistrarPreguntasInspecciones";
@@ -653,6 +654,15 @@ export default function Router() {
             element={
               <DynamicProtectedRoute permission="/auth/crm/cartera-clientes">
                 <ObtenerGestionCartera />
+              </DynamicProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/auth/crm/cartera-ordenes-vencida"
+            element={
+              <DynamicProtectedRoute permission="/auth/crm/cartera-ordenes-vencida">
+                <OrdenesCarteraVencida />
               </DynamicProtectedRoute>
             }
           />

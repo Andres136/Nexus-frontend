@@ -17,6 +17,7 @@ export default function DetallesOrdenTrabajo() {
     setObservaciones,
     errores,
     loading,
+    carteraInfo,
     handleGuardarYGenerarPDF,
     handleChangeDetalle,
     revisados,
@@ -37,6 +38,8 @@ export default function DetallesOrdenTrabajo() {
         const documentoRevisado = Boolean(orden.documento_revisado_at);
         const tieneDocumentoCliente = Boolean(orden.orden_compra?.cliente_documento);
         const puedeGenerarPDF = !tieneDocumentoCliente || documentoRevisado;
+        const tieneCarteraVencida = Boolean(carteraInfo?.tiene_vencida);
+        const tieneCarteraProxima = Boolean(carteraInfo?.tiene_proxima);
 
 
 
@@ -130,9 +133,13 @@ export default function DetallesOrdenTrabajo() {
 
     {/* Cliente */}
     <div className="bg-white p-3 rounded-md border shadow-sm flex items-start gap-2">
-      <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
+      <div
+        className={`w-8 h-8 rounded flex items-center justify-center ${
+          tieneCarteraVencida ? "bg-red-100" : "bg-blue-100"
+        }`}
+      >
         <svg
-          className="w-5 h-5 text-blue-600"
+          className={`w-5 h-5 ${tieneCarteraVencida ? "text-red-600" : "text-blue-600"}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -150,6 +157,16 @@ export default function DetallesOrdenTrabajo() {
         <p className="text-sm font-semibold text-gray-900">
           {orden.orden_compra?.cliente?.nombre || "No asignado"}
         </p>
+        {tieneCarteraVencida && (
+          <p className="mt-1 text-xs font-medium text-red-600">
+            ⚠️ Cartera vencida — se recomienda revisarla antes de continuar
+          </p>
+        )}
+        {!tieneCarteraVencida && tieneCarteraProxima && (
+          <p className="mt-1 text-xs font-medium text-amber-600">
+            Cartera próxima a vencer
+          </p>
+        )}
       </div>
     </div>
 

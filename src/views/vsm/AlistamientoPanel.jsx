@@ -32,6 +32,7 @@ export default function AlistamientoPanel() {
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [errors, setErrors] = useState({});
   const [ordenesTrabajo, setOrdenesTrabajo] = useState([]);
+  const [guardando, setGuardando] = useState(false);
   const location = useLocation();
 
   const fetchUsers = async () => {
@@ -78,6 +79,7 @@ export default function AlistamientoPanel() {
 
   // INICIAR ALISTAMIENTO
   const iniciar = async () => {
+    setGuardando(true);
     try {
       const payload = {
         tipo_origen: tipoOrigen,
@@ -115,6 +117,8 @@ export default function AlistamientoPanel() {
       }
 
       toast.error("Error inesperado");
+    } finally {
+      setGuardando(false);
     }
   };
 
@@ -380,14 +384,14 @@ export default function AlistamientoPanel() {
               <button
                 className="w-full min-h-11 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:from-gray-400 disabled:to-gray-500 text-white px-4 py-2.5 rounded-lg font-medium transition-all duration-200 sm:hover:scale-[1.02] disabled:scale-100 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
                 onClick={iniciar}
-                disabled={loading || selectedUsers.length === 0 || (tipoOrigen === "OT"
+                disabled={guardando || loading || selectedUsers.length === 0 || (tipoOrigen === "OT"
                   ? !selectedOT
                   : modalidadLibre === "PRODUCTOS" ? selectedProducts.length === 0 : !nombreActividad.trim())}
               >
-                {loading ? (
+                {guardando ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Iniciando...
+                    Guardando...
                   </>
                 ) : (
                   <>

@@ -62,6 +62,7 @@ export default function DetallesOrdenesCompra() {
   const [searchTerm, setSearchTerm] = useState(" ");
   const [documentoVisto, setDocumentoVisto] = useState(false);
   const [editingProductIndex, setEditingProductIndex] = useState(null);
+  const [carteraInfo, setCarteraInfo] = useState(null);
 
 //console.log("ordenesCompra desde detalles:", ordenesCompra);
       const { products, isLoading,isEmpty, isFetching } = useProducts({search: searchTerm});
@@ -281,6 +282,29 @@ const tieneDocumentoCliente = Boolean(ordenSeleccionada?.cliente_documento);
     obtenerSedes();
   }, []);
 
+  // Consultar si el cliente de esta orden tiene cartera vencida/próxima a vencer
+  useEffect(() => {
+    const clienteId = ordenSeleccionada?.cliente_id || ordenSeleccionada?.cliente?.id;
+    if (!clienteId) {
+      setCarteraInfo(null);
+      return;
+    }
+
+    const obtenerCartera = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await clienteAxios.get(`/api/clientes/${clienteId}/cartera-resumen`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setCarteraInfo(response.data.cartera);
+      } catch {
+        setCarteraInfo(null);
+      }
+    };
+
+    obtenerCartera();
+  }, [ordenSeleccionada?.cliente_id, ordenSeleccionada?.cliente?.id]);
+
 
   const inputClass =
     "w-full rounded-md border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900 shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100";
@@ -375,6 +399,37 @@ const tieneDocumentoCliente = Boolean(ordenSeleccionada?.cliente_documento);
               </button>
             )}
           </div>
+
+          {carteraInfo && (carteraInfo.tiene_vencida || carteraInfo.tiene_proxima) && (
+            <div
+              className={`mx-4 mt-4 flex items-start gap-3 rounded-lg border p-3 ${
+                carteraInfo.tiene_vencida
+                  ? "border-red-200 bg-red-50 text-red-800"
+                  : "border-amber-200 bg-amber-50 text-amber-800"
+              }`}
+            >
+              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+              <div className="text-sm">
+                <p className="font-semibold">
+                  {carteraInfo.tiene_vencida
+                    ? "🚨 Este cliente tiene cartera vencida"
+                    : "⚠️ Este cliente tiene cartera próxima a vencer"}
+                </p>
+                {carteraInfo.tiene_vencida && (
+                  <p className="mt-0.5">
+                    Facturas vencidas: {carteraInfo.facturas_vencidas.join(", ")} — total{" "}
+                    {formatCurrency(carteraInfo.total_vencido)}
+                  </p>
+                )}
+                {carteraInfo.tiene_proxima && (
+                  <p className="mt-0.5">
+                    Facturas próximas a vencer: {carteraInfo.facturas_proximas.join(", ")} — total{" "}
+                    {formatCurrency(carteraInfo.total_proximo)}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 gap-3 p-4 md:grid-cols-2 xl:grid-cols-4">
             {infoCards.map(({ label, value, icon: Icon, tone }) => (

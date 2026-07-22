@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useListaCartera } from "../../hooks/crm/useListaCartera"
 import NexusLoader from "../NexusLoader"
 import ModalAbonoCartera from "./ModalAbonoCartera"
@@ -6,14 +6,29 @@ import { useDebounce } from "../../hooks/useDebounce"
 import { useGestionCartera } from "../../hooks/crm/useGestionCartera"
 import { useAuth } from "../../hooks/useAuth"
 import { Link } from "react-router-dom"
-import { Ban, Briefcase, DollarSign, Download, Pencil } from "lucide-react"
+import { AlertTriangle, Ban, Briefcase, DollarSign, Download, Pencil } from "lucide-react"
 import { formatDate } from "../../helpers"
-import { carteraApi } from "../../services/api"
+import { carteraApi, departamentosApi } from "../../services/api"
 import { showToast } from "../../helpers/utils/showToast"
 
 export default function ObtenerGestionCartera() {
 const { user } = useAuth({middleware: 'auth'})
 //console.log("USUARIO DESDE CARTERA:", user)
+
+const [departamento, setDepartamento] = useState(null)
+useEffect(() => {
+  const fetchDepartamento = async () => {
+    try {
+      const res = await departamentosApi.getById(user.departamento_id)
+      setDepartamento(res.data)
+    } catch {
+      setDepartamento(null)
+    }
+  }
+  if (user?.departamento_id) fetchDepartamento()
+}, [user?.departamento_id])
+
+const isResponsable = departamento?.responsable_id === user?.id || user?.role_id === 1
   const [filtros, setFiltros] = useState({
     buscar: "",
     fecha_inicio: "",
@@ -172,6 +187,16 @@ const{cancelarDeuda, eliminarFactura}=useGestionCartera()
         </svg>
         Historial de Gestión de Factura
       </Link>
+
+      {isResponsable && (
+        <Link
+          to="/auth/crm/cartera-ordenes-vencida"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors"
+        >
+          <AlertTriangle className="w-4 h-4" />
+          Órdenes con cartera vencida
+        </Link>
+      )}
 
       <button
         onClick={handleExportar}

@@ -453,6 +453,13 @@ export const carteraApi = {
 
 };
 
+// Órdenes de Compra con cartera vencida (activar/desactivar, solo responsable de proceso)
+export const ordenesCarteraApi = {
+  listar: (params = {}) => apiClient.get("/api/orden-compras-cartera-vencida", { params }),
+  activar: (id) => apiClient.patch(`/api/orden-compras/${id}/activar`),
+  desactivar: (id) => apiClient.delete(`/api/orden-compras/${id}`),
+};
+
 export  const GestionarFacturaApi = {
   create: (data) =>
     apiClient.post("/api/gestion-facturas-cartera", data,{
