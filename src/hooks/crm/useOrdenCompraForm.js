@@ -1,6 +1,7 @@
 import { useCallback, useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
+import Swal from "sweetalert2";
 import {
   fetchOrdenCompra,
   createOrdenCompra,
@@ -142,6 +143,27 @@ export default function useOrdenCompraForm({ modo, id }) {
       setErroresDetalles({});
 
       if (modo !== "edicion") {
+        const cartera = response.data.cartera;
+        if (cartera) {
+          const partes = [];
+          if (cartera.tiene_vencida) {
+            partes.push(
+              `<p>🚨 Facturas <b>vencidas</b>: ${cartera.facturas_vencidas.join(", ")} (total $${cartera.total_vencido.toLocaleString("es-CO")})</p>`
+            );
+          }
+          if (cartera.tiene_proxima) {
+            partes.push(
+              `<p>⚠️ Facturas <b>próximas a vencer</b>: ${cartera.facturas_proximas.join(", ")} (total $${cartera.total_proximo.toLocaleString("es-CO")})</p>`
+            );
+          }
+          Swal.fire({
+            icon: cartera.tiene_vencida ? "warning" : "info",
+            title: "Cliente con cartera pendiente",
+            html: partes.join(""),
+            confirmButtonText: "Entendido",
+          });
+        }
+
         setFormData(FORM_INICIAL);
       }
     } catch (error) {

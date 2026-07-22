@@ -159,6 +159,12 @@ export default function Notificaciones() {
                     </div>
                   )}
 
+                  {noti.data?.numero_factura && (
+                    <div className="text-sm text-amber-700 mt-1">
+                      🧾 Factura: {noti.data.numero_factura}
+                    </div>
+                  )}
+
            
 
                 

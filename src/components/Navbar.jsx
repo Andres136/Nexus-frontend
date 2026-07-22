@@ -32,6 +32,7 @@ import {
 const TRADUCCIONES_NOTIFICACION = {
   TicketAsignadoNotification: "Ticket asignado",
   OrdenTrabajoCreada: "Orden de trabajo creada",
+  OrdenTrabajoGeneradaParaCreador: "Orden de trabajo generada",
   OrdenTrabajoListaParcial: "Orden con productos listos parcialmente",
   TareaVencidaNotificacion: "Tarea vencida",
   NuevaTareaAsignada: "Nueva tarea asignada",
@@ -41,6 +42,8 @@ const TRADUCCIONES_NOTIFICACION = {
   OrdenesPorVencerNotificacion: "Órdenes por vencer",
   PqrNotifycaciones: "Nuevo mensaje de PQR",
   FacturaCarteraNotification: "Factura de cartera",
+  CarteraClienteAlCrearOcNotification: "Cliente con cartera pendiente",
+  AlistamientoIniciadoCarteraNotificacion: "Alistamiento con cartera pendiente",
   NotificacionTrasladoCreado: "Traslado creado",
   TrasladoActualizadoNotification: "Traslado actualizado",
   TrasladoPendienteBodegaNotificacion: "Traslado pendiente en bodega",
@@ -467,6 +470,61 @@ export default function Navbar() {
                       <p className="mt-1 text-sm text-gray-800">
                         {noti.data?.mensaje ?? "Nueva notificación"}
                       </p>
+                      {nombreCortoTipo(noti.type) === "FacturaCarteraNotification" && (
+                        <p className="mt-1 text-xs text-gray-600">
+                          Factura <span className="font-semibold">{noti.data?.numero_factura}</span>
+                          {noti.data?.cliente && (
+                            <>
+                              {" "}— Cliente: <span className="font-semibold">{noti.data.cliente}</span>
+                            </>
+                          )}
+                        </p>
+                      )}
+                      {(noti.data?.orden_trabajo_id || noti.data?.orden_compra_id) && (
+                        <p className="mt-1 text-xs text-gray-600">
+                          {noti.data?.orden_compra_id && <>OC #{noti.data.orden_compra_id}</>}
+                          {noti.data?.orden_trabajo_id && (
+                            <>
+                              {noti.data?.orden_compra_id ? " — " : ""}OT #{noti.data.orden_trabajo_id}
+                            </>
+                          )}
+                          {noti.data?.cliente && (
+                            <>
+                              {" "}— Cliente: <span className="font-semibold">{noti.data.cliente}</span>
+                            </>
+                          )}
+                          {noti.data?.fecha_entrega && (
+                            <>
+                              {" "}— Entrega:{" "}
+                              {new Date(noti.data.fecha_entrega).toLocaleDateString("es-CO")}
+                            </>
+                          )}
+                        </p>
+                      )}
+                      {!noti.data?.orden_trabajo_id &&
+                        !noti.data?.orden_compra_id &&
+                        nombreCortoTipo(noti.type) !== "FacturaCarteraNotification" &&
+                        noti.data?.cliente && (
+                          <p className="mt-1 text-xs text-gray-600">
+                            Cliente: <span className="font-semibold">{noti.data.cliente}</span>
+                          </p>
+                        )}
+                      {noti.data?.facturas_vencidas?.length > 0 && (
+                        <p className="mt-1 text-xs text-red-600">
+                          🚨 Vencidas: {noti.data.facturas_vencidas.join(", ")}
+                          {typeof noti.data?.total_vencido === "number" && (
+                            <> — ${noti.data.total_vencido.toLocaleString("es-CO")}</>
+                          )}
+                        </p>
+                      )}
+                      {noti.data?.facturas_proximas?.length > 0 && (
+                        <p className="mt-1 text-xs text-amber-600">
+                          ⚠️ Próximas a vencer: {noti.data.facturas_proximas.join(", ")}
+                          {typeof noti.data?.total_proximo === "number" && (
+                            <> — ${noti.data.total_proximo.toLocaleString("es-CO")}</>
+                          )}
+                        </p>
+                      )}
                       <p className="mt-1 text-xs text-gray-400">
                         {new Date(noti.created_at).toLocaleString("es-CO")}
                       </p>

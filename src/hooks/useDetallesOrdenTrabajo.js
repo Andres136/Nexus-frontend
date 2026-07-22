@@ -26,6 +26,7 @@ export default function useDetallesOrdenTrabajo() {
 
   const [detalles, setDetalles] = useState([]);
   const [entregas, setEntregas] = useState([]);
+  const [carteraInfo, setCarteraInfo] = useState(null);
 
 
 
@@ -104,6 +105,29 @@ useEffect(() => {
     setObservaciones(orden.observaciones || "");
 
   }, [orden]);
+
+  // Estado de cartera del cliente de esta orden (vencida / próxima a vencer)
+  useEffect(() => {
+    const clienteId = orden?.orden_compra?.cliente_id || orden?.orden_compra?.cliente?.id;
+    if (!clienteId) {
+      setCarteraInfo(null);
+      return;
+    }
+
+    const obtenerCartera = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const { data } = await clienteAxios.get(`/api/clientes/${clienteId}/cartera-resumen`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setCarteraInfo(data.cartera);
+      } catch {
+        setCarteraInfo(null);
+      }
+    };
+
+    obtenerCartera();
+  }, [orden?.orden_compra?.cliente_id, orden?.orden_compra?.cliente?.id]);
 
   const handleChangeDetalle = (index, field, value) => {
     setDetalles((prev) => {
@@ -215,6 +239,7 @@ useEffect(() => {
     errores,
     loading,
     entregas,
+    carteraInfo,
     handleGuardarYGenerarPDF,
     handleChangeDetalle,
  
