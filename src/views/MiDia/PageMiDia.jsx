@@ -358,7 +358,6 @@ export default function PageMiDia() {
                 onInputChange={(value, meta) => {
                   if (meta.action === "input-change") setForm((p) => ({ ...p, titulo: value }));
                 }}
-                inputValue={form.titulo}
                 placeholder="Escribe la tarea..."
                 formatCreateLabel={(value) => `Usar "${value}"`}
                 isClearable

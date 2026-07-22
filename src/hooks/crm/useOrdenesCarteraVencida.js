@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Swal from "sweetalert2";
 import { showToast } from "../../helpers/utils/showToast";
 import { ordenesCarteraApi } from "../../services/api";
+import { useDebounce } from "../useDebounce";
 
 export const useOrdenesCarteraVencida = () => {
   const [filtros, setFiltros] = useState({
@@ -12,15 +13,17 @@ export const useOrdenesCarteraVencida = () => {
     per_page: 10,
   });
 
+  const filtrosDebounced = useDebounce(filtros, 500);
+
   const queryClient = useQueryClient();
 
   const obtenerOrdenes = async () => {
-    const response = await ordenesCarteraApi.listar(filtros);
+    const response = await ordenesCarteraApi.listar(filtrosDebounced);
     return response.data;
   };
 
   const query = useQuery({
-    queryKey: ["ordenesCarteraVencida", filtros],
+    queryKey: ["ordenesCarteraVencida", filtrosDebounced],
     queryFn: obtenerOrdenes,
     keepPreviousData: true,
   });
@@ -71,6 +74,7 @@ export const useOrdenesCarteraVencida = () => {
     cambiarPagina,
     ordenes: query.data?.data ?? [],
     pagination: query.data,
+    totalValor: query.data?.total_valor ?? 0,
     isLoading: query.isLoading,
     error: query.error,
     activar,
