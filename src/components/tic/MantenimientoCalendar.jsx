@@ -1,7 +1,7 @@
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
-import { Wrench, User, Building2, UserCheck, Settings, Calendar, Filter } from "lucide-react";
+import { Wrench, Calendar, Filter } from "lucide-react";
 import PropTypes from "prop-types";
 import { useState } from "react";
 
@@ -126,61 +126,36 @@ const getBgClass = (estado, vencido) => {
   return bg[estado] || "bg-gray-50 border-gray-300";
 };
 
+              const meta = [usuario, sede, asignado_a, tipo].filter(Boolean).join(" · ");
+
               return (
                 <div
-                  className={`group relative p-2.5 rounded-lg shadow-sm border-l-4 ${getBgClass(estado, vencido)}
-                    hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 cursor-pointer
-                    ${revisadaHoy ? "ring-2 ring-green-500 ring-offset-1" : ""}`}
+                  className={`group relative px-1.5 py-1 rounded-md border-l-2 ${getBgClass(estado, vencido)}
+                    hover:shadow-sm transition-colors duration-150 cursor-pointer
+                    ${revisadaHoy ? "ring-1 ring-green-500" : ""}`}
                   style={{ borderLeftColor: bgColor }}
                 >
                   {revisadaHoy && (
-                    <span className="absolute -top-2 -right-2 rounded-full bg-green-600 px-1.5 py-0.5 text-[9px] font-bold text-white shadow">
+                    <span className="absolute -top-1.5 -right-1.5 rounded-full bg-green-600 px-1 py-0.5 text-[8px] font-bold leading-none text-white shadow">
                       ✓ Hoy
                     </span>
                   )}
-                  <div className="font-semibold text-gray-800 text-xs mb-2 truncate group-hover:text-indigo-700 transition-colors">
-                    {arg.event.title}
-                  </div>
-
-                  <div className="space-y-1.5">
-                    {usuario && (
-                      <div className="flex items-center gap-1.5 text-[11px] text-gray-600">
-                        <User className="w-3 h-3 text-gray-400 flex-shrink-0" />
-                        <span className="truncate">{usuario}</span>
-                      </div>
-                    )}
-
-                    {sede && (
-                      <div className="flex items-center gap-1.5 text-[11px] text-gray-600">
-                        <Building2 className="w-3 h-3 text-gray-400 flex-shrink-0" />
-                        <span className="truncate">{sede}</span>
-                      </div>
-                    )}
-
-                    {asignado_a && (
-                      <div className="flex items-center gap-1.5 text-[11px] text-gray-500">
-                        <UserCheck className="w-3 h-3 text-gray-400 flex-shrink-0" />
-                        <span className="truncate">{asignado_a}</span>
-                      </div>
-                    )}
-
-                    {tipo && (
-                      <div className="flex items-center gap-1.5 text-[11px] text-gray-500">
-                        <Settings className="w-3 h-3 text-gray-400 flex-shrink-0" />
-                        <span className="capitalize truncate">{tipo}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="mt-2.5">
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="font-semibold text-gray-800 text-[11px] truncate group-hover:text-indigo-700 transition-colors">
+                      {arg.event.title}
+                    </span>
                     <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border ${badge.style}`}
+                      className={`shrink-0 inline-flex items-center px-1.5 py-0 rounded-full text-[9px] font-medium border ${badge.style}`}
                     >
                       {badge.label}
                     </span>
-
-                    
                   </div>
+
+                  {meta && (
+                    <div className="truncate text-[10px] text-gray-500 leading-tight">
+                      {meta}
+                    </div>
+                  )}
                 </div>
               );
             }}
@@ -191,6 +166,8 @@ const getBgClass = (estado, vencido) => {
             height="auto"
             events={filteredEvents}
             eventDisplay="block"
+            dayMaxEvents={4}
+            moreLinkText={(n) => `+${n} más`}
             dateClick={(info) => onDateClick(info.dateStr)}
             eventClick={(info) =>
               onEventClick({
