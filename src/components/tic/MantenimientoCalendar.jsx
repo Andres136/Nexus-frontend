@@ -111,7 +111,7 @@ export default function MantenimientoCalendar({
         ) : (
           <FullCalendar
             eventContent={(arg) => {
-              const { usuario, sede, tipo, asignado_a, estado, vencido, revisadaHoy } = arg.event.extendedProps;
+              const { usuario, sede, cliente, tipo, asignado_a, estado, vencido, revisadaHoy } = arg.event.extendedProps;
               const bgColor = getEstadoColor(estado);
               const badge = getEstadoBadge(estado);
 const getBgClass = (estado, vencido) => {
@@ -126,7 +126,7 @@ const getBgClass = (estado, vencido) => {
   return bg[estado] || "bg-gray-50 border-gray-300";
 };
 
-              const meta = [usuario, sede, asignado_a, tipo].filter(Boolean).join(" · ");
+              const meta = [usuario, sede, cliente, asignado_a, tipo].filter(Boolean).join(" · ");
 
               return (
                 <div
