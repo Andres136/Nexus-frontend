@@ -166,8 +166,7 @@ const getBgClass = (estado, vencido) => {
             height="auto"
             events={filteredEvents}
             eventDisplay="block"
-            dayMaxEvents={4}
-            moreLinkText={(n) => `+${n} más`}
+            dayMaxEvents={false}
             dateClick={(info) => onDateClick(info.dateStr)}
             eventClick={(info) =>
               onEventClick({
