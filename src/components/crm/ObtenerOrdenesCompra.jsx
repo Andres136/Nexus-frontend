@@ -89,7 +89,7 @@ export default function ObtenerOrdenesCompra() {
     <FaSearch className="text-gray-500 mr-2" />
     <input
       type="text"
-      placeholder="Buscar orden de compra..."
+      placeholder="Buscar por cliente, fecha o N° de orden del cliente..."
       className="border px-3 py-2 rounded-lg w-full"
       value={busquedaOrdenesCompra}
       onChange={(e) => setBusquedaOrdenesCompra(e.target.value)}

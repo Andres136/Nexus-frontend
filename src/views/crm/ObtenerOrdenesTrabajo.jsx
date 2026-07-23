@@ -158,12 +158,12 @@ export default function ObtenerOrdenesTrabajo() {
             <div className="relative sm:col-span-2 lg:col-span-1">
               <label className="text-xs sm:text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
                 <FaSearch className="w-3 h-3" />
-                Cliente
+                Cliente / N° Orden Cliente
               </label>
               <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 mt-3 text-gray-400 w-4 h-4" />
               <input
                 type="text"
-                placeholder="Buscar por cliente..."
+                placeholder="Buscar por cliente, sede o N° de orden del cliente..."
                 autoFocus
                 className="w-full pl-10 pr-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm sm:text-base"
                 value={busquedaLocal}

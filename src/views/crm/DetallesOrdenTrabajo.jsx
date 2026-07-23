@@ -195,6 +195,31 @@ export default function DetallesOrdenTrabajo() {
       </div>
     </div>
 
+    {/* N° Orden de Compra del Cliente */}
+    <div className="bg-white p-3 rounded-md border shadow-sm flex items-start gap-2">
+      <div className="w-8 h-8 bg-sky-100 rounded flex items-center justify-center">
+        <svg
+          className="w-5 h-5 text-sky-600"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"
+          />
+        </svg>
+      </div>
+      <div>
+        <p className="text-xs font-medium text-gray-500">N° Orden de Compra del Cliente</p>
+        <p className="text-sm font-semibold text-gray-900">
+          {orden.orden_compra?.orden_compra_cliente || "No disponible"}
+        </p>
+      </div>
+    </div>
+
     {/* Asesor */}
     <div className="bg-white p-3 rounded-md border shadow-sm flex items-start gap-2">
       <div className="w-8 h-8 bg-orange-100 rounded flex items-center justify-center">

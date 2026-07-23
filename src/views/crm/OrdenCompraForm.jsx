@@ -144,6 +144,23 @@ export default function OrdenCompraForm({ modo }) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
+              N° Orden de Compra del Cliente
+            </label>
+            <input
+              type="text"
+              name="orden_compra_cliente"
+              placeholder="Número o referencia que dio el cliente"
+              value={formData.orden_compra_cliente}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            {errores.orden_compra_cliente && (
+              <p className="text-sm text-red-600 mt-1">{errores.orden_compra_cliente}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Orden de Compra del Cliente (Archivo)
             </label>
             <input

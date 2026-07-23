@@ -1167,11 +1167,11 @@ const events = data?.map((orden) => {
   </div>
 <div className="flex flex-col w-48">
   <label className="text-xs font-semibold text-gray-500 mb-1">
-    Buscar OT
+    Buscar OT / Orden Cliente
   </label>
 <input
   type="text"
-  placeholder="Buscar por OT..."
+  placeholder="Buscar por OT o N° de orden del cliente..."
   value={searchInput}
   onChange={(e) => setSearchInput(e.target.value)}
   onKeyDown={(e) => {

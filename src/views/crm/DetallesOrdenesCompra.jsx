@@ -16,6 +16,7 @@ import {
   ClipboardList,
   Eye,
   FileText,
+  Hash,
   Loader2,
   MapPin,
   PackageSearch,
@@ -323,6 +324,12 @@ const tieneDocumentoCliente = Boolean(ordenSeleccionada?.cliente_documento);
       value: ordenSeleccionada?.fecha_entrega || "No disponible",
       icon: CalendarDays,
       tone: "bg-blue-50 text-blue-700",
+    },
+    {
+      label: "N° Orden de Compra del Cliente",
+      value: ordenSeleccionada?.orden_compra_cliente || "No disponible",
+      icon: Hash,
+      tone: "bg-sky-50 text-sky-700",
     },
     {
       label: "Asesor comercial",

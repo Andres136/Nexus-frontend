@@ -15,6 +15,7 @@ const FORM_INICIAL = {
   ubicacion_entrega: "",
   observaciones: "",
   cliente_documento: null,
+  orden_compra_cliente: "",
   empresa_id: "",
   detalles: [],
 };
@@ -52,6 +53,7 @@ export default function useOrdenCompraForm({ modo, id }) {
           ubicacion_entrega: data.ubicacion_entrega,
           observaciones: data.observaciones,
           cliente_documento: data.cliente_documento,
+          orden_compra_cliente: data.orden_compra_cliente || "",
           empresa_id: data.empresa_id,
           detalles: data.detalles.map((d) => ({
             id: d.id,
@@ -108,6 +110,7 @@ export default function useOrdenCompraForm({ modo, id }) {
       data.append("ubicacion_entrega", formData.ubicacion_entrega);
       data.append("observaciones", formData.observaciones);
       data.append("empresa_id", formData.empresa_id);
+      data.append("orden_compra_cliente", formData.orden_compra_cliente || "");
       if (formData.cliente_documento instanceof File) {
         data.append("cliente_documento", formData.cliente_documento);
       }
