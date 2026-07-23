@@ -100,6 +100,7 @@ export function useUpdateOrdenCompraProveedor(id) {
         empresa_id: formData.empresa_id,
         observaciones: formData.observaciones,
         fecha_entrega: formData.fecha_entrega,
+        sede_id: formData.sede_id,
         detalles: formData.detalles.map((d, i) => ({
           id: d.id,
           item: d.item || i + 1,
@@ -133,6 +134,11 @@ export function useUpdateOrdenCompraProveedor(id) {
           setOrdenBloqueada(true);
           setMensajeBloqueo(data.message);
         }
+        return;
+      }
+
+      if (status === 403 && data?.message) {
+        toast.error(data.message);
         return;
       }
 

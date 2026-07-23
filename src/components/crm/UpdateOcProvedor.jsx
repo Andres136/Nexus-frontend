@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import { useProducts } from "../../hooks/useProducts";
 import { useEntregasProveedores } from "../../hooks/useEntregasProveedores";
 import { useEmpresas } from "../../hooks/useEmpresas";
+import { useSedes } from "../../hooks/useSedes";
 import Select from "react-select";
 import { Trash2, Search, Plus } from "lucide-react";
 
@@ -18,6 +19,7 @@ export default function UpdateOcProvedor() {
   const { products, isLoading, isFetching, isEmpty } = useProducts({ search });
   const { proveedoresAll } = useEntregasProveedores();
   const { empresas } = useEmpresas();
+  const { sedes } = useSedes();
   const { stockUserOrder, getStockForUserAndOrder } = useContext(ProductContext);
  const [modalOpen, setModalOpen] = useState(false);
 
@@ -242,6 +244,24 @@ const fetchStockForProduct = async (productId) => {
             />
             {errores.fecha_entrega && (
               <p className="text-red-500 text-sm mt-1">{errores.fecha_entrega[0]}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block mb-2 text-sm font-medium text-gray-700">
+              Sede
+            </label>
+            <Select
+              options={sedes.map(s => ({ value: s.id, label: s.nombre }))}
+              value={sedes
+                .map(s => ({ value: s.id, label: s.nombre }))
+                .find(s => s.value === formData.sede_id) || null}
+              onChange={(selected) => handleInputChange('sede_id', selected?.value || null)}
+              placeholder="Seleccionar sede..."
+              isClearable
+            />
+            {errores.sede_id && (
+              <p className="text-red-500 text-sm mt-1">{errores.sede_id[0]}</p>
             )}
           </div>
 
