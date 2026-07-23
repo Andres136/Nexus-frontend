@@ -111,7 +111,7 @@ export default function MantenimientoCalendar({
         ) : (
           <FullCalendar
             eventContent={(arg) => {
-              const { usuario, sede, tipo, asignado_a, estado, vencido, revisadaHoy } = arg.event.extendedProps;
+              const { usuario, sede, tipo, asignado_a, estado, vencido, revisada, revisadaHoy } = arg.event.extendedProps;
               const bgColor = getEstadoColor(estado);
               const badge = getEstadoBadge(estado);
 const getBgClass = (estado, vencido) => {
@@ -130,7 +130,7 @@ const getBgClass = (estado, vencido) => {
                 <div
                   className={`group relative p-2.5 rounded-lg shadow-sm border-l-4 ${getBgClass(estado, vencido)}
                     hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 cursor-pointer
-                    ${revisadaHoy ? "ring-2 ring-green-500 ring-offset-1" : ""}`}
+                    ${revisada ? "ring-2 ring-green-500 ring-offset-1" : ""}`}
                   style={{ borderLeftColor: bgColor }}
                 >
                   {revisadaHoy && (
