@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, keepPreviousData } from "@tanstack/react-query"
 import { carteraApi } from "../../services/api"
 
 export const useListaCartera = (filtros = {}) => {
@@ -32,7 +32,7 @@ return {
  filtros.per_page
 ],
     queryFn: obtenerCartera,
-    keepPreviousData: true
+    placeholderData: keepPreviousData
   })
 
   return {
