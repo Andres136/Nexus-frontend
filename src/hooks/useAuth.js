@@ -85,6 +85,48 @@ const loadPermissions = async () => {
       return false;
     }
   };
+  const forgotPassword = async (email, setErrores) => {
+    try {
+      const response = await clienteAxios.post("/api/forgot-password", { email });
+      setErrores({});
+      toast.success(response.data.message);
+      return true;
+    } catch (error) {
+      if (error.response?.data?.errors) {
+        const backendErrors = error.response.data.errors;
+        const erroresPorCampo = {};
+        Object.keys(backendErrors).forEach((campo) => {
+          erroresPorCampo[campo] = backendErrors[campo][0];
+        });
+        setErrores(erroresPorCampo);
+      } else {
+        toast.error("Ocurrió un error inesperado. Inténtalo de nuevo.");
+      }
+      return false;
+    }
+  };
+
+  const resetPassword = async (data, setErrores) => {
+    try {
+      const response = await clienteAxios.post("/api/reset-password", data);
+      setErrores({});
+      toast.success(response.data.message);
+      return true;
+    } catch (error) {
+      if (error.response?.data?.errors) {
+        const backendErrors = error.response.data.errors;
+        const erroresPorCampo = {};
+        Object.keys(backendErrors).forEach((campo) => {
+          erroresPorCampo[campo] = backendErrors[campo][0];
+        });
+        setErrores(erroresPorCampo);
+      } else {
+        toast.error("Ocurrió un error inesperado. Inténtalo de nuevo.");
+      }
+      return false;
+    }
+  };
+
   const register = async (data, setErrores) => {
     try {
       // 1. Construimos el objeto de configuración de Axios
@@ -277,6 +319,8 @@ const loadingUser = !user && !error && token;
   return {
     login,
     register,
+    forgotPassword,
+    resetPassword,
     logout,
     user,
     error,

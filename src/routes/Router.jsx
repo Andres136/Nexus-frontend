@@ -5,6 +5,8 @@ import GestionUsers from "../views/GestionUsers";
 
 import AuthLyout from "../layouts/AuthLyout";
 import Login from "../views/Login";
+import ForgotPassword from "../views/ForgotPassword";
+import ResetPassword from "../views/ResetPassword";
 
 import DepartamentosPage from "../views/calidad/DepartamentosPage";
 import ProcesosDepartamento from "../components/calidad/ProcesosDepartamento";
@@ -184,6 +186,8 @@ export default function Router() {
     <Routes>
       {/* 🔹 Ruta de Login (Accesible para todos) */}
       <Route path="/" element={<Login />} />
+      <Route path="/olvide-password" element={<ForgotPassword />} />
+      <Route path="/restablecer-password" element={<ResetPassword />} />
 
       {/* 🔹 Encuesta pública — sin auth, el cliente responde por token */}
       <Route path="/encuesta/:token" element={<EncuestaPublica />} />

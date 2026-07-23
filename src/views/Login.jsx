@@ -1,7 +1,7 @@
 import { createRef, useEffect, useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { Eye, EyeOff, User, Lock, ArrowRight } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 export default function Login() {
   const emailRef = createRef();
@@ -148,9 +148,12 @@ useEffect(() => {
 
               {/* Contraseña Input */}
               <div className="space-y-2">
-                <label className="block text-gray-700 text-sm font-semibold" htmlFor="password">
-                  Contraseña
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="block text-gray-700 text-sm font-semibold" htmlFor="password">
+                    Contraseña
+                  </label>
+         
+                </div>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Lock className="h-5 w-5 text-gray-400" />
@@ -195,10 +198,9 @@ useEffect(() => {
             {/* Footer */}
             <div className="mt-8 text-center">
               <p className="text-gray-500 text-sm">
-                ¿Problemas para acceder?{' '}
-                <a href="#" className="text-blue-600 hover:text-blue-700 font-medium">
-                  Contacta soporte
-                </a>
+                    <Link to="/olvide-password" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                    ¿Olvidaste tu contraseña?
+                  </Link>
               </p>
             </div>
           </div>
