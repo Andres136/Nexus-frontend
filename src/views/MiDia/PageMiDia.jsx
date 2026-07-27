@@ -127,6 +127,14 @@ export default function PageMiDia() {
 
   const estadoBadge = ESTADO_BADGE[estado?.estado_actual] ?? ESTADO_BADGE.SIN_CLASIFICAR;
 
+  // El tiempo clasificable puede empezar a contar desde la hora del turno
+  // configurado (si llegó antes) en vez de la marcación real del kiosko.
+  const horaInicioConteo = resumen?.hora_inicio_conteo;
+  const conteoDesdeTurno =
+    horaInicioConteo &&
+    workSessionHoy?.hora_entrada &&
+    new Date(horaInicioConteo).getTime() !== new Date(workSessionHoy.hora_entrada).getTime();
+
   const cerrarModo = () => {
     setModo(null);
     setForm({ categoria_id: "", titulo: "", descripcion: "", resultado: "", observacion: "", motivo_bloqueo: "" });
@@ -218,7 +226,11 @@ export default function PageMiDia() {
           <Indicador
             label="Entrada"
             value={fmtHora(workSessionHoy?.hora_entrada)}
-            detail="Registrada por el kiosko"
+            detail={
+              conteoDesdeTurno
+                ? `Tiempo contado desde las ${fmtHora(horaInicioConteo)} (turno)`
+                : "Registrada por el kiosko"
+            }
             icon={Clock}
             color="bg-blue-50 text-blue-600"
           />
