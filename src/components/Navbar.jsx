@@ -48,6 +48,7 @@ const TRADUCCIONES_NOTIFICACION = {
   TrasladoActualizadoNotification: "Traslado actualizado",
   TrasladoPendienteBodegaNotificacion: "Traslado pendiente en bodega",
   RecordatorioMiDiaNotificacion: "Recordatorio de Mi Día",
+  TicketAbiertoRecordatorioNotification: "Ticket abierto pendiente",
 };
 
 const nombreCortoTipo = (type) => type?.split("\\").pop();
