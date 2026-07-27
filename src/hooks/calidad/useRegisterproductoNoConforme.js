@@ -9,8 +9,7 @@ const initialForm = {
     orden_compra_id: '',
     proveedor_id: '',
     orden_compra_proveedor_id: '',
-    producto_id: '',
-    cantidad_afectada: '',
+    productos: [],
     descripcion_inicial: '',
     tipo_falla: '',
     estado_id: 1,
@@ -34,6 +33,7 @@ export const useRegisterProductoNoConforme = () => {
                 orden_compra_id: '',
                 proveedor_id: '',
                 orden_compra_proveedor_id: '',
+                productos: value === 'interno' ? [] : prev.productos,
             }));
             return;
         }
@@ -104,6 +104,7 @@ export const useRegisterProductoNoConforme = () => {
 
     return {
         formData,
+        setFormData,
         loading,
         error,
         handleChange,

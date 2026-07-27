@@ -175,9 +175,8 @@ export default function ListaProductoNoConforme() {
                   <th className="px-4 py-3">ID</th>
                   <th className="px-4 py-3">Origen</th>
                   <th className="px-4 py-3">Cliente / Proveedor</th>
-                  <th className="px-4 py-3">Producto</th>
+                  <th className="px-4 py-3">Productos afectados</th>
                   <th className="px-4 py-3">Tipo de falla</th>
-                  <th className="px-4 py-3">Cantidad</th>
                   <th className="px-4 py-3">Fecha reporte</th>
                   <th className="px-4 py-3">Estado</th>
                   <th className="px-4 py-3">Reportado por</th>
@@ -195,9 +194,12 @@ export default function ListaProductoNoConforme() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-gray-600">{origenLabel(nc)}</td>
-                    <td className="px-4 py-3 text-gray-600">{nc.producto?.name || "—"}</td>
+                    <td className="px-4 py-3 text-gray-600">
+                      {nc.items?.length
+                        ? nc.items.map((item) => `${item.producto?.name || "—"} (${item.cantidad_afectada})`).join(", ")
+                        : "—"}
+                    </td>
                     <td className="px-4 py-3 text-gray-600">{nc.tipo_falla || "—"}</td>
-                    <td className="px-4 py-3 text-gray-600">{nc.cantidad_afectada}</td>
                     <td className="whitespace-nowrap px-4 py-3 text-gray-600">
                       {nc.fecha_reporte ? new Date(nc.fecha_reporte).toLocaleDateString() : "—"}
                     </td>

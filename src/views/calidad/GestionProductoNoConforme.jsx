@@ -121,16 +121,20 @@ export default function GestionProductoNoConforme() {
               <p className="text-sm text-slate-700 font-medium">{origenLabel || "—"}</p>
             </div>
             <div>
-              <label className={labelClass}>Producto</label>
-              <p className="text-sm text-slate-700 font-medium">{producto.producto?.name || "—"}</p>
+              <label className={labelClass}>Productos afectados</label>
+              {producto.items?.length ? (
+                <ul className="text-sm text-slate-700 font-medium">
+                  {producto.items.map((item) => (
+                    <li key={item.id}>{item.producto?.name || "—"} ({item.cantidad_afectada})</li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-slate-700 font-medium">—</p>
+              )}
             </div>
             <div>
               <label className={labelClass}>Tipo de falla</label>
               <p className="text-sm text-slate-700 font-medium">{producto.tipo_falla || "—"}</p>
-            </div>
-            <div>
-              <label className={labelClass}>Cantidad afectada</label>
-              <p className="text-sm text-slate-700 font-medium">{producto.cantidad_afectada}</p>
             </div>
             <div>
               <label className={labelClass}>Fecha de reporte</label>
