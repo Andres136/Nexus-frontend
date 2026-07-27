@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 
 const TRADUCCIONES_NOTIFICACION = {
+  NotifyAdminUserLoggedIn: "Inicio de sesión",
   TicketAsignadoNotification: "Ticket asignado",
   OrdenTrabajoCreada: "Orden de trabajo creada",
   OrdenTrabajoGeneradaParaCreador: "Orden de trabajo generada",
@@ -47,6 +48,7 @@ const TRADUCCIONES_NOTIFICACION = {
   NotificacionTrasladoCreado: "Traslado creado",
   TrasladoActualizadoNotification: "Traslado actualizado",
   TrasladoPendienteBodegaNotificacion: "Traslado pendiente en bodega",
+  ProductoNoConformeRegistradoNotification: "Producto no conforme registrado",
 };
 
 const nombreCortoTipo = (type) => type?.split("\\").pop();
