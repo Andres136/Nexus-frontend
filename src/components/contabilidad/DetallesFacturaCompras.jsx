@@ -18,7 +18,34 @@ export default function DetallesFacturaCompras({
   const { pucks } = useGetPuck();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedProducts, setSelectedProducts] = useState([]);
+  const [precioEnEdicion, setPrecioEnEdicion] = useState(null);
   const { products,isLoading, isEmpty, isFetching } = useProducts({ search: searchTerm });
+
+  // El estado conserva el valor que entiende la API (1500.03), mientras el
+  // usuario escribe con coma decimal y ve puntos como separadores de miles.
+  const normalizarPrecio = (value) => {
+    const limpio = String(value).replace(/[^\d,.]/g, "");
+    const sinMiles = limpio.replace(/\./g, "");
+    const [entero = "", ...decimales] = sinMiles.split(",");
+    const decimal = decimales.join("").slice(0, 2);
+
+    if (!entero && !decimal) return "";
+    return decimal.length > 0 || sinMiles.endsWith(",")
+      ? `${entero || "0"}.${decimal}`
+      : entero;
+  };
+
+  const precioParaEditar = (value) => String(value ?? "").replace(".", ",");
+
+  const precioFormateado = (value) => {
+    if (value === "" || value === null || value === undefined) return "";
+
+    return Number(value).toLocaleString("es-CO", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    });
+  };
+
   const calcularTotalDetalle = (detalle) => {
     const base = Number(detalle.cantidad || 0) * Number(detalle.precio_unitario || 0);
     const efectoImpuestos = (detalle.impuestos || []).reduce((total, impuestoSeleccionado) => {
@@ -269,10 +296,19 @@ export default function DetallesFacturaCompras({
                   <div className="relative">
                     <span className="absolute left-2 top-1.5 text-gray-400 text-xs">$</span>
                     <input
-                      type="number"
+                      type="text"
+                      inputMode="decimal"
                       className="w-full pl-5 pr-2 py-1 text-xs border rounded border-gray-300"
-                      value={det.precio_unitario}
-                      onChange={(e) => updateDetalle(index, "precio_unitario", e.target.value)}
+                      value={
+                        precioEnEdicion === index
+                          ? precioParaEditar(det.precio_unitario)
+                          : precioFormateado(det.precio_unitario)
+                      }
+                      onFocus={() => setPrecioEnEdicion(index)}
+                      onBlur={() => setPrecioEnEdicion(null)}
+                      onChange={(e) =>
+                        updateDetalle(index, "precio_unitario", normalizarPrecio(e.target.value))
+                      }
                     />
                     {error?.[`detalles.${index}.precio_unitario`] && (
                       <p className="text-red-500 text-xs mt-1">

@@ -148,7 +148,11 @@ export const useRegisterFacturaCompras = ({ id = null, modo = "creacion" } = {})
       const payload = {
         factura: factura.factura,
         ordenes_compra_proveedor_ids: factura.ordenes_compra_proveedor_ids,
-        detalles: factura.detalles,
+        detalles: factura.detalles.map((detalle) => ({
+          ...detalle,
+          cantidad: Number(detalle.cantidad),
+          precio_unitario: Number(detalle.precio_unitario).toFixed(2),
+        })),
         pagos: factura.pagos,
         gastos: factura.gastos,
         impuestos: factura.impuestos,
