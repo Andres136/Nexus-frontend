@@ -31,6 +31,7 @@ export const useLiquidarTodoNomina = () => {
   const [page, setPage] = useState(1);
   const [excluidosTardanza, setExcluidosTardanza] = useState([]);
   const [excluidosPermiso, setExcluidosPermiso] = useState([]);
+  const [decisionesPermisos, setDecisionesPermisos] = useState({});
   const [responsableId, setResponsableId] = useState("");
   const [responsables, setResponsables] = useState([]);
   const [loadingResponsables, setLoadingResponsables] = useState(false);
@@ -49,7 +50,8 @@ export const useLiquidarTodoNomina = () => {
 
   const buildPayload = (
     excluirTardanzaIds = excluidosTardanza,
-    excluirPermisoIds = excluidosPermiso
+    excluirPermisoIds = excluidosPermiso,
+    decisiones = decisionesPermisos
   ) => {
     const payload = { ...formData };
     if (!payload.empresa_id) delete payload.empresa_id;
@@ -62,6 +64,11 @@ export const useLiquidarTodoNomina = () => {
     if (excluirPermisoIds.length > 0) {
       payload.excluir_permiso_ids = excluirPermisoIds;
     }
+    const decisionesArray = Object.entries(decisiones).map(([userId, permisoIds]) => ({
+      user_id: Number(userId),
+      permisos_descontar_ids: permisoIds,
+    }));
+    if (decisionesArray.length > 0) payload.decisiones_permisos = decisionesArray;
     return payload;
   };
 
@@ -71,6 +78,7 @@ export const useLiquidarTodoNomina = () => {
     setResultado(null);
     setExcluidosTardanza([]);
     setExcluidosPermiso([]);
+    setDecisionesPermisos({});
   };
 
   const handleSearchEmpleados = (e) => {
@@ -91,12 +99,26 @@ export const useLiquidarTodoNomina = () => {
     [empleadosFiltrados, page]
   );
 
-  const ejecutarCalculo = async (excluirTardanzaIds, excluirPermisoIds, { silent = false } = {}) => {
+  const ejecutarCalculo = async (
+    excluirTardanzaIds,
+    excluirPermisoIds,
+    { silent = false, decisiones = decisionesPermisos, inicializarDecisiones = false } = {}
+  ) => {
     setPreviewLoading(true);
     setFieldErrors({});
     try {
-      const response = await nominaService.preliquidarLote(buildPayload(excluirTardanzaIds, excluirPermisoIds));
+      const response = await nominaService.preliquidarLote(
+        buildPayload(excluirTardanzaIds, excluirPermisoIds, decisiones)
+      );
       setResultado(response.data.data);
+      if (inicializarDecisiones) {
+        setDecisionesPermisos(Object.fromEntries(
+          response.data.data.empleados.map((calculo) => [
+            calculo.user_id,
+            calculo.permisos_descontar_ids ?? [],
+          ])
+        ));
+      }
       if (!silent) {
         const { empleados_calculados, empleados_con_error } = response.data.data.totales;
         showToast(
@@ -120,7 +142,8 @@ export const useLiquidarTodoNomina = () => {
     setPage(1);
     setExcluidosTardanza([]);
     setExcluidosPermiso([]);
-    await ejecutarCalculo([], []);
+    setDecisionesPermisos({});
+    await ejecutarCalculo([], [], { inicializarDecisiones: true, decisiones: {} });
   };
 
   const toggleExcluirTardanza = async (userId) => {
@@ -141,6 +164,19 @@ export const useLiquidarTodoNomina = () => {
 
     setExcluidosPermiso(nuevosExcluidos);
     await ejecutarCalculo(excluidosTardanza, nuevosExcluidos, { silent: true });
+  };
+
+  const togglePermisoIndividual = async (userId, permisoId) => {
+    const actuales = decisionesPermisos[userId] ?? [];
+    const nuevos = actuales.includes(permisoId)
+      ? actuales.filter((id) => id !== permisoId)
+      : [...actuales, permisoId];
+    const nuevasDecisiones = { ...decisionesPermisos, [userId]: nuevos };
+    setDecisionesPermisos(nuevasDecisiones);
+    await ejecutarCalculo(excluidosTardanza, excluidosPermiso, {
+      silent: true,
+      decisiones: nuevasDecisiones,
+    });
   };
 
   const handleDescargarExcel = async () => {
@@ -238,6 +274,8 @@ export const useLiquidarTodoNomina = () => {
     toggleExcluirTardanza,
     excluidosPermiso,
     toggleExcluirPermiso,
+    decisionesPermisos,
+    togglePermisoIndividual,
     responsableId,
     setResponsableId,
     responsables,

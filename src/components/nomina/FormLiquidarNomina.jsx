@@ -58,6 +58,11 @@ export default function FormLiquidarNomina({ onClose, initialData = {} }) {
     loadingEmpleados,
     jornadas,
     loadingJornadas,
+    permisosPeriodo,
+    permisosLoading,
+    permisosDescontarIds,
+    togglePermisoDescuento,
+    seleccionarTodosPermisos,
   } = useLiquidarNomina({ onSuccess: onClose, initialData });
 
   const inputClass = (field) =>
@@ -254,16 +259,90 @@ export default function FormLiquidarNomina({ onClose, initialData = {} }) {
               />
               Descontar tardanzas del pago (si no se marca, solo se muestran de referencia)
             </label>
-            <label className="col-span-2 flex items-center gap-2 text-sm text-gray-700">
-              <input
-                type="checkbox"
-                name="descontar_permisos"
-                checked={formData.descontar_permisos}
-                onChange={handleChange}
-              />
-              Descontar permisos no remunerados del pago
-            </label>
           </div>
+        )}
+
+        {formData.tipo_liquidacion !== "retiro" && (
+          <section className="overflow-hidden rounded-xl border border-gray-200">
+            <div className="flex flex-col gap-3 border-b border-gray-200 bg-gray-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-gray-800">Permisos aprobados del período</h3>
+                <p className="mt-0.5 text-xs text-gray-500">
+                  Selecciona individualmente cuáles se descontarán en esta nómina.
+                </p>
+              </div>
+              {permisosPeriodo.length > 0 && (
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => seleccionarTodosPermisos(true)}
+                    className="text-xs font-medium text-indigo-700 hover:text-indigo-900"
+                  >
+                    Marcar todos
+                  </button>
+                  <span className="text-gray-300">|</span>
+                  <button
+                    type="button"
+                    onClick={() => seleccionarTodosPermisos(false)}
+                    className="text-xs font-medium text-gray-600 hover:text-gray-900"
+                  >
+                    Ninguno
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {permisosLoading ? (
+              <div className="px-4 py-6 text-center text-sm text-gray-500">Consultando permisos...</div>
+            ) : permisosPeriodo.length === 0 ? (
+              <div className="px-4 py-6 text-center text-sm text-gray-500">
+                No hay permisos aprobados para el empleado en este período.
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-100">
+                {permisosPeriodo.map((permiso) => {
+                  const seleccionado = permisosDescontarIds.includes(permiso.id);
+                  return (
+                    <label
+                      key={permiso.id}
+                      className={`flex cursor-pointer items-start gap-3 px-4 py-3 transition-colors ${
+                        seleccionado ? "bg-amber-50" : "bg-white hover:bg-gray-50"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={seleccionado}
+                        onChange={() => togglePermisoDescuento(permiso.id)}
+                        className="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                      />
+                      <span className="min-w-0 flex-1">
+                        <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                          <span className="text-sm font-medium text-gray-800">
+                            {formatDate(permiso.fecha)} · {String(permiso.hora_inicio).slice(0, 5)}–{String(permiso.hora_fin).slice(0, 5)}
+                          </span>
+                          <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                            permiso.es_remunerado
+                              ? "bg-emerald-100 text-emerald-700"
+                              : "bg-orange-100 text-orange-700"
+                          }`}>
+                            {permiso.es_remunerado ? "Registrado como remunerado" : "Registrado como no remunerado"}
+                          </span>
+                        </span>
+                        <span className="mt-1 block text-xs text-gray-500">
+                          {permiso.motivo || "Sin motivo"} · {permiso.minutos} minutos
+                        </span>
+                      </span>
+                      <span className={`flex-shrink-0 text-xs font-semibold ${
+                        seleccionado ? "text-amber-700" : "text-gray-400"
+                      }`}>
+                        {seleccionado ? "Descontar" : "No descontar"}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+          </section>
         )}
 
         {preview && formData.tipo_liquidacion === "retiro" && (

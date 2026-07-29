@@ -105,8 +105,8 @@ export default function PageLiquidarTodoNomina() {
     totalPaginas,
     excluidosTardanza,
     toggleExcluirTardanza,
-    excluidosPermiso,
-    toggleExcluirPermiso,
+    decisionesPermisos,
+    togglePermisoIndividual,
     responsableId,
     setResponsableId,
     responsables,
@@ -408,8 +408,8 @@ export default function PageLiquidarTodoNomina() {
                           Descontar tardanza
                         </th>
                       )}
-                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Descontar permiso
+                      <th className="min-w-[260px] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Decisión por permiso
                       </th>
                     </tr>
                   </thead>
@@ -443,18 +443,40 @@ export default function PageLiquidarTodoNomina() {
                             />
                           </td>
                         )}
-                        <td className="px-4 py-3.5 text-center">
-                          <input
-                            type="checkbox"
-                            checked={!excluidosPermiso.includes(calculo.user_id)}
-                            onChange={() => toggleExcluirPermiso(calculo.user_id)}
-                            disabled={previewLoading || calculo.minutos_permisos_no_remunerados === 0}
-                            title={
-                              calculo.minutos_permisos_no_remunerados === 0
-                                ? "Este empleado no tiene permisos no remunerados en el período"
-                                : "Desmarca para no descontarle los permisos no remunerados a este empleado"
-                            }
-                          />
+                        <td className="px-4 py-3.5">
+                          {(calculo.detalle_permisos ?? []).length === 0 ? (
+                            <span className="text-xs text-gray-400">Sin permisos aprobados</span>
+                          ) : (
+                            <div className="space-y-2">
+                              {calculo.detalle_permisos.map((permiso) => {
+                                const seleccionado = (decisionesPermisos[calculo.user_id] ?? [])
+                                  .includes(permiso.id);
+                                return (
+                                  <label key={permiso.id} className="flex cursor-pointer items-start gap-2 text-left">
+                                    <input
+                                      type="checkbox"
+                                      checked={seleccionado}
+                                      onChange={() => togglePermisoIndividual(calculo.user_id, permiso.id)}
+                                      disabled={previewLoading}
+                                      className="mt-0.5"
+                                    />
+                                    <span className="text-xs text-gray-600">
+                                      <span className="font-medium text-gray-800">
+                                        {String(permiso.fecha).slice(0, 10)} · {permiso.minutos} min
+                                      </span>
+                                      <span className="block">
+                                        {permiso.es_remunerado ? "Registrado remunerado" : "Registrado no remunerado"}
+                                        {" · "}
+                                        <strong className={seleccionado ? "text-amber-700" : "text-gray-400"}>
+                                          {seleccionado ? "Descontar" : "No descontar"}
+                                        </strong>
+                                      </span>
+                                    </span>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          )}
                         </td>
                       </tr>
                     ))}
