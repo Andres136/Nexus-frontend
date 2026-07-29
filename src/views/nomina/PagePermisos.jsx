@@ -17,7 +17,7 @@ const STATUS_BADGE = {
 
 function ModalGestion({ item, accion, onClose, onConfirm, loading }) {
   const [observacion, setObservacion] = useState("");
-  const [esRemunerado, setEsRemunerado] = useState(true);
+  const [esRemunerado, setEsRemunerado] = useState("");
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
@@ -32,12 +32,13 @@ function ModalGestion({ item, accion, onClose, onConfirm, loading }) {
           <div className="mb-4">
             <label className="block text-xs font-medium text-gray-600 mb-1">Tratamiento en nómina</label>
             <select
-              value={esRemunerado ? "1" : "0"}
-              onChange={(event) => setEsRemunerado(event.target.value === "1")}
+              value={esRemunerado}
+              onChange={(event) => setEsRemunerado(event.target.value)}
               className="w-full h-9 rounded-md border border-gray-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
-              <option value="1">Remunerado</option>
-              <option value="0">No remunerado</option>
+              <option value="">Selecciona el tratamiento...</option>
+              <option value="1">Remunerado — no descontar en nómina</option>
+              <option value="0">No remunerado — descontar en nómina</option>
             </select>
           </div>
         )}
@@ -56,8 +57,11 @@ function ModalGestion({ item, accion, onClose, onConfirm, loading }) {
             Cancelar
           </button>
           <button
-            onClick={() => onConfirm({ observacion, es_remunerado: esRemunerado })}
-            disabled={loading}
+            onClick={() => onConfirm({
+              observacion,
+              es_remunerado: esRemunerado === "1",
+            })}
+            disabled={loading || (accion === "aprobar" && esRemunerado === "")}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white rounded-md disabled:opacity-60 ${
               accion === "aprobar" ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"
             }`}
@@ -81,7 +85,7 @@ ModalGestion.propTypes = {
 
 export default function PagePermisos({ portalMode = false }) {
   const queryClient = useQueryClient();
-  const filtros = useFiltrosSolicitudes();
+  const filtros = useFiltrosSolicitudes({ estadoInicial: "" });
   const [gestion, setGestion] = useState(null); // { item, accion }
   const [crear, setCrear] = useState(false);
   const [creando, setCreando] = useState(false);

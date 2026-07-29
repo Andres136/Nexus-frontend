@@ -2,13 +2,13 @@ import { useMemo, useState } from "react";
 import { useGetEmpleados } from "./useGetEmpleados";
 import { useSedes } from "../useSedes";
 
-export function useFiltrosSolicitudes({ estadoKey = "status" } = {}) {
+export function useFiltrosSolicitudes({ estadoKey = "status", estadoInicial = "pendiente" } = {}) {
   const [search, setSearch] = useState("");
   const [userId, setUserId] = useState("");
   const [sedeId, setSedeId] = useState("");
   const [fechaDesde, setFechaDesde] = useState("");
   const [fechaHasta, setFechaHasta] = useState("");
-  const [estado, setEstado] = useState("pendiente");
+  const [estado, setEstado] = useState(estadoInicial);
   const [page, setPage] = useState(1);
 
   const { empleados, isLoading: loadingEmpleados } = useGetEmpleados({
