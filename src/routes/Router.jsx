@@ -128,6 +128,7 @@ import TrazabilidadPrioridades from "../views/calidad/TrazabilidadPrioridades";
 import Contabilidad from "../views/contabilidad/Contabilidad";
 import NominaLayout from "../layouts/NominaLayout";
 import PageProcesarNomina from "../views/nomina/PageProcesarNomina";
+import PageLiquidarNomina from "../views/nomina/PageLiquidarNomina";
 import PageLiquidarTodoNomina from "../views/nomina/PageLiquidarTodoNomina";
 import PageContratos from "../views/nomina/PageContratos";
 import PageSeguridadSocial from "../views/nomina/PageSeguridadSocial";
@@ -163,6 +164,7 @@ import CreateImpuestos from "../components/contabilidad/CreateImpuestos";
 
 import RegisterProductoNoConforme from "../components/calidad/RegisterProductoNoConforme";
 import PageMiDia from "../views/MiDia/PageMiDia";
+import PageAprobarLoteNomina from "../views/nomina/PageAprobarLoteNomina";
 import PageAdminProductividad from "../views/MiDia/PageAdminProductividad";
 import PageDetalleUsuarioProductividad from "../views/MiDia/PageDetalleUsuarioProductividad";
 import ListaProductoNoConforme from "../components/calidad/ListaProductoNoConforme";
@@ -200,6 +202,7 @@ export default function Router() {
       >
         <Route path="/auth" element={<AuthLyout />}>
           <Route path="mi-dia" element={<PageMiDia />} />
+          <Route path="nomina-lote-aprobacion/:uuid" element={<PageAprobarLoteNomina />} />
 
           <Route element={<ProtectedRoute allowedRoles={[1]} />}>
             <Route path="admin/productividad" element={<PageAdminProductividad />} />
@@ -816,6 +819,14 @@ export default function Router() {
               element={
                 <DynamicProtectedRoute permission="/auth/crm/nomina/procesar">
                   <PageProcesarNomina />
+                </DynamicProtectedRoute>
+              }
+            />
+            <Route
+              path="procesar/liquidar"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/procesar">
+                  <PageLiquidarNomina />
                 </DynamicProtectedRoute>
               }
             />

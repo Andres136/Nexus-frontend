@@ -36,8 +36,6 @@ export function useProcesarNomina() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [activeTab, setActiveTab] = useState("resumen");
-  const [showLiquidarModal, setShowLiquidarModal] = useState(false);
-  const [liquidarInitialData, setLiquidarInitialData] = useState({});
   const [openActions, setOpenActions] = useState(null);
   const [batchEmpresa, setBatchEmpresa] = useState("");
   const [batchPeriodoInicio, setBatchPeriodoInicio] = useState("");
@@ -216,13 +214,12 @@ export function useProcesarNomina() {
 
   const abrirLiquidacion = useCallback((item = {}) => {
     const periodo = periodoContrato(item);
-    setLiquidarInitialData({
+    setOpenActions(null);
+    return {
       user_id: item.users_id ? String(item.users_id) : "",
       periodo_inicio: periodo.inicio,
       periodo_fin: periodo.fin,
-    });
-    setShowLiquidarModal(true);
-    setOpenActions(null);
+    };
   }, [periodoContrato]);
 
   const descargarDesprendible = useCallback(async (nomina) => {
@@ -312,9 +309,6 @@ export function useProcesarNomina() {
     setPage,
     activeTab,
     setActiveTab,
-    showLiquidarModal,
-    setShowLiquidarModal,
-    liquidarInitialData,
     openActions,
     setOpenActions,
     batchEmpresa,

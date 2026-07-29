@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { showToast } from "../../helpers/utils/showToast";
 import { nominaService } from "../../services/nominaService";
 import { useGetJornadaLaboral } from "./useGetJornadaLaboral";
@@ -31,9 +31,21 @@ export const useLiquidarTodoNomina = () => {
   const [page, setPage] = useState(1);
   const [excluidosTardanza, setExcluidosTardanza] = useState([]);
   const [excluidosPermiso, setExcluidosPermiso] = useState([]);
+  const [responsableId, setResponsableId] = useState("");
+  const [responsables, setResponsables] = useState([]);
+  const [loadingResponsables, setLoadingResponsables] = useState(false);
+  const [enviandoAprobacion, setEnviandoAprobacion] = useState(false);
 
   const { jornadas, isLoading: loadingJornadas } = useGetJornadaLaboral();
   const { empresas, loading: loadingEmpresas } = useEmpresas();
+
+  useEffect(() => {
+    setLoadingResponsables(true);
+    nominaService.getResponsablesLote()
+      .then((response) => setResponsables(response.data?.data ?? []))
+      .catch(() => setResponsables([]))
+      .finally(() => setLoadingResponsables(false));
+  }, []);
 
   const buildPayload = (
     excluirTardanzaIds = excluidosTardanza,
@@ -167,6 +179,34 @@ export const useLiquidarTodoNomina = () => {
     }
   };
 
+  const handleEnviarAprobacion = async () => {
+    if (!formData.periodo_inicio || !formData.periodo_fin || !formData.jornada_laboral_id) {
+      showToast("error", "Completa período y jornada antes de enviar a aprobación.");
+      return false;
+    }
+    if (!responsableId) {
+      showToast("error", "Selecciona el responsable que va a aprobar el lote.");
+      return false;
+    }
+
+    setEnviandoAprobacion(true);
+    try {
+      const response = await nominaService.crearLoteAprobacion({
+        ...buildPayload(),
+        responsable_id: responsableId,
+      });
+      showToast("success", response.data.message || "Lote enviado a aprobación.");
+      return true;
+    } catch (err) {
+      const data = err.response?.data;
+      if (data?.errors) setFieldErrors(data.errors);
+      showToast("error", data?.message || "No se pudo enviar el lote a aprobación.");
+      return false;
+    } finally {
+      setEnviandoAprobacion(false);
+    }
+  };
+
   const reset = () => {
     setFormData(EMPTY_FORM);
     setFieldErrors({});
@@ -198,5 +238,11 @@ export const useLiquidarTodoNomina = () => {
     toggleExcluirTardanza,
     excluidosPermiso,
     toggleExcluirPermiso,
+    responsableId,
+    setResponsableId,
+    responsables,
+    loadingResponsables,
+    enviandoAprobacion,
+    handleEnviarAprobacion,
   };
 };

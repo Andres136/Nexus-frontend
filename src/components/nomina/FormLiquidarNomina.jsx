@@ -34,7 +34,7 @@ const motivosRetiro = [
   { value: "fin_contrato", label: "Fin de contrato" },
 ];
 
-export default function ModalLiquidarNomina({ onClose, initialData = {} }) {
+export default function FormLiquidarNomina({ onClose, initialData = {} }) {
   const {
     formData,
     handleChange,
@@ -780,7 +780,7 @@ export default function ModalLiquidarNomina({ onClose, initialData = {} }) {
   );
 }
 
-ModalLiquidarNomina.propTypes = {
+FormLiquidarNomina.propTypes = {
   onClose: PropTypes.func.isRequired,
   initialData: PropTypes.object,
 };
