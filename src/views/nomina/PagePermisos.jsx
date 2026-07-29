@@ -195,7 +195,7 @@ export default function PagePermisos({ portalMode = false }) {
         />
       )}
 
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-x-auto">
         {isLoading ? (
           <div className="flex justify-center items-center py-16 text-sm text-gray-400">
             <Loader2 className="h-5 w-5 mr-2 animate-spin text-indigo-500" /> Cargando...
@@ -232,7 +232,11 @@ export default function PagePermisos({ portalMode = false }) {
                       {item.status === "pendiente" ? "Por definir" : item.es_remunerado ? "Sí" : "No"}
                     </span>
                   </td>
-                  <td className="px-4 py-3.5 text-gray-500 max-w-[180px] truncate">{item.motivo ?? "—"}</td>
+                  <td className="min-w-[260px] max-w-[420px] px-4 py-3.5 align-top text-gray-600">
+                    <p className="whitespace-normal break-words leading-5">
+                      {item.motivo ?? "—"}
+                    </p>
+                  </td>
                   <td className="px-4 py-3.5">
                     <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${STATUS_BADGE[item.status] ?? "bg-gray-100 text-gray-500"}`}>
                       {item.status ?? "—"}
