@@ -29,13 +29,27 @@ export const useLiquidarTodoNomina = () => {
   const [resultado, setResultado] = useState(null);
   const [searchEmpleados, setSearchEmpleados] = useState("");
   const [page, setPage] = useState(1);
+  const [excluidosTardanza, setExcluidosTardanza] = useState([]);
+  const [excluidosPermiso, setExcluidosPermiso] = useState([]);
 
   const { jornadas, isLoading: loadingJornadas } = useGetJornadaLaboral();
   const { empresas, loading: loadingEmpresas } = useEmpresas();
 
-  const buildPayload = () => {
+  const buildPayload = (
+    excluirTardanzaIds = excluidosTardanza,
+    excluirPermisoIds = excluidosPermiso
+  ) => {
     const payload = { ...formData };
     if (!payload.empresa_id) delete payload.empresa_id;
+    // Laravel valida "boolean" en query strings (GET) aceptando solo 0/1, no los textos
+    // "true"/"false" que produce la URL — se envía como número para que funcione en ambos casos.
+    payload.descontar_tardanzas = payload.descontar_tardanzas ? 1 : 0;
+    if (payload.descontar_tardanzas && excluirTardanzaIds.length > 0) {
+      payload.excluir_tardanza_ids = excluirTardanzaIds;
+    }
+    if (excluirPermisoIds.length > 0) {
+      payload.excluir_permiso_ids = excluirPermisoIds;
+    }
     return payload;
   };
 
@@ -43,6 +57,8 @@ export const useLiquidarTodoNomina = () => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
     setResultado(null);
+    setExcluidosTardanza([]);
+    setExcluidosPermiso([]);
   };
 
   const handleSearchEmpleados = (e) => {
@@ -63,20 +79,20 @@ export const useLiquidarTodoNomina = () => {
     [empleadosFiltrados, page]
   );
 
-  const handlePreview = async () => {
+  const ejecutarCalculo = async (excluirTardanzaIds, excluirPermisoIds, { silent = false } = {}) => {
     setPreviewLoading(true);
     setFieldErrors({});
-    setSearchEmpleados("");
-    setPage(1);
     try {
-      const response = await nominaService.preliquidarLote(buildPayload());
+      const response = await nominaService.preliquidarLote(buildPayload(excluirTardanzaIds, excluirPermisoIds));
       setResultado(response.data.data);
-      const { empleados_calculados, empleados_con_error } = response.data.data.totales;
-      showToast(
-        "success",
-        `Se calcularon ${empleados_calculados} empleados` +
-          (empleados_con_error > 0 ? ` (${empleados_con_error} con error).` : ".")
-      );
+      if (!silent) {
+        const { empleados_calculados, empleados_con_error } = response.data.data.totales;
+        showToast(
+          "success",
+          `Se calcularon ${empleados_calculados} empleados` +
+            (empleados_con_error > 0 ? ` (${empleados_con_error} con error).` : ".")
+        );
+      }
     } catch (err) {
       const data = err.response?.data;
       if (data?.errors) setFieldErrors(data.errors);
@@ -85,6 +101,34 @@ export const useLiquidarTodoNomina = () => {
     } finally {
       setPreviewLoading(false);
     }
+  };
+
+  const handlePreview = async () => {
+    setSearchEmpleados("");
+    setPage(1);
+    setExcluidosTardanza([]);
+    setExcluidosPermiso([]);
+    await ejecutarCalculo([], []);
+  };
+
+  const toggleExcluirTardanza = async (userId) => {
+    const yaExcluido = excluidosTardanza.includes(userId);
+    const nuevosExcluidos = yaExcluido
+      ? excluidosTardanza.filter((id) => id !== userId)
+      : [...excluidosTardanza, userId];
+
+    setExcluidosTardanza(nuevosExcluidos);
+    await ejecutarCalculo(nuevosExcluidos, excluidosPermiso, { silent: true });
+  };
+
+  const toggleExcluirPermiso = async (userId) => {
+    const yaExcluido = excluidosPermiso.includes(userId);
+    const nuevosExcluidos = yaExcluido
+      ? excluidosPermiso.filter((id) => id !== userId)
+      : [...excluidosPermiso, userId];
+
+    setExcluidosPermiso(nuevosExcluidos);
+    await ejecutarCalculo(excluidosTardanza, nuevosExcluidos, { silent: true });
   };
 
   const handleDescargarExcel = async () => {
@@ -150,5 +194,9 @@ export const useLiquidarTodoNomina = () => {
     page,
     setPage,
     totalPaginas,
+    excluidosTardanza,
+    toggleExcluirTardanza,
+    excluidosPermiso,
+    toggleExcluirPermiso,
   };
 };

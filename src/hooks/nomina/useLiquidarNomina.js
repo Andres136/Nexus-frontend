@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { showToast } from "../../helpers/utils/showToast";
 import { nominaService } from "../../services/nominaService";
@@ -12,6 +12,7 @@ const EMPTY_FORM = {
   periodo_fin: "",
   descuento_id: "",
   descontar_tardanzas: false,
+  descontar_permisos: true,
   tipo_liquidacion: "nomina",
   fecha_retiro: "",
   motivo_retiro: "renuncia",
@@ -49,6 +50,32 @@ export const useLiquidarNomina = ({ onSuccess, initialData = {} } = {}) => {
     setFormData((prev) => ({ ...prev, user_id: option ? option.value : "" }));
     setPreview(null);
   };
+
+  // Si "Liquidar todo" ya calculó a este empleado en este mismo período, recuerda si se le
+  // descontaron tardanzas/permisos y precarga esas mismas casillas aquí.
+  useEffect(() => {
+    if (formData.tipo_liquidacion === "retiro") return undefined;
+    if (!formData.user_id || !formData.periodo_inicio || !formData.periodo_fin) return undefined;
+
+    let cancelado = false;
+    nominaService.getExcepcionDescuento({
+      user_id: formData.user_id,
+      periodo_inicio: formData.periodo_inicio,
+      periodo_fin: formData.periodo_fin,
+    }).then((response) => {
+      if (cancelado) return;
+      const excepcion = response.data?.data;
+      if (excepcion) {
+        setFormData((prev) => ({
+          ...prev,
+          descontar_tardanzas: excepcion.descontar_tardanzas,
+          descontar_permisos: excepcion.descontar_permisos,
+        }));
+      }
+    }).catch(() => {});
+
+    return () => { cancelado = true; };
+  }, [formData.user_id, formData.periodo_inicio, formData.periodo_fin, formData.tipo_liquidacion]);
 
   const handleAjusteChange = (event) => {
     const { name, value, type, checked } = event.target;

@@ -428,6 +428,9 @@ export const nominaService = {
       responseType: "blob",
     });
   },
+  getExcepcionDescuento(params = {}) {
+    return apiClient.get("api/nomina/nominas/excepcion-descuento", { params });
+  },
   desprendiblePdf(nominaUuid) {
     return apiClient.get(`api/nomina/nominas/${nominaUuid}/desprendible`, {
       responseType: "blob",

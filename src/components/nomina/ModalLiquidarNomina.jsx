@@ -19,6 +19,13 @@ function totalHorasExtra(preview = {}) {
     + Number(preview.horas_nocturnas_festivas || 0);
 }
 
+function valorHorasExtra(preview = {}) {
+  return Number(preview.valor_horas_extras_diurnas || 0)
+    + Number(preview.valor_horas_extras_nocturnas || 0)
+    + Number(preview.valor_horas_festivas || 0)
+    + Number(preview.valor_horas_nocturnas_festivas || 0);
+}
+
 const motivosRetiro = [
   { value: "renuncia", label: "Renuncia" },
   { value: "terminacion_sin_justa_causa", label: "Terminación sin justa causa" },
@@ -247,6 +254,15 @@ export default function ModalLiquidarNomina({ onClose, initialData = {} }) {
               />
               Descontar tardanzas del pago (si no se marca, solo se muestran de referencia)
             </label>
+            <label className="col-span-2 flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                name="descontar_permisos"
+                checked={formData.descontar_permisos}
+                onChange={handleChange}
+              />
+              Descontar permisos no remunerados del pago
+            </label>
           </div>
         )}
 
@@ -377,6 +393,7 @@ export default function ModalLiquidarNomina({ onClose, initialData = {} }) {
               <div>
                 <p className="text-xs text-indigo-500">Horas extra</p>
                 <p className="font-semibold text-gray-900">{totalHorasExtra(preview)} h</p>
+                <p className="text-xs font-medium text-emerald-600">{formatCOP(valorHorasExtra(preview))}</p>
               </div>
               <div>
                 <p className="text-xs text-indigo-500">Horas normales</p>
@@ -655,14 +672,17 @@ export default function ModalLiquidarNomina({ onClose, initialData = {} }) {
                   )}
                 </div>
 
-                {/* Permisos no remunerados: siempre se descuentan. Tardanzas: solo si se marcó la casilla. */}
+                {/* Permisos: descontados salvo que se desmarque la casilla. Tardanzas: solo si se marcó la casilla. */}
                 {((preview.minutos_tardanza ?? 0) > 0 || (preview.minutos_permisos_no_remunerados ?? 0) > 0) && (
                   <div className="mt-3 pt-2 border-t border-dashed border-gray-200">
                     <p className="mb-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">Tardanzas y permisos</p>
                     <div className="space-y-1">
                       {(preview.minutos_permisos_no_remunerados ?? 0) > 0 && (
                         <div className="flex justify-between gap-3 text-xs text-gray-400">
-                          <span>Permisos no remunerados ({preview.minutos_permisos_no_remunerados} min) — descontados</span>
+                          <span>
+                            Permisos no remunerados ({preview.minutos_permisos_no_remunerados} min)
+                            {preview.descuenta_permisos ? " — descontados" : " — solo referencia, no descontados"}
+                          </span>
                           <span>{formatCOP(preview.valor_permisos_no_remunerados ?? 0)}</span>
                         </div>
                       )}

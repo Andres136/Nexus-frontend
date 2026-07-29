@@ -14,6 +14,13 @@ function totalHorasExtra(calculo = {}) {
     + Number(calculo.horas_nocturnas_festivas || 0);
 }
 
+function valorHorasExtra(calculo = {}) {
+  return Number(calculo.valor_horas_extras_diurnas || 0)
+    + Number(calculo.valor_horas_extras_nocturnas || 0)
+    + Number(calculo.valor_horas_festivas || 0)
+    + Number(calculo.valor_horas_nocturnas_festivas || 0);
+}
+
 function Pagination({ page, totalPaginas, total, onPage }) {
   if (totalPaginas <= 1) return null;
   const pages = [];
@@ -96,6 +103,10 @@ export default function PageLiquidarTodoNomina() {
     page,
     setPage,
     totalPaginas,
+    excluidosTardanza,
+    toggleExcluirTardanza,
+    excluidosPermiso,
+    toggleExcluirPermiso,
   } = useLiquidarTodoNomina();
 
   const inputClass = (field) =>
@@ -220,6 +231,16 @@ export default function PageLiquidarTodoNomina() {
           />
           Descontar tardanzas del pago (si no se marca, solo se muestran de referencia)
         </label>
+        {formData.descontar_tardanzas && (
+          <p className="mt-1 text-xs text-gray-400">
+            Después de calcular, puedes desmarcar la casilla &quot;Descontar tardanza&quot; de un empleado puntual en
+            la tabla de resultados para excluirlo de este descuento.
+          </p>
+        )}
+        <p className="mt-1 text-xs text-gray-400">
+          Los permisos no remunerados se descuentan por defecto para todos. Después de calcular, puedes desmarcar
+          &quot;Descontar permiso&quot; de un empleado puntual para excluirlo.
+        </p>
       </div>
 
       {resultado && (
@@ -337,17 +358,58 @@ export default function PageLiquidarTodoNomina() {
                       <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Permisos</th>
                       <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Devengado</th>
                       <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Neto</th>
+                      {formData.descontar_tardanzas && (
+                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Descontar tardanza
+                        </th>
+                      )}
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Descontar permiso
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-50">
                     {empleadosPaginados.map((calculo) => (
                       <tr key={calculo.user_id} className="hover:bg-gray-50 transition-colors">
                         <td className="px-4 py-3.5 font-medium text-gray-800">{calculo.empleado.name}</td>
-                        <td className="px-4 py-3.5 text-right text-gray-700">{totalHorasExtra(calculo)} h</td>
+                        <td className="px-4 py-3.5 text-right text-gray-700">
+                          {totalHorasExtra(calculo)} h
+                          {valorHorasExtra(calculo) > 0 && (
+                            <p className="text-xs text-emerald-600">{formatCOP(valorHorasExtra(calculo))}</p>
+                          )}
+                        </td>
                         <td className="px-4 py-3.5 text-right text-gray-700">{calculo.minutos_tardanza} min</td>
                         <td className="px-4 py-3.5 text-right text-gray-700">{calculo.minutos_permisos_no_remunerados} min</td>
                         <td className="px-4 py-3.5 text-right text-gray-700">{formatCOP(calculo.total_devengado)}</td>
                         <td className="px-4 py-3.5 text-right font-semibold text-green-700">{formatCOP(calculo.salario_neto)}</td>
+                        {formData.descontar_tardanzas && (
+                          <td className="px-4 py-3.5 text-center">
+                            <input
+                              type="checkbox"
+                              checked={!excluidosTardanza.includes(calculo.user_id)}
+                              onChange={() => toggleExcluirTardanza(calculo.user_id)}
+                              disabled={previewLoading || calculo.minutos_tardanza === 0}
+                              title={
+                                calculo.minutos_tardanza === 0
+                                  ? "Este empleado no tiene tardanza en el período"
+                                  : "Desmarca para no descontarle la tardanza a este empleado"
+                              }
+                            />
+                          </td>
+                        )}
+                        <td className="px-4 py-3.5 text-center">
+                          <input
+                            type="checkbox"
+                            checked={!excluidosPermiso.includes(calculo.user_id)}
+                            onChange={() => toggleExcluirPermiso(calculo.user_id)}
+                            disabled={previewLoading || calculo.minutos_permisos_no_remunerados === 0}
+                            title={
+                              calculo.minutos_permisos_no_remunerados === 0
+                                ? "Este empleado no tiene permisos no remunerados en el período"
+                                : "Desmarca para no descontarle los permisos no remunerados a este empleado"
+                            }
+                          />
+                        </td>
                       </tr>
                     ))}
                   </tbody>
