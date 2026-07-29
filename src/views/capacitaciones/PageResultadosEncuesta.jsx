@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import PropTypes from "prop-types";
 import { Link, useParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -39,10 +40,16 @@ function EficienciaBar({ valor, label }) {
   );
 }
 
+EficienciaBar.propTypes = {
+  valor: PropTypes.number.isRequired,
+  label: PropTypes.string,
+};
+
 export default function PageResultadosEncuesta() {
   const { uuid } = useParams();
   const { data, isLoading } = useCapacitacionEncuestaResultados(uuid);
   const [search, setSearch] = useState("");
+  const [envioSeleccionadoId, setEnvioSeleccionadoId] = useState("");
   const [copiado, setCopiado] = useState(null);
 
   const copiarLink = (token) => {
@@ -97,6 +104,18 @@ export default function PageResultadosEncuesta() {
 
   const respondieronFiltrados = filtrarEnvios(respondieron);
   const pendientesFiltrados = filtrarEnvios(pendientes);
+  const envioSeleccionado = respondieron.find(
+    (envio) => String(envio.id) === String(envioSeleccionadoId)
+  );
+  const respuestasSeleccionadas = useMemo(
+    () => new Map(
+      (envioSeleccionado?.respuestas ?? []).map((respuesta) => [
+        String(respuesta.pregunta_id),
+        respuesta.valor,
+      ])
+    ),
+    [envioSeleccionado]
+  );
 
   if (isLoading) {
     return (
@@ -183,10 +202,24 @@ export default function PageResultadosEncuesta() {
 
           {/* Resultados por pregunta */}
           <section className="space-y-3">
-            <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-950">
-              <BarChart3 className="h-4 w-4 text-blue-600" />
-              Resultados por pregunta
-            </h2>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-950">
+                <BarChart3 className="h-4 w-4 text-blue-600" />
+                {envioSeleccionado ? `Respuestas de ${envioSeleccionado.usuario?.name}` : "Resultados por pregunta"}
+              </h2>
+              <select
+                value={envioSeleccionadoId}
+                onChange={(event) => setEnvioSeleccionadoId(event.target.value)}
+                className="h-9 min-w-64 rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              >
+                <option value="">Resumen de todos los participantes</option>
+                {respondieron.map((envio) => (
+                  <option key={envio.id} value={envio.id}>
+                    {envio.usuario?.name ?? "Sin nombre"} — {envio.usuario?.email ?? "Sin correo"}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             {eficienciaPorPregunta.length === 0 ? (
               <div className="rounded-md border border-slate-200 bg-white px-4 py-8 text-sm text-slate-500">
@@ -204,6 +237,30 @@ export default function PageResultadosEncuesta() {
                     </div>
                     <span className="shrink-0 text-xs text-slate-400">{resultado.total_respuestas} resp.</span>
                   </div>
+
+                  {envioSeleccionado && (
+                    <div className="mt-3 rounded-md border border-blue-200 bg-blue-50 px-3 py-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-blue-600">
+                        Respuesta del usuario
+                      </p>
+                      <div className="mt-1 flex items-start justify-between gap-3">
+                        <p className="whitespace-pre-wrap break-words text-sm font-medium text-slate-900">
+                          {respuestasSeleccionadas.get(String(resultado.pregunta_id)) ?? "Sin respuesta"}
+                        </p>
+                        {resultado.tipo === "opcion_multiple" && resultado.respuesta_correcta && (
+                          <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${
+                            respuestasSeleccionadas.get(String(resultado.pregunta_id)) === resultado.respuesta_correcta
+                              ? "bg-emerald-100 text-emerald-700"
+                              : "bg-red-100 text-red-700"
+                          }`}>
+                            {respuestasSeleccionadas.get(String(resultado.pregunta_id)) === resultado.respuesta_correcta
+                              ? "Correcta"
+                              : "Incorrecta"}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                   {resultado.eficiencia !== null && (
                     <div className="mt-3">
@@ -297,13 +354,20 @@ export default function PageResultadosEncuesta() {
                   </p>
                 ) : (
                   respondieronFiltrados.map((envio) => (
-                    <div key={envio.id} className="flex items-center justify-between px-4 py-2.5">
+                    <button
+                      type="button"
+                      key={envio.id}
+                      onClick={() => setEnvioSeleccionadoId(String(envio.id))}
+                      className={`flex w-full items-center justify-between px-4 py-2.5 text-left transition-colors hover:bg-emerald-50 ${
+                        String(envioSeleccionadoId) === String(envio.id) ? "bg-emerald-50" : ""
+                      }`}
+                    >
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium text-slate-900">{envio.usuario?.name}</p>
                         <p className="truncate text-xs text-slate-500">{envio.usuario?.email}</p>
                       </div>
                       <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
-                    </div>
+                    </button>
                   ))
                 )}
               </div>

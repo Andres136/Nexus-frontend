@@ -74,6 +74,9 @@ import PageCapacitaciones from "../views/capacitaciones/PageCapacitaciones";
 import PageCapacitacionEncuestas from "../views/capacitaciones/PageCapacitacionEncuestas";
 import PageResultadosEncuesta from "../views/capacitaciones/PageResultadosEncuesta";
 import CapacitacionEncuestaPublica from "../views/capacitaciones/CapacitacionEncuestaPublica";
+import CapacitacionActaPublica from "../views/capacitaciones/CapacitacionActaPublica";
+import PageCapacitacionActa from "../views/capacitaciones/PageCapacitacionActa";
+import PageCapacitacionActas from "../views/capacitaciones/PageCapacitacionActas";
 import MovimientoInventario from "../views/crm/MovimientoInventario";
 import DynamicProtectedRoute from "./DynamicProtectedRoute";
 import SettingPermissions from "../views/Roles/SettingPermissions";
@@ -195,6 +198,7 @@ export default function Router() {
       {/* 🔹 Encuesta pública — sin auth, el cliente responde por token */}
       <Route path="/encuesta/:token" element={<EncuestaPublica />} />
       <Route path="/capacitacion-encuesta/:token" element={<CapacitacionEncuestaPublica />} />
+      <Route path="/capacitacion-acta/:token" element={<CapacitacionActaPublica />} />
 
       {/* 🔹 Rutas bajo AuthLayout (Procesos y CRM) */}
       <Route
@@ -385,6 +389,22 @@ export default function Router() {
             element={
               <DynamicProtectedRoute permission="/auth/capacitaciones/encuestas">
                 <PageCapacitacionEncuestas />
+              </DynamicProtectedRoute>
+            }
+          />
+          <Route
+            path="capacitaciones/:uuid/acta"
+            element={
+              <DynamicProtectedRoute permission="/auth/capacitaciones">
+                <PageCapacitacionActa />
+              </DynamicProtectedRoute>
+            }
+          />
+          <Route
+            path="capacitaciones/actas"
+            element={
+              <DynamicProtectedRoute permission="/auth/capacitaciones">
+                <PageCapacitacionActas />
               </DynamicProtectedRoute>
             }
           />
