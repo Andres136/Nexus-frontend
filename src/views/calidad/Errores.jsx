@@ -71,25 +71,25 @@ const COLORS = ["#6B7280", "#EF4444", "#10B981", "#3B82F6", "#F59E0B"];
 
     return (
         <div className="p-6 min-h-screen bg-gray-50">
-            <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">📊 Dashboard de Novedades</h1>
+            <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">📊 Dashboard de No Conformidades</h1>
 
             {/* KPIs Principales */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Total Errores */}
                 <div className="bg-white p-6 rounded-lg shadow-md flex flex-col items-center">
-                    <h2 className="text-lg font-bold text-gray-700">Total Novedades</h2>
+                    <h2 className="text-lg font-bold text-gray-700">Total No Conformidades</h2>
                     <p className="text-5xl font-semibold text-red-500">{kpis.totalErrores}</p>
                 </div>
 
                 {/* Errores del Mes Actual */}
                 <div className="bg-white p-6 rounded-lg shadow-md flex flex-col items-center">
-                    <h2 className="text-lg font-bold text-gray-700">Novedades Mes Actual</h2>
+                    <h2 className="text-lg font-bold text-gray-700">No Conformidades Mes Actual</h2>
                     <p className="text-4xl font-semibold text-blue-500">{kpis.totalErroresMesActual}</p>
                 </div>
 
                 {/* Errores del Mes Anterior */}
                 <div className="bg-white p-6 rounded-lg shadow-md flex flex-col items-center">
-                    <h2 className="text-lg font-bold text-gray-700">Novedades Mes Anterior</h2>
+                    <h2 className="text-lg font-bold text-gray-700">No Conformidades Mes Anterior</h2>
                     <p className="text-4xl font-semibold text-gray-500">{kpis.totalErroresMesAnterior}</p>
                 </div>
             </div>
@@ -116,7 +116,7 @@ const COLORS = ["#6B7280", "#EF4444", "#10B981", "#3B82F6", "#F59E0B"];
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
                 {/* Gráfico de Barras Comparativo */}
                 <div className="bg-white p-6 rounded-lg shadow-md">
-                    <h2 className="text-lg font-bold text-gray-700 mb-3">Novedades por Departamento (Comparación)</h2>
+                    <h2 className="text-lg font-bold text-gray-700 mb-3">No Conformidades por Departamento (Comparación)</h2>
                     <ResponsiveContainer width="100%" height={250}>
                         <BarChart>
                             <XAxis dataKey="departamento_nombre" stroke="#374151" />
@@ -130,7 +130,7 @@ const COLORS = ["#6B7280", "#EF4444", "#10B981", "#3B82F6", "#F59E0B"];
 
                 {/* Gráfico de Pastel */}
                 <div className="bg-white p-6 rounded-lg shadow-md">
-                    <h2 className="text-lg font-bold text-gray-700 mb-3">Distribución de Novedades</h2>
+                    <h2 className="text-lg font-bold text-gray-700 mb-3">Distribución de No Conformidades</h2>
                     <ResponsiveContainer width="100%" height={250}>
                         <PieChart>
                             <Pie data={kpis.erroresPorProceso} dataKey="total" nameKey="departamento_nombre" cx="50%" cy="50%" outerRadius={80}>
@@ -148,7 +148,7 @@ const COLORS = ["#6B7280", "#EF4444", "#10B981", "#3B82F6", "#F59E0B"];
             <div className="grid grid-cols-1">
   <div className="bg-white p-4 md:p-6 rounded-lg shadow-md mt-6 col-span-1 overflow-x-auto">
     <h2 className="text-lg font-bold text-gray-700 mb-3">
-      🔍 Comparación de Novedades por Departamento
+      🔍 Comparación de No Conformidades por Departamento
     </h2>
 
     <div className="w-full overflow-x-auto">

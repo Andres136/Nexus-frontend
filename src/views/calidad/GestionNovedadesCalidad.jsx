@@ -16,11 +16,11 @@ import {
   Calendar,
   User,
   Activity,
-  Paperclip,
   MessageSquare
 } from "lucide-react";
 import { SeguimientoHallazgo } from "./SeguimientoHallazgo";
 import { SoportesHallazgo } from "./SoportesHallazgo";
+import { OPCIONES_FUENTES, OPCIONES_TIPO_ACCION } from "../../constants/novedadesCalidad";
 
 export default function GestionNovedadesCalidad() {
   const { id } = useParams();
@@ -48,11 +48,12 @@ export default function GestionNovedadesCalidad() {
 
   const [form, setForm] = useState({
     descripcion: "",
+    numero_no_conformidad: "",
+    correccion: "",
     estado: "ABIERTA",
     fecha_revision: "",
     fecha_terminado: "",
     responsable_id: null,
-    soporte: null,
     fuentes: "",
     causa: "",
     tipo_accion: "",
@@ -67,11 +68,12 @@ export default function GestionNovedadesCalidad() {
     if (novedadSeleccionada) {
       setForm({
         descripcion: novedadSeleccionada.descripcion || "",
+        numero_no_conformidad: novedadSeleccionada.numero_no_conformidad || "",
+        correccion: novedadSeleccionada.correccion || "",
         estado: novedadSeleccionada.estado || "ABIERTA",
         fecha_revision: novedadSeleccionada.fecha_revision || "",
         fecha_terminado: novedadSeleccionada.fecha_terminado || "",
         responsable_id: novedadSeleccionada.responsable_id || null,
-        soporte: null,
         fuentes: novedadSeleccionada.fuentes || "",
         causa: novedadSeleccionada.causa || "",
         tipo_accion: novedadSeleccionada.tipo_accion || ""
@@ -122,22 +124,6 @@ export default function GestionNovedadesCalidad() {
     u => u.value === form.responsable_id
   );
 
-  const opcionesFuentes = [
-    { value: "Auditoría Interna", label: "Auditoría Interna" },
-    { value: "Auditoría Externa", label: "Auditoría Externa" },
-    { value: "Cliente", label: "Cliente" },
-    { value: "Proveedor", label: "Proveedor" },
-    { value: "Inspección Interna", label: "Inspección Interna" },
-    { value: "Control de Proceso", label: "Control de Proceso" },
-    { value: "Queja", label: "Queja" },
-    { value: "Revisión Gerencial", label: "Revisión Gerencial" },
-    { value: "Indicadores", label: "Indicadores / KPIs" },
-    { value: "Acción Correctiva", label: "Acción Correctiva" },
-    { value: "Acción Preventiva", label: "Acción Preventiva" },
-    { value: "Hallazgo SST", label: "Seguridad y Salud en el Trabajo (SST)" },
-    { value: "Ambiental", label: "Gestión Ambiental" },
-    { value: "Otro", label: "Otro" }
-  ];
 
   // Tailwind Class Helpers
   const inputClass = "w-full p-2.5 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-200 bg-white";
@@ -154,7 +140,7 @@ export default function GestionNovedadesCalidad() {
             </div>
             <div>
               <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-                Gestión de Novedad <span className="text-blue-600">#{id}</span>
+                Gestión de No Conformidad <span className="text-blue-600">#{id}</span>
               </h1>
               <p className="text-slate-500 text-sm font-medium">Panel de control de calidad y seguimiento de hallazgos.</p>
             </div>
@@ -174,7 +160,7 @@ export default function GestionNovedadesCalidad() {
           <form onSubmit={handleSubmitNovedad} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-1">
-                <label className={labelClass}>Descripción de la Novedad</label>
+                <label className={labelClass}>Descripción de la No Conformidad</label>
                 <textarea
                   name="descripcion"
                   value={form.descripcion}
@@ -184,13 +170,37 @@ export default function GestionNovedadesCalidad() {
                 />
               </div>
               <div className="space-y-1">
-                <label className={labelClass}>Causa de la Novedad</label>
+                <label className={labelClass}>Causa de la No Conformidad</label>
                 <textarea
                   name="causa"
                   value={form.causa}
                   onChange={handleChangeNovedad}
                   className={`${inputClass} min-h-[120px] resize-y`}
                   placeholder="Detalle la causa raíz..."
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-1">
+                <label className={labelClass}>N° de No Conformidad</label>
+                <input
+                  type="text"
+                  name="numero_no_conformidad"
+                  value={form.numero_no_conformidad}
+                  onChange={handleChangeNovedad}
+                  className={inputClass}
+                  placeholder="Ej: NC-2026-001"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className={labelClass}>Corrección</label>
+                <textarea
+                  name="correccion"
+                  value={form.correccion}
+                  onChange={handleChangeNovedad}
+                  className={`${inputClass} min-h-[80px] resize-y`}
+                  placeholder="Describa la correcion"
                 />
               </div>
             </div>
@@ -221,17 +231,17 @@ export default function GestionNovedadesCalidad() {
                 <label className={labelClass}>Tipo de Acción</label>
                 <select name="tipo_accion" value={form.tipo_accion} onChange={handleChangeNovedad} className={inputClass}>
                   <option value="">Seleccionar...</option>
-                  <option value="Preventiva">Preventiva</option>
-                  <option value="Correctiva">Correctiva</option>
-                  <option value="Mejora">Mejora</option>
+                  {OPCIONES_TIPO_ACCION.map((t) => (
+                    <option key={t.value} value={t.value}>{t.label}</option>
+                  ))}
                 </select>
               </div>
 
               <div>
-                <label className={labelClass}>Fuente de la Novedad</label>
+                <label className={labelClass}>Fuente de la No Conformidad</label>
                 <Select
-                  options={opcionesFuentes}
-                  value={opcionesFuentes.find(f => f.value === form.fuentes)}
+                  options={OPCIONES_FUENTES}
+                  value={OPCIONES_FUENTES.find(f => f.value === form.fuentes)}
                   onChange={(selected) => setForm(prev => ({ ...prev, fuentes: selected?.value }))}
                   className="text-sm"
                   placeholder="Fuente..."
@@ -240,7 +250,7 @@ export default function GestionNovedadesCalidad() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
               <div>
                 <label className={labelClass}><Calendar size={14} /> Fecha Revisión</label>
                 <input type="date" name="fecha_revision" value={form.fecha_revision} onChange={handleChangeNovedad} className={inputClass} />
@@ -248,10 +258,6 @@ export default function GestionNovedadesCalidad() {
               <div>
                 <label className={labelClass}><Calendar size={14} /> Fecha Terminado</label>
                 <input type="date" name="fecha_terminado" value={form.fecha_terminado} onChange={handleChangeNovedad} className={inputClass} />
-              </div>
-              <div>
-                <label className={labelClass}><Paperclip size={14} /> Formato plan de Accion</label>
-                <input type="file" name="soporte" onChange={handleChangeNovedad} className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer" />
               </div>
             </div>
 

@@ -5,8 +5,8 @@ import Swal from "sweetalert2";
 
 
 
-export const useNovedades = () => {
- 
+export const useNovedades = (initialFilters = {}) => {
+
 
   const [formData, setFormData] = useState({
     registro_diario_id: null,
@@ -35,6 +35,9 @@ export const useNovedades = () => {
     page: 1,
     per_page: 10,
     search: "",
+    numero_no_conformidad: "",
+    fuentes: "",
+    ...initialFilters,
   });
 
   // ===============================
@@ -90,6 +93,8 @@ const actualizarNovedad = async (id, data) => {
 
   formData.append('_method', 'PUT');
   formData.append('descripcion', data.descripcion);
+  formData.append('numero_no_conformidad', data.numero_no_conformidad || '');
+  formData.append('correccion', data.correccion || '');
   formData.append('estado', data.estado);
   formData.append('fecha_revision', data.fecha_revision || '');
   formData.append('fecha_terminado', data.fecha_terminado || '');
@@ -97,10 +102,6 @@ const actualizarNovedad = async (id, data) => {
   formData.append('fuentes', data.fuentes || '');
   formData.append('tipo_accion', data.tipo_accion || '');
   formData.append('causa', data.causa || '');
-
-  if (data.soporte instanceof File) {
-    formData.append('soporte', data.soporte);
-  }
 
   setLoading(true);
   setError(null);
