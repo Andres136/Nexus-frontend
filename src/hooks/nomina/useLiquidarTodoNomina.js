@@ -2,11 +2,13 @@ import { useMemo, useState } from "react";
 import { showToast } from "../../helpers/utils/showToast";
 import { nominaService } from "../../services/nominaService";
 import { useGetJornadaLaboral } from "./useGetJornadaLaboral";
+import { useEmpresas } from "../useEmpresas";
 
 const EMPTY_FORM = {
   periodo_inicio: "",
   periodo_fin: "",
   jornada_laboral_id: "",
+  empresa_id: "",
   descontar_tardanzas: false,
 };
 
@@ -29,6 +31,13 @@ export const useLiquidarTodoNomina = () => {
   const [page, setPage] = useState(1);
 
   const { jornadas, isLoading: loadingJornadas } = useGetJornadaLaboral();
+  const { empresas, loading: loadingEmpresas } = useEmpresas();
+
+  const buildPayload = () => {
+    const payload = { ...formData };
+    if (!payload.empresa_id) delete payload.empresa_id;
+    return payload;
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -60,7 +69,7 @@ export const useLiquidarTodoNomina = () => {
     setSearchEmpleados("");
     setPage(1);
     try {
-      const response = await nominaService.preliquidarLote(formData);
+      const response = await nominaService.preliquidarLote(buildPayload());
       setResultado(response.data.data);
       const { empleados_calculados, empleados_con_error } = response.data.data.totales;
       showToast(
@@ -86,7 +95,7 @@ export const useLiquidarTodoNomina = () => {
 
     setExportLoading(true);
     try {
-      const response = await nominaService.exportarPreliquidacionLote(formData);
+      const response = await nominaService.exportarPreliquidacionLote(buildPayload());
       const url = window.URL.createObjectURL(
         new Blob([response.data], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" })
       );
@@ -132,6 +141,8 @@ export const useLiquidarTodoNomina = () => {
     reset,
     jornadas: jornadas?.data?.data ?? [],
     loadingJornadas,
+    empresas: Array.isArray(empresas) ? empresas : [],
+    loadingEmpresas,
     searchEmpleados,
     handleSearchEmpleados,
     empleadosFiltrados,

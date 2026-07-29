@@ -87,6 +87,8 @@ export default function PageLiquidarTodoNomina() {
     handleDescargarExcel,
     jornadas,
     loadingJornadas,
+    empresas,
+    loadingEmpresas,
     searchEmpleados,
     handleSearchEmpleados,
     empleadosFiltrados,
@@ -115,7 +117,7 @@ export default function PageLiquidarTodoNomina() {
       </div>
 
       <div className="mb-6 bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 items-end">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5 items-end">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Inicio <span className="text-red-500">*</span>
@@ -164,6 +166,26 @@ export default function PageLiquidarTodoNomina() {
             </select>
             {fieldErrors.jornada_laboral_id && (
               <p className="mt-1 text-xs text-red-500">{fieldErrors.jornada_laboral_id[0]}</p>
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Empresa
+            </label>
+            <select
+              name="empresa_id"
+              value={formData.empresa_id}
+              onChange={handleChange}
+              disabled={loadingEmpresas}
+              className={inputClass("empresa_id")}
+            >
+              <option value="">{loadingEmpresas ? "Cargando..." : "Todas las empresas"}</option>
+              {empresas.map((empresa) => (
+                <option key={empresa.id} value={empresa.id}>{empresa.nombre}</option>
+              ))}
+            </select>
+            {fieldErrors.empresa_id && (
+              <p className="mt-1 text-xs text-red-500">{fieldErrors.empresa_id[0]}</p>
             )}
           </div>
           <div className="flex flex-wrap gap-2">
