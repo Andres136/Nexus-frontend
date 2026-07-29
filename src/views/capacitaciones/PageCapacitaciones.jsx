@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
@@ -8,6 +8,7 @@ import {
   Check,
   Clock,
   ClipboardList,
+  FileSignature,
   Filter,
   Loader2,
   MapPin,
@@ -48,6 +49,7 @@ const getBadge = (estado) => ESTADOS[estado] ?? ESTADOS.programada;
 const today = new Date().toISOString().slice(0, 10);
 
 export default function PageCapacitaciones() {
+  const navigate = useNavigate();
   const [filters, setFilters] = useState({
     search: "",
     fecha_desde: "",
@@ -197,7 +199,7 @@ export default function PageCapacitaciones() {
 
   return (
     <div className="min-h-screen bg-slate-50 px-3 py-4 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl space-y-4">
+      <div className="mx-auto w-full max-w-[1600px] space-y-4">
         <header className="flex flex-col gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="flex items-center gap-2 text-sm font-medium text-slate-500">
@@ -207,6 +209,13 @@ export default function PageCapacitaciones() {
             <h1 className="mt-1 text-2xl font-semibold text-slate-950">Calendario de capacitaciones</h1>
           </div>
           <div className="flex flex-wrap gap-2">
+            <Link
+              to="/auth/capacitaciones/actas"
+              className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-white"
+            >
+              <FileSignature className="h-4 w-4" />
+              Actas
+            </Link>
             <Link
               to="/auth/capacitaciones/encuestas"
               className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-white"
@@ -472,13 +481,25 @@ export default function PageCapacitaciones() {
                   <p className="mt-1 text-sm text-slate-500">Creada por {nombreUsuario(selected.creador)}</p>
                 )}
               </div>
-              <button
-                type="button"
-                onClick={closeModal}
-                className="rounded-md p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
-              >
-                <X className="h-5 w-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                {selected && (
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/auth/capacitaciones/${selected.uuid}/acta`)}
+                    className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+                  >
+                    <FileSignature className="h-4 w-4" />
+                    Acta y firmas
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="rounded-md p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
 
             {selected && !canEditSelected && (
@@ -600,6 +621,16 @@ export default function PageCapacitaciones() {
                   )}
                 </div>
                 <div className="flex flex-col-reverse gap-2 sm:flex-row">
+                  {selected && (
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/auth/capacitaciones/${selected.uuid}/acta`)}
+                      className="inline-flex items-center justify-center gap-2 rounded-md border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
+                    >
+                      <FileSignature className="h-4 w-4" />
+                      Gestionar acta
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={closeModal}
