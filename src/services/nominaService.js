@@ -684,6 +684,9 @@ export const permisoService = {
   rechazar(uuid, data = {}) {
     return apiClient.patch(`api/nomina/permisos/${uuid}/rechazar`, data);
   },
+  actualizarTratamiento(uuid, data) {
+    return apiClient.patch(`api/nomina/permisos/${uuid}/tratamiento`, data);
+  },
   async getPermisosAprobadosHoy(userId) {
     const kioskConfig = await kioskRequestConfig();
     const params = { user_id: userId };

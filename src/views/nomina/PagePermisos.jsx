@@ -1,7 +1,7 @@
 import { useState } from "react";
 import PropTypes from "prop-types";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle, XCircle, Loader2, Plus } from "lucide-react";
+import { CheckCircle, XCircle, Loader2, Pencil, Plus } from "lucide-react";
 import { useGetPermisos } from "../../hooks/nomina/useGetPermisos";
 import { permisoService, portalEmpleadoService } from "../../services/nominaService";
 import { showToast } from "../../helpers/utils/showToast";
@@ -17,18 +17,25 @@ const STATUS_BADGE = {
 
 function ModalGestion({ item, accion, onClose, onConfirm, loading }) {
   const [observacion, setObservacion] = useState("");
-  const [esRemunerado, setEsRemunerado] = useState("");
+  const [esRemunerado, setEsRemunerado] = useState(
+    accion === "tratamiento" ? (item?.es_remunerado ? "1" : "0") : ""
+  );
+  const gestionaTratamiento = accion === "aprobar" || accion === "tratamiento";
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div className="relative bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
         <h3 className="text-base font-semibold text-gray-800 mb-1">
-          {accion === "aprobar" ? "Aprobar permiso" : "Rechazar permiso"}
+          {accion === "aprobar"
+            ? "Aprobar permiso"
+            : accion === "tratamiento"
+              ? "Cambiar tratamiento en nómina"
+              : "Rechazar permiso"}
         </h3>
         <p className="text-sm text-gray-500 mb-4">
           Empleado: <span className="font-medium text-gray-700">{item?.empleado?.name ?? "—"}</span>
         </p>
-        {accion === "aprobar" && (
+        {gestionaTratamiento && (
           <div className="mb-4">
             <label className="block text-xs font-medium text-gray-600 mb-1">Tratamiento en nómina</label>
             <select
@@ -61,13 +68,17 @@ function ModalGestion({ item, accion, onClose, onConfirm, loading }) {
               observacion,
               es_remunerado: esRemunerado === "1",
             })}
-            disabled={loading || (accion === "aprobar" && esRemunerado === "")}
+            disabled={loading || (gestionaTratamiento && esRemunerado === "")}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white rounded-md disabled:opacity-60 ${
-              accion === "aprobar" ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"
+              gestionaTratamiento ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"
             }`}
           >
             {loading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-            {accion === "aprobar" ? "Confirmar aprobación" : "Confirmar rechazo"}
+            {accion === "aprobar"
+              ? "Confirmar aprobación"
+              : accion === "tratamiento"
+                ? "Guardar tratamiento"
+                : "Confirmar rechazo"}
           </button>
         </div>
       </div>
@@ -76,7 +87,10 @@ function ModalGestion({ item, accion, onClose, onConfirm, loading }) {
 }
 
 ModalGestion.propTypes = {
-  item: PropTypes.shape({ empleado: PropTypes.shape({ name: PropTypes.string }) }),
+  item: PropTypes.shape({
+    empleado: PropTypes.shape({ name: PropTypes.string }),
+    es_remunerado: PropTypes.bool,
+  }),
   accion: PropTypes.string.isRequired,
   onClose: PropTypes.func.isRequired,
   onConfirm: PropTypes.func.isRequired,
@@ -111,11 +125,17 @@ export default function PagePermisos({ portalMode = false }) {
     const { item, accion } = gestion;
     setLoadingUuid(item.uuid);
     try {
-      const fn = accion === "aprobar" ? permisoService.aprobar : permisoService.rechazar;
-      const payload = accion === "aprobar" ? { observacion, es_remunerado } : { observacion };
+      const fn = accion === "aprobar"
+        ? permisoService.aprobar
+        : accion === "tratamiento"
+          ? permisoService.actualizarTratamiento
+          : permisoService.rechazar;
+      const payload = ["aprobar", "tratamiento"].includes(accion)
+        ? { observacion, es_remunerado }
+        : { observacion };
       const res = await fn(item.uuid, payload);
-      showToast("success", res.data.message || `Permiso ${accion === "aprobar" ? "aprobado" : "rechazado"}`);
-      queryClient.invalidateQueries(["permisos"]);
+      showToast("success", res.data.message || "Permiso actualizado");
+      queryClient.invalidateQueries({ queryKey: ["permisos"] });
     } catch {
       showToast("error", "Error al procesar el permiso");
     } finally {
@@ -240,6 +260,17 @@ export default function PagePermisos({ portalMode = false }) {
                             <XCircle className="h-3.5 w-3.5" /> Rechazar
                           </button>
                         </div>
+                      )}
+                      {item.status === "aprobado" && (
+                        <button
+                          type="button"
+                          onClick={() => setGestion({ item, accion: "tratamiento" })}
+                          disabled={!!loadingUuid}
+                          className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-800 disabled:opacity-40"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                          Cambiar tratamiento
+                        </button>
                       )}
                     </td>
                   )}
