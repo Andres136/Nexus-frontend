@@ -419,6 +419,15 @@ export const nominaService = {
       responseType: "blob",
     });
   },
+  preliquidarLote(data) {
+    return apiClient.post("api/nomina/nominas/preliquidar-todos", data);
+  },
+  exportarPreliquidacionLote(params = {}) {
+    return apiClient.get("api/nomina/nominas/exportar-preliquidacion-masiva", {
+      params,
+      responseType: "blob",
+    });
+  },
   desprendiblePdf(nominaUuid) {
     return apiClient.get(`api/nomina/nominas/${nominaUuid}/desprendible`, {
       responseType: "blob",
@@ -578,6 +587,15 @@ export const workSessionService = {
   },
   getResumen(params = {}) {
     return apiClient.get("api/nomina/work-sessions/resumen", { params });
+  },
+  getResumenFiltrado(params = {}) {
+    return apiClient.get("api/nomina/work-sessions/resumen-filtrado", { params });
+  },
+  exportarTardanza(params = {}) {
+    return apiClient.get("api/nomina/work-sessions/exportar", {
+      params,
+      responseType: "blob",
+    });
   },
   async createSession(data) {
     const kioskConfig = await kioskRequestConfig();

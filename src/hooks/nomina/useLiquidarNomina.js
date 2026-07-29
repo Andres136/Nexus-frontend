@@ -11,6 +11,7 @@ const EMPTY_FORM = {
   periodo_inicio: "",
   periodo_fin: "",
   descuento_id: "",
+  descontar_tardanzas: false,
   tipo_liquidacion: "nomina",
   fecha_retiro: "",
   motivo_retiro: "renuncia",
@@ -39,8 +40,8 @@ export const useLiquidarNomina = ({ onSuccess, initialData = {} } = {}) => {
   const { jornadas, isLoading: loadingJornadas } = useGetJornadaLaboral();
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
     setPreview(null);
   };
 

@@ -128,6 +128,7 @@ import TrazabilidadPrioridades from "../views/calidad/TrazabilidadPrioridades";
 import Contabilidad from "../views/contabilidad/Contabilidad";
 import NominaLayout from "../layouts/NominaLayout";
 import PageProcesarNomina from "../views/nomina/PageProcesarNomina";
+import PageLiquidarTodoNomina from "../views/nomina/PageLiquidarTodoNomina";
 import PageContratos from "../views/nomina/PageContratos";
 import PageSeguridadSocial from "../views/nomina/PageSeguridadSocial";
 import PageTipoContrato from "../views/nomina/PageTipoContrato";
@@ -815,6 +816,14 @@ export default function Router() {
               element={
                 <DynamicProtectedRoute permission="/auth/crm/nomina/procesar">
                   <PageProcesarNomina />
+                </DynamicProtectedRoute>
+              }
+            />
+            <Route
+              path="liquidar-todo"
+              element={
+                <DynamicProtectedRoute permission="/auth/crm/nomina/liquidar-todo">
+                  <PageLiquidarTodoNomina />
                 </DynamicProtectedRoute>
               }
             />

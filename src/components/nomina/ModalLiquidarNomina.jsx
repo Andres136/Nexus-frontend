@@ -238,6 +238,15 @@ export default function ModalLiquidarNomina({ onClose, initialData = {} }) {
                 <p className="mt-1 text-xs text-red-500">{fieldErrors.periodo_fin[0]}</p>
               )}
             </div>
+            <label className="col-span-2 flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                name="descontar_tardanzas"
+                checked={formData.descontar_tardanzas}
+                onChange={handleChange}
+              />
+              Descontar tardanzas del pago (si no se marca, solo se muestran de referencia)
+            </label>
           </div>
         )}
 
@@ -646,20 +655,23 @@ export default function ModalLiquidarNomina({ onClose, initialData = {} }) {
                   )}
                 </div>
 
-                {/* Informativos — no se descuentan automáticamente */}
+                {/* Permisos no remunerados: siempre se descuentan. Tardanzas: solo si se marcó la casilla. */}
                 {((preview.minutos_tardanza ?? 0) > 0 || (preview.minutos_permisos_no_remunerados ?? 0) > 0) && (
                   <div className="mt-3 pt-2 border-t border-dashed border-gray-200">
-                    <p className="mb-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">Informativos (no descontados)</p>
+                    <p className="mb-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">Tardanzas y permisos</p>
                     <div className="space-y-1">
                       {(preview.minutos_permisos_no_remunerados ?? 0) > 0 && (
                         <div className="flex justify-between gap-3 text-xs text-gray-400">
-                          <span>Permisos no remunerados ({preview.minutos_permisos_no_remunerados} min)</span>
+                          <span>Permisos no remunerados ({preview.minutos_permisos_no_remunerados} min) — descontados</span>
                           <span>{formatCOP(preview.valor_permisos_no_remunerados ?? 0)}</span>
                         </div>
                       )}
                       {(preview.minutos_tardanza ?? 0) > 0 && (
                         <div className="flex justify-between gap-3 text-xs text-gray-400">
-                          <span>Tardanzas ({preview.minutos_tardanza} min)</span>
+                          <span>
+                            Tardanzas ({preview.minutos_tardanza} min)
+                            {preview.descuenta_tardanzas ? " — descontadas" : " — solo referencia, no descontadas"}
+                          </span>
                           <span>{formatCOP(preview.valor_tardanzas ?? 0)}</span>
                         </div>
                       )}
