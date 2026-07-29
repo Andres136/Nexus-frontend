@@ -1,7 +1,6 @@
 import { useState } from "react";
 import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
-import ModalLiquidarNomina from "../../components/nomina/ModalLiquidarNomina";
 import { CENTROS_COSTO, useProcesarNomina } from "../../hooks/nomina/useProcesarNomina";
 import { Building2, Download, History, LayoutDashboard, ReceiptText, Users } from "lucide-react";
 
@@ -146,7 +145,6 @@ export default function PageProcesarNomina() {
   const [actionMenuPosition, setActionMenuPosition] = useState(null);
   const {
     mes, anio, search, page, setPage, activeTab, setActiveTab,
-    showLiquidarModal, setShowLiquidarModal, liquidarInitialData,
     openActions, setOpenActions,
     batchEmpresa, setBatchEmpresa, setBatchPeriodoInicio, setBatchPeriodoFin,
     batchInicioSeleccionado, batchFinSeleccionado,
@@ -182,6 +180,11 @@ export default function PageProcesarNomina() {
         : Math.max(ACTION_MENU_GAP, rect.top - ACTION_MENU_HEIGHT - ACTION_MENU_GAP),
       right: window.innerWidth - rect.right,
     });
+  };
+
+  const irALiquidacion = (item) => {
+    const params = new URLSearchParams(abrirLiquidacion(item));
+    navigate(`/auth/crm/nomina/procesar/liquidar?${params.toString()}`);
   };
 
   return (
@@ -471,7 +474,7 @@ export default function PageProcesarNomina() {
                             >
                               <button
                                 type="button"
-                                onClick={() => abrirLiquidacion(item)}
+                                onClick={() => irALiquidacion(item)}
                                 className="block w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:text-gray-400"
                                 disabled={Boolean(nominaExiste)}
                               >
@@ -726,17 +729,6 @@ export default function PageProcesarNomina() {
           </>
         )}
       </div>
-
-      {showLiquidarModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-xl bg-white p-6 shadow-xl">
-            <ModalLiquidarNomina
-              onClose={() => setShowLiquidarModal(false)}
-              initialData={liquidarInitialData}
-            />
-          </div>
-        </div>
-      )}
 
     </div>
   );

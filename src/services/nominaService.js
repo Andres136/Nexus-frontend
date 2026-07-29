@@ -431,6 +431,18 @@ export const nominaService = {
   getExcepcionDescuento(params = {}) {
     return apiClient.get("api/nomina/nominas/excepcion-descuento", { params });
   },
+  getResponsablesLote() {
+    return apiClient.get("api/nomina/nominas/lotes-aprobacion/responsables");
+  },
+  crearLoteAprobacion(data) {
+    return apiClient.post("api/nomina/nominas/lotes-aprobacion", data);
+  },
+  getLoteAprobacion(uuid) {
+    return apiClient.get(`api/nomina/nominas/lotes-aprobacion/${uuid}`);
+  },
+  aprobarLoteAprobacion(uuid) {
+    return apiClient.post(`api/nomina/nominas/lotes-aprobacion/${uuid}/aprobar`);
+  },
   desprendiblePdf(nominaUuid) {
     return apiClient.get(`api/nomina/nominas/${nominaUuid}/desprendible`, {
       responseType: "blob",
