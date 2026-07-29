@@ -116,7 +116,7 @@ export default function DashboardSemestral() {
 
       {/* GRÁFICA */}
       <div className="bg-white p-6 rounded-xl shadow">
-        <h3 className="mb-4 font-semibold">Distribución de Novedades</h3>
+        <h3 className="mb-4 font-semibold">Distribución de No Conformidades</h3>
 
         <ResponsiveContainer width="100%" height={300}>
           <PieChart>
