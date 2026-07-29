@@ -1,8 +1,9 @@
 import { useState } from "react";
 import PropTypes from "prop-types";
+import { useNavigate } from "react-router-dom";
 import ModalLiquidarNomina from "../../components/nomina/ModalLiquidarNomina";
 import { CENTROS_COSTO, useProcesarNomina } from "../../hooks/nomina/useProcesarNomina";
-import { Building2, Download, History, LayoutDashboard, ReceiptText } from "lucide-react";
+import { Building2, Download, History, LayoutDashboard, ReceiptText, Users } from "lucide-react";
 
 const MESES = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -141,6 +142,7 @@ Pagination.propTypes = {
 };
 
 export default function PageProcesarNomina() {
+  const navigate = useNavigate();
   const [actionMenuPosition, setActionMenuPosition] = useState(null);
   const {
     mes, anio, search, page, setPage, activeTab, setActiveTab,
@@ -263,6 +265,14 @@ export default function PageProcesarNomina() {
                 Descarga únicamente nóminas que ya pasaron por preliquidación, aprobación y liquidación.
               </p>
             </div>
+            <button
+              type="button"
+              onClick={() => navigate("/auth/crm/nomina/liquidar-todo")}
+              className="h-9 px-4 inline-flex items-center gap-2 text-sm font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-colors flex-shrink-0"
+            >
+              <Users className="h-4 w-4" />
+              Liquidar todo
+            </button>
           </div>
 
           <div className="flex flex-wrap gap-3 items-end mb-4">

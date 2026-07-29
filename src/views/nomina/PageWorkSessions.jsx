@@ -12,6 +12,7 @@ import {
   Timer,
   Users,
   Camera,
+  Download,
   X,
 } from "lucide-react";
 import { useGetWorkSessions } from "../../hooks/nomina/useGetWorkSessions";
@@ -225,7 +226,16 @@ export default function PageWorkSessions() {
     per_page: 1000,
   }), [userId, sedeId, today]);
 
+  const [exportandoTardanza, setExportandoTardanza] = useState(false);
+
   const { workSessions, isLoading } = useGetWorkSessions(params);
+  const { data: resumenFiltrado, isFetching: loadingResumenFiltrado } = useQuery({
+    queryKey: ["workSessionsResumenFiltrado", userId, search, fechaInicio, fechaFin, sedeId],
+    queryFn: async () => {
+      const response = await workSessionService.getResumenFiltrado(params);
+      return response.data?.data;
+    },
+  });
   const { workSessions: dailyWorkSessions, isLoading: loadingDaily } =
     useGetWorkSessions(dailyParams);
   const { data: resumenPeriodo, isFetching: loadingResumen } = useQuery({
@@ -321,6 +331,37 @@ export default function PageWorkSessions() {
       showToast("error", error.response?.data?.message || "No fue posible autorizar la recuperación");
     },
   });
+
+  const handleExportarTardanza = async () => {
+    setExportandoTardanza(true);
+    try {
+      const response = await workSessionService.exportarTardanza(params);
+      const url = window.URL.createObjectURL(
+        new Blob([response.data], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" })
+      );
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `tardanzas_asistencia_${fechaInicio || "todas"}_${fechaFin || "todas"}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      showToast("success", "Excel de tardanzas descargado.");
+    } catch (error) {
+      let message = "No se pudo descargar el Excel de tardanzas.";
+      if (error.response?.data instanceof Blob) {
+        try {
+          const data = JSON.parse(await error.response.data.text());
+          message = data.message || message;
+        } catch {
+          // La respuesta no contiene un error JSON legible.
+        }
+      }
+      showToast("error", message);
+    } finally {
+      setExportandoTardanza(false);
+    }
+  };
 
   const guardarRecuperacion = (event) => {
     event.preventDefault();
@@ -548,6 +589,59 @@ export default function PageWorkSessions() {
         </div>
       </div>
 
+      {/* Resumen de tardanza según los filtros activos (fecha, sede, empleado, búsqueda) */}
+      <div className="mb-5 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold text-gray-900">Tardanza según filtros aplicados</p>
+            <p className="text-xs text-gray-500">
+              {fmtFecha(fechaInicio)} a {fmtFecha(fechaFin)}
+              {empleadoSeleccionado ? ` · ${empleadoSeleccionado.label}` : ""}
+              {loadingResumenFiltrado && " · actualizando..."}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleExportarTardanza}
+            disabled={exportandoTardanza}
+            className="inline-flex h-9 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+          >
+            <Download className="h-4 w-4" />
+            {exportandoTardanza ? "Preparando..." : "Descargar tardanzas (Excel)"}
+          </button>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <Indicador
+            label="Sesiones filtradas"
+            value={loadingResumenFiltrado ? "—" : (resumenFiltrado?.total_sesiones ?? 0)}
+            detail="Según los filtros activos"
+            icon={Users}
+            color="bg-blue-50 text-blue-600"
+          />
+          <Indicador
+            label="Trabajado"
+            value={loadingResumenFiltrado ? "—" : minsToHM(resumenFiltrado?.minutos_trabajados)}
+            detail="Total del rango filtrado"
+            icon={Timer}
+            color="bg-indigo-50 text-indigo-600"
+          />
+          <Indicador
+            label="Tardanza"
+            value={loadingResumenFiltrado ? "—" : minsToHM(resumenFiltrado?.minutos_tardanza)}
+            detail={`${resumenFiltrado?.dias_tarde ?? 0} sesión(es) con tardanza`}
+            icon={CircleAlert}
+            color="bg-orange-50 text-orange-600"
+          />
+          <Indicador
+            label="Empleados con tardanza"
+            value={loadingResumenFiltrado ? "—" : (resumenFiltrado?.empleados_con_tardanza ?? 0)}
+            detail="Dentro del rango filtrado"
+            icon={CircleAlert}
+            color="bg-amber-50 text-amber-600"
+          />
+        </div>
+      </div>
 
       {/* Tabla */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">

@@ -23,6 +23,7 @@ import {
   RefreshCcw,
   Landmark,
   UserMinus,
+  Users,
 } from "lucide-react";
 
 import { useSolicitudesPendientesCount } from "../hooks/nomina/useSolicitudesPendientesCount";
@@ -38,6 +39,12 @@ const NAV_ITEMS = [
         label: "Liquidación",
         icon: ReceiptText,
         link: "/auth/crm/nomina/procesar",
+      },
+      {
+        id: "liquidar-todo",
+        label: "Liquidar todo",
+        icon: Users,
+        link: "/auth/crm/nomina/liquidar-todo",
       },
       {
         id: "comisiones",
