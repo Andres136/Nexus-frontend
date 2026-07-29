@@ -395,6 +395,9 @@ export const nominaService = {
   preliquidar(data) {
     return apiClient.post("api/nomina/nominas/preliquidar", data);
   },
+  getPermisosLiquidacion(params) {
+    return apiClient.get("api/nomina/nominas/permisos-liquidacion", { params });
+  },
   getPreliquidacion(uuid) {
     return apiClient.get(`api/nomina/nominas/preliquidaciones/${uuid}`);
   },

@@ -28,6 +28,9 @@ export const useLiquidarNomina = ({ onSuccess, initialData = {} } = {}) => {
   const [preview, setPreview] = useState(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [auditLoading, setAuditLoading] = useState(false);
+  const [permisosPeriodo, setPermisosPeriodo] = useState([]);
+  const [permisosLoading, setPermisosLoading] = useState(false);
+  const [permisosDescontarIds, setPermisosDescontarIds] = useState([]);
   const [observacionRevision, setObservacionRevision] = useState("");
   const [ajusteForm, setAjusteForm] = useState({
     tipo: "devengo",
@@ -77,6 +80,57 @@ export const useLiquidarNomina = ({ onSuccess, initialData = {} } = {}) => {
     return () => { cancelado = true; };
   }, [formData.user_id, formData.periodo_inicio, formData.periodo_fin, formData.tipo_liquidacion]);
 
+  useEffect(() => {
+    if (
+      formData.tipo_liquidacion === "retiro"
+      || !formData.user_id
+      || !formData.periodo_inicio
+      || !formData.periodo_fin
+    ) {
+      setPermisosPeriodo([]);
+      setPermisosDescontarIds([]);
+      return undefined;
+    }
+
+    let cancelado = false;
+    setPermisosLoading(true);
+    nominaService.getPermisosLiquidacion({
+      user_id: formData.user_id,
+      periodo_inicio: formData.periodo_inicio,
+      periodo_fin: formData.periodo_fin,
+    }).then((response) => {
+      if (cancelado) return;
+      const permisos = response.data?.data ?? [];
+      setPermisosPeriodo(permisos);
+      setPermisosDescontarIds(
+        permisos.filter((permiso) => !permiso.es_remunerado).map((permiso) => permiso.id)
+      );
+    }).catch(() => {
+      if (!cancelado) {
+        setPermisosPeriodo([]);
+        setPermisosDescontarIds([]);
+      }
+    }).finally(() => {
+      if (!cancelado) setPermisosLoading(false);
+    });
+
+    return () => { cancelado = true; };
+  }, [formData.user_id, formData.periodo_inicio, formData.periodo_fin, formData.tipo_liquidacion]);
+
+  const togglePermisoDescuento = (permisoId) => {
+    setPermisosDescontarIds((prev) => (
+      prev.includes(permisoId)
+        ? prev.filter((id) => id !== permisoId)
+        : [...prev, permisoId]
+    ));
+    setPreview(null);
+  };
+
+  const seleccionarTodosPermisos = (seleccionar) => {
+    setPermisosDescontarIds(seleccionar ? permisosPeriodo.map((permiso) => permiso.id) : []);
+    setPreview(null);
+  };
+
   const handleAjusteChange = (event) => {
     const { name, value, type, checked } = event.target;
     setAjusteForm((prev) => ({
@@ -93,6 +147,8 @@ export const useLiquidarNomina = ({ onSuccess, initialData = {} } = {}) => {
     if (!payload.indemnizacion) delete payload.indemnizacion;
     if (!payload.deducciones) delete payload.deducciones;
     if (formData.tipo_liquidacion !== "retiro") {
+      payload.permisos_descontar_ids = permisosDescontarIds;
+      payload.descontar_permisos = permisosDescontarIds.length > 0;
       delete payload.motivo_retiro;
       delete payload.indemnizacion;
       delete payload.deducciones;
@@ -267,5 +323,10 @@ export const useLiquidarNomina = ({ onSuccess, initialData = {} } = {}) => {
     loadingEmpleados,
     jornadas: jornadas?.data?.data ?? [],
     loadingJornadas,
+    permisosPeriodo,
+    permisosLoading,
+    permisosDescontarIds,
+    togglePermisoDescuento,
+    seleccionarTodosPermisos,
   };
 };
