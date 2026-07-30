@@ -1,25 +1,35 @@
 import { useState } from "react";
-import { 
-  QrCode, 
-  Mail, 
-  FileText, 
+import {
+  QrCode,
+  Mail,
+  FileText,
   Files,
-  Sparkles, 
+  Sparkles,
   Zap,
   Target,
   Users,
-  BarChart3
+  BarChart3,
+  CalendarDays
 } from "lucide-react";
 
 import CreateQr from "./CreateQr";
 import EnviarCorreo from "./EnviarCorreo";
 import PlantillaEditor from "./PlantillaEditor";
 import PageCorporateDocuments from "../corporate/PageCorporateDocuments";
+import CalendarioPublicaciones from "../../components/marketing/CalendarioPublicaciones";
 
 export default function Marketing() {
   const [activeTab, setActiveTab] = useState("plantillas");
 
   const tabs = [
+    {
+      id: "cronograma",
+      label: "Cronograma",
+      icon: CalendarDays,
+      description: "Calendario de publicaciones en redes",
+      color: "amber",
+      component: <CalendarioPublicaciones />
+    },
     {
       id: "plantillas",
       label: "Editor de Plantillas",
@@ -83,6 +93,13 @@ export default function Marketing() {
         border: isActive ? "border-slate-300" : "border-transparent",
         accent: "text-slate-700",
         icon: isActive ? "text-slate-700" : "text-gray-400"
+      },
+      amber: {
+        bg: isActive ? "bg-amber-100" : "hover:bg-amber-50",
+        text: isActive ? "text-amber-700" : "text-gray-600 hover:text-amber-600",
+        border: isActive ? "border-amber-300" : "border-transparent",
+        accent: "text-amber-600",
+        icon: isActive ? "text-amber-600" : "text-gray-400"
       }
     };
     return colors[color];
@@ -92,105 +109,62 @@ export default function Marketing() {
   const contentWidthClass = activeTab === "documentos" ? "max-w-[1520px]" : "max-w-7xl";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-      {/* ✅ HEADER MEJORADO */}
+    <div className="min-h-screen bg-gray-50">
+      {/* ✅ HEADER COMPACTO */}
       <div className="bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-8">
+          <div className="py-4">
             {/* Hero Section */}
-            <div className="text-center mb-8">
-              <div className="flex justify-center items-center mb-4">
-                <div className="p-4 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-lg">
-                  <Sparkles className="w-10 h-10 text-white" />
-                </div>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-sm shrink-0">
+                <Sparkles className="w-5 h-5 text-white" />
               </div>
-              <h1 className="text-4xl font-bold text-gray-900 mb-3">
-                Marketing Digital
-              </h1>
-              <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-                Suite completa de herramientas para potenciar tu estrategia de marketing digital y comunicaciones corporativas
-              </p>
-            </div>
+              <div className="min-w-0">
+                <h1 className="text-lg font-bold text-gray-900 leading-tight">
+                  Marketing Digital
+                </h1>
+                <p className="text-sm text-gray-500 leading-tight truncate">
+                  Suite de herramientas de marketing digital y comunicaciones corporativas
+                </p>
+              </div>
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl p-6 text-white">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-green-100 text-sm font-medium">Plantillas</p>
-                    <p className="text-2xl font-bold">12+</p>
-                  </div>
-                  <FileText className="w-8 h-8 text-green-200" />
+              {/* Stats compactos */}
+              <div className="hidden lg:flex items-center gap-2 ml-auto shrink-0">
+                <div className="flex items-center gap-1.5 bg-green-50 border border-green-100 rounded-lg px-3 py-1.5">
+                  <FileText className="w-3.5 h-3.5 text-green-600" />
+                  <span className="text-xs font-semibold text-green-700">12+ plantillas</span>
                 </div>
-              </div>
-              
-              <div className="bg-gradient-to-r from-blue-500 to-cyan-600 rounded-xl p-6 text-white">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-blue-100 text-sm font-medium">Campañas</p>
-                    <p className="text-2xl font-bold">500+</p>
-                  </div>
-                  <Target className="w-8 h-8 text-blue-200" />
+                <div className="flex items-center gap-1.5 bg-blue-50 border border-blue-100 rounded-lg px-3 py-1.5">
+                  <Target className="w-3.5 h-3.5 text-blue-600" />
+                  <span className="text-xs font-semibold text-blue-700">500+ campañas</span>
                 </div>
-              </div>
-              
-              <div className="bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl p-6 text-white">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-purple-100 text-sm font-medium">Alcance</p>
-                    <p className="text-2xl font-bold">10K+</p>
-                  </div>
-                  <Users className="w-8 h-8 text-purple-200" />
+                <div className="flex items-center gap-1.5 bg-purple-50 border border-purple-100 rounded-lg px-3 py-1.5">
+                  <Users className="w-3.5 h-3.5 text-purple-600" />
+                  <span className="text-xs font-semibold text-purple-700">10K+ alcance</span>
                 </div>
               </div>
             </div>
 
-            {/* ✅ NAVIGATION TABS MEJORADAS */}
-            <div className="flex flex-wrap gap-2 justify-center">
+            {/* ✅ NAVIGATION TABS COMPACTAS */}
+            <div className="flex flex-wrap gap-1.5">
               {tabs.map((tab) => {
                 const isActive = activeTab === tab.id;
                 const colorClasses = getColorClasses(tab.color, isActive);
                 const Icon = tab.icon;
-                
+
                 return (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
                     className={`
-                      group relative flex items-center gap-3 px-6 py-4 rounded-xl font-medium
-                      transition-all duration-200 border-2
+                      group relative flex items-center gap-2 px-3 py-2 rounded-lg font-medium text-sm
+                      transition-all duration-150 border
                       ${colorClasses.bg} ${colorClasses.text} ${colorClasses.border}
-                      ${isActive ? 'shadow-lg transform -translate-y-1' : 'hover:shadow-md hover:-translate-y-0.5'}
-                      min-w-[200px]
+                      ${isActive ? 'shadow-sm' : ''}
                     `}
                   >
-                    {/* Icono */}
-                    <Icon className={`w-5 h-5 ${colorClasses.icon} group-hover:scale-110 transition-transform`} />
-                    
-                    {/* Contenido */}
-                    <div className="flex flex-col items-start">
-                      <span className="font-semibold text-sm">
-                        {tab.label}
-                      </span>
-                      <span className="text-xs opacity-75 leading-tight">
-                        {tab.description}
-                      </span>
-                    </div>
-
-                    {/* Indicator activo */}
-                    {isActive && (
-                      <div className={`
-                        absolute -top-1 -right-1 w-3 h-3 rounded-full
-                        ${tab.color === 'green' ? 'bg-green-500' : ''}
-                        ${tab.color === 'blue' ? 'bg-blue-500' : ''}
-                        ${tab.color === 'purple' ? 'bg-purple-500' : ''}
-                        ${tab.color === 'slate' ? 'bg-slate-500' : ''}
-                        shadow-md animate-pulse
-                      `} />
-                    )}
-
-                    {/* Efecto hover */}
-                    <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-5 bg-gradient-to-r from-gray-900 to-transparent transition-opacity" />
+                    <Icon className={`w-4 h-4 ${colorClasses.icon}`} />
+                    <span className="font-semibold">{tab.label}</span>
                   </button>
                 );
               })}
@@ -199,42 +173,8 @@ export default function Marketing() {
         </div>
       </div>
 
-      {/* ✅ CONTENT AREA MEJORADA */}
-      <div className={`${contentWidthClass} mx-auto px-4 sm:px-6 lg:px-8 py-8`}>
-        {/* Breadcrumb y título de sección */}
-        <div className="mb-6">
-          <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-            <span>Marketing Digital</span>
-            <span>/</span>
-            <span className={getColorClasses(currentTab.color, true).accent}>
-              {currentTab.label}
-            </span>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <div className={`
-              p-2 rounded-lg
-              ${currentTab.color === 'green' ? 'bg-green-100' : ''}
-              ${currentTab.color === 'blue' ? 'bg-blue-100' : ''}
-              ${currentTab.color === 'purple' ? 'bg-purple-100' : ''}
-              ${currentTab.color === 'slate' ? 'bg-slate-100' : ''}
-            `}>
-              <currentTab.icon className={`
-                w-6 h-6
-                ${getColorClasses(currentTab.color, true).accent}
-              `} />
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">
-                {currentTab.label}
-              </h2>
-              <p className="text-gray-600">
-                {currentTab.description}
-              </p>
-            </div>
-          </div>
-        </div>
-
+      {/* ✅ CONTENT AREA */}
+      <div className={`${contentWidthClass} mx-auto px-4 sm:px-6 lg:px-8 py-5`}>
         {/* Contenido dinámico */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="animate-in fade-in duration-300">
