@@ -750,11 +750,17 @@ export const horaExtraService = {
   createHoraExtra(data) {
     return apiClient.post("api/nomina/horas-extras", data);
   },
+  actualizarHoraExtra(uuid, data) {
+    return apiClient.patch(`api/nomina/horas-extras/${uuid}`, data);
+  },
   aprobar(uuid, data = {}) {
     return apiClient.patch(`api/nomina/horas-extras/${uuid}/aprobar`, data);
   },
   rechazar(uuid, data = {}) {
     return apiClient.patch(`api/nomina/horas-extras/${uuid}/rechazar`, data);
+  },
+  desaprobar(uuid, data = {}) {
+    return apiClient.patch(`api/nomina/horas-extras/${uuid}/desaprobar`, data);
   },
   aprobarTodas(params = {}, data = {}) {
     return apiClient.patch("api/nomina/horas-extras/aprobar-todas", data, { params });

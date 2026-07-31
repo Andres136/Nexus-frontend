@@ -10,7 +10,11 @@ export default function ModalGestionHoraExtra({ item, accion, onClose, onConfirm
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div className="relative bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
         <h3 className="text-base font-semibold text-gray-800 mb-1">
-          {accion === "aprobar" ? "Aprobar hora extra" : "Rechazar hora extra"}
+          {accion === "aprobar"
+            ? "Aprobar hora extra"
+            : accion === "desaprobar"
+              ? "Desaprobar hora extra"
+              : "Rechazar hora extra"}
         </h3>
         <p className="text-sm text-gray-500 mb-4">
           Empleado: <span className="font-medium text-gray-700">{item?.empleado?.name ?? "-"}</span>
@@ -34,11 +38,19 @@ export default function ModalGestionHoraExtra({ item, accion, onClose, onConfirm
             onClick={() => onConfirm(observacion)}
             disabled={loading}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white rounded-md disabled:opacity-60 ${
-              accion === "aprobar" ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"
+              accion === "aprobar"
+                ? "bg-green-600 hover:bg-green-700"
+                : accion === "desaprobar"
+                  ? "bg-amber-600 hover:bg-amber-700"
+                  : "bg-red-600 hover:bg-red-700"
             }`}
           >
             {loading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-            {accion === "aprobar" ? "Confirmar aprobación" : "Confirmar rechazo"}
+            {accion === "aprobar"
+              ? "Confirmar aprobación"
+              : accion === "desaprobar"
+                ? "Confirmar desaprobación"
+                : "Confirmar rechazo"}
           </button>
         </div>
       </div>
@@ -48,7 +60,7 @@ export default function ModalGestionHoraExtra({ item, accion, onClose, onConfirm
 
 ModalGestionHoraExtra.propTypes = {
   item: PropTypes.object,
-  accion: PropTypes.oneOf(["aprobar", "rechazar"]).isRequired,
+  accion: PropTypes.oneOf(["aprobar", "rechazar", "desaprobar"]).isRequired,
   onClose: PropTypes.func.isRequired,
   onConfirm: PropTypes.func.isRequired,
   loading: PropTypes.bool,

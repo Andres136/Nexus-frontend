@@ -1,5 +1,5 @@
 import PropTypes from "prop-types";
-import { CheckCircle, Loader2, XCircle } from "lucide-react";
+import { CheckCircle, Loader2, RotateCcw, XCircle } from "lucide-react";
 
 const STATUS_BADGE = {
   pendiente: "bg-yellow-100 text-yellow-700",
@@ -73,6 +73,15 @@ export default function TablaHorasExtrasOperacion({ lista, isLoading, loadingUui
                     <XCircle className="h-3.5 w-3.5" /> Rechazar
                   </button>
                 </div>
+              )}
+              {item.status === "aprobada" && (
+                <button
+                  onClick={() => onGestion({ item, accion: "desaprobar" })}
+                  disabled={!!loadingUuid}
+                  className="inline-flex items-center gap-1 text-xs font-medium text-amber-600 hover:text-amber-800 disabled:opacity-40"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" /> Desaprobar
+                </button>
               )}
             </td>
           </tr>

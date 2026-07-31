@@ -1,7 +1,7 @@
 import { useState } from "react";
 import PropTypes from "prop-types";
 import Select from "react-select";
-import { Loader2, Plus, X } from "lucide-react";
+import { Loader2, Plus, Save, X } from "lucide-react";
 
 const initialForm = {
   users: [],
@@ -14,6 +14,21 @@ const initialForm = {
   motivo: "",
 };
 
+function formFromEditItem(editItem, sedeId) {
+  if (!editItem) return { ...initialForm, sede_id: sedeId || "" };
+
+  return {
+    users: [String(editItem.user_id ?? editItem.empleado?.id ?? "")],
+    sede_id: editItem.sede_id ? String(editItem.sede_id) : sedeId || "",
+    kiosko_device_id: editItem.kiosko_device_id ? String(editItem.kiosko_device_id) : "",
+    fecha: editItem.fecha?.slice(0, 10) ?? "",
+    hora_inicio: editItem.hora_inicio?.slice(0, 5) ?? "",
+    hora_fin: editItem.hora_fin?.slice(0, 5) ?? "",
+    tipo: editItem.tipo ?? "diurna",
+    motivo: editItem.motivo ?? "",
+  };
+}
+
 export default function FormHoraExtraOperacion({
   open,
   onClose,
@@ -25,10 +40,11 @@ export default function FormHoraExtraOperacion({
   loadingCatalogos,
   sedeId,
   onSedeChange,
-  mode = "modal",
+  editItem = null,
 }) {
-  const [form, setForm] = useState(() => ({ ...initialForm, sede_id: sedeId || "" }));
+  const [form, setForm] = useState(() => formFromEditItem(editItem, sedeId));
   const [errors, setErrors] = useState({});
+  const isEdit = Boolean(editItem);
 
   if (!open) return null;
 
@@ -46,7 +62,7 @@ export default function FormHoraExtraOperacion({
 
     try {
       await onSubmit(form);
-      setForm({ ...initialForm, sede_id: sedeId || "" });
+      if (!isEdit) setForm({ ...initialForm, sede_id: sedeId || "" });
     } catch (error) {
       setErrors(error.response?.data?.errors ?? {});
     }
@@ -64,7 +80,7 @@ export default function FormHoraExtraOperacion({
   };
 
   const empleadosSeleccionados = empleados.filter((empleado) => form.users.includes(String(empleado.value)));
-  const isPage = mode === "page";
+  const nombreEmpleadoEdit = editItem?.empleado?.name ?? empleadosSeleccionados[0]?.label ?? "Empleado";
 
   const selectStyles = {
     control: (base, state) => ({
@@ -93,25 +109,17 @@ export default function FormHoraExtraOperacion({
     menuPortal: (base) => ({ ...base, zIndex: 9999 }),
   };
 
-  const formClass = isPage
-    ? "bg-white rounded-xl border border-gray-200 shadow-sm w-full"
-    : "relative bg-white rounded-xl shadow-xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-y-auto";
-
-  const wrapperClass = isPage
-    ? "w-full"
-    : "fixed inset-0 z-50 flex items-center justify-center";
-
   return (
-    <div className={wrapperClass}>
-      {!isPage && <div className="absolute inset-0 bg-black/40" onClick={onClose} />}
-      <form onSubmit={submit} className={formClass}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <form onSubmit={submit} className="relative bg-white rounded-xl shadow-xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between">
-          <h3 className="text-base font-semibold text-gray-900">Nueva solicitud de hora extra</h3>
-          {!isPage && (
-            <button type="button" onClick={onClose} className="h-8 w-8 inline-flex items-center justify-center rounded-md text-gray-500 hover:bg-gray-100">
-              <X className="h-4 w-4" />
-            </button>
-          )}
+          <h3 className="text-base font-semibold text-gray-900">
+            {isEdit ? "Editar solicitud de hora extra" : "Nueva solicitud de hora extra"}
+          </h3>
+          <button type="button" onClick={onClose} className="h-8 w-8 inline-flex items-center justify-center rounded-md text-gray-500 hover:bg-gray-100">
+            <X className="h-4 w-4" />
+          </button>
         </div>
 
         <div className="p-6 space-y-4">
@@ -156,20 +164,28 @@ export default function FormHoraExtraOperacion({
 
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Empleados</label>
-            <Select
-              isMulti
-              options={empleados}
-              value={empleadosSeleccionados}
-              onChange={(options) => toggleUser(options ?? [])}
-              isLoading={loadingCatalogos}
-              isDisabled={loadingCatalogos}
-              placeholder={loadingCatalogos ? "Cargando empleados..." : "Buscar y seleccionar empleados..."}
-              noOptionsMessage={() => "No hay empleados disponibles"}
-              classNamePrefix="react-select"
-              menuPortalTarget={document.body}
-              styles={selectStyles}
-            />
-            <p className="mt-1 text-xs text-gray-400">{form.users.length} empleado(s) seleccionado(s)</p>
+            {isEdit ? (
+              <div className="flex h-10 items-center rounded-md border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700">
+                {nombreEmpleadoEdit}
+              </div>
+            ) : (
+              <>
+                <Select
+                  isMulti
+                  options={empleados}
+                  value={empleadosSeleccionados}
+                  onChange={(options) => toggleUser(options ?? [])}
+                  isLoading={loadingCatalogos}
+                  isDisabled={loadingCatalogos}
+                  placeholder={loadingCatalogos ? "Cargando empleados..." : "Buscar y seleccionar empleados..."}
+                  noOptionsMessage={() => "No hay empleados disponibles"}
+                  classNamePrefix="react-select"
+                  menuPortalTarget={document.body}
+                  styles={selectStyles}
+                />
+                <p className="mt-1 text-xs text-gray-400">{form.users.length} empleado(s) seleccionado(s)</p>
+              </>
+            )}
             <FieldError name="users" />
           </div>
 
@@ -207,14 +223,12 @@ export default function FormHoraExtraOperacion({
         </div>
 
         <div className="sticky bottom-0 bg-white border-t border-gray-100 px-6 py-4 flex justify-end gap-2">
-          {!isPage && (
-            <button type="button" onClick={onClose} className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
-              Cancelar
-            </button>
-          )}
+          <button type="button" onClick={onClose} className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+            Cancelar
+          </button>
           <button type="submit" disabled={loading || form.users.length === 0} className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:opacity-60">
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-            Crear solicitud
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : isEdit ? <Save className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+            {isEdit ? "Guardar cambios" : "Crear solicitud"}
           </button>
         </div>
       </form>
@@ -236,5 +250,16 @@ FormHoraExtraOperacion.propTypes = {
   loadingCatalogos: PropTypes.bool,
   sedeId: PropTypes.string,
   onSedeChange: PropTypes.func,
-  mode: PropTypes.oneOf(["modal", "page"]),
+  editItem: PropTypes.shape({
+    uuid: PropTypes.string,
+    user_id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    sede_id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    kiosko_device_id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    fecha: PropTypes.string,
+    hora_inicio: PropTypes.string,
+    hora_fin: PropTypes.string,
+    tipo: PropTypes.string,
+    motivo: PropTypes.string,
+    empleado: PropTypes.shape({ id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]), name: PropTypes.string }),
+  }),
 };

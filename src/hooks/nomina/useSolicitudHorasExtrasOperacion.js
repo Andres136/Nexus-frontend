@@ -71,11 +71,37 @@ export function useSolicitudHorasExtrasOperacion() {
     }
   };
 
+  const editarSolicitud = async (uuid, form) => {
+    setGuardando(true);
+
+    try {
+      const payload = {
+        sede_id: form.sede_id ? Number(form.sede_id) : null,
+        kiosko_device_id: form.kiosko_device_id ? Number(form.kiosko_device_id) : null,
+        fecha: form.fecha,
+        hora_inicio: form.hora_inicio,
+        hora_fin: form.hora_fin,
+        tipo: form.tipo || "diurna",
+        motivo: form.motivo,
+      };
+
+      const res = await horaExtraService.actualizarHoraExtra(uuid, payload);
+      showToast("success", res.data.message || "Solicitud de hora extra actualizada");
+      queryClient.invalidateQueries({ queryKey: ["horasExtras"] });
+    } catch (error) {
+      showToast("error", error.response?.data?.message || "Error al actualizar la solicitud");
+      throw error;
+    } finally {
+      setGuardando(false);
+    }
+  };
+
   return {
     sedeId,
     setSedeId,
     guardando,
     crearSolicitud,
+    editarSolicitud,
     solicitudes,
     isLoading,
     empleados,

@@ -132,9 +132,14 @@ export function useHorasExtrasOperacion() {
     setLoadingUuid(item.uuid);
 
     try {
-      const fn = accion === "aprobar" ? horaExtraService.aprobar : horaExtraService.rechazar;
+      const fn = accion === "aprobar"
+        ? horaExtraService.aprobar
+        : accion === "desaprobar"
+          ? horaExtraService.desaprobar
+          : horaExtraService.rechazar;
+      const mensajes = { aprobar: "aprobada", desaprobar: "desaprobada", rechazar: "rechazada" };
       const res = await fn(item.uuid, { observacion });
-      showToast("success", res.data.message || `Hora extra ${accion === "aprobar" ? "aprobada" : "rechazada"}`);
+      showToast("success", res.data.message || `Hora extra ${mensajes[accion]}`);
       queryClient.invalidateQueries({ queryKey: ["horasExtras"] });
       setGestion(null);
     } catch (error) {
