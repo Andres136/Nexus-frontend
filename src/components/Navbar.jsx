@@ -32,6 +32,7 @@ import {
 const TRADUCCIONES_NOTIFICACION = {
   NotifyAdminUserLoggedIn: "Inicio de sesión",
   TicketAsignadoNotification: "Ticket asignado",
+  TicketCerradoNotification: "Ticket cerrado",
   OrdenTrabajoCreada: "Orden de trabajo creada",
   OrdenTrabajoGeneradaParaCreador: "Orden de trabajo generada",
   OrdenTrabajoListaParcial: "Orden con productos listos parcialmente",
