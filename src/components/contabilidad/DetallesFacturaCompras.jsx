@@ -236,6 +236,7 @@ export default function DetallesFacturaCompras({
                 <td className="px-2 py-2">
                   <input
                     type="number"
+                    step="0.0001"
                     className="w-full px-2 py-1 text-xs border rounded border-gray-300"
                     value={det.cantidad}
                     onChange={(e) => updateDetalle(index, "cantidad", e.target.value)}
@@ -270,6 +271,7 @@ export default function DetallesFacturaCompras({
                     <span className="absolute left-2 top-1.5 text-gray-400 text-xs">$</span>
                     <input
                       type="number"
+                      step="0.0001"
                       className="w-full pl-5 pr-2 py-1 text-xs border rounded border-gray-300"
                       value={det.precio_unitario}
                       onChange={(e) => updateDetalle(index, "precio_unitario", e.target.value)}
